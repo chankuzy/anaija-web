@@ -62,7 +62,7 @@ function GlassButton({ label, onClick, children }: { label: string; onClick: () 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-10 place-items-center rounded-full border border-white/12 bg-black/35 text-white backdrop-blur"
+      className="grid size-10 place-items-center rounded-full border border-white/12 bg-black/35 text-white backdrop-blur transition active:scale-95"
     >
       {children}
     </button>
@@ -284,17 +284,26 @@ export function ProfileView({ username }: { username: string }) {
 
   return (
     <div className="mx-auto w-full max-w-[935px] pb-8">
-      {/* Cover */}
-      <div className="relative h-36 overflow-hidden md:h-52">
+      {/* Cover Banner with smooth fade to black at the bottom */}
+      <div className="relative h-36 w-full overflow-hidden md:h-52">
         {profile.cover ? (
-          <button type="button" aria-label="View cover photo" className="absolute inset-0" onClick={() => setLightbox({ url: profile.cover!, round: false })}>
+          <button
+            type="button"
+            aria-label="View cover photo"
+            className="absolute inset-0 size-full"
+            onClick={() => setLightbox({ url: profile.cover!, round: false })}
+          >
             <img src={profile.cover} alt="" className="size-full object-cover" />
           </button>
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#2b2b31,#131316)]" />
         )}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.42),rgba(0,0,0,0.55)_55%,#000)]" />
-        <div className="absolute inset-x-3 flex items-center justify-between" style={{ top: "calc(10px + env(safe-area-inset-top))" }}>
+        
+        {/* Subtle fade-to-black gradient transition at cover bottom */}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.4),rgba(0,0,0,0.2)_50%,rgba(0,0,0,0.85)_85%,#000_100%)]" />
+
+        {/* Action Buttons Overlay */}
+        <div className="absolute inset-x-3 z-10 flex items-center justify-between" style={{ top: "calc(10px + env(safe-area-inset-top))" }}>
           {own ? (
             <span />
           ) : (
@@ -308,24 +317,27 @@ export function ProfileView({ username }: { username: string }) {
             </GlassButton>
           )}
         </div>
+
+        {/* Tagline Badge */}
         {tagline && (
-          <span className="absolute bottom-3 left-[112px] max-w-[calc(100%-128px)] truncate rounded-[18px] border border-white/6 bg-[#2a2d32]/95 px-3.5 py-1.5 text-[14px] font-semibold italic text-[#afbbc9] shadow-lg">
+          <span className="absolute bottom-3 left-[112px] z-10 max-w-[calc(100%-128px)] truncate rounded-[18px] border border-white/6 bg-[#2a2d32]/95 px-3.5 py-1.5 text-[14px] font-semibold italic text-[#afbbc9] shadow-lg">
             {tagline}
           </span>
         )}
       </div>
 
-      {/* Avatar + stats */}
-      <div className="flex items-center gap-4 px-4">
+      {/* Avatar + Stats (Vertically Centered Alignment via items-center) */}
+      <div className="relative z-10 flex items-center gap-4 px-4">
         <button
           type="button"
           aria-label="View profile picture"
           disabled={!profile.avatar}
           onClick={() => profile.avatar && setLightbox({ url: profile.avatar, round: true })}
-          className="-mt-10 shrink-0 rounded-full bg-bg p-[3px]"
+          className="-mt-10 shrink-0 rounded-full bg-bg p-[3px] ring-2 ring-bg"
         >
           <Avatar url={profile.avatar} name={profile.name ?? profile.username} size={80} />
         </button>
+
         <div className="grid flex-1 grid-cols-3 gap-1">
           <Stat label="Followers" value={profile.counts.followers} href={`/u/${profile.username}/followers`} />
           <Stat label="Following" value={profile.counts.following} href={`/u/${profile.username}/following`} />
@@ -333,7 +345,7 @@ export function ProfileView({ username }: { username: string }) {
         </div>
       </div>
 
-      {/* Info */}
+      {/* Info Section */}
       <div className="px-4 pt-3">
         <h1 className="truncate text-[17px] font-extrabold tracking-tight text-fg">{profile.name ?? profile.username}</h1>
         <p className="mt-px truncate text-[12.5px] text-muted">
@@ -377,7 +389,7 @@ export function ProfileView({ username }: { username: string }) {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs Bar */}
       <div role="tablist" className="sticky top-0 z-20 mt-3 flex border-b border-white/6 bg-bg">
         {TABS.map((t) => {
           const active = t === tab;
