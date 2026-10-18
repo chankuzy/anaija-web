@@ -19,7 +19,7 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
     !head ||
     !FN_RE.test(head) ||
     BLOCKED.has(head) ||
-    path.length > 3 ||
+    path.length > 4 ||
     !rest.every((s) => SEG_RE.test(s))
   ) {
     return NextResponse.json({ message: "Not found." }, { status: 404 });
