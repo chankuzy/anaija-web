@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0a;
+  --color-surface: #121214;
+  --color-card: #18181c;
+  --color-card-alt: #141416;
+  --color-card-elevated: #1e1e23;
+  --color-line: #26262c;
+
+  --color-accent: #4cc38a;
+  --color-warm: #ffb340;
+  --color-info: #4c8dff;
+
+  --color-fg: #ededed;
+  --color-muted: #7a7a85;
+  --color-success: #00e676;
+  --color-danger: #ff5c5c;
+
+  --radius-card: 20px;
+  --radius-image: 22px;
+  --radius-input: 18px;
+  --radius-floating: 24px;
+  --radius-sheet: 30px;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+body {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* AppGlass: floating/modal material only (sheets, popovers, mobile tab bar). */
+.glass {
+  background: rgba(24, 24, 26, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
