@@ -12,18 +12,22 @@ type AuthContextValue = AuthState & {
   signOut: () => Promise<void>;
 };
 
+const GUEST: AuthState = { status: "guest", user: null };
+const toState = (user: AuthUser | null): AuthState =>
+  user ? { status: "authed", user } : GUEST;
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AuthState>({ status: "loading", user: null });
 
+  // Event-handler use only (e.g. after OTP verify). Never called from an effect body.
   const refresh = useCallback(async () => {
     try {
-      const user = await authApi.session();
-      setState(user ? { status: "authed", user } : { status: "guest", user: null });
+      setState(toState(await authApi.session()));
     } catch {
       // Network failure: keep what we had; only an initial load falls back to guest.
-      setState((s) => (s.status === "loading" ? { status: "guest", user: null } : s));
+      setState((s) => (s.status === "loading" ? GUEST : s));
     }
   }, []);
 
@@ -31,16 +35,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await authApi.logout();
     } finally {
-      setState({ status: "guest", user: null });
+      setState(GUEST);
     }
   }, []);
 
+  // Initial session check: setState only inside promise callbacks.
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let cancelled = false;
+    authApi
+      .session()
+      .then((user) => {
+        if (!cancelled) setState(toState(user));
+      })
+      .catch(() => {
+        if (!cancelled) setState((s) => (s.status === "loading" ? GUEST : s));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
-    const onExpired = () => setState({ status: "guest", user: null });
+    const onExpired = () => setState(GUEST);
     window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
   }, []);

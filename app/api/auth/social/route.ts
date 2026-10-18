@@ -2,16 +2,24 @@ import { NextRequest, NextResponse } from "next/server";
 import { callFunction, clientIp, sameOrigin } from "@/lib/server/upstream";
 import { setTokenCookie } from "@/lib/server/session";
 
-export const dynamic = "force-dynamic";
-
 export async function POST(req: NextRequest) {
   if (!sameOrigin(req)) return NextResponse.json({ message: "Forbidden." }, { status: 403 });
 
+  let input: { provider?: unknown; token?: unknown };
+  try {
+    input = await req.json();
+  } catch {
+    return NextResponse.json({ message: "Invalid request." }, { status: 422 });
+  }
+  if (input.provider !== "google" || typeof input.token !== "string" || input.token.length < 20 || input.token.length > 4096) {
+    return NextResponse.json({ message: "Invalid request." }, { status: 422 });
+  }
+
   let up: Response;
   try {
-    up = await callFunction("otp-verify", {
+    up = await callFunction("social-auth", {
       method: "POST",
-      body: await req.text(),
+      body: JSON.stringify({ provider: "google", token: input.token }),
       contentType: "application/json",
       ip: clientIp(req),
     });

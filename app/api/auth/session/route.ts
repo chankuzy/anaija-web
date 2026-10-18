@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { callFunction } from "@/lib/server/upstream";
 import { clearTokenCookie, readToken } from "@/lib/server/session";
 
-export const dynamic = "force-dynamic";
 
 // Equivalent of AuthService.validateToken(): confirm the token with profile-get.
 export async function GET() {

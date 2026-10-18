@@ -1,0 +1,103 @@
+.
+├── app
+│   ├── api
+│   │   ├── auth
+│   │   │   ├── logout
+│   │   │   │   └── route.ts
+│   │   │   ├── session
+│   │   │   │   └── route.ts
+│   │   │   └── social
+│   │   │       └── route.ts
+│   │   └── fn
+│   │       └── [...path]
+│   │           └── route.ts
+│   ├── dev
+│   │   └── probe
+│   │       └── page.tsx
+│   ├── favicon.ico
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── login
+│   │   └── page.tsx
+│   ├── page.tsx
+│   └── setup
+│       └── page.tsx
+├── components
+│   ├── auth
+│   │   ├── google-login.tsx
+│   │   └── profile-setup.tsx
+│   ├── dev
+│   │   └── probe-client.tsx
+│   ├── feed
+│   │   ├── action-rail.tsx
+│   │   ├── comments-sheet.tsx
+│   │   ├── feed-card.tsx
+│   │   ├── feed-states.tsx
+│   │   ├── feed-top-bar.tsx
+│   │   ├── feed-view.tsx
+│   │   ├── options-sheet.tsx
+│   │   ├── people-unit.tsx
+│   │   ├── playback-context.tsx
+│   │   ├── post-info.tsx
+│   │   └── post-media.tsx
+│   ├── shell
+│   │   └── app-shell.tsx
+│   └── ui
+│       ├── app-logo.tsx
+│       ├── avatar.tsx
+│       ├── button.tsx
+│       ├── follow-pill.tsx
+│       ├── icon.tsx
+│       └── input.ts
+├── eslint.config.mjs
+├── .gitignore
+├── lib
+│   ├── api
+│   │   ├── auth.ts
+│   │   ├── client.ts
+│   │   ├── comments.ts
+│   │   ├── feed.ts
+│   │   ├── feed-types.ts
+│   │   ├── posts.ts
+│   │   ├── profile.ts
+│   │   ├── social.ts
+│   │   └── types.ts
+│   ├── auth
+│   │   ├── auth-context.tsx
+│   │   └── guards.ts
+│   ├── feed
+│   │   ├── event-tracker.ts
+│   │   ├── follow-store.ts
+│   │   └── use-feed.ts
+│   ├── format.ts
+│   ├── icons
+│   │   └── solar-data.ts
+│   └── server
+│       ├── env.ts
+│       ├── session.ts
+│       └── upstream.ts
+├── next.config.ts
+├── next-env.d.ts
+├── package.json
+├── public
+│   ├── brand
+│   │   ├── anaija_bg.png
+│   │   ├── anaija_logo_dark.svg
+│   │   ├── anaija_logo_master.svg
+│   │   ├── anaija_logo.svg
+│   │   ├── app_icon.png
+│   │   ├── auth_bg.png
+│   │   └── splash_logo.png
+│   ├── file.svg
+│   ├── globe.svg
+│   ├── next.svg
+│   ├── vercel.svg
+│   └── window.svg
+├── README.md
+├── scripts
+│   ├── gen-icons.mjs
+│   └── gen-solar.mjs
+├── tsconfig.json
+└── web-tree.txt
+
+28 directories, 73 files

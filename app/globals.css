@@ -26,6 +26,13 @@
 
 :root {
   color-scheme: dark;
+  /* Height of the floating mobile tab bar (excluding safe-area). Zero where the sidebar is used. */
+  --nav-h: 3.75rem;
+}
+@media (min-width: 768px) {
+  :root {
+    --nav-h: 0px;
+  }
 }
 
 html,
@@ -39,11 +46,60 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* AppGlass: floating/modal material only (sheets, popovers, mobile tab bar). */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* AppGlass: floating/modal material only (sheets, popovers). */
 .glass {
   background: rgba(24, 24, 26, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* Feed: full-bleed pages on mobile, a centred 9:16-ish card on tablet/desktop. */
+.feed-card {
+  height: 100%;
+  width: 100%;
+}
+.feed-col {
+  width: 100%;
+}
+@media (min-width: 768px) {
+  .feed-card,
+  .feed-col {
+    max-width: min(460px, calc((100dvh - 24px) * 0.5625));
+  }
+  .feed-card {
+    height: calc(100dvh - 24px);
+    border-radius: var(--radius-image);
+  }
+}
+
+.fade-bottom {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88), transparent);
+}
+.fade-top {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.65), transparent);
+}
+.text-shadow {
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.87);
+}
+.icon-shadow {
+  filter: drop-shadow(0 1px 6px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes heart-burst {
+  0% { opacity: 0; transform: scale(0.3); }
+  12% { opacity: 1; transform: scale(1.15); }
+  70% { opacity: 1; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(1); }
+}
+.heart-burst {
+  animation: heart-burst 700ms ease-out forwards;
 }
