@@ -3,7 +3,7 @@
 import { useMemo, useSyncExternalStore } from "react";
 import type { DiscoverItem } from "@/lib/api/discover";
 import { aspectOf } from "@/lib/discover/tile";
-import { DiscoverCard } from "./discover-card";
+import { DiscoverCard, type VideoBadge } from "./discover-card";
 
 // Flutter is fixed at 3 columns; web adapts to the space left of the sidebar.
 const subscribe = (cb: () => void) => {
@@ -15,7 +15,15 @@ const useColumns = () => useSyncExternalStore(subscribe, columnsNow, () => 3);
 
 // Each tile goes to the currently shortest column (heights known from aspect ratios), so appending a
 // page never moves tiles already placed. Same rule as DiscoverMasonryGrid.
-export function DiscoverGrid({ items, onOpen }: { items: DiscoverItem[]; onOpen: (index: number) => void }) {
+export function DiscoverGrid({
+  items,
+  onOpen,
+  videoBadge = "play",
+}: {
+  items: DiscoverItem[];
+  onOpen: (index: number) => void;
+  videoBadge?: VideoBadge;
+}) {
   const n = useColumns();
   const columns = useMemo(() => {
     const cols: { item: DiscoverItem; index: number }[][] = Array.from({ length: n }, () => []);
@@ -34,7 +42,7 @@ export function DiscoverGrid({ items, onOpen }: { items: DiscoverItem[]; onOpen:
       {columns.map((col, c) => (
         <div key={c} className="flex min-w-0 flex-1 flex-col gap-[2px]">
           {col.map(({ item, index }) => (
-            <DiscoverCard key={item.id} item={item} onOpen={() => onOpen(index)} />
+            <DiscoverCard key={item.id} item={item} onOpen={() => onOpen(index)} videoBadge={videoBadge} />
           ))}
         </div>
       ))}

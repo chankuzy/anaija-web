@@ -4,10 +4,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
 import { DiscoverGrid, DiscoverSkeleton } from "@/components/discover/discover-grid";
 import { PostViewer } from "@/components/discover/post-viewer";
 import { Avatar } from "@/components/ui/avatar";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { Lightbox } from "@/components/ui/lightbox";
 import type { DiscoverItem } from "@/lib/api/discover";
 import type { Post } from "@/lib/api/feed-types";
@@ -19,11 +20,28 @@ import { formatCount } from "@/lib/format";
 import { usePaged } from "@/lib/paged/use-paged";
 import { isReel, loadLiked, loadPosts, loadReposts, loadSaved, postsView, type PostsCursor } from "@/lib/profile/feeds";
 import { useProfile } from "@/lib/profile/use-profile";
-import { GridGlyph, ReelGlyph } from "./glyphs";
 import { ProfileMenu } from "./profile-menu";
 
 type TabId = "posts" | "reels" | "reposts" | "liked" | "saved";
-const TABS: TabId[] = ["posts", "reels", "reposts", "liked", "saved"];
+type SortOption = "latest" | "popular" | "oldest";
+
+const TABS: { id: TabId; label: string }[] = [
+  { id: "posts", label: "Posts" },
+  { id: "reels", label: "Reels" },
+  { id: "reposts", label: "Reposts" },
+  { id: "saved", label: "Favorites" },
+  { id: "liked", label: "Liked" },
+];
+
+// Official Solar icons: outline when inactive, bold when active. Reels = clapperboard.
+const TAB_ICON: Record<TabId, { name: IconName; glow: string }> = {
+  posts: { name: "galleryWide", glow: "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" },
+  reels: { name: "clapperboard", glow: "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]" },
+  reposts: { name: "repeat", glow: "text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]" },
+  saved: { name: "bookmark", glow: "text-amber-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" },
+  liked: { name: "heart", glow: "text-rose-600 drop-shadow-[0_0_8px_rgba(225,29,72,0.5)]" },
+};
+
 const EMPTY_POSTS: Post[] = [];
 
 interface PagedLike {
@@ -40,78 +58,21 @@ const EMPTY_COPY: Record<TabId, { title: string; sub: string }> = {
   reels: { title: "No reels yet", sub: "Video posts show up here automatically" },
   reposts: { title: "No reposts yet", sub: "Posts reposted from the feed show up here" },
   liked: { title: "No likes yet", sub: "Posts you like will show up here" },
-  saved: { title: "No saves yet", sub: "Tap the bookmark on anything you want to find again" },
+  saved: { title: "No favorites yet", sub: "Tap the bookmark on anything you want to find again" },
 };
-
-function linkUri(raw: string): string | null {
-  let s = raw.trim();
-  if (!s) return null;
-  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(s)) s = `https://${s}`;
-  try {
-    const u = new URL(s);
-    return u.protocol === "http:" || u.protocol === "https:" ? u.toString() : null;
-  } catch {
-    return null;
-  }
-}
-const linkLabel = (raw: string) => raw.trim().replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-
-function GlassButton({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-label={label}
-      onClick={onClick}
-      className="grid size-10 place-items-center rounded-full border border-white/12 bg-black/35 text-white backdrop-blur transition active:scale-95"
-    >
-      {children}
-    </button>
-  );
-}
-
-function Stat({ label, value, href }: { label: string; value: number; href?: string }) {
-  const inner = (
-    <>
-      <span className="block text-[17px] font-bold text-fg">{formatCount(value)}</span>
-      <span className="block text-[11px] text-muted">{label}</span>
-    </>
-  );
-  return href ? (
-    <Link href={href} className="text-center">
-      {inner}
-    </Link>
-  ) : (
-    <div className="text-center">{inner}</div>
-  );
-}
-
-function Pill({ filled, onClick, children, className = "" }: { filled?: boolean; onClick: () => void; children: React.ReactNode; className?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`h-[34px] rounded-[10px] px-[18px] text-[13px] font-bold transition active:scale-[0.97] ${
-        filled ? "bg-white text-black" : "border border-white/28 text-fg"
-      } ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 export function ProfileSkeleton() {
   return (
-    <div className="mx-auto w-full max-w-[935px]" aria-hidden="true">
-      <div className="h-36 animate-pulse bg-card/70 md:h-52" />
-      <div className="flex items-center gap-4 px-4">
-        <div className="-mt-10 size-[86px] shrink-0 animate-pulse rounded-full bg-card-elevated" />
-        <div className="h-8 flex-1 animate-pulse rounded-xl bg-card/70" />
+    <div className="mx-auto w-full max-w-[935px] p-4 sm:p-6" aria-hidden="true">
+      <div className="flex gap-4 sm:gap-6">
+        <div className="size-20 sm:size-28 shrink-0 animate-pulse rounded-full bg-card-elevated" />
+        <div className="flex-1 space-y-3 pt-1">
+          <div className="h-5 w-36 sm:w-48 animate-pulse rounded bg-card/70" />
+          <div className="h-4 w-48 sm:w-64 animate-pulse rounded bg-card/70" />
+          <div className="h-8 w-28 sm:w-32 animate-pulse rounded-full bg-card/70" />
+        </div>
       </div>
-      <div className="mt-4 space-y-2 px-4">
-        <div className="h-4 w-40 animate-pulse rounded bg-card/70" />
-        <div className="h-3 w-56 animate-pulse rounded bg-card/70" />
-      </div>
-      <div className="mt-6">
+      <div className="mt-8">
         <DiscoverSkeleton />
       </div>
     </div>
@@ -126,11 +87,11 @@ export function ProfileView({ username }: { username: string }) {
 
   const { profile, error, loading, reload } = useProfile(username, authed);
   const [tab, setTab] = useState<TabId>("posts");
-  const [visited, setVisited] = useState<ReadonlySet<TabId>>(() => new Set<TabId>(["posts"]));
+  const [sort, setSort] = useState<SortOption>("latest");
+  const [visited, setVisited] = useState<ReadonlySet<TabId>>(() => new Set<TabId>([...TABS.map(t => t.id)]));
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; index: number } | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; round: boolean } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [linksOpen, setLinksOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
 
@@ -165,14 +126,31 @@ export function ProfileView({ username }: { username: string }) {
     liked: { items: liked.data?.items ?? EMPTY_POSTS, src: liked },
     saved: { items: saved.data?.items ?? EMPTY_POSTS, src: saved },
   };
+
   const isPrivateTab = !own && (tab === "liked" || tab === "saved");
   const cur = lists[tab];
   const src = cur.src;
   const curItems = isPrivateTab ? EMPTY_POSTS : cur.items;
 
+  // TypeScript safe sorting property lookup across API model variants
+  const sortedItems = useMemo(() => {
+    const list = [...curItems];
+    if (sort === "popular") {
+      return list.sort((a, b) => {
+        const likesA = (a as unknown as { likes_count?: number; like_count?: number; likes?: number }).likes_count ?? (a as unknown as { like_count?: number }).like_count ?? 0;
+        const likesB = (b as unknown as { likes_count?: number; like_count?: number; likes?: number }).likes_count ?? (b as unknown as { like_count?: number }).like_count ?? 0;
+        return likesB - likesA;
+      });
+    }
+    if (sort === "oldest") {
+      return list.reverse();
+    }
+    return list;
+  }, [curItems, sort]);
+
   const grid = useMemo<DiscoverItem[]>(
-    () => curItems.map((p) => ({ id: String(p.id), kind: p.type === "listing" ? "listing" : "post", post: p, src: null, slot: 0 })),
-    [curItems],
+    () => sortedItems.map((p) => ({ id: String(p.id), kind: p.type === "listing" ? "listing" : "post", post: p, src: null, slot: 0 })),
+    [sortedItems],
   );
 
   const hasMore = !isPrivateTab && (src.data?.hasMore ?? false);
@@ -205,7 +183,7 @@ export function ProfileView({ username }: { username: string }) {
     if (!profile) return;
     const r = await toggleFollow(profile.id, following);
     if (r === null) flash("Unable to update follow");
-    else reload(); // counts changed on both sides
+    else reload();
   }
 
   function onMessage() {
@@ -250,17 +228,12 @@ export function ProfileView({ username }: { username: string }) {
     );
   }
 
-  const loc = (profile.location ?? "").trim();
-  const campus = profile.institution?.short_name?.trim() ?? "";
-  const tagline = (profile.tagline ?? "").trim();
   const bio = (profile.bio ?? "").trim();
   const total = profile.counts.posts + profile.counts.listings;
-  const links = profile.links;
-  const shownLinks = linksOpen ? links : links.slice(0, 1);
 
   let body: React.ReactNode;
   if (isPrivateTab) {
-    body = <TabMessage title={tab === "liked" ? "Likes are private" : "Collections are private"} />;
+    body = <TabMessage title={tab === "liked" ? "Likes are private" : "Favorites are private"} />;
   } else if ((src.loading && !src.data) || (!src.data && !src.loading && visited.has(tab) && grid.length === 0 && !src.data)) {
     body = <DiscoverSkeleton />;
   } else if (src.data?.error && grid.length === 0) {
@@ -270,7 +243,7 @@ export function ProfileView({ username }: { username: string }) {
   } else {
     body = (
       <>
-        <DiscoverGrid items={grid} onOpen={(i) => setViewer({ items: grid, index: i })} />
+        <DiscoverGrid items={grid} videoBadge="clapper" onOpen={(i) => setViewer({ items: grid, index: i })} />
         <div ref={sentinel} className="h-px" />
         {loadingMore && <div className="grid h-14 place-items-center text-sm text-muted">Loading…</div>}
         {moreError && (
@@ -283,144 +256,159 @@ export function ProfileView({ username }: { username: string }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[935px] pb-8">
-      {/* Cover Banner with smooth fade to black at the bottom */}
-      <div className="relative h-36 w-full overflow-hidden md:h-52">
+    <div className="mx-auto w-full max-w-[935px] px-3.5 sm:px-6 pt-4 sm:pt-6 pb-8">
+      {/* Header sits ON the cover: cover image as background, desaturated + dark scrim, content on top */}
+      <section className="relative isolate overflow-hidden rounded-[22px] border border-white/8">
         {profile.cover ? (
+          <img src={profile.cover} alt="" decoding="async" className="absolute inset-0 -z-20 size-full object-cover saturate-[0.55]" />
+        ) : (
+          <span className="absolute inset-0 -z-20 bg-[linear-gradient(135deg,var(--color-card-elevated),var(--color-card-alt))]" />
+        )}
+        <span className="absolute inset-0 -z-10 bg-gradient-to-b from-black/55 via-black/68 to-black/82" />
+
+        <div className="flex items-start gap-3.5 px-3.5 pb-5 pt-9 sm:gap-6 sm:px-7 sm:pb-7 sm:pt-14 md:gap-7">
           <button
             type="button"
-            aria-label="View cover photo"
-            className="absolute inset-0 size-full"
-            onClick={() => setLightbox({ url: profile.cover!, round: false })}
+            aria-label="View profile picture"
+            disabled={!profile.avatar}
+            onClick={() => profile.avatar && setLightbox({ url: profile.avatar, round: true })}
+            className="shrink-0 rounded-full bg-black/40 p-[2px] ring-1 ring-white/20 transition hover:opacity-95"
           >
-            <img src={profile.cover} alt="" className="size-full object-cover" />
+            <div className="hidden sm:block">
+              <Avatar url={profile.avatar} name={profile.name ?? profile.username} size={116} />
+            </div>
+            <div className="sm:hidden">
+              <Avatar url={profile.avatar} name={profile.name ?? profile.username} size={82} />
+            </div>
           </button>
-        ) : (
-          <div className="absolute inset-0 bg-[linear-gradient(135deg,#2b2b31,#131316)]" />
-        )}
-        
-        {/* Subtle fade-to-black gradient transition at cover bottom */}
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_bottom,rgba(0,0,0,0.4),rgba(0,0,0,0.2)_50%,rgba(0,0,0,0.85)_85%,#000_100%)]" />
 
-        {/* Action Buttons Overlay */}
-        <div className="absolute inset-x-3 z-10 flex items-center justify-between" style={{ top: "calc(10px + env(safe-area-inset-top))" }}>
-          {own ? (
-            <span />
-          ) : (
-            <GlassButton label="Back" onClick={() => router.back()}>
-              <Icon name="back" className="size-5" />
-            </GlassButton>
-          )}
-          {!own && (
-            <GlassButton label="More" onClick={() => setMenuOpen(true)}>
-              <Icon name="dots" filled className="size-5" />
-            </GlassButton>
-          )}
-        </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+              <h1 className="truncate text-[18px] font-extrabold text-white sm:text-[22px]">{profile.name ?? profile.username}</h1>
+              <span className="truncate text-[13px] font-normal text-white/60 sm:text-[15px]">@{profile.username}</span>
+            </div>
 
-        {/* Tagline Badge */}
-        {tagline && (
-          <span className="absolute bottom-3 left-[112px] z-10 max-w-[calc(100%-128px)] truncate rounded-[18px] border border-white/6 bg-[#2a2d32]/95 px-3.5 py-1.5 text-[14px] font-semibold italic text-[#afbbc9] shadow-lg">
-            {tagline}
-          </span>
-        )}
-      </div>
+            <div className="mt-2 flex flex-wrap items-center gap-3.5 text-[13.5px] sm:mt-2.5 sm:gap-5 sm:text-[15px]">
+              <Link href={`/u/${profile.username}/following`} className="flex items-center gap-1 transition hover:opacity-80">
+                <span className="font-extrabold text-white">{formatCount(profile.counts.following)}</span>
+                <span className="text-[12.5px] text-white/65 sm:text-[13.5px]">Following</span>
+              </Link>
+              <Link href={`/u/${profile.username}/followers`} className="flex items-center gap-1 transition hover:opacity-80">
+                <span className="font-extrabold text-white">{formatCount(profile.counts.followers)}</span>
+                <span className="text-[12.5px] text-white/65 sm:text-[13.5px]">Followers</span>
+              </Link>
+              <div className="flex items-center gap-1">
+                <span className="font-extrabold text-white">{formatCount(total)}</span>
+                <span className="text-[12.5px] text-white/65 sm:text-[13.5px]">Likes</span>
+              </div>
+            </div>
 
-      {/* Avatar + Stats (Vertically Centered Alignment via items-center) */}
-      <div className="relative z-10 flex items-center gap-4 px-4">
-        <button
-          type="button"
-          aria-label="View profile picture"
-          disabled={!profile.avatar}
-          onClick={() => profile.avatar && setLightbox({ url: profile.avatar, round: true })}
-          className="-mt-10 shrink-0 rounded-full bg-bg p-[3px] ring-2 ring-bg"
-        >
-          <Avatar url={profile.avatar} name={profile.name ?? profile.username} size={80} />
-        </button>
+            <div className="mt-3 flex flex-wrap items-center gap-2 sm:mt-4 sm:gap-2.5">
+              {own ? (
+                <button
+                  type="button"
+                  onClick={() => router.push("/settings/profile")}
+                  className="h-8 rounded-md bg-white/15 px-3.5 text-[13px] font-semibold text-white transition hover:bg-white/25 active:scale-98 sm:h-9 sm:px-5 sm:text-[14px]"
+                >
+                  Edit profile
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => (following ? onMessage() : void onFollow())}
+                  className={`h-8 rounded-md px-4 text-[13px] font-bold transition active:scale-98 sm:h-9 sm:px-6 sm:text-[14px] ${
+                    following ? "border border-white/30 text-white" : "bg-rose-600 text-white hover:bg-rose-500"
+                  }`}
+                >
+                  {following ? "Message" : "Follow"}
+                </button>
+              )}
 
-        <div className="grid flex-1 grid-cols-3 gap-1">
-          <Stat label="Followers" value={profile.counts.followers} href={`/u/${profile.username}/followers`} />
-          <Stat label="Following" value={profile.counts.following} href={`/u/${profile.username}/following`} />
-          <Stat label="Posts" value={total} />
-        </div>
-      </div>
+              {own ? (
+                <button
+                  type="button"
+                  aria-label="Settings"
+                  onClick={() => router.push("/settings")}
+                  className="grid size-8 place-items-center rounded-md bg-white/15 text-white transition hover:bg-white/25 active:scale-95 sm:size-9"
+                >
+                  <Icon name="settings" className="size-4.5 sm:size-5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  aria-label="More Options"
+                  onClick={() => setMenuOpen(true)}
+                  className="grid size-8 place-items-center rounded-md bg-white/15 text-white transition hover:bg-white/25 active:scale-95 sm:size-9"
+                >
+                  <Icon name="menuDots" filled className="size-4.5 sm:size-5" />
+                </button>
+              )}
 
-      {/* Info Section */}
-      <div className="px-4 pt-3">
-        <h1 className="truncate text-[17px] font-extrabold tracking-tight text-fg">{profile.name ?? profile.username}</h1>
-        <p className="mt-px truncate text-[12.5px] text-muted">
-          @{profile.username}
-          {loc && ` · ${loc}`}
-          {campus && <span className="font-semibold text-warm"> · {campus}</span>}
-        </p>
-        {bio && <p className="mt-1.5 line-clamp-3 whitespace-pre-wrap text-[13.5px] leading-[1.3] text-fg">{bio}</p>}
-        {links.length > 0 && (
-          <div className="mt-1 flex flex-col items-start gap-0.5">
-            {shownLinks.map((l) => {
-              const href = linkUri(l);
-              return href ? (
-                <a key={l} href={href} target="_blank" rel="noopener noreferrer" className="flex max-w-full items-center gap-1 text-[13px] font-semibold text-info">
-                  <Icon name="link" filled className="size-[13px] shrink-0" />
-                  <span className="truncate">{linkLabel(l)}</span>
-                </a>
-              ) : null;
-            })}
-            {links.length > 1 && (
-              <button type="button" onClick={() => setLinksOpen((o) => !o)} className="text-[12.5px] text-muted">
-                {linksOpen ? "Show less" : `+${links.length - 1} more`}
+              <button
+                type="button"
+                aria-label="Share profile"
+                onClick={() => void onShare()}
+                className="grid size-8 place-items-center rounded-md bg-white/15 text-white transition hover:bg-white/25 active:scale-95 sm:size-9"
+              >
+                <Icon name="share" className="size-4.5 sm:size-5" />
               </button>
-            )}
-          </div>
-        )}
+            </div>
 
-        <div className="mt-3 flex gap-2">
-          {!own && (
-            <Pill
-              filled={!following}
-              className="flex-1"
-              onClick={() => (following ? onMessage() : void onFollow())}
+            {bio && <p className="mt-3 whitespace-pre-line text-[13.5px] leading-relaxed text-white/85 sm:mt-4 sm:text-[14.5px]">{bio}</p>}
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs: official Solar icons, outline inactive / bold active, with warm glows */}
+      <div className="mt-5 flex flex-col justify-between gap-3 border-b border-white/10 sm:mt-6 sm:flex-row sm:items-center">
+        <div role="tablist" className="no-scrollbar flex items-center gap-5 overflow-x-auto scroll-smooth pb-0.5 sm:gap-8">
+          {TABS.map((t) => {
+            const active = t.id === tab;
+            const ic = TAB_ICON[t.id];
+            return (
+              <button
+                key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => selectTab(t.id)}
+                className={`relative flex shrink-0 items-center gap-1.5 pb-3 text-[14.5px] font-bold transition sm:gap-2 sm:text-[16px] ${
+                  active ? "text-white" : "text-white/40 hover:text-white/70"
+                }`}
+              >
+                <Icon name={ic.name} filled={active} className={`size-5 transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
+                <span>{t.label}</span>
+                {active && <span className="absolute inset-x-0 bottom-0 h-[2.5px] rounded-full bg-white" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Sort Filter Selector Pill */}
+        <div className="mb-2 flex items-center self-start rounded-lg bg-white/8 p-1 sm:mb-2 sm:self-auto">
+          {(["latest", "popular", "oldest"] as SortOption[]).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSort(s)}
+              className={`rounded-md px-2.5 py-1 text-[11.5px] font-semibold capitalize transition sm:px-3 sm:text-[12.5px] ${
+                sort === s ? "bg-white/20 text-white" : "text-white/40 hover:text-white/70"
+              }`}
             >
-              {following ? "Message" : "Follow"}
-            </Pill>
-          )}
-          <Pill className={own ? "flex-1" : "min-w-[88px]"} onClick={() => void onShare()}>
-            Share
-          </Pill>
+              {s}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Tabs Bar */}
-      <div role="tablist" className="sticky top-0 z-20 mt-3 flex border-b border-white/6 bg-bg">
-        {TABS.map((t) => {
-          const active = t === tab;
-          return (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={active}
-              aria-label={t}
-              onClick={() => selectTab(t)}
-              className={`relative grid h-[46px] flex-1 place-items-center ${active ? "text-fg" : "text-muted"}`}
-            >
-              {t === "posts" && <GridGlyph filled={active} />}
-              {t === "reels" && <ReelGlyph filled={active} />}
-              {t === "reposts" && <Icon name="repeat" filled={active} className="size-[22px]" />}
-              {t === "liked" && <Icon name="heart" filled={active} className="size-[22px]" />}
-              {t === "saved" && <Icon name="bookmark" filled={active} className="size-[22px]" />}
-              {active && <span className="absolute bottom-0 h-0.5 w-6 rounded-full bg-fg" />}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="px-[2px] pt-[2px]">{body}</div>
+      <div className="pt-4">{body}</div>
 
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center">
           <span className="rounded-full bg-black/80 px-3 py-1.5 text-xs font-semibold text-white">{toast}</span>
         </div>
       )}
+
       {menuOpen && (
         <ProfileMenu
           profile={profile}
@@ -431,7 +419,9 @@ export function ProfileView({ username }: { username: string }) {
           onToast={flash}
         />
       )}
+
       {lightbox && <Lightbox url={lightbox.url} round={lightbox.round} onClose={() => setLightbox(null)} />}
+
       {viewer && (
         <PostViewer items={viewer.items} startIndex={viewer.index} onClose={() => setViewer(null)} onPatch={src.patch} onRemove={src.remove} />
       )}

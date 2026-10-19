@@ -3,9 +3,11 @@
 
 import type { DiscoverItem } from "@/lib/api/discover";
 import { coverOf, imageCount, tileAspect } from "@/lib/discover/tile";
-import { BagGlyph, LayersGlyph, PlayGlyph } from "./glyphs";
+import { BagGlyph, ClapperboardGlyph, LayersGlyph, PlayGlyph } from "./glyphs";
 
 const RADIUS = "rounded-[3px]";
+
+export type VideoBadge = "play" | "clapper";
 
 function Badge({ children, className }: { children: React.ReactNode; className: string }) {
   return (
@@ -14,7 +16,16 @@ function Badge({ children, className }: { children: React.ReactNode; className: 
 }
 
 // Port of DiscoverPostCard / DiscoverListingCard: media at its own aspect, nothing underneath.
-export function DiscoverCard({ item, onOpen }: { item: DiscoverItem; onOpen: () => void }) {
+// videoBadge: Discover keeps the play glyph; the profile grid uses the clapperboard.
+export function DiscoverCard({
+  item,
+  onOpen,
+  videoBadge = "play",
+}: {
+  item: DiscoverItem;
+  onOpen: () => void;
+  videoBadge?: VideoBadge;
+}) {
   const post = item.post;
   const cover = coverOf(post);
   const isListing = item.kind === "listing";
@@ -54,7 +65,7 @@ export function DiscoverCard({ item, onOpen }: { item: DiscoverItem; onOpen: () 
       )}
       {cover.isVideo ? (
         <Badge className="right-1.5 top-1.5 bg-black/55">
-          <PlayGlyph className="size-[13px]" />
+          {videoBadge === "clapper" ? <ClapperboardGlyph className="size-[13px]" /> : <PlayGlyph className="size-[13px]" />}
         </Badge>
       ) : (
         multi && (
