@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useMessages } from "@/components/messaging/messages-context";
 import { ApiError } from "@/lib/api/client";
-import { messagingApi, type Message } from "@/lib/api/messaging";
+import { messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
+import { subscribeBroadcast } from "@/lib/realtime/client";
 import { useInterval } from "./use-interval";
 
 type TState = { id: number; items: Message[]; cursor: string | null; error: string | null; loadingOlder: boolean };
@@ -26,9 +28,13 @@ function mergeLatest(prev: TState | null, id: number, server: Message[], cursor:
   };
 }
 
-// Messages are polled (the browser has no realtime channel through the cookie proxy); sends are optimistic.
+// Live via conversation:{id} (new_message, reaction_updated, message_deleted). While that channel is joined the
+// poll is only a 30s safety net; if it isn't, inbox_update pulses and a 6s poll keep the thread fresh.
 export function useThread(conversationId: number, myId: number | undefined) {
   const enabled = myId !== undefined;
+  const { pulse, live } = useMessages();
+  const pulseN = pulse.id === conversationId ? pulse.n : 0;
+  const [joined, setJoined] = useState(false);
   const [state, setState] = useState<TState | null>(null);
   const s = state && state.id === conversationId ? state : null;
 
@@ -49,7 +55,61 @@ export function useThread(conversationId: number, myId: number | undefined) {
     if (!enabled) return;
     fetchLatest();
   }, [enabled, fetchLatest]);
-  useInterval(fetchLatest, 6000, enabled);
+  useEffect(() => {
+    if (enabled && pulseN > 0 && !joined) fetchLatest();
+  }, [enabled, pulseN, joined, fetchLatest]);
+  useInterval(fetchLatest, joined ? 30_000 : live ? 20_000 : 6000, enabled);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const off = subscribeBroadcast(
+      `conversation:${conversationId}`,
+      {
+        new_message: (p) => {
+          const m = parseMessage(p);
+          if (!m) return;
+          setState((prev) => {
+            if (!prev || prev.id !== conversationId) return prev;
+            if (prev.items.some((x) => x.id === m.id)) return prev;
+            // Our own send is confirmed by the HTTP response; don't double up while it is in flight.
+            if (m.sender_id === myId && prev.items.some(isLocal)) return prev;
+            const at = prev.items.findIndex(isLocal);
+            const items = at < 0 ? [...prev.items, m] : [...prev.items.slice(0, at), m, ...prev.items.slice(at)];
+            return { ...prev, items };
+          });
+        },
+        reaction_updated: (p) => {
+          const u = p as { message_id?: number; reactions?: unknown };
+          if (typeof u.message_id !== "number") return;
+          const reactions = parseReactions(u.reactions);
+          setState((prev) =>
+            prev && prev.id === conversationId
+              ? { ...prev, items: prev.items.map((x) => (x.id === u.message_id ? { ...x, reactions } : x)) }
+              : prev,
+          );
+        },
+        message_deleted: (p) => {
+          const u = p as { message_id?: number };
+          if (typeof u.message_id !== "number") return;
+          setState((prev) =>
+            prev && prev.id === conversationId
+              ? {
+                  ...prev,
+                  items: prev.items.map((x) =>
+                    x.id === u.message_id ? { ...x, is_deleted: true, body: null, media_url: null, shared_post: null } : x,
+                  ),
+                }
+              : prev,
+          );
+        },
+      },
+      setJoined,
+    );
+    return () => {
+      off();
+      setJoined(false);
+    };
+  }, [enabled, conversationId, myId]);
 
   const loadOlder = useCallback(() => {
     if (!s?.cursor || s.loadingOlder) return;

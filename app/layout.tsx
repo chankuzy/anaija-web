@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/auth-context";
+import { ActivityProvider } from "@/lib/activity/activity-context";
+import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
 import { PlaybackProvider } from "@/components/feed/playback-context";
 import { AppShell } from "@/components/shell/app-shell";
 
@@ -23,9 +25,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body>
         <AuthProvider>
-          <PlaybackProvider>
-            <AppShell>{children}</AppShell>
-          </PlaybackProvider>
+          <ActivityProvider>
+            <NotificationsPanelProvider>
+              <PlaybackProvider>
+                <AppShell>{children}</AppShell>
+              </PlaybackProvider>
+            </NotificationsPanelProvider>
+          </ActivityProvider>
         </AuthProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type RealtimeChannel, type SupabaseClient } from "@supabase/supabase-js";
 
 // Same setup as Flutter: the public anon key, no user session. All backend authorisation happens in the
 // Edge Functions; this client only listens to broadcast channels. NEVER put the service-role key here.
@@ -16,18 +16,54 @@ export function realtime(): SupabaseClient | null {
   return client;
 }
 
-type Handler = (payload: unknown) => void;
+type Handler = (payload: unknown, event?: string) => void;
+type Listener = { events: Record<string, Handler>; onJoined?: (joined: boolean) => void };
+type Entry = { ch: RealtimeChannel; listeners: Set<Listener>; joined: boolean; teardown: number | null };
 
-// Subscribes to a broadcast topic; returns an unsubscribe. Without an anon key it is a no-op and callers poll.
+// One channel per topic, shared by every subscriber. Registering "*" as an event name receives everything.
+const hub = new Map<string, Entry>();
+
 export function subscribeBroadcast(topic: string, events: Record<string, Handler>, onJoined?: (joined: boolean) => void): () => void {
   const c = realtime();
   if (!c) return () => {};
-  const ch = c.channel(topic);
-  for (const [event, fn] of Object.entries(events)) {
-    ch.on("broadcast", { event }, (m: { payload?: unknown }) => fn(m.payload ?? m));
+
+  let entry = hub.get(topic);
+  if (!entry) {
+    const ch = c.channel(topic);
+    const created: Entry = { ch, listeners: new Set(), joined: false, teardown: null };
+    ch.on("broadcast", { event: "*" }, (m: { event?: string; payload?: unknown }) => {
+      const data = m.payload ?? m;
+      for (const l of created.listeners) {
+        if (m.event) l.events[m.event]?.(data, m.event);
+        l.events["*"]?.(data, m.event);
+      }
+    });
+    ch.subscribe((s: string) => {
+      created.joined = s === "SUBSCRIBED";
+      for (const l of created.listeners) l.onJoined?.(created.joined);
+    });
+    hub.set(topic, created);
+    entry = created;
   }
-  ch.subscribe((status: string) => onJoined?.(status === "SUBSCRIBED"));
+
+  const e = entry;
+  if (e.teardown !== null) {
+    window.clearTimeout(e.teardown);
+    e.teardown = null;
+  }
+  const listener: Listener = { events, onJoined };
+  e.listeners.add(listener);
+  if (e.joined) onJoined?.(true);
+
   return () => {
-    void c.removeChannel(ch);
+    e.listeners.delete(listener);
+    if (e.listeners.size > 0) return;
+    // Delayed so React strict-mode remounts reuse the channel instead of racing a teardown.
+    e.teardown = window.setTimeout(() => {
+      if (e.listeners.size === 0 && hub.get(topic) === e) {
+        hub.delete(topic);
+        void c.removeChannel(e.ch);
+      }
+    }, 400);
   };
 }

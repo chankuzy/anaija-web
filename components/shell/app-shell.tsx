@@ -2,19 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect, useSyncExternalStore } from "react";
 import { needsProfileSetup } from "@/lib/auth/guards";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useActivity } from "@/lib/activity/activity-context";
+import { useNotificationsPanel } from "@/lib/notifications/panel-context";
+import { mediaUrl } from "@/lib/api/feed";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Avatar } from "@/components/ui/avatar";
-import { Suspense } from "react";
+import { NotificationsView } from "@/components/notifications/notifications-view";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
 // Matches main_shell.dart: Home, Discover, [Create], Messages, Profile. Guests get sent to sign-in for
-// anything but Home (same rule as Flutter's _onTabTapped). Notifications is the bell in the feed top bar
-// on mobile; it gets a sidebar entry on tablet/desktop.
+// anything but Home. Notifications has no page: on md+ it is a slide-out panel beside the rail, on mobile a
+// full-screen sheet (opened by the bell, which is any link to /notifications).
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
@@ -27,15 +30,31 @@ const NAV: NavItem[] = [
 const SIDE = NAV.filter((n) => n.mobile !== "create");
 const CREATE = NAV.find((n) => n.mobile === "create")!;
 
-// Sidebar labels live in the DOM at all times and just fade in while the rail is hovered/focused.
-const LABEL = "whitespace-nowrap opacity-0 transition-opacity duration-150 group-hover/side:opacity-100 group-focus-within/side:opacity-100";
+const ASIDE_BASE =
+  "group/side sticky top-0 z-[2] flex h-dvh w-[76px] flex-col justify-between overflow-hidden border-r border-white/8 px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out";
+// Expand on hover or keyboard focus only (focus-visible), so a mouse click never leaves the rail stuck open.
+const ASIDE_EXPAND =
+  "hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_48px_rgba(0,0,0,0.55)] hover:backdrop-blur-xl has-[:focus-visible]:w-[256px] has-[:focus-visible]:bg-bg/92 has-[:focus-visible]:shadow-[12px_0_48px_rgba(0,0,0,0.55)] has-[:focus-visible]:backdrop-blur-xl";
+const LABEL_BASE = "whitespace-nowrap opacity-0 transition-opacity duration-150";
+const LABEL_SHOW = "group-hover/side:opacity-100 group-has-[:focus-visible]/side:opacity-100";
 const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
+const ACTIVE = "bg-white/10 font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]";
+const IDLE = "font-medium text-white/60 hover:bg-white/6 hover:text-white";
 
-export function AppShell({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const MD = "(min-width: 768px)";
+function useIsDesktop() {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(MD);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(MD).matches,
+    () => true,
+  );
+}
+
+export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<div className="min-h-screen" />}>
       <AppShellContent>{children}</AppShellContent>
@@ -43,11 +62,26 @@ export function AppShell({
   );
 }
 
+function Badge({ n }: { n: number }) {
+  if (n <= 0) return null;
+  return (
+    <span className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white ring-2 ring-bg">
+      {n > 99 ? "99+" : n}
+    </span>
+  );
+}
+
 export function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { status, user, signOut } = useAuth();
-
   const router = useRouter();
+  const { status, user, signOut } = useAuth();
+  const { unseen } = useActivity();
+  const { open: panelOpen, toggle: togglePanel, hide: closePanel } = useNotificationsPanel();
+  const desktop = useIsDesktop();
+  useEffect(() => {
+    closePanel();
+  }, [pathname, closePanel]);
+
   useEffect(() => {
     if (status === "authed" && needsProfileSetup(user) && pathname !== "/setup" && pathname !== "/login") {
       router.replace("/setup");
@@ -56,44 +90,84 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
 
   if (pathname === "/login" || pathname === "/setup") return <>{children}</>;
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  // Segment-exact: "/messages" must not match "/me".
+  const matches = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
+    return matches(href);
+  };
   const hrefFor = (n: NavItem) => (n.auth && status === "guest" ? "/login" : n.href);
-  // Home is full-bleed under the glass bar (it lifts its own overlays); other pages reserve the bar's space.
   const fullBleed = pathname === "/";
+  const railPanel = panelOpen && desktop;
+  const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
+  const avatar = user ? mediaUrl(user.avatar) : null;
 
   return (
-    // Home: no width cap, sidebar hugs the screen edge (TikTok-style). Other pages keep the 1440px column.
     <div className={`flex min-h-dvh w-full ${fullBleed ? "" : "mx-auto max-w-[1440px]"}`}>
-      {/* Rail (md+): reserves 76px; the aside inside grows over the page on hover and shrinks back on leave. */}
+      {/* Rail (md+): reserves 76px. The aside grows over the page on hover and shrinks back on leave; while the
+          notifications panel is open it stays icon-only and the panel slides out beside it. */}
       <div className="relative z-40 hidden w-[76px] shrink-0 md:block">
-        <aside className="group/side sticky top-0 flex h-dvh w-[76px] flex-col justify-between overflow-hidden border-r border-white/8 px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_48px_rgba(0,0,0,0.55)] hover:backdrop-blur-xl focus-within:w-[256px] focus-within:bg-bg/92 focus-within:shadow-[12px_0_48px_rgba(0,0,0,0.55)] focus-within:backdrop-blur-xl">
+        {railPanel && (
+          <>
+            <button type="button" aria-label="Close notifications" onClick={closePanel} className="fixed inset-0 z-[1] cursor-default" />
+            <div className="sticky top-0 z-[2] h-0">
+              <div
+                role="dialog"
+                aria-label="Notifications"
+                className="notif-panel absolute left-full top-0 h-dvh w-[400px] max-w-[calc(100vw-76px)] overflow-hidden rounded-r-[28px] border-r border-white/8 bg-bg shadow-[12px_0_48px_rgba(0,0,0,0.55)]"
+              >
+                <NotificationsView onClose={closePanel} />
+              </div>
+            </div>
+          </>
+        )}
+
+        <aside className={`${ASIDE_BASE} ${railPanel ? "bg-bg" : ASIDE_EXPAND}`}>
           <div className="flex flex-col">
             <Link href="/" aria-label="Anaija home" className="mb-8 flex h-11 items-center px-[9px]">
-              <span className="group-hover/side:hidden group-focus-within/side:hidden">
+              <span className={railPanel ? "" : "group-hover/side:hidden group-has-[:focus-visible]/side:hidden"}>
                 <AppLogo size={34} showWordmark={false} />
               </span>
-              <span className="hidden group-hover/side:inline group-focus-within/side:inline">
-                <AppLogo size={34} />
-              </span>
+              {!railPanel && (
+                <span className="hidden group-hover/side:inline group-has-[:focus-visible]/side:inline">
+                  <AppLogo size={34} />
+                </span>
+              )}
             </Link>
 
             <nav className="flex flex-col gap-1.5">
               {SIDE.map((n) => {
-                const active = isActive(n.href);
+                const isBell = n.href === "/notifications";
+                const active = railPanel ? isBell : isActive(n.href);
+                const cls = `${ITEM} ${active ? ACTIVE : IDLE}`;
+                const inner = (
+                  <>
+                    <span className="relative shrink-0">
+                      <Icon name={n.icon} filled={active} className="size-8" />
+                      {isBell && <Badge n={unseen} />}
+                    </span>
+                    <span className={label}>{n.label}</span>
+                  </>
+                );
+                if (isBell && status === "authed") {
+                  return (
+                    <button
+                      key={n.href}
+                      type="button"
+                      title={n.label}
+                      aria-haspopup="dialog"
+                      aria-expanded={railPanel}
+                      onClick={togglePanel}
+                      className={`${cls} w-full text-left`}
+                    >
+                      {inner}
+                    </button>
+                  );
+                }
                 return (
-                  <Link
-                    key={n.href}
-                    href={hrefFor(n)}
-                    title={n.label}
-                    aria-current={active ? "page" : undefined}
-                    className={`${ITEM} ${
-                      active
-                        ? "bg-white/10 font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                        : "font-medium text-white/60 hover:bg-white/6 hover:text-white"
-                    }`}
-                  >
-                    <Icon name={n.icon} filled={active} className="size-8 shrink-0" />
-                    <span className={LABEL}>{n.label}</span>
+                  <Link key={n.href} href={hrefFor(n)} title={n.label} aria-current={active ? "page" : undefined} className={cls}>
+                    {inner}
                   </Link>
                 );
               })}
@@ -105,7 +179,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition hover:bg-white/92 hover:shadow-[0_10px_34px_rgba(255,255,255,0.24)] active:scale-[0.98]"
             >
               <Icon name="plus" weight="strong" className="size-7 shrink-0" />
-              <span className={LABEL}>Create</span>
+              <span className={label}>Create</span>
             </Link>
           </div>
 
@@ -113,35 +187,26 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
             {status === "authed" && (
               <div className="flex flex-col gap-1.5 border-t border-white/8 pt-4">
                 <Link href="/me" title="Profile" className="flex h-[52px] items-center gap-3 rounded-full px-[7px] transition-colors hover:bg-white/6">
-                  <Avatar
-                    url={(user as { avatar_url?: string | null } | null)?.avatar_url}
-                    name={user?.name ?? user?.username}
-                    size={38}
-                  />
-                  <span className={`min-w-0 ${LABEL}`}>
+                  <Avatar url={avatar} name={user?.name ?? user?.username} size={38} />
+                  <span className={`min-w-0 ${label}`}>
                     <span className="block truncate text-body font-semibold text-white">{user?.name ?? ""}</span>
                     <span className="block truncate text-supporting text-white/50">{user?.username ? `@${user.username}` : ""}</span>
                   </span>
                 </Link>
-                <Link href="/settings" title="Settings" className={`${ITEM} font-medium text-white/60 hover:bg-white/6 hover:text-white`}>
+                <Link href="/settings" title="Settings" className={`${ITEM} ${matches("/settings") && !railPanel ? ACTIVE : IDLE}`}>
                   <Icon name="settings" className="size-8 shrink-0" />
-                  <span className={LABEL}>Settings</span>
+                  <span className={label}>Settings</span>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => void signOut()}
-                  title="Sign out"
-                  className={`${ITEM} w-full font-medium text-white/60 hover:bg-white/6 hover:text-white`}
-                >
+                <button type="button" onClick={() => void signOut()} title="Sign out" className={`${ITEM} w-full ${IDLE}`}>
                   <Icon name="logout" className="size-8 shrink-0" />
-                  <span className={LABEL}>Sign out</span>
+                  <span className={label}>Sign out</span>
                 </button>
               </div>
             )}
             {status === "guest" && (
               <Link href="/login" title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black">
                 <Icon name="user" className="size-7 shrink-0" />
-                <span className={LABEL}>Sign in</span>
+                <span className={label}>Sign in</span>
               </Link>
             )}
           </div>
@@ -182,6 +247,13 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           ),
         )}
       </nav>
+
+      {/* Mobile: the same panel as a full-screen sheet. */}
+      {panelOpen && !desktop && (
+        <div role="dialog" aria-label="Notifications" className="fixed inset-0 z-50 bg-bg">
+          <NotificationsView onClose={closePanel} />
+        </div>
+      )}
     </div>
   );
 }

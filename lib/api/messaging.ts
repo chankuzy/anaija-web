@@ -193,3 +193,11 @@ export const messagingApi = {
   respond: (id: number, action: "accept" | "decline" | "block") =>
     api.post<unknown>(`conversations-respond/${id}`, { action }),
 };
+
+
+export function asUtc(value: string): string {
+  if (!value) return value;
+  return /(?:Z|[+-]\\d{2}:\\d{2})$/i.test(value)
+    ? value
+    : `${value.replace(" ", "T")}Z`;
+}

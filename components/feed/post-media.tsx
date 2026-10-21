@@ -3,6 +3,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { MULTI_MIN, MultiBadge } from "@/components/ui/multi-badge";
 import type { FeedMedia, Post, PostAudio } from "@/lib/api/feed-types";
 import { usePlayback } from "./playback-context";
 
@@ -289,6 +290,7 @@ export function PostMedia({
   return (
     <>
       {body}
+      {images.length >= MULTI_MIN && <MultiBadge className="right-3 top-[60px]" />}
       {audio && near && <PostAudioPlayer audio={audio} active={active} />}
     </>
   );
