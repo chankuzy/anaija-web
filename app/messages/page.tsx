@@ -8,7 +8,7 @@ export default function MessagesIndexPage() {
     <div className="grid flex-1 place-items-center px-6 text-center">
       <div>
         <p className="text-[17px] font-bold text-fg">Your messages</p>
-        <p className="mt-1.5 text-[13px] text-muted">Pick a conversation or start a new one.</p>
+        <p className="mt-1.5 text-secondary text-muted">Pick a conversation or start a new one.</p>
       </div>
     </div>
   );

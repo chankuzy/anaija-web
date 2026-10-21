@@ -111,10 +111,10 @@ function NewChat({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label="New message">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/50" />
-      <div className="glass relative flex h-[70dvh] w-full max-w-md flex-col overflow-hidden rounded-t-[30px] md:rounded-[30px]">
+      <div className="glass relative flex h-[70dvh] w-full max-w-md flex-col overflow-hidden rounded-t-sheet md:rounded-sheet">
         <div className="flex items-center justify-center border-b border-line/70 px-4 py-3.5">
-          <span className="text-[11px] font-bold tracking-[0.18em] text-fg">NEW MESSAGE</span>
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60">
+          <span className="text-micro font-bold tracking-[0.18em] text-fg">NEW MESSAGE</span>
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60 hit-area">
             <Icon name="close" className="size-[18px]" />
           </button>
         </div>
@@ -126,12 +126,12 @@ function NewChat({ onClose }: { onClose: () => void }) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search by name or @username"
-              className="min-w-0 flex-1 bg-transparent text-[14.5px] text-fg outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent text-[15px] text-fg outline-none placeholder:text-muted"
             />
           </div>
           {error && <p className="mt-2 text-xs text-danger">{error}</p>}
         </div>
-        <p className="px-5 pb-2 pt-4 text-[11px] font-bold tracking-[0.16em] text-muted">{t.length >= 2 ? "RESULTS" : "RECENT"}</p>
+        <p className="px-5 pb-2 pt-4 text-micro font-bold tracking-[0.16em] text-muted">{t.length >= 2 ? "RESULTS" : "RECENT"}</p>
         <div className="no-scrollbar flex-1 overflow-y-auto px-2 pb-4">
           {list.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted">
@@ -142,7 +142,7 @@ function NewChat({ onClose }: { onClose: () => void }) {
               <button key={u.id} type="button" disabled={busy !== null} onClick={() => void start(u)} className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left hover:bg-white/6 disabled:opacity-60">
                 <Avatar url={u.avatar} name={u.name ?? u.username} size={46} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14.5px] font-bold text-fg">{u.name ?? u.username}</span>
+                  <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
                   <span className="block truncate text-xs text-muted">@{u.username}</span>
                 </span>
                 {busy === u.id && <span className="text-xs text-muted">Opening…</span>}
@@ -195,15 +195,15 @@ export function InboxPanel() {
     body = (
       <div className="py-24 text-center">
         <p className="text-sm text-muted">{inbox.error}</p>
-        <button type="button" onClick={inbox.reload} className="mt-4 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">Try again</button>
+        <button type="button" onClick={inbox.reload} className="mt-4 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">Try again</button>
       </div>
     );
   } else if (items.length === 0) {
     body = (
       <div className="px-8 py-24 text-center">
         <p className="text-[17px] font-bold text-fg">No messages yet</p>
-        <p className="mt-1.5 text-[13px] text-muted">Connect with friends, buyers and sellers across your campus.</p>
-        <button type="button" onClick={() => setComposing(true)} className="mt-5 h-11 rounded-full bg-white px-6 text-[13px] font-bold text-black">Start a chat</button>
+        <p className="mt-1.5 text-secondary text-muted">Connect with friends, buyers and sellers across your campus.</p>
+        <button type="button" onClick={() => setComposing(true)} className="mt-5 h-11 rounded-full bg-white px-6 text-secondary font-bold text-black">Start a chat</button>
       </div>
     );
   } else if (shown.length === 0) {
@@ -216,7 +216,7 @@ export function InboxPanel() {
             <span className="grid size-10 place-items-center rounded-full bg-warm/14 text-warm"><Icon name="userPlus" filled className="size-[19px]" /></span>
             <span className="flex-1">
               <span className="block text-[15px] font-bold text-fg">Message requests</span>
-              <span className="block text-[12.5px] font-semibold text-warm">{counts.requests === 1 ? "1 new request" : `${counts.requests} new requests`}</span>
+              <span className="block text-secondary font-semibold text-warm">{counts.requests === 1 ? "1 new request" : `${counts.requests} new requests`}</span>
             </span>
             <Icon name="chevronRight" className="size-4 text-muted" />
           </button>
@@ -229,16 +229,16 @@ export function InboxPanel() {
               <Avatar url={convAvatar(c)} name={convName(c)} size={54} />
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className={`min-w-0 flex-1 truncate text-[16px] tracking-tight text-fg ${unread ? "font-bold" : "font-semibold"}`}>{convName(c)}</span>
-                  {c.last_message_at && <span className="shrink-0 text-[11.5px] text-muted">{timeAgo(asUtc(c.last_message_at))}</span>}
+                  <span className={`min-w-0 flex-1 truncate text-label tracking-tight text-fg ${unread ? "font-bold" : "font-semibold"}`}>{convName(c)}</span>
+                  {c.last_message_at && <span className="shrink-0 text-supporting text-muted">{timeAgo(asUtc(c.last_message_at))}</span>}
                 </span>
                 <span className="mt-0.5 flex items-center gap-2">
-                  <span className={`min-w-0 flex-1 truncate text-[14px] ${unread ? "font-medium text-fg/90" : "text-fg/55"}`}>
+                  <span className={`min-w-0 flex-1 truncate text-body ${unread ? "font-medium text-fg/90" : "text-fg/55"}`}>
                     {isRequest(c) ? "Message request" : previewText(c.last_message_body)}
                   </span>
-                  {c.is_muted && <span className="text-[10.5px] font-semibold text-muted">Muted</span>}
+                  {c.is_muted && <span className="text-micro font-semibold text-muted">Muted</span>}
                   {unread && (
-                    <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-warm px-1 text-[10.5px] font-bold text-black">
+                    <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-warm px-1 text-micro font-bold text-black">
                       {c.unread_count > 99 ? "99+" : c.unread_count}
                     </span>
                   )}
@@ -260,7 +260,7 @@ export function InboxPanel() {
             <Icon name="edit" className="size-5" />
           </button>
         </div>
-        <div className="mt-4 flex h-11 items-center gap-2.5 rounded-[22px] border border-white/12 bg-white/6 px-3.5">
+        <div className="mt-4 flex h-11 items-center gap-2.5 rounded-image border border-white/12 bg-white/6 px-3.5">
           <Icon name="search" className="size-[18px] text-muted" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search conversations" className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-muted" />
         </div>
@@ -269,9 +269,9 @@ export function InboxPanel() {
             {FILTERS.map((f) => {
               const n = f.id === "unread" ? counts.unread : f.id === "requests" ? counts.requests : f.id === "marketplace" ? counts.marketplace : 0;
               return (
-                <button key={f.id} type="button" onClick={() => setFilter(f.id)} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-[18px] text-[14.5px] ${f.id === filter ? "border-white/38 bg-white/14 font-bold text-fg" : "border-white/14 font-medium text-fg/70"}`}>
+                <button key={f.id} type="button" onClick={() => setFilter(f.id)} className={`flex h-10 shrink-0 items-center gap-1.5 rounded-full border px-[18px] text-[15px] ${f.id === filter ? "border-white/38 bg-white/14 font-bold text-fg" : "border-white/14 font-medium text-fg/70"}`}>
                   {f.label}
-                  {n > 0 && <span className="text-[12.5px] font-bold text-warm">{n}</span>}
+                  {n > 0 && <span className="text-secondary font-bold text-warm">{n}</span>}
                 </button>
               );
             })}

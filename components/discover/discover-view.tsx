@@ -25,7 +25,7 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-10 items-center gap-1 rounded-full px-3 text-[13px] font-semibold text-fg"
+        className="flex h-10 items-center gap-1 rounded-full px-3 text-secondary font-semibold text-fg"
       >
         {label}
         <ChevronDownGlyph className="size-4 text-muted" />
@@ -43,7 +43,7 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
                   setOpen(false);
                   onChange(f.id);
                 }}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-[14px] font-semibold text-white"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-body font-semibold text-white"
               >
                 {f.label}
                 {f.id === value && <CheckGlyph className="size-4" />}
@@ -61,9 +61,9 @@ function Message({ title, body, action }: { title: string; body: string; action?
     <div className="grid place-items-center px-6 py-24 text-center">
       <div>
         <p className="text-[15px] font-bold text-fg">{title}</p>
-        <p className="mt-1 text-[13px] text-muted">{body}</p>
+        <p className="mt-1 text-secondary text-muted">{body}</p>
         {action && (
-          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
             {action.label}
           </button>
         )}
@@ -131,7 +131,7 @@ export function DiscoverView() {
         <div ref={sentinel} className="h-px" />
         {loadingMore && <div className="grid h-16 place-items-center text-sm text-muted">Loading…</div>}
         {!hasMore && !loading && !view?.fromCache && (
-          <div className="px-6 pb-4 pt-7 text-center text-[12.5px] text-muted">
+          <div className="px-6 pb-4 pt-7 text-center text-secondary text-muted">
             That&apos;s everything for now.
             <button type="button" onClick={reload} className="ml-1 font-semibold text-fg underline-offset-2 hover:underline">
               Refresh
@@ -148,10 +148,10 @@ export function DiscoverView() {
         className="sticky top-0 z-30 flex items-center gap-2 bg-bg px-3 pb-2 pt-2"
         style={{ paddingTop: "calc(8px + env(safe-area-inset-top))" }}
       >
-        <div className="flex h-12 min-w-0 flex-1 items-center rounded-[22px] border border-white/12 bg-white/6 pl-3.5 pr-1">
+        <div className="flex h-12 min-w-0 flex-1 items-center rounded-image border border-white/12 bg-white/6 pl-3.5 pr-1">
           <Link href="/search" className="flex min-w-0 flex-1 items-center gap-2.5 text-muted">
             <SearchGlyph className="size-[19px] shrink-0" />
-            <span className="truncate text-[13.5px]">Search people, posts, listings...</span>
+            <span className="truncate text-body">Search people, posts, listings...</span>
           </Link>
           <FilterMenu value={filter} onChange={selectFilter} />
         </div>

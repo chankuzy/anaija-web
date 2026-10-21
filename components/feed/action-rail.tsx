@@ -28,7 +28,7 @@ function RailButton({
       className="flex flex-col items-center gap-[3px] text-white transition-transform active:scale-90"
     >
       <span className="icon-shadow">{children}</span>
-      {label ? <span className="text-shadow text-[11.5px] font-bold">{label}</span> : null}
+      {label ? <span className="text-shadow text-supporting font-bold">{label}</span> : null}
     </button>
   );
 }

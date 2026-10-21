@@ -38,17 +38,17 @@ function Row({
   onDelete: () => void;
 }) {
   const href = c.author.username ? `/u/${c.author.username}` : null;
-  const who = <span className={`font-bold text-fg ${small ? "text-[12.5px]" : "text-[13px]"}`}>{c.author.username}</span>;
-  const act = "text-[11.5px] font-semibold text-muted";
+  const who = <span className={`font-bold text-fg ${small ? "text-secondary" : "text-secondary"}`}>{c.author.username}</span>;
+  const act = "text-supporting font-semibold text-muted";
   return (
     <div className={`flex gap-2.5 py-2 ${small ? "pl-[58px] pr-4" : "px-4"} ${c.pending ? "opacity-70" : ""}`}>
       <Avatar url={c.author.avatar} name={c.author.name ?? c.author.username} size={small ? 26 : 36} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           {href ? <Link href={href}>{who}</Link> : who}
-          <span className="text-[11px] text-muted">{c.pending ? "Posting…" : timeAgo(c.created_at)}</span>
+          <span className="text-micro text-muted">{c.pending ? "Posting…" : timeAgo(c.created_at)}</span>
         </div>
-        <p className={`mt-0.5 whitespace-pre-wrap break-words text-fg/95 ${small ? "text-[13px]" : "text-[13.5px]"} leading-[1.4]`}>
+        <p className={`mt-0.5 whitespace-pre-wrap break-words text-fg/95 ${small ? "text-secondary" : "text-body"} leading-[1.4]`}>
           {c.body}
         </p>
         <div className="mt-1.5 flex items-center gap-4">
@@ -267,11 +267,11 @@ export function CommentsSheet({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label="Comments">
       <button type="button" aria-label="Close comments" onClick={onClose} className="absolute inset-0 cursor-default bg-black/50" />
-      <div className="glass relative flex h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[30px] md:rounded-[30px]">
+      <div className="glass relative flex h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-sheet md:rounded-sheet">
         <div className="flex items-center justify-center gap-2 border-b border-line/70 px-4 py-3.5">
           <span className="text-[15px] font-bold tracking-tight text-fg">Comments</span>
           <span className="rounded-[10px] bg-white/8 px-2 py-0.5 text-xs font-bold text-white/70">{count}</span>
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60">
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60 hit-area">
             <Icon name="close" className="size-[18px]" />
           </button>
         </div>
@@ -285,7 +285,7 @@ export function CommentsSheet({
             <div className="flex flex-col items-center gap-1 py-16">
               <Icon name="message" filled className="mb-2 size-9 text-white/50" />
               <p className="text-[15px] font-bold text-fg">No comments yet</p>
-              <p className="text-[13px] text-muted">Start the conversation</p>
+              <p className="text-secondary text-muted">Start the conversation</p>
             </div>
           ) : (
             top.items.map((c) => {
@@ -342,7 +342,7 @@ export function CommentsSheet({
           )}
           {top.hasMore && !top.loading && (
             <div className="grid place-items-center py-3">
-              <button type="button" onClick={() => void loadMore()} disabled={top.more} className="text-[13px] font-semibold text-muted disabled:opacity-60">
+              <button type="button" onClick={() => void loadMore()} disabled={top.more} className="text-secondary font-semibold text-muted disabled:opacity-60">
                 {top.more ? "Loading…" : "Load more comments"}
               </button>
             </div>

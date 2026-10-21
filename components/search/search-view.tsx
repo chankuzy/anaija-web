@@ -54,9 +54,9 @@ function highlight(text: string, q: string) {
 function SectionTitle({ children, action }: { children: React.ReactNode; action?: { label: string; onClick: () => void } }) {
   return (
     <div className="mb-3 flex items-center">
-      <h2 className="flex-1 text-[18px] font-bold tracking-tight text-fg">{children}</h2>
+      <h2 className="flex-1 text-section font-bold tracking-tight text-fg">{children}</h2>
       {action && (
-        <button type="button" onClick={action.onClick} className="text-[12.5px] font-semibold text-muted">
+        <button type="button" onClick={action.onClick} className="text-secondary font-semibold text-muted">
           {action.label}
         </button>
       )}
@@ -69,7 +69,7 @@ function Empty({ title, sub }: { title: string; sub?: string }) {
     <div className="grid place-items-center px-6 py-24 text-center">
       <div>
         <p className="text-[15px] font-bold text-fg">{title}</p>
-        {sub && <p className="mt-1 text-[13px] text-muted">{sub}</p>}
+        {sub && <p className="mt-1 text-secondary text-muted">{sub}</p>}
       </div>
     </div>
   );
@@ -186,11 +186,11 @@ export function SearchView() {
             <SectionTitle action={{ label: "Clear all", onClick: clearRecents }}>Recent</SectionTitle>
             <div className="flex flex-wrap gap-2">
               {recents.slice(0, 8).map((r) => (
-                <span key={r} className="flex items-center rounded-full border border-white/12 bg-white/6 pl-3 text-[13.5px] text-fg">
+                <span key={r} className="flex items-center rounded-full border border-white/12 bg-white/6 pl-3 text-body text-fg">
                   <button type="button" onClick={() => runTerm(r)} className="max-w-[170px] truncate py-1.5 font-medium">
                     {r}
                   </button>
-                  <button type="button" aria-label={`Remove ${r}`} onClick={() => removeRecent(r)} className="grid size-8 place-items-center text-muted">
+                  <button type="button" aria-label={`Remove ${r}`} onClick={() => removeRecent(r)} className="grid size-8 place-items-center text-muted relative hit-area">
                     <Icon name="close" className="size-3.5" />
                   </button>
                 </span>
@@ -203,7 +203,7 @@ export function SearchView() {
             <SectionTitle>Popular searches</SectionTitle>
             <div className="flex flex-wrap gap-2">
               {terms.map((x) => (
-                <button key={x} type="button" onClick={() => runTerm(x)} className="rounded-full border border-white/12 bg-white/6 px-3.5 py-2 text-[13px] text-fg">
+                <button key={x} type="button" onClick={() => runTerm(x)} className="rounded-full border border-white/12 bg-white/6 px-3.5 py-2 text-secondary text-fg">
                   {x}
                 </button>
               ))}
@@ -218,8 +218,8 @@ export function SearchView() {
                 <span className="w-12 text-[28px] font-medium leading-none text-white/25">{String(i + 1).padStart(2, "0")}</span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
-                    <span className="min-w-0 flex-1 truncate text-[15.5px] font-bold text-fg">#{h.tag}</span>
-                    <span className="text-[11.5px] text-muted">{formatCount(h.posts_count)} posts</span>
+                    <span className="min-w-0 flex-1 truncate text-label font-bold text-fg">#{h.tag}</span>
+                    <span className="text-supporting text-muted">{formatCount(h.posts_count)} posts</span>
                   </span>
                   <span className="mt-2 block h-0.5 rounded bg-white/8">
                     <span className="block h-full rounded bg-white/60" style={{ width: `${Math.max(5, (h.posts_count / max) * 100)}%` }} />
@@ -230,7 +230,7 @@ export function SearchView() {
           </section>
         )}
         {recents.length === 0 && tags.length === 0 && terms.length === 0 && (
-          <p className="text-[13.5px] leading-snug text-muted">People, posts, listings and businesses, all in one place.</p>
+          <p className="text-body leading-snug text-muted">People, posts, listings and businesses, all in one place.</p>
         )}
       </div>
     );
@@ -248,7 +248,7 @@ export function SearchView() {
                 <span className="grid size-[42px] place-items-center rounded-full border border-white/12 bg-white/6 text-lg font-bold text-fg">#</span>
               )}
               <span className="min-w-0 flex-1 text-left">
-                <span className="block truncate text-[14.5px] font-semibold text-fg/60">{highlight(isUser ? (s.name ?? s.value) : `#${s.value}`, t)}</span>
+                <span className="block truncate text-[15px] font-semibold text-fg/60">{highlight(isUser ? (s.name ?? s.value) : `#${s.value}`, t)}</span>
                 <span className="block text-xs text-muted">{isUser ? `@${s.value}` : `${formatCount(s.posts_count ?? 0)} posts`}</span>
               </span>
             </>
@@ -291,10 +291,10 @@ export function SearchView() {
               <Link key={u.id} href={`/u/${u.username}`} onClick={() => addRecent(t)} className="flex items-center gap-3 py-2.5">
                 <Avatar url={u.avatar} name={u.name ?? u.username} size={48} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[14.5px] font-bold text-fg">{u.name ?? u.username}</span>
+                  <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
                   <span className="block text-xs text-muted">@{u.username}</span>
                 </span>
-                <span className="rounded-full border border-white/28 px-3.5 py-1.5 text-[12.5px] font-bold text-fg">View</span>
+                <span className="rounded-full border border-white/28 px-3.5 py-1.5 text-secondary font-bold text-fg">View</span>
               </Link>
             ))}
           </div>
@@ -315,7 +315,7 @@ export function SearchView() {
                     <span className="mx-auto block w-fit rounded-full border border-white/22 p-0.5">
                       <Avatar url={u.avatar} name={u.name ?? u.username} size={54} />
                     </span>
-                    <span className="mt-1.5 block truncate text-[11.5px] font-semibold text-fg">{u.name ?? u.username}</span>
+                    <span className="mt-1.5 block truncate text-supporting font-semibold text-fg">{u.name ?? u.username}</span>
                   </Link>
                 ))}
               </div>
@@ -356,7 +356,7 @@ export function SearchView() {
               enterKeyHint="search"
               autoComplete="off"
               placeholder="Search people, posts, listings..."
-              className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-fg outline-none placeholder:text-[13.5px] placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
+              className="min-w-0 flex-1 bg-transparent text-[15px] font-medium text-fg outline-none placeholder:text-body placeholder:text-muted [&::-webkit-search-cancel-button]:hidden"
             />
             {q && (
               <button
@@ -385,12 +385,12 @@ export function SearchView() {
                   key={x.id}
                   type="button"
                   onClick={() => setTab(x.id)}
-                  className={`flex h-[38px] flex-1 items-center justify-center gap-1.5 rounded-full text-[13.5px] ${
+                  className={`flex h-[38px] flex-1 items-center justify-center gap-1.5 rounded-full text-body ${
                     x.id === tab ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
                   }`}
                 >
                   {x.label}
-                  {n > 0 && <span className="text-[11px] font-semibold text-white/40">{n}</span>}
+                  {n > 0 && <span className="text-micro font-semibold text-white/40">{n}</span>}
                 </button>
               );
             })}

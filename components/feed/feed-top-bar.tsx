@@ -50,7 +50,7 @@ export function FeedTopBar({
               <Icon name="bell" className="size-[25px]" />
             </Link>
           ) : (
-            <Link href="/login" className="rounded-full bg-white px-[18px] py-[9px] text-[13.5px] font-bold text-black">
+            <Link href="/login" className="rounded-full bg-white px-[18px] py-[9px] text-body font-bold text-black">
               Sign in
             </Link>
           )}
@@ -58,7 +58,7 @@ export function FeedTopBar({
           {open && (
             <>
               <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-              <div className="glass absolute left-0 top-full z-50 mt-2 w-60 rounded-[20px] p-1.5">
+              <div className="glass absolute left-0 top-full z-50 mt-2 w-60 rounded-card p-1.5">
                 {OPTIONS.map((o) => (
                   <button
                     key={o.value}
@@ -70,7 +70,7 @@ export function FeedTopBar({
                     className="flex w-full items-center justify-between rounded-2xl px-3.5 py-2.5 text-left hover:bg-white/8"
                   >
                     <span>
-                      <span className="block text-[14.5px] font-semibold text-white">{o.label}</span>
+                      <span className="block text-[15px] font-semibold text-white">{o.label}</span>
                       <span className="block text-xs text-white/55">{o.sub}</span>
                     </span>
                     {o.value === scope && <Icon name="check" className="size-4 text-accent" />}

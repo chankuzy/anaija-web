@@ -90,8 +90,8 @@ import { FireIcon as b_fire } from "@solar-icons/react/bold/fire";
 import { FireIcon as o_fire } from "@solar-icons/react/outline/fire";
 import { ForbiddenCircleIcon as b_forbidden_circle } from "@solar-icons/react/bold/forbidden-circle";
 import { ForbiddenCircleIcon as o_forbidden_circle } from "@solar-icons/react/outline/forbidden-circle";
-import { ForwardIcon as b_forward } from "@solar-icons/react/bold/forward";
-import { ForwardIcon as o_forward } from "@solar-icons/react/outline/forward";
+import { ForwardRightIcon as b_forward_right } from "@solar-icons/react/bold/forward-right";
+import { ForwardRightIcon as o_forward_right } from "@solar-icons/react/outline/forward-right";
 import { GalleryIcon as b_gallery } from "@solar-icons/react/bold/gallery";
 import { GalleryIcon as o_gallery } from "@solar-icons/react/outline/gallery";
 import { GalleryWideIcon as b_gallery_wide } from "@solar-icons/react/bold/gallery-wide";
@@ -299,7 +299,7 @@ export const SOLAR = {
   "send": p(b_plane, o_plane),
   "settings": p(b_settings, o_settings),
   "share": p(b_share, o_share),
-  "shareArrow": p(b_forward, o_forward),
+  "shareArrow": p(b_forward_right, o_forward_right),
   "shieldCross": p(b_shield_cross, o_shield_cross),
   "shop": p(b_shop, o_shop),
   "squareAcademicCap": p(b_square_academic_cap, o_square_academic_cap),

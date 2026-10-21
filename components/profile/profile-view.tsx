@@ -25,9 +25,8 @@ import { StoryRingAvatar } from "./story-ring-avatar";
 
 type ListTab = "posts" | "reels" | "reposts" | "liked" | "saved";
 type TabId = ListTab | "info";
-type SortOption = "latest" | "popular" | "oldest";
 
-// The plus on your own avatar opens the composer with Story focused (create-view reads ?mode=story).
+// The plus on your own avatar (mobile) opens the composer with Story focused.
 const STORY_COMPOSER_HREF = "/create?mode=story";
 
 const TABS: { id: TabId; label: string }[] = [
@@ -41,12 +40,12 @@ const TABS: { id: TabId; label: string }[] = [
 
 // Official Solar icons: outline when inactive, bold when active.
 const TAB_ICON: Record<TabId, { name: IconName; glow: string }> = {
-  posts: { name: "galleryWide", glow: "text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]" },
-  reels: { name: "clapperboard", glow: "text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]" },
-  reposts: { name: "repeat", glow: "text-orange-400 drop-shadow-[0_0_8px_rgba(251,146,60,0.5)]" },
-  saved: { name: "bookmark", glow: "text-amber-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]" },
-  liked: { name: "heart", glow: "text-rose-600 drop-shadow-[0_0_8px_rgba(225,29,72,0.5)]" },
-  info: { name: "infoCircle", glow: "text-info drop-shadow-[0_0_8px_rgba(76,141,255,0.5)]" },
+  posts: { name: "galleryWide", glow: "text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.55)]" },
+  reels: { name: "clapperboard", glow: "text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.55)]" },
+  reposts: { name: "repeat", glow: "text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.55)]" },
+  saved: { name: "bookmark", glow: "text-amber-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.55)]" },
+  liked: { name: "heart", glow: "text-rose-600 drop-shadow-[0_0_10px_rgba(225,29,72,0.55)]" },
+  info: { name: "infoCircle", glow: "text-info drop-shadow-[0_0_10px_rgba(76,141,255,0.55)]" },
 };
 
 const EMPTY_POSTS: Post[] = [];
@@ -70,7 +69,9 @@ const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
 
 // Cover mask (mobile): fades the left/right edges and the bottom into the screen black.
 const COVER_MASK =
-  "linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%), linear-gradient(to right, transparent 0%, #000 24%, #000 76%, transparent 100%)";
+  "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
+
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,179,64,0.10),transparent_70%)]";
 
 function safeHref(raw: string): { href: string; label: string } | null {
   const t = raw.trim();
@@ -88,10 +89,10 @@ function safeHref(raw: string): { href: string; label: string } | null {
 export function ProfileSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[935px]" aria-hidden="true">
-      <div className="flex items-start gap-3 px-4 pb-4 pt-24 md:gap-8 md:px-6 md:pt-8">
-        <div className="size-[96px] shrink-0 animate-pulse rounded-full bg-card-elevated md:order-first md:size-[160px]" />
+      <div className="flex items-start gap-4 px-4 pb-4 pt-24 md:gap-8 md:px-6 md:pt-8">
+        <div className="size-[98px] shrink-0 animate-pulse rounded-full bg-card-elevated md:order-first md:size-[160px]" />
         <div className="order-first flex-1 space-y-3 md:order-none">
-          <div className="h-5 w-40 animate-pulse rounded bg-card/70" />
+          <div className="h-6 w-44 animate-pulse rounded bg-card/70" />
           <div className="h-4 w-28 animate-pulse rounded bg-card/70" />
           <div className="h-10 w-56 animate-pulse rounded bg-card/70" />
         </div>
@@ -109,7 +110,7 @@ function GlassBtn({ label, onClick, children }: { label: string; onClick: () => 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-10 place-items-center rounded-full border border-white/12 bg-black/35 text-white backdrop-blur-sm transition active:scale-95"
+      className="grid size-10 place-items-center rounded-full border border-white/10 bg-black/30 text-white backdrop-blur-md transition active:scale-92"
     >
       {children}
     </button>
@@ -122,26 +123,47 @@ function RoundBtn({ label, onClick, children }: { label: string; onClick: () => 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-11 place-items-center rounded-full bg-white/12 text-white transition hover:bg-white/20 active:scale-95"
+      className="grid size-11 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/16 active:scale-92"
     >
       {children}
     </button>
   );
 }
 
-// Avatar with its story ring; on your own profile a blue + opens the composer on Story.
+function Stat({ value, label, href, inline }: { value: number; label: string; href?: string; inline?: boolean }) {
+  const inner = inline ? (
+    <>
+      <span className="text-section font-extrabold tracking-tight text-white">{formatCount(value)}</span>{" "}
+      <span className="text-[15px] text-white/55">{label}</span>
+    </>
+  ) : (
+    <>
+      <p className="text-[21px] font-extrabold leading-none tracking-tight text-white text-shadow">{formatCount(value)}</p>
+      <p className="mt-1.5 text-body text-white/55">{label}</p>
+    </>
+  );
+  return href ? (
+    <Link href={href} className="block transition hover:opacity-80">
+      {inner}
+    </Link>
+  ) : (
+    <div>{inner}</div>
+  );
+}
+
+// Avatar with its story ring; the blue + (mobile, own profile only) opens the composer on Story.
 function AvatarBlock({
   profile,
   size,
   ring,
-  own,
+  showAdd,
   onView,
   onAddStory,
 }: {
   profile: UserProfile;
   size: number;
   ring: StoryRingState;
-  own: boolean;
+  showAdd: boolean;
   onView: () => void;
   onAddStory: () => void;
 }) {
@@ -157,17 +179,26 @@ function AvatarBlock({
       >
         <StoryRingAvatar url={profile.avatar} name={profile.name ?? profile.username} size={size} ring={ring} />
       </button>
-      {own && (
+      {showAdd && (
         <button
           type="button"
           aria-label="Add to your story"
           onClick={onAddStory}
-          className="absolute bottom-[5%] right-[5%] grid size-7 place-items-center rounded-full bg-info text-white ring-[3px] ring-black transition active:scale-90 md:size-8"
+          className="absolute bottom-[3%] right-[3%] grid size-[30px] place-items-center rounded-full bg-info text-white ring-[3px] ring-black transition active:scale-90"
         >
-          <Icon name="plus" className="size-[18px]" />
+          <Icon name="plus" weight="strong" className="size-[18px]" />
         </button>
       )}
     </span>
+  );
+}
+
+function NameRow({ profile, className }: { profile: UserProfile; className: string }) {
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      <h1 className={`truncate font-extrabold tracking-tight ${className}`}>{profile.name ?? profile.username}</h1>
+      {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[18px] shrink-0 text-warm" />}
+    </div>
   );
 }
 
@@ -180,7 +211,7 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
 
   if (empty) return <TabMessage title="Nothing here yet" sub="Tagline, location and links show up here" />;
 
-  const row = "flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3.5 text-[14px] text-white/90";
+  const row = "flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3.5 text-body text-white/90";
   return (
     <div className="space-y-2.5 px-4 py-5 md:px-0">
       {tagline && (
@@ -226,7 +257,6 @@ export function ProfileView({ username }: { username: string }) {
   const { profile, error, loading, reload } = useProfile(username, authed);
   const ring = useStoryRing(profile?.id, authed && !!profile);
   const [tab, setTab] = useState<TabId>("posts");
-  const [sort, setSort] = useState<SortOption>("latest");
   const [visited, setVisited] = useState<ReadonlySet<TabId>>(() => new Set<TabId>([...TABS.map((t) => t.id)]));
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; index: number } | null>(null);
   const [lightbox, setLightbox] = useState<{ url: string; round: boolean } | null>(null);
@@ -273,25 +303,9 @@ export function ProfileView({ username }: { username: string }) {
   const src = cur.src;
   const curItems = isPrivateTab || isInfo ? EMPTY_POSTS : cur.items;
 
-  // TypeScript safe sorting property lookup across API model variants
-  const sortedItems = useMemo(() => {
-    const list = [...curItems];
-    if (sort === "popular") {
-      return list.sort((a, b) => {
-        const likesA = (a as unknown as { likes_count?: number; like_count?: number; likes?: number }).likes_count ?? (a as unknown as { like_count?: number }).like_count ?? 0;
-        const likesB = (b as unknown as { likes_count?: number; like_count?: number; likes?: number }).likes_count ?? (b as unknown as { like_count?: number }).like_count ?? 0;
-        return likesB - likesA;
-      });
-    }
-    if (sort === "oldest") {
-      return list.reverse();
-    }
-    return list;
-  }, [curItems, sort]);
-
   const grid = useMemo<DiscoverItem[]>(
-    () => sortedItems.map((p) => ({ id: String(p.id), kind: p.type === "listing" ? "listing" : "post", post: p, src: null, slot: 0 })),
-    [sortedItems],
+    () => curItems.map((p) => ({ id: String(p.id), kind: p.type === "listing" ? "listing" : "post", post: p, src: null, slot: 0 })),
+    [curItems],
   );
 
   const hasMore = !isInfo && !isPrivateTab && (src.data?.hasMore ?? false);
@@ -356,11 +370,11 @@ export function ProfileView({ username }: { username: string }) {
       <div className="grid min-h-[70dvh] place-items-center px-6 text-center">
         <div>
           <p className="text-[17px] font-bold text-fg">{notFound ? "User not found" : "Couldn't load profile"}</p>
-          <p className="mt-1.5 text-[13px] text-muted">
+          <p className="mt-1.5 text-secondary text-muted">
             {notFound ? "This account doesn't exist or isn't available." : (error?.message ?? "Check your connection and try again.")}
           </p>
           {!notFound && (
-            <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+            <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
               Reload profile
             </button>
           )}
@@ -371,7 +385,6 @@ export function ProfileView({ username }: { username: string }) {
 
   const bio = (profile.bio ?? "").trim();
   const total = profile.counts.posts + profile.counts.listings;
-  const displayName = profile.name ?? profile.username;
   const viewAvatar = () => profile.avatar && setLightbox({ url: profile.avatar, round: true });
   const addStory = () => router.push(STORY_COMPOSER_HREF);
 
@@ -403,9 +416,9 @@ export function ProfileView({ username }: { username: string }) {
 
   return (
     <div className="mx-auto w-full max-w-[935px] pb-8">
-      {/* ───────── MOBILE header: cover as a shadow behind the content, no card ───────── */}
+      {/* ───────── MOBILE header: cover as a shadow behind everything, no card ───────── */}
       <section className="relative isolate overflow-hidden md:hidden">
-        {profile.cover && (
+        {profile.cover ? (
           <>
             <img
               src={profile.cover}
@@ -414,8 +427,10 @@ export function ProfileView({ username }: { username: string }) {
               className="absolute inset-0 -z-20 size-full object-cover saturate-[0.6]"
               style={{ WebkitMaskImage: COVER_MASK, maskImage: COVER_MASK, WebkitMaskComposite: "source-in", maskComposite: "intersect" }}
             />
-            <span className="absolute inset-0 -z-10 bg-gradient-to-b from-black/45 via-black/55 to-black/70" />
+            <span className="absolute inset-0 -z-10 bg-gradient-to-b from-black/45 via-black/55 to-black/72" />
           </>
+        ) : (
+          <span className={`absolute inset-0 -z-10 ${WARM_GLOW}`} />
         )}
 
         <div
@@ -424,136 +439,121 @@ export function ProfileView({ username }: { username: string }) {
         >
           {own ? (
             <GlassBtn label="Edit profile" onClick={() => flash("Edit profile is coming to web")}>
-              <Icon name="edit" className="size-5" />
+              <Icon name="edit" weight="strong" className="size-[22px]" />
             </GlassBtn>
           ) : (
             <GlassBtn label="Back" onClick={() => router.back()}>
-              <Icon name="back" className="size-5" />
+              <Icon name="back" weight="strong" className="size-[22px]" />
             </GlassBtn>
           )}
           <div className="flex items-center gap-2">
             <GlassBtn label="Share profile" onClick={() => void onShare()}>
-              <Icon name="shareArrow" className="size-5" />
+              <Icon name="shareArrow" weight="strong" className="size-[22px]" />
             </GlassBtn>
             {own ? (
               <GlassBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
-                <Icon name="settings" className="size-5" />
+                <Icon name="hamburgerMenu" weight="strong" className="size-[22px]" />
               </GlassBtn>
             ) : (
               <GlassBtn label="More options" onClick={() => setMenuOpen(true)}>
-                <Icon name="menuDots" filled className="size-5" />
+                <Icon name="menuDots" filled className="size-[22px]" />
               </GlassBtn>
             )}
           </div>
         </div>
 
-        <div className="relative flex items-start gap-3 px-4 pb-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 74px)" }}>
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-extrabold leading-tight text-white text-shadow">{displayName}</h1>
-            <p className="mt-0.5 truncate text-[14px] text-white/60 text-shadow">@{profile.username}</p>
-
-            <div className="mt-3.5 flex items-center gap-6">
-              <Link href={`/u/${profile.username}/following`} className="transition hover:opacity-80">
-                <p className="text-[19px] font-extrabold leading-none text-white text-shadow">{formatCount(profile.counts.following)}</p>
-                <p className="mt-1 text-[13px] text-white/60">Following</p>
-              </Link>
-              <Link href={`/u/${profile.username}/followers`} className="transition hover:opacity-80">
-                <p className="text-[19px] font-extrabold leading-none text-white text-shadow">{formatCount(profile.counts.followers)}</p>
-                <p className="mt-1 text-[13px] text-white/60">Followers</p>
-              </Link>
-              <div>
-                <p className="text-[19px] font-extrabold leading-none text-white text-shadow">{formatCount(total)}</p>
-                <p className="mt-1 text-[13px] text-white/60">Posts</p>
+        <div className="relative px-4 pb-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 76px)" }}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1 pt-2">
+              <NameRow profile={profile} className="text-[25px] leading-[1.1] text-white text-shadow" />
+              <p className="mt-1 truncate text-[15px] text-white/55 text-shadow">@{profile.username}</p>
+              <div className="mt-5 flex items-start gap-7">
+                <Stat value={profile.counts.following} label="Following" href={`/u/${profile.username}/following`} />
+                <Stat value={profile.counts.followers} label="Followers" href={`/u/${profile.username}/followers`} />
+                <Stat value={total} label="Posts" />
               </div>
             </div>
-
-            {bio && <p className="mt-3.5 line-clamp-3 whitespace-pre-line text-[14px] leading-snug text-white/90 text-shadow">{bio}</p>}
-
-            {!own && (
-              <button
-                type="button"
-                onClick={() => (following ? onMessage() : void onFollow())}
-                className={`mt-4 h-9 min-w-[132px] rounded-md px-6 text-[14px] font-bold transition active:scale-98 ${
-                  following ? "border border-white/30 bg-black/30 text-white" : "bg-rose-600 text-white hover:bg-rose-500"
-                }`}
-              >
-                {following ? "Message" : "Follow"}
-              </button>
-            )}
+            <AvatarBlock profile={profile} size={88} ring={ring} showAdd={own} onView={viewAvatar} onAddStory={addStory} />
           </div>
 
-          <AvatarBlock profile={profile} size={86} ring={ring} own={own} onView={viewAvatar} onAddStory={addStory} />
+          {/* Bio spans the full width, like TikTok: it is not boxed into the stats column. */}
+          {bio && <p className="mt-4 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.45] text-white/90 text-shadow">{bio}</p>}
+
+          {!own && (
+            <button
+              type="button"
+              onClick={() => (following ? onMessage() : void onFollow())}
+              className={`mt-4 h-11 w-full rounded-xl text-[15px] font-bold transition active:scale-98 ${
+                following ? "border border-white/25 bg-black/30 text-white" : "bg-rose-600 text-white hover:bg-rose-500"
+              }`}
+            >
+              {following ? "Message" : "Follow"}
+            </button>
+          )}
         </div>
       </section>
 
-      {/* ───────── DESKTOP header: TikTok-web layout on plain black ───────── */}
-      <section className="hidden px-6 pb-5 pt-8 md:block">
-        <div className="flex items-start gap-8">
-          <AvatarBlock profile={profile} size={150} ring={ring} own={own} onView={viewAvatar} onAddStory={addStory} />
+      {/* ───────── DESKTOP header: TikTok-web layout on plain black, with a warm glow ───────── */}
+      <section className="relative isolate hidden overflow-hidden px-6 pb-6 pt-9 md:block">
+        <span className={`absolute inset-0 -z-10 ${WARM_GLOW}`} />
+        <div className="flex items-start gap-9">
+          <AvatarBlock profile={profile} size={150} ring={ring} showAdd={false} onView={viewAvatar} onAddStory={addStory} />
 
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 pt-1.5">
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <h1 className="truncate text-[24px] font-extrabold leading-tight text-white">{displayName}</h1>
-              <span className="truncate text-[16px] text-white/55">@{profile.username}</span>
+              <NameRow profile={profile} className="text-[26px] leading-tight text-white" />
+              <span className="truncate text-label text-white/50">@{profile.username}</span>
             </div>
 
-            <div className="mt-3 flex items-center gap-5 text-[15px]">
-              <Link href={`/u/${profile.username}/following`} className="transition hover:opacity-80">
-                <span className="font-extrabold text-white">{formatCount(profile.counts.following)}</span>{" "}
-                <span className="text-white/60">Following</span>
-              </Link>
-              <Link href={`/u/${profile.username}/followers`} className="transition hover:opacity-80">
-                <span className="font-extrabold text-white">{formatCount(profile.counts.followers)}</span>{" "}
-                <span className="text-white/60">Followers</span>
-              </Link>
-              <span>
-                <span className="font-extrabold text-white">{formatCount(total)}</span> <span className="text-white/60">Posts</span>
-              </span>
+            <div className="mt-3 flex items-center gap-6">
+              <Stat inline value={profile.counts.following} label="Following" href={`/u/${profile.username}/following`} />
+              <Stat inline value={profile.counts.followers} label="Followers" href={`/u/${profile.username}/followers`} />
+              <Stat inline value={total} label="Posts" />
             </div>
 
-            <div className="mt-4 flex items-center gap-2.5">
+            <div className="mt-5 flex items-center gap-2.5">
               {own ? (
                 <>
                   <button
                     type="button"
                     onClick={() => flash("Edit profile is coming to web")}
-                    className="h-11 rounded-full bg-white/12 px-5 text-[15px] font-semibold text-white transition hover:bg-white/20 active:scale-98"
+                    className="h-11 rounded-full bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/16 active:scale-98"
                   >
                     Edit profile
                   </button>
                   <RoundBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
-                    <Icon name="settings" className="size-5" />
+                    <Icon name="hamburgerMenu" weight="strong" className="size-[22px]" />
                   </RoundBtn>
                 </>
               ) : (
                 <button
                   type="button"
                   onClick={() => (following ? onMessage() : void onFollow())}
-                  className={`h-11 min-w-[140px] rounded-full px-6 text-[15px] font-bold transition active:scale-98 ${
-                    following ? "bg-white/12 text-white hover:bg-white/20" : "bg-rose-600 text-white hover:bg-rose-500"
+                  className={`h-11 min-w-[148px] rounded-full px-7 text-[15px] font-bold transition active:scale-98 ${
+                    following ? "bg-white/10 text-white hover:bg-white/16" : "bg-rose-600 text-white hover:bg-rose-500"
                   }`}
                 >
                   {following ? "Message" : "Follow"}
                 </button>
               )}
               <RoundBtn label="Share profile" onClick={() => void onShare()}>
-                <Icon name="shareArrow" className="size-5" />
+                <Icon name="shareArrow" weight="strong" className="size-[22px]" />
               </RoundBtn>
               {!own && (
                 <RoundBtn label="More options" onClick={() => setMenuOpen(true)}>
-                  <Icon name="menuDots" filled className="size-5" />
+                  <Icon name="menuDots" filled className="size-[22px]" />
                 </RoundBtn>
               )}
             </div>
 
-            {bio && <p className="mt-4 max-w-[560px] whitespace-pre-line text-[15px] leading-snug text-white/90">{bio}</p>}
+            {bio && <p className="mt-5 max-w-[620px] whitespace-pre-line text-[15px] leading-[1.5] text-white/90">{bio}</p>}
           </div>
         </div>
       </section>
 
-      {/* Tabs: icon-only on mobile, labelled from md up. Sort pills are desktop-only. */}
+      {/* Tabs: icon-only on mobile, labelled from md up. */}
       <div className="flex items-center justify-between border-b border-white/10 md:px-6">
-        <div role="tablist" className="flex w-full items-center md:w-auto md:gap-9">
+        <div role="tablist" className="flex w-full items-center md:w-auto md:gap-10">
           {TABS.map((t) => {
             const active = t.id === tab;
             const ic = TAB_ICON[t.id];
@@ -565,34 +565,20 @@ export function ProfileView({ username }: { username: string }) {
                 aria-selected={active}
                 aria-label={t.label}
                 onClick={() => selectTab(t.id)}
-                className={`relative flex flex-1 items-center justify-center gap-2 pb-3 pt-3 text-[16px] font-bold transition md:flex-none md:pt-2 ${
-                  active ? "text-white" : "text-white/40 hover:text-white/70"
+                className={`relative flex flex-1 items-center justify-center gap-2.5 pb-3.5 pt-3.5 text-label font-bold transition md:flex-none md:pb-3 md:pt-2.5 ${
+                  active ? "text-white" : "text-white/45 hover:text-white/75"
                 }`}
               >
-                <Icon name={ic.name} filled={active} className={`size-[22px] transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
+                <Icon name={ic.name} filled={active} className={`size-6 transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
                 <span className="hidden md:inline">{t.label}</span>
-                {active && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-white md:inset-x-0" />}
+                {active && (
+                  <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-white md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
+                )}
               </button>
             );
           })}
         </div>
 
-        {!isInfo && (
-          <div className="hidden items-center rounded-lg bg-white/8 p-1 md:flex">
-            {(["latest", "popular", "oldest"] as SortOption[]).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setSort(s)}
-                className={`rounded-md px-3 py-1 text-[12.5px] font-semibold capitalize transition ${
-                  sort === s ? "bg-white/20 text-white" : "text-white/40 hover:text-white/70"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       <div className="pt-0.5 md:px-6 md:pt-4">{body}</div>
@@ -628,9 +614,9 @@ function TabMessage({ title, sub, action }: { title: string; sub?: string; actio
     <div className="grid place-items-center px-6 py-20 text-center">
       <div>
         <p className="text-[15px] font-bold text-fg">{title}</p>
-        {sub && <p className="mt-1 text-[13px] text-muted">{sub}</p>}
+        {sub && <p className="mt-1 text-secondary text-muted">{sub}</p>}
         {action && (
-          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
             {action.label}
           </button>
         )}

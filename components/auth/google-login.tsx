@@ -100,7 +100,7 @@ export function GoogleLogin() {
           <br />
           Opportunity 🇳🇬
         </h1>
-        <p className="mt-3.5 text-center text-[11.5px] font-semibold tracking-[0.2em] text-white/50">
+        <p className="mt-3.5 text-center text-supporting font-semibold tracking-[0.2em] text-white/50">
           HUSTLE&nbsp;&nbsp;·&nbsp;&nbsp;FLEX&nbsp;&nbsp;·&nbsp;&nbsp;EARN
         </p>
 
@@ -122,7 +122,7 @@ export function GoogleLogin() {
             Browse as guest
           </Link>
 
-          <p className="mt-3.5 text-center text-[11.5px] leading-normal text-white/45">
+          <p className="mt-3.5 text-center text-supporting leading-normal text-white/45">
             By continuing, you agree to our
             <br />
             <span className="text-white/80 underline decoration-white/35">Terms of Service</span> and{" "}

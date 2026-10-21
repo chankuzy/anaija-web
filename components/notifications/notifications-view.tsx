@@ -88,13 +88,13 @@ function Row({
             ))}
           </div>
         )}
-        <p className={`text-[14.5px] font-bold leading-[1.3] ${unread ? "text-fg" : "text-fg/80"}`}>{item.title}</p>
-        {preview && <p className="mt-1 line-clamp-2 text-[13px] leading-[1.35] text-muted">{preview}</p>}
+        <p className={`text-[15px] font-bold leading-[1.3] ${unread ? "text-fg" : "text-fg/80"}`}>{item.title}</p>
+        {preview && <p className="mt-1 line-clamp-2 text-secondary leading-[1.35] text-muted">{preview}</p>}
         {item.follow_back !== null && actor && (
           <button
             type="button"
             onClick={onFollowBack}
-            className={`pointer-events-auto mt-2 h-[30px] rounded-full px-3 text-[11px] font-bold ${
+            className={`pointer-events-auto mt-2 h-[30px] rounded-full px-3 text-micro font-bold ${
               item.follow_back ? "border border-white/50 text-fg" : "bg-white text-black"
             }`}
           >
@@ -107,7 +107,7 @@ function Row({
         </p>
       </div>
       {item.kind === "message" ? (
-        <span className="relative rounded-full bg-white/8 px-3.5 py-2 text-[12.5px] font-bold text-fg">Message</span>
+        <span className="relative rounded-full bg-white/8 px-3.5 py-2 text-secondary font-bold text-fg">Message</span>
       ) : item.thumb ? (
         <button type="button" onClick={onThumb} aria-label="Open content" className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -266,7 +266,7 @@ export function NotificationsView() {
     body = (
       <div className="py-24 text-center">
         <p className="text-[15px] font-bold text-fg">Couldn&apos;t load activity</p>
-        <button type="button" onClick={list.reload} className="mt-4 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+        <button type="button" onClick={list.reload} className="mt-4 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
           Try again
         </button>
       </div>
@@ -275,7 +275,7 @@ export function NotificationsView() {
     body = (
       <div className="py-24 text-center">
         <p className="text-[15px] font-bold text-fg">No activity yet</p>
-        <p className="mt-1 text-[13px] text-muted">Likes, comments and follows will show here</p>
+        <p className="mt-1 text-secondary text-muted">Likes, comments and follows will show here</p>
       </div>
     );
   } else {
@@ -309,12 +309,12 @@ export function NotificationsView() {
     <div className="mx-auto w-full max-w-[640px] pb-8">
       <header className="sticky top-0 z-20 bg-bg px-4 pb-2" style={{ paddingTop: "calc(10px + env(safe-area-inset-top))" }}>
         <div className="flex items-center gap-2 py-1.5">
-          <Link href="/" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg md:hidden">
+          <Link href="/" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg md:hidden relative hit-area">
             <Icon name="back" className="size-5" />
           </Link>
           <h1 className="flex-1 text-[22px] font-bold tracking-tight text-fg">Activity</h1>
           {unread > 0 && (
-            <button type="button" onClick={() => void markAll()} className="h-9 rounded-full px-3 text-[12.5px] font-semibold text-muted hover:bg-card hover:text-fg">
+            <button type="button" onClick={() => void markAll()} className="h-9 rounded-full px-3 text-secondary font-semibold text-muted hover:bg-card hover:text-fg">
               Mark all read
             </button>
           )}
@@ -325,7 +325,7 @@ export function NotificationsView() {
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
-              className={`h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold ${
+              className={`h-9 shrink-0 rounded-full px-4 text-secondary font-semibold ${
                 f.id === filter ? "bg-white text-black" : "border border-line bg-card text-fg"
               }`}
             >

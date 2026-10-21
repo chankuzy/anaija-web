@@ -85,7 +85,7 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-2 text-[13px] ${
+      className={`rounded-full border px-3.5 py-2 text-secondary ${
         on ? "border-white bg-white font-semibold text-black" : "border-line bg-card text-fg"
       }`}
     >
@@ -95,13 +95,13 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
 }
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2.5 mt-6 text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">{children}</p>;
+  return <p className="mb-2.5 mt-6 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{children}</p>;
 }
 
-export function CreateView() {
+export function CreateView({ initialKind = "post" }: { initialKind?: Kind }) {
   const router = useRouter();
   const { status } = useAuth();
-  const [kind, setKind] = useState<Kind>("post");
+  const [kind, setKind] = useState<Kind>(initialKind);
   const [items, setItems] = useState<Item[]>([]);
   const [caption, setCaption] = useState("");
   const [visibility, setVisibility] = useState<(typeof VISIBILITY)[number][0]>("public");
@@ -305,7 +305,7 @@ export function CreateView() {
               type="button"
               disabled={busy}
               onClick={() => setKind(k.id)}
-              className={`h-[38px] flex-1 rounded-full text-[13.5px] ${
+              className={`h-[38px] flex-1 rounded-full text-body ${
                 k.id === kind ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
               }`}
             >
@@ -354,7 +354,7 @@ export function CreateView() {
                 type="button"
                 disabled={busy || i === 0}
                 onClick={() => makeCover(it.id)}
-                className="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10.5px] font-bold text-white"
+                className="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-micro font-bold text-white"
               >
                 {i === 0 ? "Cover" : i + 1}
               </button>
@@ -367,7 +367,7 @@ export function CreateView() {
               onClick={() => fileRef.current?.click()}
               className="grid h-[124px] w-[92px] shrink-0 place-items-center rounded-xl border border-dashed border-white/25 text-muted"
             >
-              <span className="flex flex-col items-center gap-1 text-[12px] font-semibold">
+              <span className="flex flex-col items-center gap-1 text-supporting font-semibold">
                 <Icon name="plus" className="size-6" />
                 {items.length === 0 ? "Add media" : "Add more"}
               </span>
@@ -424,7 +424,7 @@ export function CreateView() {
                 onChange={(e) => setPrice(e.target.value.replace(/[^\d.]/g, ""))}
               />
             </div>
-            <label className="mt-3 flex items-center justify-between text-[13.5px] text-muted">
+            <label className="mt-3 flex items-center justify-between text-body text-muted">
               Negotiable
               <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} className="size-5 accent-white" />
             </label>

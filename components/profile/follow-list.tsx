@@ -22,12 +22,12 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
       <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">
         <Avatar url={u.avatar} name={u.name ?? u.username} size={46} />
         <span className="min-w-0">
-          <span className="block truncate text-[14.5px] font-bold text-fg">{u.name ?? u.username}</span>
+          <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
           <span className="block truncate text-xs text-muted">@{u.username}</span>
           {mutual ? (
-            <span className="mt-1 inline-block rounded-full border border-white/14 bg-white/8 px-2 py-0.5 text-[10.5px] font-bold text-white/85">Mutual</span>
+            <span className="mt-1 inline-block rounded-full border border-white/14 bg-white/8 px-2 py-0.5 text-micro font-bold text-white/85">Mutual</span>
           ) : (
-            followsMe && <span className="mt-1 block text-[11.5px] font-medium text-muted">Follows you</span>
+            followsMe && <span className="mt-1 block text-supporting font-medium text-muted">Follows you</span>
           )}
         </span>
       </Link>
@@ -35,7 +35,7 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
         <button
           type="button"
           onClick={() => void toggleFollow(u.id, following)}
-          className={`h-[34px] shrink-0 rounded-full px-4 text-[13px] font-bold transition active:scale-[0.96] ${
+          className={`h-[34px] shrink-0 rounded-full px-4 text-secondary font-bold transition active:scale-[0.96] ${
             following ? "border border-white/28 text-fg" : "bg-white text-black"
           }`}
         >
@@ -86,7 +86,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
     <Link
       href={`/u/${username}/${k}`}
       replace
-      className={`grid h-[38px] flex-1 place-items-center rounded-full text-[13.5px] ${
+      className={`grid h-[38px] flex-1 place-items-center rounded-full text-body ${
         k === kind ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
       }`}
     >

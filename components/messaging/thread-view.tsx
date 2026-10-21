@@ -33,7 +33,7 @@ function dayLabel(iso: string) {
 function SharedCard({ p }: { p: SharedPost }) {
   const href = p.type === "listing" ? `/listing/${p.id}` : `/p/${p.id}`;
   if (p.unavailable) {
-    return <div className="mb-1 w-52 rounded-[18px] border border-line bg-card px-3 py-6 text-center text-[12.5px] text-muted">This post is unavailable</div>;
+    return <div className="mb-1 w-52 rounded-[18px] border border-line bg-card px-3 py-6 text-center text-secondary text-muted">This post is unavailable</div>;
   }
   return (
     <Link href={href} className="relative mb-1 block h-64 w-52 overflow-hidden rounded-[18px] border border-line bg-card">
@@ -47,10 +47,10 @@ function SharedCard({ p }: { p: SharedPost }) {
       )}
       {p.is_video && <span className="absolute inset-0 grid place-items-center"><Icon name="play" filled className="size-10 text-white icon-shadow" /></span>}
       <span className="absolute inset-x-2.5 bottom-2.5 text-white">
-        {p.type === "listing" && p.caption && <span className="text-shadow mb-1.5 block truncate text-[13px] font-bold">{p.caption}</span>}
+        {p.type === "listing" && p.caption && <span className="text-shadow mb-1.5 block truncate text-secondary font-bold">{p.caption}</span>}
         <span className="flex items-center gap-1.5">
           <Avatar url={p.author?.avatar} name={p.author?.name} size={22} />
-          <span className="text-shadow truncate text-[12.5px] font-bold">{p.author?.username}</span>
+          <span className="text-shadow truncate text-secondary font-bold">{p.author?.username}</span>
         </span>
       </span>
     </Link>
@@ -84,31 +84,31 @@ function Bubble({
       {!mine && (showAvatar ? <Link href={m.sender?.username ? `/u/${m.sender.username}` : "#"} className="self-end"><Avatar url={m.sender?.avatar} name={m.sender?.name} size={28} /></Link> : <span className="w-7 shrink-0" />)}
       <div className={`relative flex max-w-[78%] flex-col md:max-w-[65%] ${mine ? "items-end" : "items-start"}`}>
         {m.reply_to && (
-          <span className="mb-1 max-w-full truncate rounded-[16px] border border-white/16 bg-white/4 px-3 py-1.5 text-[12.5px] text-fg/75">↩ {m.reply_to.body ?? "Message"}</span>
+          <span className="mb-1 max-w-full truncate rounded-[16px] border border-white/16 bg-white/4 px-3 py-1.5 text-secondary text-fg/75">↩ {m.reply_to.body ?? "Message"}</span>
         )}
         <div className={`flex items-center gap-1 ${mine ? "flex-row-reverse" : ""}`}>
           <div className={`min-w-0 ${pending ? "opacity-80" : ""}`}>
             {m.shared_post && !m.is_deleted && <SharedCard p={m.shared_post} />}
             {media && m.type === "image" && (
-              <button type="button" onClick={() => onImage(m.media_url!)} className="mb-1 block overflow-hidden rounded-[20px] bg-card">
+              <button type="button" onClick={() => onImage(m.media_url!)} className="mb-1 block overflow-hidden rounded-card bg-card">
                 <img src={m.media_url!} alt="" loading="lazy" className="max-h-80 w-full max-w-[260px] object-cover" />
               </button>
             )}
-            {media && m.type === "video" && <video src={m.media_url!} controls playsInline preload="metadata" className="mb-1 max-h-80 w-full max-w-[260px] rounded-[20px] bg-black" />}
+            {media && m.type === "video" && <video src={m.media_url!} controls playsInline preload="metadata" className="mb-1 max-h-80 w-full max-w-[260px] rounded-card bg-black" />}
             {media && m.type === "file" && (
-              <a href={m.media_url!} target="_blank" rel="noopener noreferrer" className={`mb-1 flex max-w-[260px] items-center gap-3 rounded-[22px] px-3 py-2.5 text-sm font-semibold ${mine ? "bg-white text-black" : "bg-card-elevated text-fg"}`}>
+              <a href={m.media_url!} target="_blank" rel="noopener noreferrer" className={`mb-1 flex max-w-[260px] items-center gap-3 rounded-image px-3 py-2.5 text-sm font-semibold ${mine ? "bg-white text-black" : "bg-card-elevated text-fg"}`}>
                 <Icon name="link" className="size-5 shrink-0" />
                 <span className="truncate">{(m.body ?? "File").trim()}</span>
               </a>
             )}
             {(text || (!m.shared_post && !media)) && (
-              <div className={`whitespace-pre-wrap break-words rounded-[22px] px-4 py-3 text-[14.5px] font-medium leading-[1.42] ${mine ? "bg-white text-black" : "bg-card-elevated text-fg"} ${m.is_deleted ? "italic opacity-60" : ""}`}>
+              <div className={`whitespace-pre-wrap break-words rounded-image px-4 py-3 text-[15px] font-medium leading-[1.42] ${mine ? "bg-white text-black" : "bg-card-elevated text-fg"} ${m.is_deleted ? "italic opacity-60" : ""}`}>
                 {text ?? ""}
               </div>
             )}
           </div>
           {!pending && !m.is_deleted && m.id > 0 && (
-            <button type="button" aria-label="Message options" onClick={onMenu} className="grid size-7 shrink-0 place-items-center rounded-full text-muted opacity-100 hover:bg-white/8 md:opacity-0 md:group-hover:opacity-100">
+            <button type="button" aria-label="Message options" onClick={onMenu} className="grid size-7 shrink-0 place-items-center rounded-full text-muted opacity-100 hover:bg-white/8 md:opacity-0 md:group-hover:opacity-100 relative hit-area">
               <Icon name="dots" filled className="size-4" />
             </button>
           )}
@@ -118,33 +118,33 @@ function Bubble({
             {reacts.map(([e, u]) => {
               const own = !!user && u.includes(user.id);
               return (
-                <button key={e} type="button" onClick={() => onReact(e)} className={`rounded-xl border px-2 py-0.5 text-[13px] ${own ? "border-white/55 bg-white/16" : "border-line bg-white/7"}`}>
-                  {e}{u.length > 1 && <span className="ml-1 text-[11.5px] font-bold text-fg">{u.length}</span>}
+                <button key={e} type="button" onClick={() => onReact(e)} className={`rounded-xl border px-2 py-0.5 text-secondary ${own ? "border-white/55 bg-white/16" : "border-line bg-white/7"}`}>
+                  {e}{u.length > 1 && <span className="ml-1 text-supporting font-bold text-fg">{u.length}</span>}
                 </button>
               );
             })}
           </div>
         )}
         {(m.state === "failed" || m.state === "sending" || (isLast && mine)) && (
-          <span className="mt-1 px-1 text-[10.5px] text-muted">
+          <span className="mt-1 px-1 text-micro text-muted">
             {m.state === "failed" ? <button type="button" onClick={onRetry} className="font-semibold text-danger">Failed · tap to retry</button> : m.state === "sending" ? "Sending…" : "Sent"}
           </span>
         )}
         {menuOpen && (
           <>
             <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={onMenu} />
-            <div className={`glass absolute top-full z-50 mt-1 w-56 rounded-[20px] p-1.5 ${mine ? "right-0" : "left-0"}`}>
+            <div className={`glass absolute top-full z-50 mt-1 w-56 rounded-card p-1.5 ${mine ? "right-0" : "left-0"}`}>
               <div className="flex justify-between px-1.5 pb-1.5 pt-1">
                 {EMOJI.map((e) => (
                   <button key={e} type="button" onClick={() => onReact(e)} className="grid size-9 place-items-center rounded-full text-xl hover:bg-white/10">{e}</button>
                 ))}
               </div>
-              <button type="button" onClick={onReply} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-[14px] font-medium text-fg hover:bg-white/8">Reply</button>
+              <button type="button" onClick={onReply} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-body font-medium text-fg hover:bg-white/8">Reply</button>
               {m.body && m.type !== "file" && (
-                <button type="button" onClick={() => { void navigator.clipboard.writeText(m.body ?? "").catch(() => {}); onMenu(); }} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-[14px] font-medium text-fg hover:bg-white/8">Copy</button>
+                <button type="button" onClick={() => { void navigator.clipboard.writeText(m.body ?? "").catch(() => {}); onMenu(); }} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-body font-medium text-fg hover:bg-white/8">Copy</button>
               )}
               {canDelete && (
-                <button type="button" onClick={onDelete} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-[14px] font-medium text-danger hover:bg-white/8">Delete for everyone</button>
+                <button type="button" onClick={onDelete} className="flex w-full items-center rounded-2xl px-3.5 py-2.5 text-left text-body font-medium text-danger hover:bg-white/8">Delete for everyone</button>
               )}
             </div>
           </>
@@ -322,21 +322,21 @@ export function ThreadView({ id }: { id: string }) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col">
       <header className="flex items-center gap-3 border-b border-line px-3 py-2.5" style={{ paddingTop: "calc(10px + env(safe-area-inset-top))" }}>
-        <Link href="/messages" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg md:hidden"><Icon name="back" className="size-5" /></Link>
+        <Link href="/messages" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg md:hidden relative hit-area"><Icon name="back" className="size-5" /></Link>
         {other?.username ? <Link href={`/u/${other.username}`}><Avatar url={conv ? convAvatar(conv) : null} name={name} size={36} /></Link> : <Avatar url={conv ? convAvatar(conv) : null} name={name} size={36} />}
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[15.5px] font-bold text-fg">{name}</p>
-          {status && <p className="truncate text-[11.5px] text-muted">{status}</p>}
+          <p className="truncate text-label font-bold text-fg">{name}</p>
+          {status && <p className="truncate text-supporting text-muted">{status}</p>}
         </div>
         <div className="relative">
-          <button type="button" aria-label="Conversation options" onClick={() => setHeadMenu((o) => !o)} className="grid size-10 place-items-center rounded-full text-fg hover:bg-card"><Icon name="dots" filled className="size-5" /></button>
+          <button type="button" aria-label="Conversation options" onClick={() => setHeadMenu((o) => !o)} className="grid size-10 place-items-center rounded-full text-fg hover:bg-card relative hit-area"><Icon name="dots" filled className="size-5" /></button>
           {headMenu && (
             <>
               <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setHeadMenu(false)} />
-              <div className="glass absolute right-0 top-full z-50 mt-1 w-56 rounded-[20px] p-1.5">
-                {other?.username && <Link href={`/u/${other.username}`} className="flex w-full rounded-2xl px-3.5 py-2.5 text-[14px] font-medium text-fg hover:bg-white/8">View profile</Link>}
-                <button type="button" onClick={() => void toggleMute()} className="flex w-full rounded-2xl px-3.5 py-2.5 text-left text-[14px] font-medium text-fg hover:bg-white/8">{conv?.is_muted ? "Unmute notifications" : "Mute notifications"}</button>
-                <button type="button" onClick={() => void clearChat()} className="flex w-full rounded-2xl px-3.5 py-2.5 text-left text-[14px] font-medium text-danger hover:bg-white/8">Clear chat</button>
+              <div className="glass absolute right-0 top-full z-50 mt-1 w-56 rounded-card p-1.5">
+                {other?.username && <Link href={`/u/${other.username}`} className="flex w-full rounded-2xl px-3.5 py-2.5 text-body font-medium text-fg hover:bg-white/8">View profile</Link>}
+                <button type="button" onClick={() => void toggleMute()} className="flex w-full rounded-2xl px-3.5 py-2.5 text-left text-body font-medium text-fg hover:bg-white/8">{conv?.is_muted ? "Unmute notifications" : "Mute notifications"}</button>
+                <button type="button" onClick={() => void clearChat()} className="flex w-full rounded-2xl px-3.5 py-2.5 text-left text-body font-medium text-danger hover:bg-white/8">Clear chat</button>
               </div>
             </>
           )}
@@ -349,26 +349,26 @@ export function ThreadView({ id }: { id: string }) {
         ) : data?.error && messages.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-sm text-muted">{data.error}</p>
-            <button type="button" onClick={reload} className="mt-4 h-10 rounded-full bg-white px-5 text-[13px] font-bold text-black">Try again</button>
+            <button type="button" onClick={reload} className="mt-4 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">Try again</button>
           </div>
         ) : (
           <>
             {data?.hasMore && (
               <div className="grid place-items-center pb-3">
-                <button type="button" disabled={data.loadingMore} onClick={() => { prevHeight.current = listRef.current?.scrollHeight ?? null; loadOlder(); }} className="text-[13px] font-semibold text-muted disabled:opacity-60">
+                <button type="button" disabled={data.loadingMore} onClick={() => { prevHeight.current = listRef.current?.scrollHeight ?? null; loadOlder(); }} className="text-secondary font-semibold text-muted disabled:opacity-60">
                   {data.loadingMore ? "Loading…" : "Load earlier messages"}
                 </button>
               </div>
             )}
             {conv?.request_status === "pending" && (
-              <div className="mx-auto mb-3 max-w-md rounded-[20px] border border-line bg-surface p-4">
+              <div className="mx-auto mb-3 max-w-md rounded-card border border-line bg-surface p-4">
                 <p className="text-sm font-bold text-fg">This is a message request.</p>
-                <p className="mt-1 text-[12.5px] text-muted">You can accept the conversation or decline it.</p>
+                <p className="mt-1 text-secondary text-muted">You can accept the conversation or decline it.</p>
                 <div className="mt-3 flex gap-2">
                   <button type="button" disabled={responding} onClick={() => void respond("accept")} className="h-10 flex-1 rounded-[14px] bg-accent text-sm font-bold text-black disabled:opacity-60">Accept</button>
                   <button type="button" disabled={responding} onClick={() => void respond("decline")} className="h-10 flex-1 rounded-[14px] border border-line text-sm font-semibold text-fg disabled:opacity-60">Decline</button>
                 </div>
-                <button type="button" disabled={responding} onClick={() => void respond("block")} className="mt-2 w-full text-[12.5px] font-semibold text-danger">Block</button>
+                <button type="button" disabled={responding} onClick={() => void respond("block")} className="mt-2 w-full text-secondary font-semibold text-danger">Block</button>
               </div>
             )}
             {waiting && <p className="mx-auto mb-3 max-w-md rounded-2xl bg-surface px-4 py-3 text-xs text-muted">Message request sent. They need to accept before you can chat freely.</p>}
@@ -382,7 +382,7 @@ export function ThreadView({ id }: { id: string }) {
               return (
                 <div key={key}>
                   {(!older || !sameDay(older.created_at, m.created_at)) && (
-                    <div className="my-3.5 grid place-items-center"><span className="rounded-full bg-card px-3 py-1 text-[11.5px] font-semibold text-muted">{dayLabel(m.created_at)}</span></div>
+                    <div className="my-3.5 grid place-items-center"><span className="rounded-full bg-card px-3 py-1 text-supporting font-semibold text-muted">{dayLabel(m.created_at)}</span></div>
                   )}
                   <Bubble
                     m={m} mine={mine} showAvatar={!mine && lastInBlock} lastInBlock={lastInBlock} isLast={i === messages.length - 1}
@@ -404,10 +404,10 @@ export function ThreadView({ id }: { id: string }) {
         {replyTo && (
           <div className="mb-2 flex items-center gap-3 rounded-[18px] border border-white/14 bg-white/6 px-3.5 py-2">
             <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13.5px] font-bold text-fg">Replying to {replyTo.sender?.id === user?.id ? "yourself" : (replyTo.sender?.name ?? "them")}</span>
-              <span className="block truncate text-[12.5px] text-muted">{previewOf(replyTo)}</span>
+              <span className="block truncate text-body font-bold text-fg">Replying to {replyTo.sender?.id === user?.id ? "yourself" : (replyTo.sender?.name ?? "them")}</span>
+              <span className="block truncate text-secondary text-muted">{previewOf(replyTo)}</span>
             </span>
-            <button type="button" aria-label="Cancel reply" onClick={() => setReplyTo(null)} className="grid size-8 place-items-center text-muted"><Icon name="close" className="size-4" /></button>
+            <button type="button" aria-label="Cancel reply" onClick={() => setReplyTo(null)} className="grid size-8 place-items-center text-muted relative hit-area"><Icon name="close" className="size-4" /></button>
           </div>
         )}
         <div className="flex items-end gap-2 rounded-[26px] border border-white/14 bg-white/6 py-1.5 pl-4 pr-1.5">
@@ -417,7 +417,7 @@ export function ThreadView({ id }: { id: string }) {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void submit(); } }}
             className="max-h-[140px] min-h-[36px] flex-1 resize-none bg-transparent py-2 text-[15px] leading-[1.35] text-fg outline-none placeholder:text-muted"
           />
-          <button type="button" aria-label="Send" disabled={!text.trim()} onClick={() => void submit()} className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-black transition disabled:bg-white/12 disabled:text-white/30">
+          <button type="button" aria-label="Send" disabled={!text.trim()} onClick={() => void submit()} className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-black transition disabled:bg-white/12 disabled:text-white/30 relative hit-area">
             <Icon name="send" filled className="size-4" />
           </button>
         </div>

@@ -90,7 +90,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               </p>
               <button
                 onClick={() => void signOut()}
-                className="h-10 rounded-full text-[11px] font-semibold text-muted hover:bg-card hover:text-fg lg:text-sm"
+                className="h-10 rounded-full text-micro font-semibold text-muted hover:bg-card hover:text-fg lg:text-sm"
               >
                 Sign out
               </button>
@@ -138,7 +138,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
             <Link
               key={n.href}
               href={hrefFor(n)}
-              className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-[10.5px] ${
+              className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-micro ${
                 isActive(n.href) ? "font-bold text-white" : "font-medium text-white/60"
               }`}
             >

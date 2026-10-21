@@ -61,7 +61,7 @@ function Price({ d, size, prefix }: { d: NonNullable<ListingFull["listing"]>; si
 
 function Badge({ children, color = "#7a7a85" }: { children: React.ReactNode; color?: string }) {
   return (
-    <span className="rounded-lg border px-2.5 py-1 text-[11.5px] font-semibold" style={{ color, borderColor: `${color}55`, backgroundColor: `${color}1f` }}>
+    <span className="rounded-lg border px-2.5 py-1 text-supporting font-semibold" style={{ color, borderColor: `${color}55`, backgroundColor: `${color}1f` }}>
       {children}
     </span>
   );
@@ -69,7 +69,7 @@ function Badge({ children, color = "#7a7a85" }: { children: React.ReactNode; col
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-2.5 text-[13px]">
+    <div className="flex items-center justify-between gap-4 py-2.5 text-secondary">
       <span className="text-muted">{label}</span>
       <span className="text-right text-fg">{value}</span>
     </div>
@@ -124,7 +124,7 @@ function StatusControl({ current, busy, onChange }: { current: ListingStatus; bu
             type="button"
             disabled={busy}
             onClick={() => onChange(id)}
-            className="h-10 flex-1 rounded-[11px] text-[12.5px] font-semibold disabled:opacity-60"
+            className="h-10 flex-1 rounded-[11px] text-secondary font-semibold disabled:opacity-60"
             style={id === current ? { color, backgroundColor: `${color}29`, fontWeight: 700 } : { color: "#7a7a85" }}
           >
             {label}
@@ -151,7 +151,7 @@ function Inquiries({ id }: { id: number }) {
   return (
     <div>
       <h2 className="mb-1 flex items-center text-[15px] font-bold text-fg">
-        Inquiries <span className="ml-auto text-[13px] font-semibold text-muted">{cur?.items?.length ?? ""}</span>
+        Inquiries <span className="ml-auto text-secondary font-semibold text-muted">{cur?.items?.length ?? ""}</span>
       </h2>
       {!cur ? (
         <p className="py-6 text-center text-sm text-muted">Loading…</p>
@@ -168,9 +168,9 @@ function Inquiries({ id }: { id: number }) {
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 text-sm font-bold text-fg">
                 <span className="truncate">{q.buyer?.username ?? q.buyer?.name}</span>
-                <span className="text-[10.5px] font-bold uppercase tracking-wide text-muted">{q.status}</span>
+                <span className="text-micro font-bold uppercase tracking-wide text-muted">{q.status}</span>
               </p>
-              {q.message?.trim() && <p className="mt-0.5 line-clamp-2 text-[13px] text-muted">{q.message}</p>}
+              {q.message?.trim() && <p className="mt-0.5 line-clamp-2 text-secondary text-muted">{q.message}</p>}
             </div>
             <span className="text-xs text-muted">{timeAgo(/(Z|[+-]\d\d(:?\d\d)?)$/i.test(q.created_at) ? q.created_at : `${q.created_at}Z`)}</span>
             {q.conversation_id && (
@@ -334,7 +334,7 @@ export function ListingView({ id }: { id: string }) {
         <Gallery urls={images} onOpen={setLightbox} />
       </div>
 
-      <div className="-mt-5 rounded-t-[22px] bg-bg px-5 pt-5 md:mt-0 md:rounded-none">
+      <div className="-mt-5 rounded-t-image bg-bg px-5 pt-5 md:mt-0 md:rounded-none">
         {/* Header, adapted by listing type (same split as _ListingHeader) */}
         {type === "business" ? (
           <>
@@ -364,7 +364,7 @@ export function ListingView({ id }: { id: string }) {
           </>
         ) : type === "wanted" ? (
           <>
-            <span className="inline-block rounded-lg border border-warm/35 bg-warm/14 px-2.5 py-1 text-[11.5px] font-bold tracking-wide text-warm">LOOKING FOR</span>
+            <span className="inline-block rounded-lg border border-warm/35 bg-warm/14 px-2.5 py-1 text-supporting font-bold tracking-wide text-warm">LOOKING FOR</span>
             <p className="mt-3.5 text-lg leading-[1.55] text-fg">{caption}</p>
             {d && <div className="mt-3.5"><Price d={d} size={22} prefix="Budget: " /></div>}
           </>
@@ -382,11 +382,11 @@ export function ListingView({ id }: { id: string }) {
 
         <hr className="my-6 border-line/60" />
 
-        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-[20px] border border-line bg-card p-4">
+        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-line bg-card p-4">
           <Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={46} />
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14.5px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
-            <span className="block truncate text-[12.5px] text-muted">@{l.author?.username} · {sellerLabel}</span>
+            <span className="block truncate text-[15px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
+            <span className="block truncate text-secondary text-muted">@{l.author?.username} · {sellerLabel}</span>
           </span>
           <span className="text-xs text-muted">{timeAgo(l.created_at)}</span>
           <Icon name="chevronRight" className="size-4 text-muted" />
@@ -430,7 +430,7 @@ export function ListingView({ id }: { id: string }) {
             </div>
             {hours && (type === "business" || type === "service") && (
               <div className="mt-1">
-                <button type="button" onClick={() => setHoursOpen((o) => !o)} className="flex w-full items-center justify-between py-2.5 text-[13px]">
+                <button type="button" onClick={() => setHoursOpen((o) => !o)} className="flex w-full items-center justify-between py-2.5 text-secondary">
                   <span className="text-muted">Hours</span>
                   <span className={`flex items-center gap-1.5 font-semibold ${open ? "text-success" : "text-danger"}`}>
                     {open ? "Open now" : "Closed now"}
@@ -491,7 +491,7 @@ function Msg({ back, title, sub }: { back: React.ReactNode; title: string; sub: 
       {back}
       <div>
         <p className="text-[17px] font-bold text-fg">{title}</p>
-        <p className="mt-1.5 text-[13px] text-muted">{sub}</p>
+        <p className="mt-1.5 text-secondary text-muted">{sub}</p>
       </div>
     </div>
   );

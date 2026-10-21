@@ -34,7 +34,7 @@ export function FeedSkeleton() {
 export function FeedError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex h-dvh flex-col items-center justify-center gap-4 px-8 text-center">
-      <p className="text-[13px] text-muted">{message}</p>
+      <p className="text-secondary text-muted">{message}</p>
       <button type="button" onClick={onRetry} className="text-sm font-bold text-fg">
         Try again
       </button>
@@ -68,8 +68,8 @@ export function FeedEmpty({ scope }: { scope: FeedScope }) {
   return (
     <div className="flex h-dvh flex-col items-center justify-center gap-2 px-9 text-center">
       <h2 className="text-lg font-bold text-white">{e.title}</h2>
-      <p className="max-w-xs text-[13px] leading-snug text-white/60">{e.sub}</p>
-      <Link href={e.href} className={buttonClass("outline", "mt-5 h-11 text-[13px]")}>
+      <p className="max-w-xs text-secondary leading-snug text-white/60">{e.sub}</p>
+      <Link href={e.href} className={buttonClass("outline", "mt-5 h-11 text-secondary")}>
         {e.cta}
       </Link>
     </div>
@@ -106,7 +106,7 @@ export function CaughtUp({
     <section className="relative flex h-dvh snap-start items-center justify-center">
       <div className={`feed-card relative flex flex-col items-center justify-center px-8 text-center ${pageBg}`}>
         <h2 className="text-[22px] font-extrabold text-white">You&apos;re all caught up</h2>
-        <p className="mb-6 mt-2 max-w-xs text-[13.5px] leading-snug text-white/60">
+        <p className="mb-6 mt-2 max-w-xs text-body leading-snug text-white/60">
           {isGuest
             ? "That's everything public on Anaija right now. Sign up to follow people and get a feed built around you."
             : "You've seen everything for now. New posts land all the time."}

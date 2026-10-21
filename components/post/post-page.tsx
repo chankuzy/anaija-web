@@ -83,7 +83,7 @@ function Msg({ title, sub }: { title: string; sub?: string }) {
     <div className="grid h-dvh place-items-center px-6 text-center">
       <div>
         <p className="text-[17px] font-bold text-white">{title}</p>
-        {sub && <p className="mt-1.5 text-[13px] text-white/60">{sub}</p>}
+        {sub && <p className="mt-1.5 text-secondary text-white/60">{sub}</p>}
       </div>
     </div>
   );

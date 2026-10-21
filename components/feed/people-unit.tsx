@@ -48,13 +48,13 @@ function Row({
         <Avatar url={u.avatar} name={display} size={56} />
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-bold text-white">{display}</span>
-          <span className="block truncate text-[12.5px] text-white/65">@{u.username}</span>
-          {u.label && <span className="mt-0.5 block truncate text-[11.5px] font-semibold text-white/50">{u.label}</span>}
+          <span className="block truncate text-secondary text-white/65">@{u.username}</span>
+          {u.label && <span className="mt-0.5 block truncate text-supporting font-semibold text-white/50">{u.label}</span>}
           {u.tagline?.trim() && <span className="mt-0.5 line-clamp-2 block text-xs text-white/80">{u.tagline.trim()}</span>}
         </span>
       </Link>
       <FollowPill following={following} onClick={() => void follow()} />
-      <button type="button" aria-label="Dismiss" onClick={() => onDismiss(u.id)} className="grid size-9 place-items-center text-white/55">
+      <button type="button" aria-label="Dismiss" onClick={() => onDismiss(u.id)} className="grid size-9 place-items-center text-white/55 relative hit-area">
         <Icon name="close" className="size-[18px]" />
       </button>
     </div>
@@ -100,7 +100,7 @@ export function PeopleUnit({
       <div className="feed-card no-scrollbar relative flex flex-col overflow-y-auto bg-[linear-gradient(to_bottom,#111,#000)] px-5 pb-8 pt-24">
         <div className="my-auto">
           <h2 className="text-center text-[22px] font-extrabold text-white">{title}</h2>
-          <p className="mb-6 mt-1.5 text-center text-[12.5px] text-white/60">
+          <p className="mb-6 mt-1.5 text-center text-secondary text-white/60">
             Tap a profile to look around, or keep scrolling
           </p>
           <div className="flex flex-col gap-3.5">

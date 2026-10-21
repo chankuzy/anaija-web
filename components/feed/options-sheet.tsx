@@ -21,7 +21,7 @@ function Tile({
   destructive?: boolean;
   disabled?: boolean;
 }) {
-  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-5 py-3.5 text-left text-[14.5px] font-medium hover:bg-white/8 disabled:opacity-50 ${
+  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-5 py-3.5 text-left text-[15px] font-medium hover:bg-white/8 disabled:opacity-50 ${
     destructive ? "text-danger" : "text-fg"
   }`;
   const inner = (
@@ -55,7 +55,7 @@ function Insights({ post }: { post: Post }) {
       {stats.map(([label, n]) => (
         <div key={label} className="flex flex-col items-center">
           <span className="text-sm font-bold text-fg">{formatCount(n)}</span>
-          <span className="text-[10.5px] text-muted">{label}</span>
+          <span className="text-micro text-muted">{label}</span>
         </div>
       ))}
     </div>
@@ -105,7 +105,7 @@ export function OptionsSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/50" />
       <div
-        className="glass relative m-2.5 w-full max-w-sm rounded-[24px] p-1.5"
+        className="glass relative m-2.5 w-full max-w-sm rounded-floating p-1.5"
         style={{ marginBottom: "calc(10px + env(safe-area-inset-bottom))" }}
       >
         {confirming ? (
