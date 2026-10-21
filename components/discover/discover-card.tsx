@@ -13,7 +13,7 @@ export type VideoBadge = "play" | "clapper";
 
 function Badge({ children, className }: { children: React.ReactNode; className: string }) {
   return (
-    <span className={`absolute grid size-5 place-items-center rounded-full text-white ${className}`}>{children}</span>
+    <span className={`icon-shadow absolute grid place-items-center text-white ${className}`}>{children}</span>
   );
 }
 
@@ -83,18 +83,18 @@ export function DiscoverCard({
       {isListing && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-b from-transparent to-black/55" />}
 
       {isListing && (
-        <Badge className="left-1.5 top-1.5 size-[22px] bg-white text-black shadow-[0_0_6px_rgba(0,0,0,0.3)]">
-          <BagGlyph className="size-[13px]" />
+        <Badge className="left-1.5 top-1.5">
+          <BagGlyph className="size-[22px]" />
         </Badge>
       )}
       {cover.isVideo ? (
-        <Badge className="right-1.5 top-1.5 bg-black/55">
-          {videoBadge === "clapper" ? <ClapperboardGlyph className="size-[13px]" /> : <PlayGlyph className="size-[13px]" />}
+        <Badge className="right-1.5 top-1.5">
+          {videoBadge === "clapper" ? <ClapperboardGlyph className="size-[22px]" /> : <PlayGlyph className="size-[22px]" />}
         </Badge>
       ) : (
         multi && (
-          <Badge className="right-1.5 top-1.5 bg-black/55">
-            <LayersGlyph className="size-[13px]" />
+          <Badge className="right-1.5 top-1.5">
+            <LayersGlyph className="size-[22px]" />
           </Badge>
         )
       )}
