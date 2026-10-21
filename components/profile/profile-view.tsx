@@ -553,7 +553,7 @@ export function ProfileView({ username }: { username: string }) {
 
       {/* Tabs: icon-only on mobile, labelled from md up. */}
       <div className="flex items-center justify-between border-b border-white/10 md:px-6">
-        <div role="tablist" className="flex w-full items-center md:w-auto md:gap-10">
+        <div role="tablist" className="no-scrollbar flex w-full min-w-0 items-center overflow-x-auto md:w-auto md:gap-10 md:overflow-visible">
           {TABS.map((t) => {
             const active = t.id === tab;
             const ic = TAB_ICON[t.id];
@@ -565,11 +565,11 @@ export function ProfileView({ username }: { username: string }) {
                 aria-selected={active}
                 aria-label={t.label}
                 onClick={() => selectTab(t.id)}
-                className={`relative flex flex-1 items-center justify-center gap-2.5 pb-3.5 pt-3.5 text-label font-bold transition md:flex-none md:pb-3 md:pt-2.5 ${
+                className={`relative flex shrink-0 items-center justify-center gap-2.5 px-5 pb-3.5 pt-3.5 text-label font-bold transition md:px-0 md:pb-3 md:pt-2.5 ${
                   active ? "text-white" : "text-white/45 hover:text-white/75"
                 }`}
               >
-                <Icon name={ic.name} filled={active} className={`size-6 transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
+                <Icon name={ic.name} filled={active} className={`size-7 transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
                 <span className="hidden md:inline">{t.label}</span>
                 {active && (
                   <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-white md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
