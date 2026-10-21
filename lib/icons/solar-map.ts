@@ -108,6 +108,8 @@ import { Home2Icon as b_home_2 } from "@solar-icons/react/bold/home-2";
 import { Home2Icon as o_home_2 } from "@solar-icons/react/outline/home-2";
 import { HomeSmileIcon as b_home_smile } from "@solar-icons/react/bold/home-smile";
 import { HomeSmileIcon as o_home_smile } from "@solar-icons/react/outline/home-smile";
+import { InfoCircleIcon as b_info_circle } from "@solar-icons/react/bold/info-circle";
+import { InfoCircleIcon as o_info_circle } from "@solar-icons/react/outline/info-circle";
 import { LetterIcon as b_letter } from "@solar-icons/react/bold/letter";
 import { LetterIcon as o_letter } from "@solar-icons/react/outline/letter";
 import { LinkIcon as b_link } from "@solar-icons/react/bold/link";
@@ -262,6 +264,7 @@ export const SOLAR = {
   "home": p(b_home_smile, o_home_smile),
   "home2": p(b_home_2, o_home_2),
   "homeSmile": p(b_home_smile, o_home_smile),
+  "infoCircle": p(b_info_circle, o_info_circle),
   "letter": p(b_letter, o_letter),
   "link": p(b_link, o_link),
   "linkRound": p(b_link_round, o_link_round),
