@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type ContentSettings } from "@/lib/api/settings";
+import { usePlayback } from "@/components/feed/playback-context";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Footnote, Group, SectionLabel, SettingsPage, Tile, Toggle, useRequireAuth, useToast } from "./settings-kit";
 
@@ -11,6 +12,7 @@ export function SettingsView() {
   const router = useRouter();
   const ready = useRequireAuth();
   const { signOut } = useAuth();
+  const { setPrefs } = usePlayback();
   const { toast, show } = useToast();
   const [s, setS] = useState<ContentSettings | null>(null);
 
@@ -35,6 +37,8 @@ export function SettingsView() {
     setS({ ...s, ...patch });
     try {
       await settingsApi.setContent(patch);
+      if (patch.feed_start_muted !== undefined) setPrefs({ startMuted: patch.feed_start_muted });
+      if (patch.feed_autoplay_video !== undefined) setPrefs({ autoplay: patch.feed_autoplay_video });
     } catch (e) {
       setS(prev);
       show(e instanceof ApiError ? e.message : "Couldn't save");

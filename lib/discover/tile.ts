@@ -12,6 +12,12 @@ export function coverOf(post: Post) {
   return { url: url || null, isVideo, aspect: m?.aspect_ratio ?? null, color };
 }
 
+// Playable source for a video tile (null for image tiles).
+export function videoSrcOf(post: Post): string | null {
+  const v = (post.media ?? []).find((m) => isVideoType(m.type));
+  return v?.url ?? post.video_url ?? null;
+}
+
 export const imageCount = (post: Post) => (post.media ?? []).filter((m) => !isVideoType(m.type)).length;
 
 // Derived from DiscoverItem.tileHeightFactor in Flutter (height/width clamped to 0.8..1.6), expressed as width/height.

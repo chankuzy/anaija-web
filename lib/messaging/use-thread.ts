@@ -1,207 +1,159 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "@/lib/api/client";
-import { messagingApi, normMsg, type Message, type MsgUser } from "@/lib/api/messaging";
-import { subscribeBroadcast } from "@/lib/realtime/client";
+import { messagingApi, type Message } from "@/lib/api/messaging";
+import { useInterval } from "./use-interval";
 
-export interface ThreadData {
-  convId: number;
-  messages: Message[];
-  cursor: string | null;
-  hasMore: boolean;
-  loadingMore: boolean;
-  error: string | null;
+type TState = { id: number; items: Message[]; cursor: string | null; error: string | null; loadingOlder: boolean };
+
+const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
+const isLocal = (m: Message) => m.status !== undefined;
+
+// Server window replaces what it covers; older pages already loaded and unconfirmed local sends are kept.
+function mergeLatest(prev: TState | null, id: number, server: Message[], cursor: string | null): TState {
+  const base = prev && prev.id === id ? prev : null;
+  const ids = new Set(server.map((m) => m.id));
+  const first = server[0]?.id ?? Number.POSITIVE_INFINITY;
+  const older = base ? base.items.filter((m) => !isLocal(m) && !ids.has(m.id) && m.id < first) : [];
+  const locals = base ? base.items.filter(isLocal) : [];
+  return {
+    id,
+    items: [...older, ...server, ...locals],
+    cursor: base && older.length ? base.cursor : cursor,
+    error: null,
+    loadingOlder: false,
+  };
 }
 
-const isPending = (m: Message) => m.state !== undefined;
-const arrange = (confirmed: Map<number, Message>, pending: Message[]) => [
-  ...[...confirmed.values()].sort((a, b) => a.id - b.id),
-  ...pending,
-];
+// Messages are polled (the browser has no realtime channel through the cookie proxy); sends are optimistic.
+export function useThread(conversationId: number, myId: number | undefined) {
+  const enabled = myId !== undefined;
+  const [state, setState] = useState<TState | null>(null);
+  const s = state && state.id === conversationId ? state : null;
 
-// Union of what we already have and what the server says; pending sends survive until their echo arrives.
-function mergeServer(prev: Message[], server: Message[]): Message[] {
-  const confirmed = new Map<number, Message>();
-  for (const m of prev) if (!isPending(m)) confirmed.set(m.id, m);
-  for (const m of server) confirmed.set(m.id, m);
-  const echoed = new Set(server.map((m) => m.client_temp_id).filter(Boolean));
-  return arrange(confirmed, prev.filter((m) => isPending(m) && !(m.client_temp_id && echoed.has(m.client_temp_id))));
-}
-
-// A realtime message or an HTTP response. Reconciles our own optimistic row by client_temp_id.
-function upsert(prev: Message[], m: Message): Message[] {
-  const confirmed = new Map<number, Message>();
-  for (const x of prev) if (!isPending(x)) confirmed.set(x.id, x);
-  confirmed.set(m.id, m);
-  return arrange(confirmed, prev.filter((x) => isPending(x) && !(m.client_temp_id && x.client_temp_id === m.client_temp_id)));
-}
-
-const msgOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
-let tempSeq = 0;
-
-export function previewOf(m: Message): string {
-  if (m.is_deleted) return "Message deleted";
-  if (m.body?.trim() && m.type !== "file") return m.body.trim();
-  switch (m.type) {
-    case "image": return "Photo";
-    case "video": return "Video";
-    case "file": return m.body?.trim() || "File";
-    case "listing_share": return "Shared a listing";
-    case "post_share": return "Shared a post";
-    default: return m.body?.trim() || "Message";
-  }
-}
-
-export function useThread(convId: number, me: MsgUser | null, onIncoming: (m: Message) => void) {
-  const [data, setData] = useState<ThreadData | null>(null);
-  const [joined, setJoined] = useState(false);
-  const [nonce, setNonce] = useState(0);
-  const incoming = useRef(onIncoming);
-  useEffect(() => {
-    incoming.current = onIncoming;
-  });
-
-  const patchAll = useCallback(
-    (fn: (l: Message[]) => Message[]) => setData((p) => (p && p.convId === convId ? { ...p, messages: fn(p.messages) } : p)),
-    [convId],
-  );
-
-  useEffect(() => {
-    const ac = new AbortController();
+  const fetchLatest = useCallback(() => {
     messagingApi
-      .messages(convId, null, ac.signal)
-      .then((r) => {
-        if (ac.signal.aborted) return;
-        setData((p) => ({
-          convId,
-          messages: mergeServer(p?.convId === convId ? p.messages : [], r.messages),
-          cursor: r.next_cursor,
-          hasMore: r.has_more,
-          loadingMore: false,
-          error: null,
-        }));
-      })
-      .catch((e: unknown) => {
-        if (ac.signal.aborted) return;
-        setData((p) => (p?.convId === convId ? p : { convId, messages: [], cursor: null, hasMore: false, loadingMore: false, error: msgOf(e) }));
-      });
-    return () => ac.abort();
-  }, [convId, nonce]);
+      .messages(conversationId)
+      .then(({ items, nextCursor }) => setState((p) => mergeLatest(p, conversationId, items, nextCursor)))
+      .catch((e: unknown) =>
+        setState((p) =>
+          p && p.id === conversationId
+            ? { ...p, error: messageOf(e) }
+            : { id: conversationId, items: [], cursor: null, error: messageOf(e), loadingOlder: false },
+        ),
+      );
+  }, [conversationId]);
 
   useEffect(() => {
-    const unsub = subscribeBroadcast(
-      `conversation:${convId}`,
-      {
-        new_message: (p) => {
-          const m = normMsg(p as Message);
-          patchAll((l) => upsert(l, m));
-          incoming.current(m);
-        },
-        reaction_updated: (p) => {
-          const u = p as { message_id: number; reactions: Record<string, number[]> };
-          patchAll((l) => l.map((x) => (x.id === u.message_id ? { ...x, reactions: u.reactions ?? {} } : x)));
-        },
-        message_deleted: (p) => {
-          const u = p as { message_id: number };
-          patchAll((l) =>
-            l.map((x) => (x.id === u.message_id ? { ...x, is_deleted: true, body: null, media_url: null, shared_post: null } : x)),
-          );
-        },
-      },
-      setJoined,
-    );
-    return () => {
-      unsub();
-      setJoined(false);
-    };
-  }, [convId, patchAll]);
+    if (!enabled) return;
+    fetchLatest();
+  }, [enabled, fetchLatest]);
+  useInterval(fetchLatest, 6000, enabled);
 
-  // Broadcast has no backlog: poll quietly, fast while the socket isn't joined, slow as a safety net otherwise.
-  useEffect(() => {
-    const quiet = () => {
-      if (document.visibilityState !== "visible") return;
-      messagingApi
-        .messages(convId, null)
-        .then((r) => patchAll((l) => mergeServer(l, r.messages)))
-        .catch(() => {});
-    };
-    const id = window.setInterval(quiet, joined ? 30_000 : 8_000);
-    document.addEventListener("visibilitychange", quiet);
-    return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", quiet);
-    };
-  }, [convId, joined, patchAll]);
+  const loadOlder = useCallback(() => {
+    if (!s?.cursor || s.loadingOlder) return;
+    const cursor = s.cursor;
+    setState((p) => (p && p.id === conversationId ? { ...p, loadingOlder: true } : p));
+    messagingApi
+      .messages(conversationId, cursor)
+      .then(({ items, nextCursor }) =>
+        setState((p) => {
+          if (!p || p.id !== conversationId) return p;
+          const have = new Set(p.items.map((m) => m.id));
+          return { ...p, items: [...items.filter((m) => !have.has(m.id)), ...p.items], cursor: nextCursor, loadingOlder: false };
+        }),
+      )
+      .catch(() => setState((p) => (p && p.id === conversationId ? { ...p, loadingOlder: false } : p)));
+  }, [s, conversationId]);
 
-  const post = useCallback(
-    async (m: Message): Promise<string | null> => {
+  const deliver = useCallback(
+    async (localId: string, body: string): Promise<Message | null> => {
       try {
-        const real = await messagingApi.send(convId, {
-          body: m.body ?? "",
-          type: "text",
-          client_temp_id: m.client_temp_id!,
-          ...(m.reply_to ? { reply_to_id: m.reply_to.id } : {}),
+        const real = await messagingApi.send(conversationId, body);
+        setState((p) => {
+          if (!p || p.id !== conversationId) return p;
+          const rest = p.items.filter((m) => m.local_id !== localId);
+          if (!real || rest.some((m) => m.id === real.id)) return { ...p, items: rest };
+          const at = rest.findIndex(isLocal);
+          return { ...p, items: at < 0 ? [...rest, real] : [...rest.slice(0, at), real, ...rest.slice(at)] };
         });
-        patchAll((l) => upsert(l, real));
+        if (!real) fetchLatest();
+        return real;
+      } catch {
+        setState((p) =>
+          p && p.id === conversationId
+            ? { ...p, items: p.items.map((m) => (m.local_id === localId ? { ...m, status: "failed" as const } : m)) }
+            : p,
+        );
         return null;
-      } catch (e) {
-        patchAll((l) => l.map((x) => (isPending(x) && x.client_temp_id === m.client_temp_id ? { ...x, state: "failed" } : x)));
-        return msgOf(e);
       }
     },
-    [convId, patchAll],
+    [conversationId, fetchLatest],
   );
 
   const send = useCallback(
-    (body: string, replyTo: Message | null) => {
+    (body: string) => {
+      if (myId === undefined) return Promise.resolve(null);
+      const localId = `l${Date.now()}`;
       const temp: Message = {
-        id: -++tempSeq,
-        conversation_id: convId,
+        id: -Date.now(),
+        conversation_id: conversationId,
         type: "text",
         body,
-        is_deleted: false,
-        client_temp_id: crypto.randomUUID(),
         media_url: null,
         media_type: null,
-        reactions: {},
-        reply_to: replyTo ? { id: replyTo.id, body: previewOf(replyTo) } : null,
+        sender: null,
+        sender_id: myId,
         shared_post: null,
-        sender: me,
+        reply_to: null,
+        reactions: {},
         created_at: new Date().toISOString(),
-        state: "sending",
+        is_deleted: false,
+        status: "sending",
+        local_id: localId,
       };
-      patchAll((l) => [...l, temp]);
-      return post(temp);
+      setState((p) =>
+        p && p.id === conversationId
+          ? { ...p, items: [...p.items, temp] }
+          : { id: conversationId, items: [temp], cursor: null, error: null, loadingOlder: false },
+      );
+      return deliver(localId, body);
     },
-    [convId, me, patchAll, post],
+    [myId, conversationId, deliver],
   );
 
   const retry = useCallback(
-    (m: Message) => {
-      patchAll((l) => l.map((x) => (x.client_temp_id === m.client_temp_id && isPending(x) ? { ...x, state: "sending" } : x)));
-      return post(m);
+    (localId: string) => {
+      const m = s?.items.find((x) => x.local_id === localId);
+      if (!m || m.body === null) return Promise.resolve(null);
+      setState((p) =>
+        p && p.id === conversationId
+          ? { ...p, items: p.items.map((x) => (x.local_id === localId ? { ...x, status: "sending" as const } : x)) }
+          : p,
+      );
+      return deliver(localId, m.body);
     },
-    [patchAll, post],
+    [s, conversationId, deliver],
   );
 
-  const cur = data && data.convId === convId ? data : null;
-  const loadOlder = useCallback(() => {
-    if (!cur || !cur.hasMore || !cur.cursor || cur.loadingMore) return;
-    const cursor = cur.cursor;
-    setData((p) => (p && p.convId === convId ? { ...p, loadingMore: true } : p));
-    messagingApi
-      .messages(convId, cursor)
-      .then((r) =>
-        setData((p) =>
-          p && p.convId === convId
-            ? { ...p, messages: mergeServer(p.messages, r.messages), cursor: r.next_cursor, hasMore: r.has_more, loadingMore: false }
-            : p,
-        ),
-      )
-      .catch(() => setData((p) => (p && p.convId === convId ? { ...p, loadingMore: false } : p)));
-  }, [cur, convId]);
+  const setReactions = useCallback(
+    (id: number, reactions: Record<string, number[]>) =>
+      setState((p) =>
+        p && p.id === conversationId ? { ...p, items: p.items.map((m) => (m.id === id ? { ...m, reactions } : m)) } : p,
+      ),
+    [conversationId],
+  );
 
-  const reload = useCallback(() => setNonce((n) => n + 1), []);
-  return { data: cur, loading: cur === null, joined, send, retry, loadOlder, patchAll, reload };
+  return {
+    messages: s?.items ?? [],
+    loading: enabled && s === null,
+    error: s?.error ?? null,
+    hasOlder: !!s?.cursor,
+    loadingOlder: !!s?.loadingOlder,
+    loadOlder,
+    send,
+    retry,
+    setReactions,
+  };
 }

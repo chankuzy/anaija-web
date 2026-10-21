@@ -124,3 +124,44 @@ body {
 .heart-burst {
   animation: heart-burst 700ms ease-out forwards;
 }
+
+/* Story viewer progress bar: one fill per story, duration set inline. */
+@keyframes story-fill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+.story-fill {
+  animation-name: story-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/* themed scrollbars: slim, rounded, brighten on hover. In @layer base so .no-scrollbar still wins. */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+  }
+  *:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.32) transparent;
+  }
+  @supports not (scrollbar-width: thin) {
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.16);
+      border-radius: 9999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.32);
+      background-clip: content-box;
+    }
+  }
+}

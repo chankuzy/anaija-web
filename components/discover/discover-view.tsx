@@ -25,15 +25,15 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-10 items-center gap-1 rounded-full px-3 text-secondary font-semibold text-fg"
+        className="flex h-9 items-center gap-1 rounded-full bg-white/8 px-3.5 text-secondary font-semibold text-fg transition-colors hover:bg-white/14"
       >
         {label}
-        <ChevronDownGlyph className="size-4 text-muted" />
+        <ChevronDownGlyph className={`size-4 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <>
           <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-          <div role="menu" className="glass absolute right-0 top-full z-50 mt-2 w-44 overflow-hidden rounded-2xl py-1.5">
+          <div role="menu" className="glass absolute right-0 top-full z-50 mt-2 w-48 overflow-hidden rounded-2xl py-1.5 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
             {FILTERS.map((f) => (
               <button
                 key={f.id}
@@ -43,7 +43,7 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
                   setOpen(false);
                   onChange(f.id);
                 }}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-body font-semibold text-white"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-body font-semibold text-white transition-colors hover:bg-white/8"
               >
                 {f.label}
                 {f.id === value && <CheckGlyph className="size-4" />}
@@ -143,14 +143,14 @@ export function DiscoverView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[1100px] px-[2px] pb-6">
+    <div className="mx-auto w-full max-w-[935px] px-0 pb-6 md:px-4">
       <header
-        className="sticky top-0 z-30 flex items-center gap-2 bg-bg px-3 pb-2 pt-2"
-        style={{ paddingTop: "calc(8px + env(safe-area-inset-top))" }}
+        className="sticky top-0 z-30 -mx-0 flex items-center justify-center gap-2 bg-bg/80 px-3 pb-3 pt-2 backdrop-blur-xl md:px-0 md:pb-5 md:pt-6"
+        style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}
       >
-        <div className="flex h-12 min-w-0 flex-1 items-center rounded-image border border-white/12 bg-white/6 pl-3.5 pr-1">
+        <div className="flex h-11 min-w-0 flex-1 items-center rounded-full border border-white/10 bg-white/7 pl-4 pr-1.5 transition-colors focus-within:border-white/25 hover:bg-white/9 md:max-w-[560px]">
           <Link href="/search" className="flex min-w-0 flex-1 items-center gap-2.5 text-muted">
-            <SearchGlyph className="size-[19px] shrink-0" />
+            <SearchGlyph className="size-[18px] shrink-0" />
             <span className="truncate text-body">Search people, posts, listings...</span>
           </Link>
           <FilterMenu value={filter} onChange={selectFilter} />
@@ -159,9 +159,9 @@ export function DiscoverView() {
           type="button"
           onClick={reload}
           aria-label="Refresh"
-          className="grid size-12 shrink-0 place-items-center rounded-full border border-white/12 bg-white/6 text-fg"
+          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/7 text-fg transition-colors hover:bg-white/12"
         >
-          <RefreshGlyph className={`size-5 ${loading && view ? "animate-spin" : ""}`} />
+          <RefreshGlyph className={`size-[18px] ${loading && view ? "animate-spin" : ""}`} />
         </button>
       </header>
 

@@ -177,11 +177,15 @@ function VideoMedia({
 }) {
   const ref = useRef<HTMLVideoElement>(null);
   const timer = useRef<number | null>(null);
-  const { muted } = usePlayback();
-  const [userPaused, setUserPaused] = useState(false);
+  const { muted, autoplay, forceMute } = usePlayback();
+  const [manual, setManual] = useState<"play" | "pause" | null>(null);
   const src = video.url ?? post.video_url;
   const poster = video.thumbnail ?? post.thumbnail_url ?? undefined;
-  const play = active && !paused && !userPaused;
+  const play = active && !paused && (manual === "play" || (manual === null && autoplay));
+  const playRef = useRef(play);
+  useEffect(() => {
+    playRef.current = play;
+  });
 
   useEffect(() => {
     const el = ref.current;
@@ -193,11 +197,18 @@ function VideoMedia({
     if (!el) return;
     if (play) {
       const p = el.play();
-      if (p) p.catch(() => {});
+      if (p)
+        p.catch(() => {
+          // Browsers block unmuted autoplay: fall back to muted so the video still plays.
+          if (el.muted) return;
+          el.muted = true;
+          forceMute();
+          el.play().catch(() => {});
+        });
     } else {
       el.pause();
     }
-  }, [play, near]);
+  }, [play, near, forceMute]);
 
   useEffect(
     () => () => {
@@ -215,7 +226,7 @@ function VideoMedia({
     }
     timer.current = window.setTimeout(() => {
       timer.current = null;
-      setUserPaused((p) => !p);
+      setManual(playRef.current ? "pause" : "play");
     }, 250);
   }
 
@@ -235,7 +246,7 @@ function VideoMedia({
       ) : poster ? (
         <img src={poster} alt="" decoding="async" className="h-full w-full object-contain" />
       ) : null}
-      {userPaused && (
+      {active && !paused && !play && (
         <div className="pointer-events-none absolute inset-0 grid place-items-center">
           <span className="grid size-16 place-items-center rounded-full bg-black/45 text-white">
             <Icon name="play" filled className="size-8" />

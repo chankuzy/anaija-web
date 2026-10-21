@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { needsProfileSetup } from "@/lib/auth/guards";
 import { useAuth } from "@/lib/auth/auth-context";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { LinkButton } from "@/components/ui/button";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Avatar } from "@/components/ui/avatar";
 import { Suspense } from "react";
@@ -27,6 +26,10 @@ const NAV: NavItem[] = [
 
 const SIDE = NAV.filter((n) => n.mobile !== "create");
 const CREATE = NAV.find((n) => n.mobile === "create")!;
+
+// Sidebar labels live in the DOM at all times and just fade in while the rail is hovered/focused.
+const LABEL = "whitespace-nowrap opacity-0 transition-opacity duration-150 group-hover/side:opacity-100 group-focus-within/side:opacity-100";
+const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
 
 export function AppShell({
   children,
@@ -59,103 +62,95 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const fullBleed = pathname === "/";
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[1440px]">
-      {/* Tablet rail (md) / desktop sidebar (lg) */}
-      <aside className="sticky top-0 hidden h-dvh w-[76px] shrink-0 flex-col justify-between border-r border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.035),transparent_38%)] px-3 py-6 md:flex lg:w-[256px] lg:px-4">
-        <div className="flex flex-col">
-          <Link href="/" aria-label="Anaija home" className="mb-8 flex h-11 items-center justify-center lg:justify-start lg:px-3">
-            <span className="lg:hidden">
-              <AppLogo size={34} showWordmark={false} />
-            </span>
-            <span className="hidden lg:inline">
-              <AppLogo size={34} />
-            </span>
-          </Link>
+    // Home: no width cap, sidebar hugs the screen edge (TikTok-style). Other pages keep the 1440px column.
+    <div className={`flex min-h-dvh w-full ${fullBleed ? "" : "mx-auto max-w-[1440px]"}`}>
+      {/* Rail (md+): reserves 76px; the aside inside grows over the page on hover and shrinks back on leave. */}
+      <div className="relative z-40 hidden w-[76px] shrink-0 md:block">
+        <aside className="group/side sticky top-0 flex h-dvh w-[76px] flex-col justify-between overflow-hidden border-r border-white/8 px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_48px_rgba(0,0,0,0.55)] hover:backdrop-blur-xl focus-within:w-[256px] focus-within:bg-bg/92 focus-within:shadow-[12px_0_48px_rgba(0,0,0,0.55)] focus-within:backdrop-blur-xl">
+          <div className="flex flex-col">
+            <Link href="/" aria-label="Anaija home" className="mb-8 flex h-11 items-center px-[9px]">
+              <span className="group-hover/side:hidden group-focus-within/side:hidden">
+                <AppLogo size={34} showWordmark={false} />
+              </span>
+              <span className="hidden group-hover/side:inline group-focus-within/side:inline">
+                <AppLogo size={34} />
+              </span>
+            </Link>
 
-          <nav className="flex flex-col gap-1.5">
-            {SIDE.map((n) => {
-              const active = isActive(n.href);
-              return (
-                <Link
-                  key={n.href}
-                  href={hrefFor(n)}
-                  title={n.label}
-                  aria-current={active ? "page" : undefined}
-                  className={`flex h-[52px] items-center justify-center gap-4 rounded-full text-[15px] transition-colors lg:justify-start lg:px-4 ${
-                    active
-                      ? "bg-white/10 font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-                      : "font-medium text-white/60 hover:bg-white/6 hover:text-white"
-                  }`}
-                >
-                  <Icon name={n.icon} filled={active} className="size-8 shrink-0" />
-                  <span className="hidden lg:inline">{n.label}</span>
+            <nav className="flex flex-col gap-1.5">
+              {SIDE.map((n) => {
+                const active = isActive(n.href);
+                return (
+                  <Link
+                    key={n.href}
+                    href={hrefFor(n)}
+                    title={n.label}
+                    aria-current={active ? "page" : undefined}
+                    className={`${ITEM} ${
+                      active
+                        ? "bg-white/10 font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+                        : "font-medium text-white/60 hover:bg-white/6 hover:text-white"
+                    }`}
+                  >
+                    <Icon name={n.icon} filled={active} className="size-8 shrink-0" />
+                    <span className={LABEL}>{n.label}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+
+            <Link
+              href={hrefFor(CREATE)}
+              title="Create"
+              className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition hover:bg-white/92 hover:shadow-[0_10px_34px_rgba(255,255,255,0.24)] active:scale-[0.98]"
+            >
+              <Icon name="plus" weight="strong" className="size-7 shrink-0" />
+              <span className={LABEL}>Create</span>
+            </Link>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            {status === "authed" && (
+              <div className="flex flex-col gap-1.5 border-t border-white/8 pt-4">
+                <Link href="/me" title="Profile" className="flex h-[52px] items-center gap-3 rounded-full px-[7px] transition-colors hover:bg-white/6">
+                  <Avatar
+                    url={(user as { avatar_url?: string | null } | null)?.avatar_url}
+                    name={user?.name ?? user?.username}
+                    size={38}
+                  />
+                  <span className={`min-w-0 ${LABEL}`}>
+                    <span className="block truncate text-body font-semibold text-white">{user?.name ?? ""}</span>
+                    <span className="block truncate text-supporting text-white/50">{user?.username ? `@${user.username}` : ""}</span>
+                  </span>
                 </Link>
-              );
-            })}
-          </nav>
-
-          <Link
-            href={hrefFor(CREATE)}
-            title="Create"
-            className="mt-6 flex h-12 items-center justify-center gap-2.5 rounded-full bg-white text-[15px] font-bold text-black shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition hover:bg-white/92 hover:shadow-[0_10px_34px_rgba(255,255,255,0.24)] active:scale-[0.98]"
-          >
-            <Icon name="plus" weight="strong" className="size-7" />
-            <span className="hidden lg:inline">Create</span>
-          </Link>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          {status === "authed" && (
-            <div className="flex flex-col items-center gap-2 border-t border-white/8 pt-4 lg:flex-row lg:justify-between lg:px-1">
-              <Link href="/me" className="flex min-w-0 items-center gap-3">
-                <Avatar
-                  url={(user as { avatar_url?: string | null } | null)?.avatar_url}
-                  name={user?.name ?? user?.username}
-                  size={38}
-                />
-                <span className="hidden min-w-0 lg:block">
-                  <span className="block truncate text-body font-semibold text-white">{user?.name ?? ""}</span>
-                  <span className="block truncate text-supporting text-white/50">{user?.username ? `@${user.username}` : ""}</span>
-                </span>
-              </Link>
-              <div className="flex shrink-0 flex-col items-center lg:flex-row">
-                <Link
-                  href="/settings"
-                  aria-label="Settings"
-                  title="Settings"
-                  className="grid size-10 place-items-center rounded-full text-white/50 transition-colors hover:bg-white/8 hover:text-white"
-                >
-                  <Icon name="settings" className="size-7" />
+                <Link href="/settings" title="Settings" className={`${ITEM} font-medium text-white/60 hover:bg-white/6 hover:text-white`}>
+                  <Icon name="settings" className="size-8 shrink-0" />
+                  <span className={LABEL}>Settings</span>
                 </Link>
                 <button
                   type="button"
                   onClick={() => void signOut()}
-                  aria-label="Sign out"
                   title="Sign out"
-                  className="grid size-10 place-items-center rounded-full text-white/50 transition-colors hover:bg-white/8 hover:text-white"
+                  className={`${ITEM} w-full font-medium text-white/60 hover:bg-white/6 hover:text-white`}
                 >
-                  <Icon name="logout" className="size-7" />
+                  <Icon name="logout" className="size-8 shrink-0" />
+                  <span className={LABEL}>Sign out</span>
                 </button>
               </div>
-            </div>
-          )}
-          {status === "guest" && (
-            <>
-              <div className="hidden lg:block">
-                <LinkButton href="/login" className="w-full">
-                  Sign in
-                </LinkButton>
-              </div>
-              <Link href="/login" title="Sign in" className="flex h-12 items-center justify-center rounded-full bg-white text-black lg:hidden">
-                <Icon name="user" className="size-7" />
+            )}
+            {status === "guest" && (
+              <Link href="/login" title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black">
+                <Icon name="user" className="size-7 shrink-0" />
+                <span className={LABEL}>Sign in</span>
               </Link>
-            </>
-          )}
-        </div>
-      </aside>
+            )}
+          </div>
+        </aside>
+      </div>
 
+      {/* On home, main slides back under the rail so the feed centres on the whole viewport. */}
       <main
-        className="min-w-0 flex-1"
+        className={`min-w-0 flex-1 ${fullBleed ? "md:-ml-[76px]" : ""}`}
         style={{ paddingBottom: fullBleed ? undefined : "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
       >
         {children}

@@ -96,7 +96,10 @@ export function PeopleUnit({
   const title = only ?? "Meet some people";
 
   return (
-    <section ref={ref} className="relative flex h-dvh snap-start snap-always items-center justify-center">
+    <section
+      ref={ref}
+      className="relative flex h-dvh snap-start snap-always items-center justify-center"
+    >
       <div className="feed-card no-scrollbar relative flex flex-col overflow-y-auto bg-[linear-gradient(to_bottom,#111,#000)] px-5 pb-8 pt-24">
         <div className="my-auto">
           <h2 className="text-center text-[22px] font-extrabold text-white">{title}</h2>
