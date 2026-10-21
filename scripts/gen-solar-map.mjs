@@ -54,6 +54,7 @@ const ALIASES = {
   play: ["play"],
   userCross: ["userCrossRounded", "userCross"],
   forbidden: ["forbiddenCircle", "forbidden"],
+  shareArrow: ["forward"],
 };
 
 const kebab = (s) =>

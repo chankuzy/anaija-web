@@ -19,12 +19,16 @@ import { formatCount } from "@/lib/format";
 import { usePaged } from "@/lib/paged/use-paged";
 import { isReel, loadLiked, loadPosts, loadReposts, loadSaved, postsView, type PostsCursor } from "@/lib/profile/feeds";
 import { useProfile } from "@/lib/profile/use-profile";
+import { useStoryRing, type StoryRingState } from "@/lib/stories/use-story-ring";
 import { ProfileMenu } from "./profile-menu";
-import { StoryRingAvatar, type StoryRingState } from "./story-ring-avatar";
+import { StoryRingAvatar } from "./story-ring-avatar";
 
 type ListTab = "posts" | "reels" | "reposts" | "liked" | "saved";
 type TabId = ListTab | "info";
 type SortOption = "latest" | "popular" | "oldest";
+
+// The plus on your own avatar opens the composer with Story focused (create-view reads ?mode=story).
+const STORY_COMPOSER_HREF = "/create?mode=story";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "posts", label: "Posts" },
@@ -64,7 +68,7 @@ const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
   saved: { title: "No favorites yet", sub: "Tap the bookmark on anything you want to find again" },
 };
 
-// Cover mask: fades the left/right edges and the bottom into the screen black.
+// Cover mask (mobile): fades the left/right edges and the bottom into the screen black.
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 42%, transparent 100%), linear-gradient(to right, transparent 0%, #000 24%, #000 76%, transparent 100%)";
 
@@ -84,13 +88,13 @@ function safeHref(raw: string): { href: string; label: string } | null {
 export function ProfileSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[935px]" aria-hidden="true">
-      <div className="flex items-start gap-3 px-4 pb-4 pt-24 sm:px-7">
-        <div className="flex-1 space-y-3">
+      <div className="flex items-start gap-3 px-4 pb-4 pt-24 md:gap-8 md:px-6 md:pt-8">
+        <div className="size-[96px] shrink-0 animate-pulse rounded-full bg-card-elevated md:order-first md:size-[160px]" />
+        <div className="order-first flex-1 space-y-3 md:order-none">
           <div className="h-5 w-40 animate-pulse rounded bg-card/70" />
           <div className="h-4 w-28 animate-pulse rounded bg-card/70" />
           <div className="h-10 w-56 animate-pulse rounded bg-card/70" />
         </div>
-        <div className="size-[92px] shrink-0 animate-pulse rounded-full bg-card-elevated sm:size-[116px]" />
       </div>
       <div className="mt-4">
         <DiscoverSkeleton />
@@ -112,6 +116,61 @@ function GlassBtn({ label, onClick, children }: { label: string; onClick: () => 
   );
 }
 
+function RoundBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="grid size-11 place-items-center rounded-full bg-white/12 text-white transition hover:bg-white/20 active:scale-95"
+    >
+      {children}
+    </button>
+  );
+}
+
+// Avatar with its story ring; on your own profile a blue + opens the composer on Story.
+function AvatarBlock({
+  profile,
+  size,
+  ring,
+  own,
+  onView,
+  onAddStory,
+}: {
+  profile: UserProfile;
+  size: number;
+  ring: StoryRingState;
+  own: boolean;
+  onView: () => void;
+  onAddStory: () => void;
+}) {
+  const outer = size + 10;
+  return (
+    <span className="relative inline-block shrink-0" style={{ width: outer, height: outer }}>
+      <button
+        type="button"
+        aria-label="View profile picture"
+        disabled={!profile.avatar}
+        onClick={onView}
+        className="block rounded-full transition hover:opacity-95"
+      >
+        <StoryRingAvatar url={profile.avatar} name={profile.name ?? profile.username} size={size} ring={ring} />
+      </button>
+      {own && (
+        <button
+          type="button"
+          aria-label="Add to your story"
+          onClick={onAddStory}
+          className="absolute bottom-[5%] right-[5%] grid size-7 place-items-center rounded-full bg-info text-white ring-[3px] ring-black transition active:scale-90 md:size-8"
+        >
+          <Icon name="plus" className="size-[18px]" />
+        </button>
+      )}
+    </span>
+  );
+}
+
 function InfoPanel({ profile }: { profile: UserProfile }) {
   const tagline = (profile.tagline ?? "").trim();
   const location = (profile.location ?? "").trim();
@@ -123,7 +182,7 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
 
   const row = "flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3.5 text-[14px] text-white/90";
   return (
-    <div className="space-y-2.5 px-4 py-5 sm:px-0">
+    <div className="space-y-2.5 px-4 py-5 md:px-0">
       {tagline && (
         <div className={row}>
           <Icon name="chatRoundDots" filled className="mt-0.5 size-[18px] shrink-0 text-white/60" />
@@ -165,6 +224,7 @@ export function ProfileView({ username }: { username: string }) {
   const own = user?.username === username;
 
   const { profile, error, loading, reload } = useProfile(username, authed);
+  const ring = useStoryRing(profile?.id, authed && !!profile);
   const [tab, setTab] = useState<TabId>("posts");
   const [sort, setSort] = useState<SortOption>("latest");
   const [visited, setVisited] = useState<ReadonlySet<TabId>>(() => new Set<TabId>([...TABS.map((t) => t.id)]));
@@ -173,9 +233,6 @@ export function ProfileView({ username }: { username: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
-
-  // TODO(next): driven by the stories feed (has_unseen for this user), same as Flutter's storyRingProvider.
-  const ring: StoryRingState = "none";
 
   useEffect(() => {
     if (status === "guest") router.replace("/login");
@@ -315,6 +372,8 @@ export function ProfileView({ username }: { username: string }) {
   const bio = (profile.bio ?? "").trim();
   const total = profile.counts.posts + profile.counts.listings;
   const displayName = profile.name ?? profile.username;
+  const viewAvatar = () => profile.avatar && setLightbox({ url: profile.avatar, round: true });
+  const addStory = () => router.push(STORY_COMPOSER_HREF);
 
   let body: React.ReactNode;
   if (isInfo) {
@@ -344,8 +403,8 @@ export function ProfileView({ username }: { username: string }) {
 
   return (
     <div className="mx-auto w-full max-w-[935px] pb-8">
-      {/* Header: no card. The cover is the background, faded into the screen black on all open edges. */}
-      <section className="relative isolate overflow-hidden">
+      {/* ───────── MOBILE header: cover as a shadow behind the content, no card ───────── */}
+      <section className="relative isolate overflow-hidden md:hidden">
         {profile.cover && (
           <>
             <img
@@ -359,7 +418,6 @@ export function ProfileView({ username }: { username: string }) {
           </>
         )}
 
-        {/* Top bar */}
         <div
           className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-3"
           style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)" }}
@@ -375,7 +433,7 @@ export function ProfileView({ username }: { username: string }) {
           )}
           <div className="flex items-center gap-2">
             <GlassBtn label="Share profile" onClick={() => void onShare()}>
-              <Icon name="share" className="size-5" />
+              <Icon name="shareArrow" className="size-5" />
             </GlassBtn>
             {own ? (
               <GlassBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
@@ -389,16 +447,12 @@ export function ProfileView({ username }: { username: string }) {
           </div>
         </div>
 
-        {/* Identity row: text left, avatar + ring right */}
-        <div
-          className="relative flex items-start gap-3 px-4 pb-5 sm:gap-6 sm:px-7"
-          style={{ paddingTop: "calc(env(safe-area-inset-top) + 74px)" }}
-        >
+        <div className="relative flex items-start gap-3 px-4 pb-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 74px)" }}>
           <div className="min-w-0 flex-1">
-            <h1 className="truncate text-[22px] font-extrabold leading-tight text-white text-shadow sm:text-[26px]">{displayName}</h1>
+            <h1 className="truncate text-[22px] font-extrabold leading-tight text-white text-shadow">{displayName}</h1>
             <p className="mt-0.5 truncate text-[14px] text-white/60 text-shadow">@{profile.username}</p>
 
-            <div className="mt-3.5 flex items-center gap-6 sm:gap-8">
+            <div className="mt-3.5 flex items-center gap-6">
               <Link href={`/u/${profile.username}/following`} className="transition hover:opacity-80">
                 <p className="text-[19px] font-extrabold leading-none text-white text-shadow">{formatCount(profile.counts.following)}</p>
                 <p className="mt-1 text-[13px] text-white/60">Following</p>
@@ -413,7 +467,7 @@ export function ProfileView({ username }: { username: string }) {
               </div>
             </div>
 
-            {bio && <p className="mt-3.5 line-clamp-3 whitespace-pre-line text-[14px] leading-snug text-white/90 text-shadow sm:text-[14.5px]">{bio}</p>}
+            {bio && <p className="mt-3.5 line-clamp-3 whitespace-pre-line text-[14px] leading-snug text-white/90 text-shadow">{bio}</p>}
 
             {!own && (
               <button
@@ -428,26 +482,78 @@ export function ProfileView({ username }: { username: string }) {
             )}
           </div>
 
-          <button
-            type="button"
-            aria-label="View profile picture"
-            disabled={!profile.avatar}
-            onClick={() => profile.avatar && setLightbox({ url: profile.avatar, round: true })}
-            className="shrink-0 rounded-full transition hover:opacity-95"
-          >
-            <span className="hidden sm:block">
-              <StoryRingAvatar url={profile.avatar} name={displayName} size={110} ring={ring} />
-            </span>
-            <span className="sm:hidden">
-              <StoryRingAvatar url={profile.avatar} name={displayName} size={86} ring={ring} />
-            </span>
-          </button>
+          <AvatarBlock profile={profile} size={86} ring={ring} own={own} onView={viewAvatar} onAddStory={addStory} />
         </div>
       </section>
 
-      {/* Tabs: icon-only on mobile, with labels from sm up. Outline inactive / bold active. */}
-      <div className="flex flex-col justify-between gap-3 border-b border-white/10 sm:flex-row sm:items-center sm:px-6">
-        <div role="tablist" className="flex w-full items-center sm:w-auto sm:gap-8">
+      {/* ───────── DESKTOP header: TikTok-web layout on plain black ───────── */}
+      <section className="hidden px-6 pb-5 pt-8 md:block">
+        <div className="flex items-start gap-8">
+          <AvatarBlock profile={profile} size={150} ring={ring} own={own} onView={viewAvatar} onAddStory={addStory} />
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-3">
+              <h1 className="truncate text-[24px] font-extrabold leading-tight text-white">{displayName}</h1>
+              <span className="truncate text-[16px] text-white/55">@{profile.username}</span>
+            </div>
+
+            <div className="mt-3 flex items-center gap-5 text-[15px]">
+              <Link href={`/u/${profile.username}/following`} className="transition hover:opacity-80">
+                <span className="font-extrabold text-white">{formatCount(profile.counts.following)}</span>{" "}
+                <span className="text-white/60">Following</span>
+              </Link>
+              <Link href={`/u/${profile.username}/followers`} className="transition hover:opacity-80">
+                <span className="font-extrabold text-white">{formatCount(profile.counts.followers)}</span>{" "}
+                <span className="text-white/60">Followers</span>
+              </Link>
+              <span>
+                <span className="font-extrabold text-white">{formatCount(total)}</span> <span className="text-white/60">Posts</span>
+              </span>
+            </div>
+
+            <div className="mt-4 flex items-center gap-2.5">
+              {own ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => flash("Edit profile is coming to web")}
+                    className="h-11 rounded-full bg-white/12 px-5 text-[15px] font-semibold text-white transition hover:bg-white/20 active:scale-98"
+                  >
+                    Edit profile
+                  </button>
+                  <RoundBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
+                    <Icon name="settings" className="size-5" />
+                  </RoundBtn>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => (following ? onMessage() : void onFollow())}
+                  className={`h-11 min-w-[140px] rounded-full px-6 text-[15px] font-bold transition active:scale-98 ${
+                    following ? "bg-white/12 text-white hover:bg-white/20" : "bg-rose-600 text-white hover:bg-rose-500"
+                  }`}
+                >
+                  {following ? "Message" : "Follow"}
+                </button>
+              )}
+              <RoundBtn label="Share profile" onClick={() => void onShare()}>
+                <Icon name="shareArrow" className="size-5" />
+              </RoundBtn>
+              {!own && (
+                <RoundBtn label="More options" onClick={() => setMenuOpen(true)}>
+                  <Icon name="menuDots" filled className="size-5" />
+                </RoundBtn>
+              )}
+            </div>
+
+            {bio && <p className="mt-4 max-w-[560px] whitespace-pre-line text-[15px] leading-snug text-white/90">{bio}</p>}
+          </div>
+        </div>
+      </section>
+
+      {/* Tabs: icon-only on mobile, labelled from md up. Sort pills are desktop-only. */}
+      <div className="flex items-center justify-between border-b border-white/10 md:px-6">
+        <div role="tablist" className="flex w-full items-center md:w-auto md:gap-9">
           {TABS.map((t) => {
             const active = t.id === tab;
             const ic = TAB_ICON[t.id];
@@ -459,26 +565,26 @@ export function ProfileView({ username }: { username: string }) {
                 aria-selected={active}
                 aria-label={t.label}
                 onClick={() => selectTab(t.id)}
-                className={`relative flex flex-1 items-center justify-center gap-2 pb-3 pt-3 text-[16px] font-bold transition sm:flex-none sm:pt-2 ${
+                className={`relative flex flex-1 items-center justify-center gap-2 pb-3 pt-3 text-[16px] font-bold transition md:flex-none md:pt-2 ${
                   active ? "text-white" : "text-white/40 hover:text-white/70"
                 }`}
               >
                 <Icon name={ic.name} filled={active} className={`size-[22px] transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
-                <span className="hidden sm:inline">{t.label}</span>
-                {active && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-white sm:inset-x-0" />}
+                <span className="hidden md:inline">{t.label}</span>
+                {active && <span className="absolute inset-x-3 bottom-0 h-[2.5px] rounded-full bg-white md:inset-x-0" />}
               </button>
             );
           })}
         </div>
 
         {!isInfo && (
-          <div className="mx-3.5 mb-2 flex items-center self-start rounded-lg bg-white/8 p-1 sm:mx-0 sm:self-auto">
+          <div className="hidden items-center rounded-lg bg-white/8 p-1 md:flex">
             {(["latest", "popular", "oldest"] as SortOption[]).map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => setSort(s)}
-                className={`rounded-md px-2.5 py-1 text-[11.5px] font-semibold capitalize transition sm:px-3 sm:text-[12.5px] ${
+                className={`rounded-md px-3 py-1 text-[12.5px] font-semibold capitalize transition ${
                   sort === s ? "bg-white/20 text-white" : "text-white/40 hover:text-white/70"
                 }`}
               >
@@ -489,7 +595,7 @@ export function ProfileView({ username }: { username: string }) {
         )}
       </div>
 
-      <div className="pt-0.5 sm:px-6 sm:pt-4">{body}</div>
+      <div className="pt-0.5 md:px-6 md:pt-4">{body}</div>
 
       {toast && (
         <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center">
