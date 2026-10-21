@@ -37,18 +37,42 @@ export function useToast() {
   return { toast, show };
 }
 
-export function SettingsPage({ title, backHref, children }: { title: string; backHref: string; children: ReactNode }) {
+export function SettingsPage({
+  title,
+  backHref,
+  action,
+  onBack,
+  children,
+}: {
+  title: string;
+  backHref: string;
+  action?: ReactNode;
+  onBack?: () => void;
+  children: ReactNode;
+}) {
   return (
     <div className="mx-auto w-full max-w-[640px] px-4 pb-12 pt-3 md:pt-8">
       <header className="mb-4 flex items-center gap-3.5 py-2">
-        <Link
-          href={backHref}
-          aria-label="Back"
-          className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-white transition hover:bg-white/10"
-        >
-          <Icon name="back" className="size-6" />
-        </Link>
-        <h1 className="text-[20px] font-bold tracking-tight text-white">{title}</h1>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label="Back"
+            className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-white transition hover:bg-white/10"
+          >
+            <Icon name="back" className="size-6" />
+          </button>
+        ) : (
+          <Link
+            href={backHref}
+            aria-label="Back"
+            className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-white transition hover:bg-white/10"
+          >
+            <Icon name="back" className="size-6" />
+          </Link>
+        )}
+        <h1 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-tight text-white">{title}</h1>
+        {action}
       </header>
       {children}
     </div>

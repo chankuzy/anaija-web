@@ -55,7 +55,15 @@ export function SettingsView() {
     <SettingsPage title="Settings" backHref="/me">
       <SectionLabel>Account</SectionLabel>
       <Group>
+        <Tile icon="user" label="Edit profile" href="/settings/edit" />
+        <Tile icon="diploma" label="Campus & Institution" href="/settings/campus" />
         <Tile icon="forbidden" label="Blocked accounts" href="/settings/blocked" />
+      </Group>
+
+      <div className="h-6" />
+      <SectionLabel>Notifications</SectionLabel>
+      <Group>
+        <Tile icon="tuning2" label="Notification preferences" href="/settings/notifications" trailing="Categories, quiet hours" />
       </Group>
 
       <div className="h-6" />

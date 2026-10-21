@@ -438,7 +438,7 @@ export function ProfileView({ username }: { username: string }) {
           style={{ paddingTop: "calc(env(safe-area-inset-top) + 10px)" }}
         >
           {own ? (
-            <GlassBtn label="Edit profile" onClick={() => flash("Edit profile is coming to web")}>
+            <GlassBtn label="Edit profile" onClick={() => router.push("/settings/edit")}>
               <Icon name="edit" weight="strong" className="size-[24.6px]" />
             </GlassBtn>
           ) : (
@@ -451,7 +451,7 @@ export function ProfileView({ username }: { username: string }) {
               <Icon name="shareArrow" weight="strong" className="size-[24.6px]" />
             </GlassBtn>
             {own ? (
-              <GlassBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
+              <GlassBtn label="Settings" onClick={() => router.push("/settings")}>
                 <Icon name="hamburgerMenu" weight="strong" className="size-[24.6px]" />
               </GlassBtn>
             ) : (
@@ -516,12 +516,12 @@ export function ProfileView({ username }: { username: string }) {
                 <>
                   <button
                     type="button"
-                    onClick={() => flash("Edit profile is coming to web")}
+                    onClick={() => router.push("/settings/edit")}
                     className="h-11 rounded-full bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/16 active:scale-98"
                   >
                     Edit profile
                   </button>
-                  <RoundBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
+                  <RoundBtn label="Settings" onClick={() => router.push("/settings")}>
                     <Icon name="hamburgerMenu" weight="strong" className="size-[24.6px]" />
                   </RoundBtn>
                 </>
