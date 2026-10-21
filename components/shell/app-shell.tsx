@@ -18,7 +18,7 @@ type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mo
 // on mobile; it gets a sidebar entry on tablet/desktop.
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
-  { href: "/discover", label: "Discover", icon: "compass", auth: true, mobile: "tab" },
+  { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
   { href: "/create", label: "Create", icon: "plus", auth: true, mobile: "create" },
   { href: "/messages", label: "Messages", icon: "message", auth: true, mobile: "tab" },
   { href: "/notifications", label: "Notifications", icon: "bell", auth: true },
@@ -118,15 +118,25 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                   <span className="block truncate text-supporting text-white/50">{user?.username ? `@${user.username}` : ""}</span>
                 </span>
               </Link>
-              <button
-                type="button"
-                onClick={() => void signOut()}
-                aria-label="Sign out"
-                title="Sign out"
-                className="grid size-10 shrink-0 place-items-center rounded-full text-white/50 transition-colors hover:bg-white/8 hover:text-white"
-              >
-                <Icon name="logout" className="size-7" />
-              </button>
+              <div className="flex shrink-0 flex-col items-center lg:flex-row">
+                <Link
+                  href="/settings"
+                  aria-label="Settings"
+                  title="Settings"
+                  className="grid size-10 place-items-center rounded-full text-white/50 transition-colors hover:bg-white/8 hover:text-white"
+                >
+                  <Icon name="settings" className="size-7" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => void signOut()}
+                  aria-label="Sign out"
+                  title="Sign out"
+                  className="grid size-10 place-items-center rounded-full text-white/50 transition-colors hover:bg-white/8 hover:text-white"
+                >
+                  <Icon name="logout" className="size-7" />
+                </button>
+              </div>
             </div>
           )}
           {status === "guest" && (

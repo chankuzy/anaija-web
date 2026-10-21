@@ -186,7 +186,7 @@ function AvatarBlock({
           onClick={onAddStory}
           className="absolute bottom-[3%] right-[3%] grid size-[30px] place-items-center rounded-full bg-info text-white ring-[3px] ring-black transition active:scale-90"
         >
-          <Icon name="plus" weight="strong" className="size-[22px]" />
+          <Icon name="plus" weight="strong" className="size-[19.4px]" />
         </button>
       )}
     </span>
@@ -197,7 +197,7 @@ function NameRow({ profile, className }: { profile: UserProfile; className: stri
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <h1 className={`truncate font-extrabold tracking-tight ${className}`}>{profile.name ?? profile.username}</h1>
-      {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[22px] shrink-0 text-warm" />}
+      {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[19.4px] shrink-0 text-warm" />}
     </div>
   );
 }
@@ -216,25 +216,25 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
     <div className="space-y-2.5 px-4 py-5 md:px-0">
       {tagline && (
         <div className={row}>
-          <Icon name="chatRoundDots" filled className="mt-0.5 size-[22px] shrink-0 text-white/60" />
+          <Icon name="chatRoundDots" filled className="mt-0.5 size-[19.4px] shrink-0 text-white/60" />
           <span className="whitespace-pre-line leading-snug">{tagline}</span>
         </div>
       )}
       {location && (
         <div className={row}>
-          <Icon name="pointOnMap" filled className="mt-0.5 size-[22px] shrink-0 text-white/60" />
+          <Icon name="pointOnMap" filled className="mt-0.5 size-[19.4px] shrink-0 text-white/60" />
           <span>{location}</span>
         </div>
       )}
       {campus && (
         <div className={row}>
-          <Icon name="buildings" filled className="mt-0.5 size-[22px] shrink-0 text-warm" />
+          <Icon name="buildings" filled className="mt-0.5 size-[19.4px] shrink-0 text-warm" />
           <span className="font-semibold text-warm">{campus}</span>
         </div>
       )}
       {links.map(({ raw, parsed }) => (
         <div key={raw} className={row}>
-          <Icon name="link" filled className="mt-0.5 size-[22px] shrink-0 text-info" />
+          <Icon name="link" filled className="mt-0.5 size-[19.4px] shrink-0 text-info" />
           {parsed ? (
             <a href={parsed.href} target="_blank" rel="noopener noreferrer nofollow" className="min-w-0 break-all font-semibold text-info hover:underline">
               {parsed.label}
@@ -439,24 +439,24 @@ export function ProfileView({ username }: { username: string }) {
         >
           {own ? (
             <GlassBtn label="Edit profile" onClick={() => flash("Edit profile is coming to web")}>
-              <Icon name="edit" weight="strong" className="size-7" />
+              <Icon name="edit" weight="strong" className="size-[24.6px]" />
             </GlassBtn>
           ) : (
             <GlassBtn label="Back" onClick={() => router.back()}>
-              <Icon name="back" weight="strong" className="size-7" />
+              <Icon name="back" weight="strong" className="size-[24.6px]" />
             </GlassBtn>
           )}
           <div className="flex items-center gap-2">
             <GlassBtn label="Share profile" onClick={() => void onShare()}>
-              <Icon name="shareArrow" weight="strong" className="size-7" />
+              <Icon name="shareArrow" weight="strong" className="size-[24.6px]" />
             </GlassBtn>
             {own ? (
               <GlassBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
-                <Icon name="hamburgerMenu" weight="strong" className="size-7" />
+                <Icon name="hamburgerMenu" weight="strong" className="size-[24.6px]" />
               </GlassBtn>
             ) : (
               <GlassBtn label="More options" onClick={() => setMenuOpen(true)}>
-                <Icon name="menuDots" filled className="size-7" />
+                <Icon name="menuDots" filled className="size-[24.6px]" />
               </GlassBtn>
             )}
           </div>
@@ -522,7 +522,7 @@ export function ProfileView({ username }: { username: string }) {
                     Edit profile
                   </button>
                   <RoundBtn label="Settings" onClick={() => flash("Settings are coming to web")}>
-                    <Icon name="hamburgerMenu" weight="strong" className="size-7" />
+                    <Icon name="hamburgerMenu" weight="strong" className="size-[24.6px]" />
                   </RoundBtn>
                 </>
               ) : (
@@ -537,11 +537,11 @@ export function ProfileView({ username }: { username: string }) {
                 </button>
               )}
               <RoundBtn label="Share profile" onClick={() => void onShare()}>
-                <Icon name="shareArrow" weight="strong" className="size-7" />
+                <Icon name="shareArrow" weight="strong" className="size-[24.6px]" />
               </RoundBtn>
               {!own && (
                 <RoundBtn label="More options" onClick={() => setMenuOpen(true)}>
-                  <Icon name="menuDots" filled className="size-7" />
+                  <Icon name="menuDots" filled className="size-[24.6px]" />
                 </RoundBtn>
               )}
             </div>
@@ -569,7 +569,7 @@ export function ProfileView({ username }: { username: string }) {
                   active ? "text-white" : "text-white/45 hover:text-white/75"
                 }`}
               >
-                <Icon name={ic.name} filled={active} className={`size-7 transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
+                <Icon name={ic.name} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
                 <span className="hidden md:inline">{t.label}</span>
                 {active && (
                   <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-white md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />

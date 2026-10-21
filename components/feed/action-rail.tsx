@@ -11,14 +11,32 @@ function RailButton({
   label,
   onClick,
   pressed,
+  side,
   children,
 }: {
   aria: string;
   label?: string;
   onClick: () => void;
   pressed?: boolean;
+  side?: boolean;
   children: ReactNode;
 }) {
+  if (side) {
+    return (
+      <button
+        type="button"
+        aria-label={aria}
+        aria-pressed={pressed}
+        onClick={onClick}
+        className="flex flex-col items-center gap-1 text-white transition-transform active:scale-90"
+      >
+        <span className="grid size-12 place-items-center rounded-full bg-white/12 backdrop-blur-sm transition-colors hover:bg-white/20">
+          {children}
+        </span>
+        {label ? <span className="text-supporting font-semibold text-white/80">{label}</span> : null}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
@@ -34,10 +52,11 @@ function RailButton({
 }
 
 // Order follows Flutter: mute, like, comment, repost, bookmark, share, options.
-// Comment is added once its contract is wired.
+// side = desktop variant: round dark buttons that sit outside the card, TikTok-web style.
 export function ActionRail({
   post,
   hasMute,
+  side = false,
   onLike,
   onComment,
   onBookmark,
@@ -47,6 +66,7 @@ export function ActionRail({
 }: {
   post: Post;
   hasMute: boolean;
+  side?: boolean;
   onLike: () => void;
   onComment: () => void;
   onBookmark: () => void;
@@ -55,42 +75,55 @@ export function ActionRail({
   onOptions: () => void;
 }) {
   const { muted, toggleMute } = usePlayback();
+  const big = side ? "size-7" : "size-[34px]";
+  const mid = side ? "size-7" : "size-[32px]";
   return (
-    <div className="flex flex-col items-center gap-3.5">
-      {hasMute && (
-        <button
-          type="button"
-          aria-label={muted ? "Unmute" : "Mute"}
-          onClick={toggleMute}
-          className="mb-1 grid size-[38px] place-items-center rounded-full border border-white/30 bg-black/45 text-white shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
-        >
-          <Icon name={muted ? "volumeOff" : "volumeOn"} className="size-[19px]" />
-        </button>
-      )}
-      <RailButton aria="Like" pressed={post.is_liked} label={formatCount(post.likes_count)} onClick={onLike}>
-        <Icon name="heart" filled className={`size-[34px] ${post.is_liked ? "text-danger" : "text-white"}`} />
+    <div className={`flex flex-col items-center ${side ? "gap-3" : "gap-3.5"}`}>
+      {hasMute &&
+        (side ? (
+          <button
+            type="button"
+            aria-label={muted ? "Unmute" : "Mute"}
+            onClick={toggleMute}
+            className="mb-1 grid size-12 place-items-center rounded-full bg-white/12 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+          >
+            <Icon name={muted ? "volumeOff" : "volumeOn"} className="size-6" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            aria-label={muted ? "Unmute" : "Mute"}
+            onClick={toggleMute}
+            className="mb-1 grid size-[38px] place-items-center rounded-full border border-white/30 bg-black/45 text-white shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+          >
+            <Icon name={muted ? "volumeOff" : "volumeOn"} className="size-[19px]" />
+          </button>
+        ))}
+      <RailButton aria="Like" side={side} pressed={post.is_liked} label={formatCount(post.likes_count)} onClick={onLike}>
+        <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-danger" : "text-white"}`} />
       </RailButton>
-      <RailButton aria="Comments" label={formatCount(post.comments_count)} onClick={onComment}>
-        <Icon name="message" filled className="size-[34px]" />
+      <RailButton aria="Comments" side={side} label={formatCount(post.comments_count)} onClick={onComment}>
+        <Icon name="message" filled className={big} />
       </RailButton>
       {post.type === "post" && (
-        <RailButton aria="Repost" pressed={post.is_reposted} label={formatCount(post.reposts_count)} onClick={onRepost}>
-          <Icon name="repeat" className={`size-[32px] ${post.is_reposted ? "text-accent" : "text-white"}`} />
+        <RailButton aria="Repost" side={side} pressed={post.is_reposted} label={formatCount(post.reposts_count)} onClick={onRepost}>
+          <Icon name="repeat" className={`${mid} ${post.is_reposted ? "text-accent" : "text-white"}`} />
         </RailButton>
       )}
       <RailButton
         aria="Bookmark"
+        side={side}
         pressed={post.is_bookmarked}
         label={formatCount(post.bookmarks_count)}
         onClick={onBookmark}
       >
-        <Icon name="bookmark" filled className={`size-[34px] ${post.is_bookmarked ? "text-warm" : "text-white"}`} />
+        <Icon name="bookmark" filled className={`${big} ${post.is_bookmarked ? "text-warm" : "text-white"}`} />
       </RailButton>
-      <RailButton aria="Share" label={formatCount(post.shares_count)} onClick={onShare}>
-        <Icon name="share" className="size-[34px]" />
+      <RailButton aria="Share" side={side} label={formatCount(post.shares_count)} onClick={onShare}>
+        <Icon name="shareArrow" filled className={big} />
       </RailButton>
-      <RailButton aria="More options" onClick={onOptions}>
-        <Icon name="dots" filled className="size-[30px]" />
+      <RailButton aria="More options" side={side} onClick={onOptions}>
+        <Icon name="dots" filled className={side ? "size-7" : "size-[30px]"} />
       </RailButton>
     </div>
   );

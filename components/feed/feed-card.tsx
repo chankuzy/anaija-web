@@ -214,12 +214,27 @@ export function FeedCard({
     void applyLike(true);
   }
 
+  const rail = (side: boolean) => (
+    <ActionRail
+      post={post}
+      side={side}
+      hasMute={hasVideo || hasAudio}
+      onLike={() => void applyLike(!post.is_liked)}
+      onComment={openComments}
+      onBookmark={() => void toggleBookmark()}
+      onRepost={() => void toggleRepost()}
+      onShare={() => void share()}
+      onOptions={() => setOptionsOpen(true)}
+    />
+  );
+
   return (
     <>
       <section
         ref={sectionRef}
         className="relative flex h-dvh snap-start snap-always items-center justify-center"
       >
+        <div className="feed-col relative flex h-full items-center md:h-[calc(100dvh-24px)]">
         <article className="feed-card relative overflow-hidden bg-black" onDoubleClick={onDoubleClick}>
           <PostMedia post={post} active={active} near={near} paused={open || optionsOpen || commentsOpen} />
 
@@ -245,23 +260,14 @@ export function FeedCard({
           />
 
           <div
-            className={`absolute right-3 transition-opacity duration-200 ${open ? "pointer-events-none opacity-0" : "opacity-100"}`}
+            className={`absolute right-3 transition-opacity duration-200 md:hidden ${open ? "pointer-events-none opacity-0" : "opacity-100"}`}
             style={{ bottom: `calc(24px + var(--nav-h) + ${NAV_LIFT})` }}
           >
-            <ActionRail
-              post={post}
-              hasMute={hasVideo || hasAudio}
-              onLike={() => void applyLike(!post.is_liked)}
-              onComment={openComments}
-              onBookmark={() => void toggleBookmark()}
-              onRepost={() => void toggleRepost()}
-              onShare={() => void share()}
-              onOptions={() => setOptionsOpen(true)}
-            />
+            {rail(false)}
           </div>
 
           <div
-            className={`absolute left-4 transition-[right] duration-200 ${open ? "right-4" : "right-[76px]"}`}
+            className={`absolute left-4 transition-[right] duration-200 ${open ? "right-4" : "right-[76px] md:right-4"}`}
             style={{ bottom: `calc(20px + var(--nav-h) + ${NAV_LIFT})` }}
           >
             <PostInfo
@@ -280,6 +286,8 @@ export function FeedCard({
             </div>
           )}
         </article>
+        <div className="absolute bottom-9 left-full ml-3 hidden md:block">{rail(true)}</div>
+        </div>
       </section>
 
       {commentsOpen && (

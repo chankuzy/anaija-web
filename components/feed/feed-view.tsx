@@ -10,6 +10,7 @@ import { FeedCard } from "./feed-card";
 import { CaughtUp, FeedEmpty, FeedError, FeedSkeleton } from "./feed-states";
 import { FeedTopBar } from "./feed-top-bar";
 import { PeopleUnit } from "./people-unit";
+import { ScrollArrows } from "./scroll-arrows";
 import { postHasVideo } from "./post-media";
 
 // Closes out the current post's dwell time once the caught-up page is what's on screen.
@@ -174,6 +175,7 @@ export function FeedView() {
         {data.loadingMore && <div className="grid h-16 place-items-center text-sm text-muted">Loading…</div>}
       </div>
       {topBar}
+      <ScrollArrows scroller={scrollerRef} index={active} count={entries.length} />
       {data.notice && (
         <div className="pointer-events-none absolute inset-x-0 top-[76px] z-30 flex justify-center">
           <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">{data.notice}</span>

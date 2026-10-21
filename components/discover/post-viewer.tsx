@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { DiscoverItem } from "@/lib/api/discover";
 import type { Post } from "@/lib/api/feed-types";
 import { FeedCard } from "@/components/feed/feed-card";
+import { ScrollArrows } from "@/components/feed/scroll-arrows";
 import { Icon } from "@/components/ui/icon";
 
 // Port of ListFeedViewerScreen: the tapped post and the rest of the grid, swipeable, full screen.
@@ -97,6 +98,7 @@ export function PostViewer({
           />
         ))}
       </div>
+      <ScrollArrows scroller={scrollerRef} index={active} count={posts.length} />
       <button
         type="button"
         aria-label="Close"

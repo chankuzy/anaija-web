@@ -46,7 +46,7 @@ export function FeedTopBar({
           )}
 
           {authed ? (
-            <Link href="/notifications" aria-label="Notifications" className="icon-shadow grid size-[42px] place-items-center text-white">
+            <Link href="/notifications" aria-label="Notifications" className="icon-shadow grid size-[42px] place-items-center text-white md:hidden">
               <Icon name="bell" className="size-[25px]" />
             </Link>
           ) : (
