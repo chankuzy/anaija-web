@@ -7,7 +7,7 @@ export function buttonClass(variant: Variant = "primary", extra = "") {
   const base =
     "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50";
   const styles: Record<Variant, string> = {
-    primary: "bg-accent text-white hover:bg-accent/90",
+    primary: "bg-white text-black hover:bg-white/90",
     outline: "border border-line text-fg hover:bg-card",
     ghost: "text-fg hover:bg-card",
   };

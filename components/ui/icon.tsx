@@ -30,5 +30,11 @@ export function Icon({
 }) {
   const Glyph = SOLAR[name][filled ? "bold" : "outline"];
   const extra = filled ? "" : WEIGHT[weight];
-  return <Glyph className={`${extra} ${className}`.trim()} size="1em" color="currentColor" aria-hidden="true" />;
+  // The wrapper owns the size (className), the glyph fills it. Sizing the glyph itself via size="1em"
+  // made every icon follow the parent's font-size and ignore size-* classes.
+  return (
+    <span className={`inline-flex shrink-0 items-center justify-center ${className}`.trim()} aria-hidden="true">
+      <Glyph className={`size-full ${extra}`.trim()} size="100%" color="currentColor" />
+    </span>
+  );
 }
