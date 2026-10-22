@@ -174,3 +174,22 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .notif-panel { animation: none; }
 }
+
+/* Login showcase: phones rise in, then float; glow pulses. Off under reduced motion. */
+@keyframes login-rise {
+  from { opacity: 0; translate: 0 28px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes login-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -12px; }
+}
+@keyframes login-glow {
+  0%, 100% { opacity: 0.55; scale: 1; }
+  50% { opacity: 0.9; scale: 1.12; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .login-rise { animation: login-rise 800ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .login-float { animation: login-float 6s ease-in-out infinite; }
+  .login-glow { animation: login-glow 7s ease-in-out infinite; }
+}

@@ -10,6 +10,7 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { needsProfileSetup } from "@/lib/auth/guards";
+import { Showcase } from "./showcase";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "500", display: "swap" });
 
@@ -71,65 +72,74 @@ export function GoogleLogin() {
       shape: "pill",
       size: "large",
       text: "continue_with",
-      width: 340,
+      width: 320,
     });
   }
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-black">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-bg md:grid md:grid-cols-[1.1fr_1fr]">
       <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={initGoogle} />
 
-      <img src="/brand/anaija_bg.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-      <div
-        className="absolute inset-0"
-        style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0.72) 45%, #000 80%)" }}
-      />
-
-      <div
-        className="relative mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-7"
-        style={{ paddingTop: "max(env(safe-area-inset-top), 16px)", paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
+      {/* showcase */}
+      <section
+        className="relative flex flex-none flex-col items-center justify-center px-6 md:min-h-dvh md:py-10"
+        style={{ paddingTop: "max(env(safe-area-inset-top), 12px)" }}
       >
-        <div className="flex-[3]" />
-
-        <img src="/brand/anaija_logo_master.svg" alt="Anaija" className="mx-auto h-[120px] w-auto" />
-
-        <h1
-          className={`${playfair.className} mt-[26px] text-center text-[30px] font-medium leading-[1.2] tracking-[-0.02em] text-fg`}
-        >
-          Where Entertainment Meets
-          <br />
-          Opportunity 🇳🇬
-        </h1>
-        <p className="mt-3.5 text-center text-supporting font-semibold tracking-[0.2em] text-white/50">
-          HUSTLE&nbsp;&nbsp;·&nbsp;&nbsp;FLEX&nbsp;&nbsp;·&nbsp;&nbsp;EARN
-        </p>
-
-        <div className="flex-[4]" />
-
-        <div className="flex flex-col items-center">
-          <div className="flex min-h-[44px] justify-center" aria-busy={busy}>
-            <div ref={btnRef} className={busy ? "pointer-events-none opacity-50" : ""} />
-          </div>
-
-          {busy && <p className="mt-3 text-sm text-white/60">Signing you in…</p>}
-          {error && (
-            <p role="alert" className="mt-3 text-center text-sm text-danger">
-              {error}
-            </p>
-          )}
-
-          <Link href="/" className="mt-4 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white">
-            Browse as guest
-          </Link>
-
-          <p className="mt-3.5 text-center text-supporting leading-normal text-white/45">
-            By continuing, you agree to our
-            <br />
-            <span className="text-white/80 underline decoration-white/35">Terms of Service</span> and{" "}
-            <span className="text-white/80 underline decoration-white/35">Privacy Policy</span>.
-          </p>
+        <div className="mb-6 hidden max-w-[480px] text-center md:block">
+          <h2 className={`${playfair.className} text-[44px] font-medium leading-[1.1] tracking-[-0.02em] text-fg`}>
+            Hustle. Flex. <span className="text-[#C8FA00]">Earn.</span>
+          </h2>
+          <p className="mt-3 text-[15px] leading-normal text-white/55">Reels, stories and a campus marketplace, all in one app.</p>
         </div>
-      </div>
+        <div className="w-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)] md:[mask-image:none]">
+          <Showcase />
+        </div>
+      </section>
+
+      {/* sign in */}
+      <section
+        className="relative z-10 flex flex-1 flex-col justify-end px-7 md:justify-center md:border-l md:border-white/8 md:bg-white/[0.02] md:px-12"
+        style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
+      >
+        <div className="mx-auto w-full max-w-[380px]">
+          <img src="/brand/anaija_logo_master.svg" alt="Anaija" className="mx-auto h-[84px] w-auto md:h-[96px]" />
+
+          <h1
+            className={`${playfair.className} mt-5 text-center text-[26px] font-medium leading-[1.2] tracking-[-0.02em] text-fg md:text-[28px]`}
+          >
+            Where Entertainment Meets
+            <br />
+            Opportunity 🇳🇬
+          </h1>
+          <p className="mt-3 text-center text-supporting font-semibold tracking-[0.2em] text-white/50 md:hidden">
+            HUSTLE&nbsp;&nbsp;·&nbsp;&nbsp;FLEX&nbsp;&nbsp;·&nbsp;&nbsp;EARN
+          </p>
+
+          <div className="mt-8 flex flex-col items-center">
+            <div className="flex min-h-[44px] justify-center" aria-busy={busy}>
+              <div ref={btnRef} className={busy ? "pointer-events-none opacity-50" : ""} />
+            </div>
+
+            {busy && <p className="mt-3 text-sm text-white/60">Signing you in…</p>}
+            {error && (
+              <p role="alert" className="mt-3 text-center text-sm text-danger">
+                {error}
+              </p>
+            )}
+
+            <Link href="/" className="mt-4 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white">
+              Browse as guest
+            </Link>
+
+            <p className="mt-3.5 text-center text-supporting leading-normal text-white/45">
+              By continuing, you agree to our
+              <br />
+              <span className="text-white/80 underline decoration-white/35">Terms of Service</span> and{" "}
+              <span className="text-white/80 underline decoration-white/35">Privacy Policy</span>.
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
