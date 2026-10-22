@@ -47,7 +47,7 @@ const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: 
     title: "No posts here yet",
     sub: "Be the first to share a moment on campus",
     cta: "Create Post",
-    href: "/create",
+    href: "/create/new",
   },
   following: {
     title: "No posts from accounts you follow",
@@ -59,7 +59,7 @@ const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: 
     title: "No campus posts yet",
     sub: "Connect with your institution to see stories and updates from classmates",
     cta: "Create Post",
-    href: "/create",
+    href: "/create/new",
   },
 };
 

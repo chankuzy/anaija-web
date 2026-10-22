@@ -27,7 +27,7 @@ type ListTab = "posts" | "reels" | "reposts" | "liked" | "saved";
 type TabId = ListTab | "info";
 
 // The plus on your own avatar (mobile) opens the composer with Story focused.
-const STORY_COMPOSER_HREF = "/create?mode=story";
+const STORY_COMPOSER_HREF = "/create/new?mode=story";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "posts", label: "Posts" },

@@ -21,7 +21,7 @@ type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mo
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
-  { href: "/create", label: "Create", icon: "plus", auth: true, mobile: "create" },
+  { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
   { href: "/messages", label: "Messages", icon: "message", auth: true, mobile: "tab" },
   { href: "/notifications", label: "Notifications", icon: "bell", auth: true },
   { href: "/me", label: "Profile", icon: "user", auth: true, mobile: "tab" },

@@ -53,7 +53,7 @@ export function StoriesTray({
               <Label>Your story</Label>
             </button>
           ) : (
-            <Link href="/create" className={BTN}>
+            <Link href="/create/new" className={BTN}>
               <RingFrame size={SIZE} ring={false}>
                 <Avatar url={me.avatar} name={myName} size={SIZE} />
               </RingFrame>
@@ -61,7 +61,7 @@ export function StoriesTray({
             </Link>
           )}
           <Link
-            href="/create"
+            href="/create/new"
             aria-label="Add to your story"
             className="absolute right-0 top-[42px] grid size-6 place-items-center rounded-full border-2 border-bg bg-white text-black"
           >

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -6,6 +7,7 @@ import { ActivityProvider } from "@/lib/activity/activity-context";
 import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
 import { PlaybackProvider } from "@/components/feed/playback-context";
 import { AppShell } from "@/components/shell/app-shell";
+import { UploadDock } from "@/components/create/upload-dock";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -29,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <NotificationsPanelProvider>
               <PlaybackProvider>
                 <AppShell>{children}</AppShell>
+                <Suspense fallback={null}><UploadDock /></Suspense>
               </PlaybackProvider>
             </NotificationsPanelProvider>
           </ActivityProvider>

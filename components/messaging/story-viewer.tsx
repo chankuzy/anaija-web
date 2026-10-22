@@ -175,8 +175,10 @@ export function StoryViewer({
     onPointerLeave: () => setPaused(false),
     onPointerCancel: () => setPaused(false),
   };
-  const tap = (fn: () => void) => () => {
-    if (Date.now() - holdAt.current < 220) fn();
+  const tap = (direction: "next" | "prev") => () => {
+    if (Date.now() - holdAt.current < 220) {
+      actions.current[direction]();
+    }
   };
 
   return (
@@ -184,8 +186,8 @@ export function StoryViewer({
       <button type="button" aria-label="Close" onClick={finish} className="absolute inset-0 cursor-default" />
       <div className="relative h-dvh w-full overflow-hidden bg-black md:h-[min(92dvh,860px)] md:w-[min(calc(92dvh*0.5625),480px)] md:rounded-[22px]">
         <Slide key={`${group.author.id}-${story.id}`} group={group} story={story} index={pos.s} paused={paused} onDone={next} />
-        <button type="button" aria-label="Previous" onClick={tap(prev)} {...hold} className="absolute inset-y-16 left-0 z-10 w-[35%]" />
-        <button type="button" aria-label="Next" onClick={tap(next)} {...hold} className="absolute inset-y-16 right-0 z-10 w-[65%]" />
+        <button type="button" aria-label="Previous" onClick={tap("prev")} {...hold} className="absolute inset-y-16 left-0 z-10 w-[35%]" />
+        <button type="button" aria-label="Next" onClick={tap("next")} {...hold} className="absolute inset-y-16 right-0 z-10 w-[65%]" />
         <button
           type="button"
           aria-label="Close"
