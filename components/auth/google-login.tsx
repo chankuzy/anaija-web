@@ -117,7 +117,7 @@ export function GoogleLogin() {
 
           <div className="mt-8 flex flex-col items-center">
             <div className="flex min-h-[44px] justify-center" aria-busy={busy}>
-              <div ref={btnRef} className={busy ? "pointer-events-none opacity-50" : ""} />
+              <div ref={btnRef} style={{ colorScheme: "light" }} className={busy ? "pointer-events-none opacity-50" : ""} />
             </div>
 
             {busy && <p className="mt-3 text-sm text-white/60">Signing you in…</p>}

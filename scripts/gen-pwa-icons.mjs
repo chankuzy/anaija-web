@@ -23,8 +23,10 @@ const hex = (h) => {
   const n = parseInt(m[1], 16);
   return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255, alpha: 1 };
 };
-const APPLE_BG = hex(process.env.APPLE_BG);
-const MASK_BG = hex(process.env.MASK_BG);
+const APPLE_BG = hex(process.env.APPLE_BG ?? "#0A0A0A");
+const MASK_BG = hex(process.env.MASK_BG ?? "#0A0A0A");
+const LAUNCH_BG = hex(process.env.LAUNCH_BG ?? "#0A0A0A");
+const FILL_LAUNCH = Number(process.env.FILL_LAUNCH ?? 0.72);
 
 const meta = await sharp(SRC).metadata();
 console.log(`source: ${SRC} (${meta.width}x${meta.height})`);
@@ -119,8 +121,8 @@ function ico(entries) {
   return Buffer.concat([head, ...dirs, ...entries.map((e) => e.buf)]);
 }
 
-await writeFile("public/icons/icon-192.png", await tile(192, FILL_ANY));
-await writeFile("public/icons/icon-512.png", await tile(512, FILL_ANY));
+await writeFile("public/icons/icon-192.png", await tile(192, FILL_LAUNCH, LAUNCH_BG));
+await writeFile("public/icons/icon-512.png", await tile(512, FILL_LAUNCH, LAUNCH_BG));
 await writeFile("public/icons/maskable-512.png", await tile(512, FILL_MASK, MASK_BG));
 await writeFile("app/apple-icon.png", await tile(180, FILL_APPLE, APPLE_BG));
 await writeFile("app/icon.png", await tile(192, FILL_ANY));
