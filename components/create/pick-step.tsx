@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { maxSelection } from "@/lib/create/types";
-import { KIND_TABS, type Composer } from "@/lib/create/use-composer";
+import type { Composer } from "@/lib/create/use-composer";
+import { KindSwitch } from "./kind-switch";
 import { RoundButton, WhitePill } from "./ui";
 
 type TypeFilter = "all" | "videos" | "photos";
@@ -29,7 +30,6 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
   const n = draft.media.length;
   const accept = kind === "listing" || filter === "photos" ? "image/*" : filter === "videos" ? "video/*" : "image/*,video/*";
   const totalVideo = draft.media.reduce((s, m) => s + (m.durationSeconds ?? 0), 0);
-  const kindIdx = Math.max(0, KIND_TABS.findIndex((k) => k.id === kind));
 
   useEffect(() => {
     const onPaste = (e: ClipboardEvent) => {
@@ -90,22 +90,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
 
       {/* kind switch */}
       <div className="px-3.5 pb-2 pt-1">
-        <div className="relative flex h-10 rounded-full bg-card p-[3px]">
-          <span
-            className="absolute inset-y-[3px] rounded-full bg-white transition-[left] duration-300 ease-out"
-            style={{ width: `calc((100% - 6px) / ${KIND_TABS.length})`, left: `calc(3px + ${kindIdx} * (100% - 6px) / ${KIND_TABS.length})` }}
-          />
-          {KIND_TABS.map((k) => (
-            <button
-              key={k.id}
-              type="button"
-              onClick={() => c.setKind(k.id)}
-              className={`relative z-10 flex-1 text-[13px] font-bold transition-colors duration-200 ${k.id === kind ? "text-black" : "text-muted"}`}
-            >
-              {k.label}
-            </button>
-          ))}
-        </div>
+        <KindSwitch kind={kind} onChange={c.setKind} />
       </div>
 
       {/* filter row */}

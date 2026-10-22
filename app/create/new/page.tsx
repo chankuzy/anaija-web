@@ -13,7 +13,8 @@ async function CreatePageContent({
   searchParams: Promise<{ mode?: string | string[] }>;
 }) {
   const { mode } = await searchParams;
-  const requested = Array.isArray(mode) ? mode[0] : mode;
+  const raw = Array.isArray(mode) ? mode[0] : mode;
+  const requested = raw === "post" ? "reel" : raw; // legacy links
   const initialKind = KINDS.find((kind) => kind === requested) ?? "reel";
 
   return <Composer key={initialKind} initialKind={initialKind} />;
@@ -25,7 +26,7 @@ export default function CreateNewPage({
   searchParams: Promise<{ mode?: string | string[] }>;
 }) {
   return (
-    <Suspense fallback={<div className="fixed inset-0 bg-bg" />}>
+    <Suspense fallback={<div className="fixed inset-0 bg-bg md:static md:h-dvh md:bg-transparent" />}>
       <CreatePageContent searchParams={searchParams} />
     </Suspense>
   );

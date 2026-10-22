@@ -98,7 +98,14 @@ function Label({ children }: { children: React.ReactNode }) {
   return <p className="mb-2.5 mt-6 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{children}</p>;
 }
 
-export function CreateView({ initialKind = "post" }: { initialKind?: Kind }) {
+export function CreateView({
+  initialKind = "post",
+  embedded,
+}: {
+  initialKind?: Kind;
+  /** Set when hosted inside the unified composer: the composer owns close + kind switching. */
+  embedded?: { onClose: () => void; switcher: (disabled: boolean) => React.ReactNode };
+}) {
   const router = useRouter();
   const { status } = useAuth();
   const [kind, setKind] = useState<Kind>(initialKind);
@@ -285,19 +292,22 @@ export function CreateView({ initialKind = "post" }: { initialKind?: Kind }) {
 
   return (
     <div className="mx-auto w-full max-w-[640px] pb-4">
-      <header className="sticky top-0 z-20 bg-bg px-4 pb-2" style={{ paddingTop: "calc(10px + env(safe-area-inset-top))" }}>
+      <header className="sticky top-0 z-20 bg-bg px-4 pb-2" style={{ paddingTop: embedded ? 10 : "calc(10px + env(safe-area-inset-top))" }}>
         <div className="flex items-center gap-2 py-1.5">
           <button
             type="button"
             aria-label="Back"
             disabled={busy}
-            onClick={() => (window.history.length > 1 ? router.back() : router.replace("/"))}
+            onClick={() => (embedded ? embedded.onClose() : window.history.length > 1 ? router.back() : router.replace("/"))}
             className="grid size-10 place-items-center rounded-full text-fg disabled:opacity-50"
           >
             <Icon name="back" className="size-5" />
           </button>
-          <h1 className="flex-1 text-[22px] font-bold tracking-tight text-fg">Create</h1>
+          <h1 className="flex-1 text-[22px] font-bold tracking-tight text-fg">{embedded ? "New listing" : "Create"}</h1>
         </div>
+        {embedded ? (
+          <div className="mt-1">{embedded.switcher(busy)}</div>
+        ) : (
         <div className="mt-1 flex gap-0.5 rounded-full border border-white/10 bg-white/5 p-[3px]">
           {KINDS.map((k) => (
             <button
@@ -313,6 +323,7 @@ export function CreateView({ initialKind = "post" }: { initialKind?: Kind }) {
             </button>
           ))}
         </div>
+        )}
       </header>
 
       <div className="px-4">
@@ -490,7 +501,7 @@ export function CreateView({ initialKind = "post" }: { initialKind?: Kind }) {
 
       <div
         className="sticky z-30 mt-8 border-t border-line/60 bg-bg/80 px-4 py-3.5 backdrop-blur-xl"
-        style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
+        style={{ bottom: embedded ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
       >
         {busy && stage === "uploading" && (
           <div className="mb-2.5 h-1 overflow-hidden rounded bg-white/10">

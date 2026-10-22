@@ -7,15 +7,17 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { deleteDraft, saveDraft as persistDraft } from "./drafts-store";
 import { FULL_CROP, exportEdited, isFullCrop, readImageSize, type Crop } from "./image-pipeline";
 import { MediaLimits, checkVideo, tooLargeMessage } from "./limits";
+import { LISTING_DEFAULTS, listingError } from "./listing";
 import { IMAGE_FILTERS } from "./presets";
 import { createDraft, maxSelection, type ContentDraft, type ContentKind, type DraftMedia } from "./types";
 import { uploadManager } from "./upload-manager";
 import { grabFrame, posterTimeSec, probeVideo } from "./video";
 
-/** Listing joins this list once its details sheet exists. */
+/** Listing shares the media steps; its fields are collected in the publish step. */
 export const KIND_TABS: { id: ContentKind; label: string }[] = [
   { id: "reel", label: "Reel" },
   { id: "story", label: "Story" },
+  { id: "listing", label: "Listing" },
 ];
 
 export interface EditState {
@@ -35,7 +37,7 @@ export interface ToastMsg {
 
 export function useComposer(initialKind: ContentKind) {
   const { user } = useAuth();
-  const [draft, setDraft] = useState<ContentDraft>(() => createDraft(initialKind));
+  const [draft, setDraft] = useState<ContentDraft>(() => ({ ...createDraft(initialKind), ...(initialKind === "listing" ? LISTING_DEFAULTS : {}) }));
   const draftRef = useRef(draft);
   const [edits, setEdits] = useState<Record<string, EditState>>({});
   const editsRef = useRef(edits);
@@ -114,12 +116,24 @@ export function useComposer(initialKind: ContentKind) {
     [apply],
   );
 
+  /** Switching kind keeps the selection (and its edits); only what the new kind can't hold is dropped. */
   const setKind = useCallback(
     (kind: ContentKind) => {
-      if (kind === draftRef.current.kind) return;
-      draftRef.current.media.forEach((m) => dropPreview(m.id));
-      putEdits(() => ({}));
-      apply((d) => ({ ...d, kind, media: [], slideshow: { ...d.slideshow, enabled: false } }));
+      const d = draftRef.current;
+      if (kind === d.kind) return;
+      const keep = d.media.filter((m) => kind !== "listing" || m.type === "image").slice(0, maxSelection(kind));
+      const keepIds = new Set(keep.map((m) => m.id));
+      d.media.forEach((m) => {
+        if (!keepIds.has(m.id)) dropPreview(m.id);
+      });
+      putEdits((e) => Object.fromEntries(Object.entries(e).filter(([id]) => keepIds.has(id))));
+      apply((x) => ({
+        ...x,
+        kind,
+        media: keep,
+        ...(kind === "listing" && x.listingType === null ? LISTING_DEFAULTS : {}),
+        slideshow: { ...x.slideshow, enabled: kind === "reel" ? x.slideshow.enabled : false },
+      }));
     },
     [apply, dropPreview, putEdits],
   );
@@ -243,6 +257,11 @@ export function useComposer(initialKind: ContentKind) {
     if (busy) return false;
     if (!d.media.length) {
       flash("err", "Add at least one photo or video");
+      return false;
+    }
+    const invalid = listingError(d);
+    if (invalid) {
+      flash("err", invalid);
       return false;
     }
     for (const m of d.media) {
