@@ -238,7 +238,7 @@ export function FeedCard({
         <article className="feed-card relative overflow-hidden bg-black" onDoubleClick={onDoubleClick}>
           <PostMedia post={post} active={active} near={near} paused={open || optionsOpen || commentsOpen} />
 
-          <div className="fade-bottom pointer-events-none absolute inset-x-0 bottom-0 h-80" />
+          <div className="fade-bottom pointer-events-none absolute inset-x-0 bottom-0 h-80 xl:hidden" />
 
           {burst && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -254,7 +254,7 @@ export function FeedCard({
             aria-label="Close caption"
             tabIndex={open ? 0 : -1}
             onClick={() => setExpanded(false)}
-            className={`absolute inset-0 bg-black/60 transition-opacity duration-200 ${
+            className={`absolute inset-0 bg-black/60 transition-opacity duration-200 xl:hidden ${
               open ? "opacity-100" : "pointer-events-none opacity-0"
             }`}
           />
@@ -267,7 +267,7 @@ export function FeedCard({
           </div>
 
           <div
-            className={`absolute left-4 transition-[right] duration-200 ${open ? "right-4" : "right-[76px] md:right-4"}`}
+            className={`absolute left-4 transition-[right] duration-200 xl:hidden ${open ? "right-4" : "right-[76px] md:right-4"}`}
             style={{ bottom: `calc(20px + var(--nav-h) + ${NAV_LIFT})` }}
           >
             <PostInfo
@@ -286,6 +286,16 @@ export function FeedCard({
             </div>
           )}
         </article>
+        <div className="absolute bottom-9 right-full mr-5 hidden w-[280px] xl:block">
+          <PostInfo
+            post={post}
+            expanded={open}
+            onExpandedChange={setExpanded}
+            isOwn={isOwn}
+            following={following}
+            onFollow={follow}
+          />
+        </div>
         <div className="absolute bottom-9 left-full ml-3 hidden md:block">{rail(true)}</div>
         </div>
       </section>

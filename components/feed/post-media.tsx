@@ -3,7 +3,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
-import { MULTI_MIN, MultiBadge } from "@/components/ui/multi-badge";
 import type { FeedMedia, Post, PostAudio } from "@/lib/api/feed-types";
 import { usePlayback } from "./playback-context";
 
@@ -13,7 +12,7 @@ const cssColor = (c: string | null) => (!c ? "#0a0a0a" : /^[0-9a-f]{6}$/i.test(c
 
 function Dots({ count, index }: { count: number; index: number }) {
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 flex justify-center gap-1">
+    <div className="pointer-events-none absolute inset-x-0 top-[58px] z-10 xl:top-3 flex justify-center gap-1">
       {Array.from({ length: count }, (_, i) => (
         <span
           key={i}
@@ -290,7 +289,6 @@ export function PostMedia({
   return (
     <>
       {body}
-      {images.length >= MULTI_MIN && <MultiBadge className="right-3 top-[60px]" />}
       {audio && near && <PostAudioPlayer audio={audio} active={active} />}
     </>
   );

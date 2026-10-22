@@ -7,6 +7,7 @@ import { ActivityProvider } from "@/lib/activity/activity-context";
 import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
 import { PlaybackProvider } from "@/components/feed/playback-context";
 import { AppShell } from "@/components/shell/app-shell";
+import { NotificationPill } from "@/components/shell/notification-pill";
 import { UploadDock } from "@/components/create/upload-dock";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PwaRegister } from "@/components/pwa/pwa-register";
@@ -46,6 +47,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <NotificationsPanelProvider>
               <PlaybackProvider>
                 <AppShell>{children}</AppShell>
+                <Suspense fallback={null}><NotificationPill /></Suspense>
                 <Suspense fallback={null}><UploadDock /></Suspense>
                 <PwaRegister />
                 <Suspense fallback={null}><InstallPrompt /></Suspense>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import type { FeedScope } from "@/lib/api/feed-types";
+import { useActivity } from "@/lib/activity/activity-context";
 
 const OPTIONS: { value: FeedScope; label: string; sub: string }[] = [
   { value: "for_you", label: "For You", sub: "Picked for you" },
@@ -21,12 +22,13 @@ export function FeedTopBar({
   onScope: (s: FeedScope) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { unseen } = useActivity();
   const current = OPTIONS.find((o) => o.value === scope) ?? OPTIONS[0];
 
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center">
       <div
-        className="feed-col fade-top pointer-events-auto relative px-4 pb-3"
+        className="feed-col fade-top pointer-events-auto relative px-4 pb-3 xl:bg-none!"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 6px)" }}
       >
         <div className="hidden h-3 md:block" />
@@ -36,19 +38,32 @@ export function FeedTopBar({
               type="button"
               onClick={() => setOpen((o) => !o)}
               aria-expanded={open}
-              className="text-shadow flex items-center gap-1.5 rounded-full bg-black/35 py-2 pl-4 pr-3 text-[15px] font-bold text-white backdrop-blur-md"
+              className="text-shadow flex w-max items-center gap-1.5 whitespace-nowrap rounded-full bg-black/35 py-2 pl-4 pr-3 text-[15px] font-bold text-white backdrop-blur-md xl:absolute xl:right-full xl:top-0 xl:mr-9"
             >
               {current.label}
               <Icon name="chevronDown" className="size-4" />
             </button>
           ) : (
-            <span className="text-shadow text-[17px] font-bold text-white">For You</span>
+            <span className="text-shadow text-[17px] font-bold text-white xl:absolute xl:right-full xl:top-2 xl:mr-9">For You</span>
           )}
 
           {authed ? (
-            <Link href="/notifications" aria-label="Notifications" className="icon-shadow grid size-[42px] place-items-center text-white md:hidden">
-              <Icon name="bell" className="size-[25px]" />
-            </Link>
+            unseen > 0 ? (
+              <Link
+                href="/notifications"
+                aria-label={`${unseen} unread notifications`}
+                className="text-shadow flex w-max items-center gap-2 whitespace-nowrap rounded-full bg-black/35 py-1.5 pl-3 pr-1.5 text-white backdrop-blur-md transition active:scale-95"
+              >
+                <Icon name="bell" filled className="size-[22px]" />
+                <span className="grid h-[24px] min-w-[24px] place-items-center rounded-full bg-danger px-1.5 text-[12px] font-bold leading-none text-white">
+                  {unseen > 99 ? "99+" : unseen}
+                </span>
+              </Link>
+            ) : (
+              <Link href="/notifications" aria-label="Notifications" className="icon-shadow grid size-[42px] place-items-center text-white md:hidden">
+                <Icon name="bell" className="size-[25px]" />
+              </Link>
+            )
           ) : (
             <Link href="/login" className="rounded-full bg-white px-[18px] py-[9px] text-body font-bold text-black">
               Sign in
@@ -58,7 +73,7 @@ export function FeedTopBar({
           {open && (
             <>
               <button type="button" aria-label="Close menu" className="fixed inset-0 z-40 cursor-default" onClick={() => setOpen(false)} />
-              <div className="glass absolute left-0 top-full z-50 mt-2 w-60 rounded-card p-1.5">
+              <div className="glass absolute left-0 top-full z-50 mt-2 w-60 rounded-card p-1.5 xl:left-auto xl:right-full xl:mr-9">
                 {OPTIONS.map((o) => (
                   <button
                     key={o.value}

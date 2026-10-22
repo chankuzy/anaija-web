@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { FollowPill } from "@/components/ui/follow-pill";
 import { Icon } from "@/components/ui/icon";
+import { MULTI_MIN, MultiBadge } from "@/components/ui/multi-badge";
 import { timeAgo } from "@/lib/format";
 import type { Post } from "@/lib/api/feed-types";
 
@@ -116,6 +117,19 @@ function FollowSlot({ following, onFollow }: { following: boolean; onFollow: () 
   );
 }
 
+const IMAGE_TYPES = ["image", "photo", "picture"];
+const imageCount = (post: Post) =>
+  post.media.filter((m) => IMAGE_TYPES.includes((m.type ?? "").toLowerCase())).length;
+
+// Multi-image marker that lives beside the caption instead of on the media.
+function MultiMark() {
+  return (
+    <span className="relative mt-px inline-grid size-[22px] shrink-0 place-items-center" title="Multiple images">
+      <MultiBadge className="inset-0" />
+    </span>
+  );
+}
+
 export function PostInfo({
   post,
   expanded,
@@ -135,6 +149,7 @@ export function PostInfo({
   const d = post.listing;
   const caption = fullCaption(post.caption, post.hashtags);
   const music = (post.audio?.name ?? "").trim();
+  const multi = !post.media.some((m) => (m.type ?? "").toLowerCase() === "video") && imageCount(post) >= MULTI_MIN;
   const profileHref = a?.username ? `/u/${a.username}` : null;
 
   const who = (
@@ -181,15 +196,18 @@ export function PostInfo({
         {a && !isOwn && <FollowSlot following={following} onFollow={onFollow} />}
       </div>
 
-      {caption && (
-        <div className="mt-2 w-full">
-          <Caption text={caption} expanded={expanded} onExpandedChange={onExpandedChange} />
+      {(caption || multi) && (
+        <div className="mt-2 flex w-full items-start gap-2">
+          <div className="min-w-0 flex-1">
+            {caption && <Caption text={caption} expanded={expanded} onExpandedChange={onExpandedChange} />}
+          </div>
+          {multi && <MultiMark />}
         </div>
       )}
 
-      {music && !expanded && (
-        <span className="mt-2 inline-flex max-w-full items-center gap-1.5 rounded-2xl border border-white/10 bg-black/35 px-[11px] py-1 text-supporting font-medium text-white">
-          <Icon name="music" className="size-3 shrink-0" />
+      {music && (
+        <span className="text-shadow mt-2 inline-flex max-w-full items-center gap-1.5 text-supporting font-semibold text-white/90">
+          <Icon name="music" className="size-4 shrink-0" />
           <span className="truncate">{music}</span>
         </span>
       )}

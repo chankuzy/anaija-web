@@ -19,6 +19,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { useMessages } from "./messages-context";
 import { RingAvatar } from "./ring-avatar";
 import { ConversationDetails } from "./conversation-details";
+import { SharedPostCard } from "./shared-post-card";
 
 const QUICK = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const GAP_MS = 15 * 60 * 1000;
@@ -50,26 +51,6 @@ function SendGlyph() {
     <svg viewBox="0 0 24 24" className="size-[18px]" fill="currentColor" aria-hidden="true">
       <path d="M3.4 20.4 21 12 3.4 3.6l-.01 6.5L15 12 3.39 13.9z" />
     </svg>
-  );
-}
-
-function Shared({ m }: { m: Message }) {
-  const p = m.shared_post;
-  if (!p) return null;
-  if (p.unavailable) {
-    return <div className="mb-1 w-52 rounded-2xl border border-line bg-card p-4 text-secondary text-muted">This post is unavailable</div>;
-  }
-  return (
-    <div className="relative mb-1 h-64 w-52 overflow-hidden rounded-2xl border border-line bg-card">
-      {p.image && <img src={p.image} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}
-      <span className="fade-bottom pointer-events-none absolute inset-x-0 bottom-0 h-24" />
-      {p.price && (
-        <span className="absolute left-2 top-2 rounded-full bg-white px-2.5 py-1 text-supporting font-extrabold text-black">₦{p.price}</span>
-      )}
-      <span className="text-shadow absolute inset-x-3 bottom-3 truncate text-secondary font-bold text-white">
-        {p.caption ?? (p.author ? `@${p.author}` : "")}
-      </span>
-    </div>
   );
 }
 
@@ -144,7 +125,7 @@ function Bubble({
             ↪ {m.reply_to.body ?? "Message"}
           </span>
         )}
-        <Shared m={m} />
+        {m.shared_post && <SharedPostCard post={m.shared_post} />}
         <Media m={m} />
         {showText && (
           <span

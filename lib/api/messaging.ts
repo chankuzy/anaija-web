@@ -30,8 +30,15 @@ export interface SharedPost {
   caption: string | null;
   image: string | null;
   author: string | null;
+  author_name: string | null;
+  author_avatar: string | null;
+  author_verified: boolean;
   price: string | null;
   is_video: boolean;
+  // Number of images when the post is a multi-image post; 0 for video or when the payload does not say.
+  image_count: number;
+  // Seconds, videos only.
+  duration: number | null;
   unavailable: boolean;
 }
 
@@ -87,14 +94,23 @@ function parseShared(raw: unknown): SharedPost | null {
   const r = rec(raw);
   if (typeof r.id !== "number") return null;
   const a = rec(r.author);
+  const media = Array.isArray(r.media) ? r.media : [];
+  const hasVideoMedia = media.some((m) => (str(rec(m).type) ?? "").toLowerCase() === "video");
+  const isVideo = r.is_video === true || hasVideoMedia || !!str(r.video_url);
+  const duration = num(r.duration);
   return {
     id: r.id,
     type: str(r.type) ?? "post",
     caption: str(r.caption),
-    image: mediaUrl(str(r.image) ?? str(r.thumbnail)),
+    image: mediaUrl(str(r.image) ?? str(r.thumbnail) ?? str(r.thumbnail_url)),
     author: str(a.username),
+    author_name: str(a.name),
+    author_avatar: mediaUrl(str(a.avatar)),
+    author_verified: a.is_verified === true || a.campus_verified === true,
     price: str(rec(r.listing).formatted_price),
-    is_video: r.is_video === true,
+    is_video: isVideo,
+    image_count: isVideo ? 0 : Math.max(num(r.image_count), num(r.media_count), media.length),
+    duration: isVideo && duration > 0 ? duration : null,
     unavailable: r.unavailable === true,
   };
 }
