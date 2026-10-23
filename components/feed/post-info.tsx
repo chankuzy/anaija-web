@@ -1,12 +1,15 @@
 "use client";
 
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Avatar } from "@/components/ui/avatar";
+import { StoryRingAvatar } from "@/components/profile/story-ring-avatar";
 import { FollowPill } from "@/components/ui/follow-pill";
 import { Icon } from "@/components/ui/icon";
 import { MULTI_MIN, MultiBadge } from "@/components/ui/multi-badge";
+import { useAuth } from "@/lib/auth/auth-context";
 import { timeAgo } from "@/lib/format";
+import { useStoryRing } from "@/lib/stories/use-story-ring";
 import type { Post } from "@/lib/api/feed-types";
 
 // Port of PostInfoBlock._fullText: hashtags not already in the caption get appended.
@@ -147,6 +150,8 @@ export function PostInfo({
 }) {
   const a = post.author;
   const d = post.listing;
+  const { status } = useAuth();
+  const ring = useStoryRing(a?.id, status === "authed" && !!a);
   const caption = fullCaption(post.caption, post.hashtags);
   const music = (post.audio?.name ?? "").trim();
   const multi = !post.media.some((m) => (m.type ?? "").toLowerCase() === "video") && imageCount(post) >= MULTI_MIN;
@@ -154,9 +159,9 @@ export function PostInfo({
 
   const who = (
     <>
-      <span className="rounded-full border border-white/80 p-px">
-        <Avatar url={a?.avatar} name={a?.name ?? a?.username} size={34} />
-      </span>
+      <ProfileHoverCard username={a?.username}>
+        <StoryRingAvatar url={a?.avatar} name={a?.name ?? a?.username} size={38} ring={ring} />
+      </ProfileHoverCard>
       <span className="min-w-0">
         <span className="text-shadow block truncate text-[15px] font-bold text-white">{a?.username ?? ""}</span>
         <span className="block text-supporting text-white/70">{timeAgo(post.created_at)}</span>

@@ -1,4 +1,5 @@
 "use client";
+import { ActivitySkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -15,6 +16,9 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { toggleFollow } from "@/lib/feed/follow-store";
 import { timeAgo } from "@/lib/format";
 import { usePaged, type Page } from "@/lib/paged/use-paged";
+import { StoryViewer } from "@/components/messaging/story-viewer";
+import { resolveTarget, type Target } from "@/lib/activity/route";
+import { storiesApi, type StoryGroup } from "@/lib/api/stories";
 
 const FILTERS: { id: ActivityFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -230,6 +234,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
   const [filter, setFilter] = useState<ActivityFilter>("all");
   const [unread, setUnread] = useState(0);
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; start: number } | null>(null);
+  const [storyView, setStoryView] = useState<{ groups: StoryGroup[]; storyId: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -307,50 +312,44 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     void activityApi.read(it.id).catch(() => {});
   }
 
-  async function go(d: ActivityDest) {
-    switch (d.kind) {
-      case "post":
-      case "comment": // TODO: highlight the comment (needs a ?comment= param on /p/[id])
-        if (d.post_id) return push(`/p/${d.post_id}`);
-        break;
-      case "listing":
-        if (d.post_id) return push(`/listing/${d.post_id}`);
-        break;
-      case "profile":
-        if (d.username) return push(`/u/${d.username}`);
-        break;
-      case "followers":
-        if (user?.username) return push(`/u/${user.username}/followers`);
-        break;
+  async function openStory(id: number) {
+    try {
+      const groups = await storiesApi.list();
+      const own = user ? groups.find((g) => g.author.id === user.id) : undefined;
+      if (!own || !own.stories.some((s) => s.id === id)) return flash("This story has expired");
+      setStoryView({ groups: [own], storyId: id });
+    } catch {
+      flash("Couldn't open that story");
+    }
+  }
+
+  async function run(t: Target): Promise<void> {
+    switch (t.type) {
+      case "url":
+        return push(t.url);
       case "conversation":
-        if (d.conversation_id) return push(`/messages/${d.conversation_id}`);
-        break;
-      case "chats":
-        return push("/messages");
+        return push(`/messages/${t.id}`);
       case "posts_list":
-        if (d.item_id) {
-          try {
-            const posts = await activityApi.targets(d.item_id);
-            if (posts.length === 0) return flash("Those posts aren't available anymore");
-            setViewer({ items: posts.map(toItem), start: 0 });
-          } catch {
-            flash("Couldn't open that");
-          }
-          return;
+        try {
+          const posts = await activityApi.targets(t.itemId);
+          if (posts.length === 0) return flash("Those posts aren't available anymore");
+          setViewer({ items: posts.map(toItem), start: 0 });
+        } catch {
+          flash("Couldn't open that");
         }
-        break;
+        return;
       case "story":
-      case "story_summary":
-        return flash("Stories aren't on web yet");
+        return openStory(t.storyId);
+      case "toast":
+        return flash(t.message);
       case "none":
         return;
     }
-    flash("Can't open this on web yet");
   }
 
   function open(it: ActivityItem, d: ActivityDest) {
     markRead(it);
-    void go(d);
+    void run(resolveTarget(it, d, user?.username));
   }
 
   async function followBack(it: ActivityItem) {
@@ -377,7 +376,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
 
   let body: React.ReactNode;
   if (status !== "authed" || (list.loading && !list.data)) {
-    body = <p className="py-24 text-center text-sm text-muted">Loading…</p>;
+    body = <ActivitySkeleton />;
   } else if (list.data?.error && items.length === 0) {
     body = (
       <div className="py-24 text-center">
@@ -407,7 +406,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
               markRead(it);
               const a = it.actors[0];
               if (a?.username) push(`/u/${a.username}`);
-              else void go(it.destination);
+              else void run(resolveTarget(it, it.destination, user?.username));
             }}
             onFollowBack={() => void followBack(it)}
             onDismiss={() => dismiss(it)}
@@ -418,7 +417,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
           />
         ))}
         <div ref={sentinel} className="h-px" />
-        {loadingMore && <p className="py-4 text-center text-sm text-muted">Loading…</p>}
+        {loadingMore && <ActivitySkeleton count={2} />}
       </>
     );
   }
@@ -471,6 +470,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
         </div>
       )}
       {viewer && <PostViewer items={viewer.items} startIndex={viewer.start} onClose={() => setViewer(null)} onPatch={() => {}} onRemove={() => {}} />}
+      {storyView && <StoryViewer groups={storyView.groups} start={0} startStoryId={storyView.storyId} myId={user?.id} onClose={() => setStoryView(null)} />}
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { ListingSkeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ListingView } from "@/components/listing/listing-view";
@@ -12,7 +13,7 @@ async function Inner({ params }: { params: Promise<{ id: string }> }) {
 
 export default function ListingPage({ params }: { params: Promise<{ id: string }> }) {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<ListingSkeleton />}>
       <Inner params={params} />
     </Suspense>
   );

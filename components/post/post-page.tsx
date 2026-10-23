@@ -1,7 +1,8 @@
 "use client";
+import { FeedSkeleton } from "@/components/feed/feed-states";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FeedCard } from "@/components/feed/feed-card";
 import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
@@ -18,6 +19,9 @@ interface Data {
 // Target of share links (/p/{id}). Same card as the feed, full screen. posts-show needs a signed-in user.
 export function PostPage({ id }: { id: string }) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const cParam = Number(sp.get("comment"));
+  const focus = Number.isInteger(cParam) && cParam > 0 ? cParam : undefined;
   const { status } = useAuth();
   const authed = status === "authed";
   const n = Number(id);
@@ -57,9 +61,9 @@ export function PostPage({ id }: { id: string }) {
   } else if (cur && !cur.post) {
     content = <Msg title="Couldn't load this post" sub="Check your connection and try again." />;
   } else if (cur?.post) {
-    content = <FeedCard post={cur.post} index={0} active near onActivate={noop} patch={patch} onRemove={gone} />;
+    content = <FeedCard key={`${cur.post.id}:${focus ?? ""}`} post={cur.post} index={0} active near commentFocus={focus} onActivate={noop} patch={patch} onRemove={gone} />;
   } else {
-    content = <div className="grid h-dvh place-items-center text-sm text-white/60">Loading…</div>;
+    content = <FeedSkeleton />;
   }
 
   return (

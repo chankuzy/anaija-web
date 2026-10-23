@@ -1,4 +1,5 @@
 "use client";
+import { UserRowsSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
@@ -64,7 +65,7 @@ export function BlockedView() {
       </div>
     );
   } else if (users === null) {
-    body = <p className="py-16 text-center text-body text-muted">Loading…</p>;
+    body = <UserRowsSkeleton />;
   } else if (users.length === 0) {
     body = (
       <div className="py-16 text-center">

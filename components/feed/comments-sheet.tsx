@@ -1,4 +1,6 @@
 "use client";
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
+import { CommentsSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -41,8 +43,8 @@ function Row({
   const who = <span className={`font-bold text-fg ${small ? "text-secondary" : "text-secondary"}`}>{c.author.username}</span>;
   const act = "text-supporting font-semibold text-muted";
   return (
-    <div className={`flex gap-2.5 py-2 ${small ? "pl-[58px] pr-4" : "px-4"} ${c.pending ? "opacity-70" : ""}`}>
-      <Avatar url={c.author.avatar} name={c.author.name ?? c.author.username} size={small ? 26 : 36} />
+    <div data-comment-id={c.id} className={`flex gap-2.5 py-2 ${small ? "pl-[58px] pr-4" : "px-4"} ${c.pending ? "opacity-70" : ""}`}>
+      <ProfileHoverCard username={c.author.username}><Avatar url={c.author.avatar} name={c.author.name ?? c.author.username} size={small ? 26 : 36} /></ProfileHoverCard>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           {href ? <Link href={href}>{who}</Link> : who}
@@ -72,11 +74,13 @@ function Row({
 
 export function CommentsSheet({
   postId,
+  focusId,
   initialCount,
   onCountChange,
   onClose,
 }: {
   postId: number;
+  focusId?: number;
   initialCount: number;
   onCountChange: (n: number) => void;
   onClose: () => void;
@@ -130,6 +134,63 @@ export function CommentsSheet({
     setTop((t) => ({ ...t, items: t.items.map((c) => (c.id === id ? fn(c) : c)) }));
   const setThread = (pid: number, fn: (t: Thread) => Thread) =>
     setThreads((m) => ({ ...m, [pid]: fn(m[pid] ?? EMPTY_THREAD) }));
+
+  // Opened from a notification: find that comment (first page, then replies, then a few more pages),
+  // expand its thread when it's a reply, and say so if it's gone.
+  const searched = useRef(false);
+  useEffect(() => {
+    if (focusId === undefined || top.loading || top.error || searched.current) return;
+    searched.current = true;
+    let items = top.items;
+    let cursor = top.cursor;
+    let more = top.hasMore;
+    const checked = new Set<number>();
+    void (async () => {
+      for (let round = 0; round < 4; round++) {
+        if (items.some((c) => c.id === focusId)) return;
+        const batch = items.filter((c) => c.replies_count > 0 && !checked.has(c.id)).slice(0, 12);
+        batch.forEach((c) => checked.add(c.id));
+        const found = await Promise.all(
+          batch.map((c) => commentsApi.replies(c.id, null).then((r) => ({ c, r })).catch(() => null)),
+        );
+        for (const x of found) {
+          if (x && (x.r.data ?? []).some((rep) => rep.id === focusId)) {
+            const rows = x.r.data ?? [];
+            const next = x.r.next_cursor ?? null;
+            const hasMore = !!x.r.has_more;
+            setThread(x.c.id, (t) => ({ ...t, items: merge(t.items, rows), cursor: next, hasMore, loaded: true, loading: false, expanded: true }));
+            return;
+          }
+        }
+        if (!more || !cursor) break;
+        try {
+          const r = await commentsApi.list(postId, cursor);
+          const add = r.data ?? [];
+          const nextCursor = r.next_cursor ?? null;
+          const nextMore = !!r.has_more;
+          items = merge(items, add);
+          cursor = nextCursor;
+          more = nextMore;
+          setTop((t) => ({ ...t, items: merge(t.items, add), cursor: nextCursor, hasMore: nextMore }));
+        } catch {
+          break;
+        }
+      }
+      if (!items.some((c) => c.id === focusId)) flash("That comment isn't available anymore");
+    })();
+  }, [focusId, top.loading, top.error, top.items, top.cursor, top.hasMore, postId]);
+
+  // Once the row is on screen, scroll to it and fade a flat tint over it.
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (focusId === undefined || scrolled.current) return;
+    const el = listRef.current?.querySelector<HTMLElement>(`[data-comment-id="${focusId}"]`);
+    if (!el) return;
+    scrolled.current = true;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.classList.add("comment-flash");
+    el.addEventListener("animationend", () => el.classList.remove("comment-flash"), { once: true });
+  }, [focusId, top.items, threads]);
 
   async function loadMore() {
     if (top.more || !top.hasMore || !top.cursor) return;
@@ -278,7 +339,7 @@ export function CommentsSheet({
 
         <div ref={listRef} className="no-scrollbar flex-1 overflow-y-auto py-2">
           {top.loading ? (
-            <p className="py-16 text-center text-sm text-muted">Loading…</p>
+            <CommentsSkeleton />
           ) : top.error ? (
             <p className="px-6 py-16 text-center text-sm text-muted">{top.error}</p>
           ) : top.items.length === 0 ? (
@@ -321,7 +382,7 @@ export function CommentsSheet({
                       ) : (
                         <>
                           {th.loading ? (
-                            <span className={linkBtn}>Loading…</span>
+                            <span role="status" aria-label="Loading replies" className="sk-block ml-9 mt-1 inline-block h-3 w-28 rounded-full align-middle" />
                           ) : (
                             th.hasMore && (
                               <button type="button" onClick={() => void loadThread(c.id, th.cursor)} className={linkBtn}>
@@ -343,7 +404,7 @@ export function CommentsSheet({
           {top.hasMore && !top.loading && (
             <div className="grid place-items-center py-3">
               <button type="button" onClick={() => void loadMore()} disabled={top.more} className="text-secondary font-semibold text-muted disabled:opacity-60">
-                {top.more ? "Loading…" : "Load more comments"}
+                {top.more ? <span role="status" aria-label="Loading comments" className="sk-block inline-block h-3 w-28 rounded-full align-middle" /> : "Load more comments"}
               </button>
             </div>
           )}

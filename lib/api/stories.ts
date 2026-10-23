@@ -16,6 +16,8 @@ export interface StoryItem {
   caption: string | null;
   seen: boolean;
   created_at: string;
+  likes_count: number;
+  is_liked: boolean;
   media: StoryMedia[];
 }
 export interface StoryAuthor {
@@ -51,6 +53,8 @@ function parseStory(raw: unknown): StoryItem | null {
     caption: str(r.caption),
     seen: bool(r.seen),
     created_at: str(r.created_at) ?? "",
+    likes_count: typeof r.likes_count === "number" ? r.likes_count : 0,
+    is_liked: r.is_liked === true,
     media: (Array.isArray(r.media) ? r.media : []).map(parseMedia).filter((m): m is StoryMedia => m !== null),
   };
 }
@@ -94,4 +98,10 @@ export const storiesApi = {
       .filter((g): g is StoryGroup => g !== null);
   },
   view: (id: number) => api.post<unknown>(`stories-view/${id}`, {}),
+  // Stories have no comments server-side; replying lands in the author's DMs (stories-reply).
+  reply: (id: number, message: string) =>
+    api.post<{ conversation_id: number; message_id: number }>(`stories-reply/${id}`, { message }),
+  // Story reshare: copies someone's live story into your own story (same files, nothing re-uploaded).
+  reshare: (id: number) =>
+    api.post<{ story_id?: number; duplicate?: boolean; message?: string }>(`posts-add-to-story/${id}`, {}),
 };

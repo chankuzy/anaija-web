@@ -1,18 +1,29 @@
 "use client";
 
-import { Icon } from "./icon";
+import { Icon } from "@/components/ui/icon";
 
-// Port of FeedFollowButton: translucent pill, check when following.
-export function FollowPill({ following, onClick }: { following: boolean; onClick: () => void }) {
+// Follow is the brand rose with a soft glow; Following is quiet glass, so the state change reads at a glance.
+export function FollowPill({
+  following,
+  onClick,
+  className = "",
+}: {
+  following: boolean;
+  onClick: () => void;
+  className?: string;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`inline-flex shrink-0 items-center gap-1 rounded-2xl border px-[13px] py-[5.5px] text-xs font-semibold tracking-wide text-white transition active:scale-[0.92] ${
-        following ? "border-white/35 bg-white/14" : "border-white/80 bg-white/22"
-      }`}
+      aria-pressed={following}
+      className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-bold transition-[background,transform,box-shadow] duration-200 active:scale-95 ${
+        following
+          ? "border border-white/30 bg-white/12 text-white backdrop-blur-md"
+          : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
+      } ${className}`}
     >
-      <Icon name={following ? "check" : "plus"} className="size-[13.5px]" />
+      <Icon name={following ? "check" : "plus"} weight="strong" className="size-4" />
       {following ? "Following" : "Follow"}
     </button>
   );

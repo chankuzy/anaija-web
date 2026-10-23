@@ -44,7 +44,7 @@ function Card({ post }: { post: SharedPost }) {
       {/* Media */}
       {showImage ? (
         <>
-          {!loaded && <span className="absolute inset-0 animate-pulse bg-white/6" />}
+          {!loaded && <span aria-hidden="true" className="sk-block absolute inset-0" />}
           <img
             ref={(el) => {
               if (el?.complete && el.naturalWidth > 0) setLoaded(true);

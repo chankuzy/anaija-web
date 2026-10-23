@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { settingsApi } from "@/lib/api/settings";
 import { useAuth } from "@/lib/auth/auth-context";
+import { isFocusedNow, useDocumentFocus } from "@/lib/feed/focus";
 
 type Prefs = { startMuted?: boolean; autoplay?: boolean };
 type Playback = {
@@ -11,6 +12,8 @@ type Playback = {
   forceMute: () => void;
   autoplay: boolean;
   setPrefs: (p: Prefs) => void;
+  /** Tab visible and window focused. Nothing may play while this is false. */
+  focused: boolean;
 };
 const Ctx = createContext<Playback | null>(null);
 
@@ -20,6 +23,7 @@ export function PlaybackProvider({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
   const [muted, setMuted] = useState(true);
   const [autoplay, setAutoplay] = useState(true);
+  const focused = useDocumentFocus();
   const touched = useRef(false); // once the viewer mutes/unmutes by hand, the saved default stops overriding
 
   useEffect(() => {
@@ -36,6 +40,20 @@ export function PlaybackProvider({ children }: { children: React.ReactNode }) {
     return () => ac.abort();
   }, [status]);
 
+  // Hard guarantee, independent of any component: a media element that starts while unfocused is stopped,
+  // and losing focus pauses every audio/video on the page.
+  useEffect(() => {
+    const guard = (e: Event) => {
+      if (e.target instanceof HTMLMediaElement && !isFocusedNow()) e.target.pause();
+    };
+    document.addEventListener("play", guard, true);
+    return () => document.removeEventListener("play", guard, true);
+  }, []);
+  useEffect(() => {
+    if (focused) return;
+    document.querySelectorAll<HTMLMediaElement>("audio,video").forEach((el) => el.pause());
+  }, [focused]);
+
   const toggleMute = useCallback(() => {
     touched.current = true;
     setMuted((m) => !m);
@@ -47,8 +65,8 @@ export function PlaybackProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ muted, toggleMute, forceMute, autoplay, setPrefs }),
-    [muted, toggleMute, forceMute, autoplay, setPrefs],
+    () => ({ muted, toggleMute, forceMute, autoplay, setPrefs, focused }),
+    [muted, toggleMute, forceMute, autoplay, setPrefs, focused],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

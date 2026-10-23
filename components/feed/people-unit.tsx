@@ -1,5 +1,6 @@
 "use client";
 
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -45,7 +46,7 @@ function Row({
         onClick={() => onOpen(u.id)}
         className="flex min-w-0 flex-1 items-center gap-3"
       >
-        <Avatar url={u.avatar} name={display} size={56} />
+        <ProfileHoverCard username={u.username}><Avatar url={u.avatar} name={display} size={56} /></ProfileHoverCard>
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-bold text-white">{display}</span>
           <span className="block truncate text-secondary text-white/65">@{u.username}</span>

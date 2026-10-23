@@ -14,6 +14,7 @@ import { CommentsSheet } from "./comments-sheet";
 import { OptionsSheet } from "./options-sheet";
 import { PostInfo } from "./post-info";
 import { PostMedia, postHasVideo } from "./post-media";
+import type { Warm } from "@/lib/feed/net";
 
 const NAV_LIFT = "env(safe-area-inset-bottom)";
 
@@ -22,6 +23,8 @@ export function FeedCard({
   index,
   active,
   near,
+  warm,
+  commentFocus,
   onActivate,
   patch,
   onRemove,
@@ -30,6 +33,8 @@ export function FeedCard({
   index: number;
   active: boolean;
   near: boolean;
+  warm?: Warm;
+  commentFocus?: number;
   onActivate: (i: number) => void;
   patch: (id: number, p: Partial<Post>) => void;
   onRemove: (id: number) => void;
@@ -41,7 +46,7 @@ export function FeedCard({
   const [burst, setBurst] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [optionsOpen, setOptionsOpen] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(commentFocus !== undefined);
   const busyLike = useRef(false);
   const busyBookmark = useRef(false);
   const busyRepost = useRef(false);
@@ -236,7 +241,7 @@ export function FeedCard({
       >
         <div className="feed-col relative flex h-full items-center md:h-[calc(100dvh-24px)]">
         <article className="feed-card relative overflow-hidden bg-black" onDoubleClick={onDoubleClick}>
-          <PostMedia post={post} active={active} near={near} paused={open || optionsOpen || commentsOpen} />
+          <PostMedia post={post} active={active} near={near} warm={warm} paused={open || optionsOpen || commentsOpen} />
 
           <div className="fade-bottom pointer-events-none absolute inset-x-0 bottom-0 h-80 xl:hidden" />
 
@@ -303,6 +308,7 @@ export function FeedCard({
       {commentsOpen && (
         <CommentsSheet
           postId={post.id}
+          focusId={commentFocus}
           initialCount={post.comments_count}
           onCountChange={(n) => patch(post.id, { comments_count: n })}
           onClose={() => setCommentsOpen(false)}

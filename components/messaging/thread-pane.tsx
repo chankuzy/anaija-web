@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
@@ -102,7 +103,7 @@ function Bubble({
 
   return (
     <div className={`group/msg flex items-end gap-2 ${mine ? "justify-end" : "justify-start"} ${lastInBlock ? "mb-2" : "mb-[2px]"}`}>
-      {!mine && (showAvatar ? <Avatar url={m.sender?.avatar} name={m.sender?.name} size={28} /> : <span className="w-7 shrink-0" />)}
+      {!mine && (showAvatar ? <ProfileHoverCard username={m.sender?.username}><Avatar url={m.sender?.avatar} name={m.sender?.name} size={28} /></ProfileHoverCard> : <span className="w-7 shrink-0" />)}
 
       {mine && canReact && (
         <button type="button" onClick={onPicker} aria-label="React" className="mb-1 hidden size-7 place-items-center rounded-full text-sm opacity-0 transition-opacity hover:bg-white/10 group-hover/msg:opacity-100 md:grid">
@@ -285,8 +286,8 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           </>
         ) : (
           <>
-            <span className="size-[46px] animate-pulse rounded-full bg-card" />
-            <span className="h-4 w-32 animate-pulse rounded bg-card" />
+            <span aria-hidden="true" className="sk-block size-[46px] rounded-full" />
+            <span aria-hidden="true" className="sk-block h-4 w-32 rounded-full" />
           </>
         )}
         <button
@@ -312,7 +313,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
               }}
               className="h-9 rounded-full border border-white/14 px-4 text-secondary font-semibold text-fg hover:bg-white/6 disabled:opacity-50"
             >
-              {t.loadingOlder ? "Loading…" : "Load earlier messages"}
+              {t.loadingOlder ? <span role="status" aria-label="Loading earlier messages" className="sk-block inline-block h-3 w-28 rounded-full align-middle" /> : "Load earlier messages"}
             </button>
           </div>
         )}
@@ -321,7 +322,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           <div className="space-y-3 py-6" aria-hidden="true">
             {[60, 40, 70, 45].map((w, i) => (
               <div key={i} className={`flex ${i % 2 ? "justify-end" : ""}`}>
-                <span className="h-10 animate-pulse rounded-[22px] bg-card" style={{ width: `${w}%` }} />
+                <span className="sk-block h-10 rounded-[22px]" style={{ width: `${w}%` }} />
               </div>
             ))}
           </div>

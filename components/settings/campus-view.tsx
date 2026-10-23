@@ -1,4 +1,5 @@
 "use client";
+import { SettingsGroupsSkeleton, UserRowsSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -63,7 +64,7 @@ function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose
   const loading = res.q !== query;
   let body;
   if (res.error) body = <p className="py-10 text-center text-body text-muted">{res.error}</p>;
-  else if (res.list === null || (loading && res.list.length === 0)) body = <p className="py-10 text-center text-body text-muted">Loading…</p>;
+  else if (res.list === null || (loading && res.list.length === 0)) body = <UserRowsSkeleton avatar={false} count={7} />;
   else if (res.list.length === 0) body = <p className="py-10 text-center text-body text-muted">No institutions found</p>;
   else
     body = (
@@ -221,7 +222,7 @@ export function CampusView() {
           </button>
         </div>
       ) : (
-        <p className="py-16 text-center text-body text-muted">Loading…</p>
+        <SettingsGroupsSkeleton />
       )}
     </SettingsPage>
   );

@@ -1,13 +1,17 @@
 "use client";
+import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { FeedItem, FeedScope } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
 import { resetFollows } from "@/lib/feed/follow-store";
+import { useDocumentFocus } from "@/lib/feed/focus";
+import { usePrefetchWindow } from "@/lib/feed/net";
 import { useFeed } from "@/lib/feed/use-feed";
 import { FeedCard } from "./feed-card";
 import { CaughtUp, FeedEmpty, FeedError, FeedSkeleton } from "./feed-states";
+import { FeedStories } from "./feed-stories";
 import { FeedTopBar } from "./feed-top-bar";
 import { PeopleUnit } from "./people-unit";
 import { ScrollArrows } from "./scroll-arrows";
@@ -37,6 +41,7 @@ export function FeedView() {
   const [scope, setScope] = useState<FeedScope>("for_you");
   const effScope: FeedScope = authed ? scope : "for_you";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
+  const [storyOpen, setStoryOpen] = useState(false);
 
   const { data, loading, reload, maybeLoadMore, patchPost, removePost } = useFeed({
     enabled: status !== "loading",
@@ -55,6 +60,14 @@ export function FeedView() {
   const [activeState, setActiveState] = useState({ key: "", index: 0 });
   const active = activeState.key === dataKey ? activeState.index : 0;
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const focused = useDocumentFocus();
+  const windowFor = usePrefetchWindow(active);
+
+  // Dwell time only counts while the window is actually focused.
+  useEffect(() => {
+    if (focused) feedEvents.release("focus");
+    else feedEvents.hold("focus");
+  }, [focused]);
 
   // Rendered entries: posts, plus people units minus anyone dismissed (a unit with nobody left is dropped).
   const entries = useMemo<FeedItem[]>(() => {
@@ -136,7 +149,7 @@ export function FeedView() {
     <div className="relative h-dvh">
       <div
         ref={scrollerRef}
-        className={`no-scrollbar h-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain transition-opacity duration-200 ${
+        className={`no-scrollbar relative h-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain transition-opacity duration-200 ${
           loading ? "opacity-40" : "opacity-100"
         }`}
       >
@@ -146,8 +159,9 @@ export function FeedView() {
               key={`p${it.post.id}`}
               post={it.post}
               index={i}
-              active={i === active}
-              near={Math.abs(i - active) <= 2}
+              active={i === active && !storyOpen}
+              near={windowFor(i).near}
+              warm={windowFor(i).warm}
               onActivate={onActivate}
               patch={patchPost}
               onRemove={removePost}
@@ -172,7 +186,8 @@ export function FeedView() {
             <CaughtUp actions={data.nextActions} isGuest={!authed} busy={loading} onRefresh={reload} />
           </LeaveWhenVisible>
         )}
-        {data.loadingMore && <div className="grid h-16 place-items-center text-sm text-muted">Loading…</div>}
+        {data.loadingMore && <MoreSkeleton />}
+        <FeedStories onViewerChange={setStoryOpen} />
       </div>
       {topBar}
       <ScrollArrows scroller={scrollerRef} index={active} count={entries.length} />

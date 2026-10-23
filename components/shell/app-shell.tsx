@@ -6,6 +6,9 @@ import { Suspense, useEffect, useSyncExternalStore } from "react";
 import { needsProfileSetup } from "@/lib/auth/guards";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useActivity } from "@/lib/activity/activity-context";
+import { useMessagesUnread } from "@/lib/messaging/unread-context";
+import { useTabBadge } from "@/lib/notifications/tab-badge";
+import { UnreadBadge } from "@/components/ui/unread-badge";
 import { useNotificationsPanel } from "@/lib/notifications/panel-context";
 import { mediaUrl } from "@/lib/api/feed";
 import { Icon, type IconName } from "@/components/ui/icon";
@@ -62,22 +65,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Badge({ n }: { n: number }) {
-  if (n <= 0) return null;
-  return (
-    <span className="absolute -right-1.5 -top-1 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-danger px-1 text-[10px] font-bold leading-none text-white ring-2 ring-bg">
-      {n > 99 ? "99+" : n}
-    </span>
-  );
-}
-
 export function AppShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { status, user, signOut } = useAuth();
   const { unseen } = useActivity();
+  const { count: msgUnread, refresh: refreshMsgs } = useMessagesUnread();
   const { open: panelOpen, toggle: togglePanel, hide: closePanel } = useNotificationsPanel();
   const desktop = useIsDesktop();
+  // Reading a chat on /messages then navigating away should drop the badge right away.
+  useEffect(() => {
+    refreshMsgs();
+  }, [pathname, refreshMsgs]);
+  useTabBadge(msgUnread + unseen);
   useEffect(() => {
     closePanel();
   }, [pathname, closePanel]);
@@ -139,15 +139,30 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
             <nav className="flex flex-col gap-1.5">
               {SIDE.map((n) => {
                 const isBell = n.href === "/notifications";
+                const count = isBell ? unseen : n.href === "/messages" ? msgUnread : 0;
+                const what = isBell ? "new notifications" : "unread chats";
                 const active = railPanel ? isBell : isActive(n.href);
                 const cls = `${ITEM} ${active ? ACTIVE : IDLE}`;
                 const inner = (
                   <>
                     <span className="relative shrink-0">
                       <Icon name={n.icon} filled={active} className="size-8" />
-                      {isBell && <Badge n={unseen} />}
+                      {count > 0 && (
+                        <span
+                          className={`absolute -right-1.5 -top-1 origin-center transition-transform duration-200 ${
+                            railPanel ? "" : "group-hover/side:scale-0 group-has-[:focus-visible]/side:scale-0"
+                          }`}
+                        >
+                          <UnreadBadge count={count} label={what} />
+                        </span>
+                      )}
                     </span>
                     <span className={label}>{n.label}</span>
+                    {count > 0 && (
+                      <span className={`ml-auto pr-1 ${label}`}>
+                        <UnreadBadge count={count} label={what} flat />
+                      </span>
+                    )}
                   </>
                 );
                 if (isBell && status === "authed") {
@@ -241,7 +256,14 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                 isActive(n.href) ? "font-bold text-white" : "font-medium text-white/60"
               }`}
             >
-              <Icon name={n.icon} filled={isActive(n.href)} />
+              <span className="relative inline-flex">
+                <Icon name={n.icon} filled={isActive(n.href)} />
+                {n.href === "/messages" && msgUnread > 0 && (
+                  <span className="absolute -right-2.5 -top-1.5">
+                    <UnreadBadge count={msgUnread} label="unread chats" />
+                  </span>
+                )}
+              </span>
               {n.label}
             </Link>
           ),

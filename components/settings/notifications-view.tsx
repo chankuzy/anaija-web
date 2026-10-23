@@ -1,4 +1,5 @@
 "use client";
+import { SettingsGroupsSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
@@ -76,7 +77,7 @@ export function NotificationsView() {
         </button>
       </div>
     ) : (
-      <p className="py-16 text-center text-body text-muted">Loading…</p>
+      <SettingsGroupsSkeleton />
     );
   } else {
     const on = p.push_enabled;

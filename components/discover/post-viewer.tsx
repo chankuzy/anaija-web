@@ -6,6 +6,7 @@ import type { Post } from "@/lib/api/feed-types";
 import { FeedCard } from "@/components/feed/feed-card";
 import { ScrollArrows } from "@/components/feed/scroll-arrows";
 import { Icon } from "@/components/ui/icon";
+import { usePrefetchWindow } from "@/lib/feed/net";
 
 // Port of ListFeedViewerScreen: the tapped post and the rest of the grid, swipeable, full screen.
 // Browser Back / Esc / the close button all land on the grid exactly where it was.
@@ -25,6 +26,7 @@ export function PostViewer({
   // The viewer owns its copy so optimistic like/bookmark state is correct even if the grid is a cached snapshot.
   const [posts, setPosts] = useState<Post[]>(() => items.map((i) => i.post));
   const [active, setActive] = useState(startIndex);
+  const windowFor = usePrefetchWindow(active);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
   useEffect(() => {
@@ -91,7 +93,8 @@ export function PostViewer({
             post={p}
             index={i}
             active={i === active}
-            near={Math.abs(i - active) <= 2}
+            near={windowFor(i).near}
+            warm={windowFor(i).warm}
             onActivate={onActivate}
             patch={patch}
             onRemove={remove}

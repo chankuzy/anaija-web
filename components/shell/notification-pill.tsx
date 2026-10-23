@@ -1,10 +1,12 @@
 "use client";
+import { ChatSkeleton } from "@/components/ui/skeleton";
 
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { useActivity } from "@/lib/activity/activity-context";
+import { resolveTarget } from "@/lib/activity/route";
 import { activityApi, type ActivityDest, type ActivityItem } from "@/lib/api/activity";
 import { convAvatar, convName, isPending, messagingApi, previewOf, type Conversation, type Message } from "@/lib/api/messaging";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -12,6 +14,7 @@ import { toggleFollow } from "@/lib/feed/follow-store";
 import { timeAgo } from "@/lib/format";
 import { useInterval } from "@/lib/messaging/use-interval";
 import { useNotificationsPanel } from "@/lib/notifications/panel-context";
+import { useMessagesUnread } from "@/lib/messaging/unread-context";
 
 type Tab = "chats" | "activity";
 type Peek = { key: string; avatar: string | null; name: string; text: string; conv?: number; act?: ActivityItem };
@@ -33,28 +36,6 @@ const FALLBACK = { icon: "bell" as IconName, color: "#71717A" };
 
 // Server timestamps can come back without a zone; they are UTC.
 const utc = (s: string | null) => (!s ? "" : /(Z|[+-]\d\d(:?\d\d)?)$/i.test(s) ? s : `${s.replace(" ", "T")}Z`);
-
-function destUrl(d: ActivityDest | null, me?: string | null): string | null {
-  if (!d) return null;
-  switch (d.kind) {
-    case "post":
-      return d.post_id ? `/p/${d.post_id}` : null;
-    case "comment":
-      return d.post_id ? `/p/${d.post_id}${d.comment_id ? `?comment=${d.comment_id}` : ""}` : null;
-    case "listing":
-      return d.post_id ? `/listing/${d.post_id}` : null;
-    case "profile":
-      return d.username ? `/u/${d.username}` : null;
-    case "followers":
-      return me ? `/u/${me}/followers` : null;
-    case "conversation":
-      return d.conversation_id ? `/messages/${d.conversation_id}` : null;
-    case "chats":
-      return "/messages";
-    default:
-      return null;
-  }
-}
 
 function Count({ n, className = "" }: { n: number; className?: string }) {
   if (n <= 0) return null;
@@ -227,7 +208,7 @@ function MiniChat({
         onTouchMove={(e) => e.stopPropagation()}
         className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overscroll-contain px-3 py-3"
       >
-        {loading && <p className="m-auto text-secondary text-muted">Loading…</p>}
+        {loading && <ChatSkeleton />}
         {!loading && msgs.length === 0 && outbox.length === 0 && <p className="m-auto text-secondary text-muted">No messages yet. Say hi.</p>}
         {rows.map(({ m, sep }) => {
           const mine = m.sender_id === me;
@@ -313,6 +294,7 @@ export function NotificationPill() {
   const pathname = usePathname();
   const { status, user } = useAuth();
   const { unseen, version, clearUnseen } = useActivity();
+  const { refresh: refreshMsgs } = useMessagesUnread();
   const { open: panelOpen, show: showPanel } = useNotificationsPanel();
   const enabled = status === "authed";
 
@@ -499,12 +481,20 @@ export function NotificationPill() {
       setActs((p) => p.map((x) => (x.id === it.id ? { ...x, is_read: true } : x)));
       void activityApi.read(it.id).catch(() => {});
     }
-    const dd = d ?? it.destination;
-    if (dd?.kind === "conversation" && dd.conversation_id) return openChat(dd.conversation_id);
-    // Anything that needs the full viewer (grouped likes, stories) opens the full Activity panel instead.
-    const url = destUrl(d, user?.username) ?? destUrl(it.destination, user?.username);
-    if (url) go(url);
-    else openFull();
+    const t = resolveTarget(it, d ?? it.destination, user?.username);
+    switch (t.type) {
+      case "conversation":
+        return openChat(t.id);
+      case "url":
+        return go(t.url);
+      case "toast":
+        return flash(t.message);
+      case "none":
+        return;
+      default:
+        // Grouped likes and stories need the full viewer, which lives in the Activity panel.
+        return openFull();
+    }
   }
   async function followBack(it: ActivityItem) {
     const a = it.actors[0];
@@ -534,7 +524,10 @@ export function NotificationPill() {
                 setOpen(false);
                 setView(null);
               }}
-              onChanged={loadConvs}
+              onChanged={() => {
+                loadConvs();
+                refreshMsgs();
+              }}
             />
           ) : (
             <>

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { CreateSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -284,7 +285,7 @@ export function CreateView({
     }
   }
 
-  if (status !== "authed") return <div className="min-h-[70dvh]" />;
+  if (status !== "authed") return <CreateSkeleton />;
 
   const stageLabel =
     stage === "processing" ? "Preparing…" : stage === "uploading" ? `Uploading ${Math.round(progress * 100)}%` : stage === "saving" ? "Publishing…" : null;

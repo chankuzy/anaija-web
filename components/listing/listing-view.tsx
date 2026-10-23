@@ -1,4 +1,6 @@
 "use client";
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
+import { ListingSkeleton, UserRowsSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -148,13 +150,17 @@ function Inquiries({ id }: { id: number }) {
     };
   }, [id]);
   const cur = state?.id === id ? state : null;
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (window.location.hash === "#inquiries") root.current?.scrollIntoView({ block: "start" });
+  }, []);
   return (
-    <div>
+    <div id="inquiries" ref={root} className="scroll-mt-4">
       <h2 className="mb-1 flex items-center text-[15px] font-bold text-fg">
         Inquiries <span className="ml-auto text-secondary font-semibold text-muted">{cur?.items?.length ?? ""}</span>
       </h2>
       {!cur ? (
-        <p className="py-6 text-center text-sm text-muted">Loading…</p>
+        <UserRowsSkeleton count={2} />
       ) : cur.error ? (
         <p className="py-6 text-center text-sm text-muted">Couldn&apos;t load inquiries</p>
       ) : cur.items!.length === 0 ? (
@@ -163,7 +169,7 @@ function Inquiries({ id }: { id: number }) {
         cur.items!.map((q) => (
           <div key={q.id} className="flex items-start gap-3 py-2.5">
             <Link href={q.buyer?.username ? `/u/${q.buyer.username}` : "#"}>
-              <Avatar url={q.buyer?.avatar} name={q.buyer?.name ?? q.buyer?.username} size={40} />
+              <ProfileHoverCard username={q.buyer?.username}><Avatar url={q.buyer?.avatar} name={q.buyer?.name ?? q.buyer?.username} size={40} /></ProfileHoverCard>
             </Link>
             <div className="min-w-0 flex-1">
               <p className="flex items-center gap-2 text-sm font-bold text-fg">
@@ -241,7 +247,7 @@ export function ListingView({ id }: { id: string }) {
 
   if (!valid || cur?.status === 404) return <Msg back={back} title="This listing isn't available" sub="It may have been removed or sold out of the marketplace." />;
   if (cur && !cur.listing) return <Msg back={back} title="Couldn't load this listing" sub="Check your connection and try again." />;
-  if (!cur?.listing) return <div className="grid min-h-[70dvh] place-items-center text-sm text-muted">{back}Loading…</div>;
+  if (!cur?.listing) return <ListingSkeleton back={back} />;
 
   const l = cur.listing;
   const d = l.listing;
@@ -383,7 +389,7 @@ export function ListingView({ id }: { id: string }) {
         <hr className="my-6 border-line/60" />
 
         <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-line bg-card p-4">
-          <Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={46} />
+          <ProfileHoverCard username={l.author?.username}><Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={46} /></ProfileHoverCard>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
             <span className="block truncate text-secondary text-muted">@{l.author?.username} · {sellerLabel}</span>

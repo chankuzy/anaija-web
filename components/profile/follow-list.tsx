@@ -1,4 +1,6 @@
 "use client";
+import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
+import { UserRowsSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,7 +22,7 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
   return (
     <div className="flex items-center gap-3 py-2.5">
       <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">
-        <Avatar url={u.avatar} name={u.name ?? u.username} size={46} />
+        <ProfileHoverCard username={u.username}><Avatar url={u.avatar} name={u.name ?? u.username} size={46} /></ProfileHoverCard>
         <span className="min-w-0">
           <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
           <span className="block truncate text-xs text-muted">@{u.username}</span>
@@ -96,7 +98,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
 
   let body: React.ReactNode;
   if (status !== "authed" || (list.loading && !list.data)) {
-    body = <p className="py-16 text-center text-sm text-muted">Loading…</p>;
+    body = <UserRowsSkeleton />;
   } else if (list.data?.error && items.length === 0) {
     body = (
       <div className="py-16 text-center">
@@ -115,7 +117,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
           <Row key={u.id} u={u} isSelf={user?.id === u.id} followsMe={(viewingOwn && kind === "followers") || mine.has(u.id)} />
         ))}
         <div ref={sentinel} className="h-px" />
-        {loadingMore && <p className="py-4 text-center text-sm text-muted">Loading…</p>}
+        {loadingMore && <UserRowsSkeleton count={2} />}
         {moreError && (
           <button type="button" onClick={() => loadMore(true)} className="mx-auto block py-4 text-xs font-semibold text-muted">
             Couldn&apos;t load more · tap to retry

@@ -1,3 +1,4 @@
+import { CreateSkeleton } from "@/components/ui/skeleton";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Composer } from "@/components/create/composer";
@@ -26,7 +27,7 @@ export default function CreateNewPage({
   searchParams: Promise<{ mode?: string | string[] }>;
 }) {
   return (
-    <Suspense fallback={<div className="fixed inset-0 bg-bg md:static md:h-dvh md:bg-transparent" />}>
+    <Suspense fallback={<div className="fixed inset-0 overflow-hidden bg-bg md:static md:h-dvh md:bg-transparent"><CreateSkeleton /></div>}>
       <CreatePageContent searchParams={searchParams} />
     </Suspense>
   );

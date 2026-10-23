@@ -1,4 +1,5 @@
 "use client";
+import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -129,7 +130,7 @@ export function DiscoverView() {
           <DiscoverGrid items={items} onOpen={(i) => setViewer({ items, index: i })} />
         </div>
         <div ref={sentinel} className="h-px" />
-        {loadingMore && <div className="grid h-16 place-items-center text-sm text-muted">Loading…</div>}
+        {loadingMore && <MoreSkeleton />}
         {!hasMore && !loading && !view?.fromCache && (
           <div className="px-6 pb-4 pt-7 text-center text-secondary text-muted">
             That&apos;s everything for now.

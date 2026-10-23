@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { FormSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -331,7 +332,7 @@ export function EditProfileView() {
           </button>
         </div>
       ) : (
-        <p className="py-16 text-center text-body text-muted">Loading…</p>
+        <FormSkeleton />
       )}
     </SettingsPage>
   );

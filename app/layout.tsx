@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth/auth-context";
 import { ActivityProvider } from "@/lib/activity/activity-context";
 import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
 import { PlaybackProvider } from "@/components/feed/playback-context";
+import { MessagesUnreadProvider } from "@/lib/messaging/unread-context";
 import { AppShell } from "@/components/shell/app-shell";
 import { NotificationPill } from "@/components/shell/notification-pill";
 import { UploadDock } from "@/components/create/upload-dock";
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <ActivityProvider>
             <NotificationsPanelProvider>
+              <MessagesUnreadProvider>
               <PlaybackProvider>
                 <AppShell>{children}</AppShell>
                 <Suspense fallback={null}><NotificationPill /></Suspense>
@@ -52,6 +54,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <PwaRegister />
                 <Suspense fallback={null}><InstallPrompt /></Suspense>
               </PlaybackProvider>
+              </MessagesUnreadProvider>
             </NotificationsPanelProvider>
           </ActivityProvider>
         </AuthProvider>

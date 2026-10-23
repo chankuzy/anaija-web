@@ -173,7 +173,7 @@ export function ImageCropper({
             />
           </div>
         ) : (
-          <p className="text-body text-muted">Loading…</p>
+          <span role="status" aria-label="Loading image" className="sk-block block size-64 rounded-2xl" />
         )}
       </div>
 

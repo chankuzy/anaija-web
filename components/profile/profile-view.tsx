@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -404,7 +405,7 @@ export function ProfileView({ username }: { username: string }) {
       <>
         <DiscoverGrid items={grid} videoBadge="clapper" onOpen={(i) => setViewer({ items: grid, index: i })} />
         <div ref={sentinel} className="h-px" />
-        {loadingMore && <div className="grid h-14 place-items-center text-sm text-muted">Loading…</div>}
+        {loadingMore && <MoreSkeleton />}
         {moreError && (
           <button type="button" onClick={() => loadMore(true)} className="mx-auto block py-4 text-xs font-semibold text-muted">
             Couldn&apos;t load more · tap to retry
@@ -484,7 +485,7 @@ export function ProfileView({ username }: { username: string }) {
               type="button"
               onClick={() => (following ? onMessage() : void onFollow())}
               className={`mt-4 h-11 w-full rounded-xl text-[15px] font-bold transition active:scale-98 ${
-                following ? "border border-white/25 bg-black/30 text-white" : "bg-rose-600 text-white hover:bg-rose-500"
+                following ? "border border-white/25 bg-black/30 text-white" : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
               }`}
             >
               {following ? "Message" : "Follow"}
@@ -530,7 +531,7 @@ export function ProfileView({ username }: { username: string }) {
                   type="button"
                   onClick={() => (following ? onMessage() : void onFollow())}
                   className={`h-11 min-w-[148px] rounded-full px-7 text-[15px] font-bold transition active:scale-98 ${
-                    following ? "bg-white/10 text-white hover:bg-white/16" : "bg-rose-600 text-white hover:bg-rose-500"
+                    following ? "bg-white/10 text-white hover:bg-white/16" : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
                   }`}
                 >
                   {following ? "Message" : "Follow"}

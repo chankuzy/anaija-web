@@ -10,7 +10,7 @@ import { EDITOR_CROP_RATIOS, IMAGE_FILTERS, RATIO_ORIGINAL } from "@/lib/create/
 import type { Composer } from "@/lib/create/use-composer";
 import { CropOverlay } from "./crop-overlay";
 import { FilterDefs, filterCss } from "./filter-defs";
-import { PrimaryButton, Spinner } from "./ui";
+import { PrimaryButton } from "./ui";
 
 type Tool = "crop" | "filter";
 type Size = { w: number; h: number };
@@ -138,7 +138,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
               <div key={m.id} className="relative h-full w-full shrink-0 snap-center">
                 {!size || !s ? (
                   <span className="absolute inset-0 grid place-items-center">
-                    <Spinner />
+                    <span role="status" aria-label="Loading image" className="sk-block block size-full" />
                   </span>
                 ) : (
                   <div className="absolute" style={{ left: (box.w - w) / 2, top: (box.h - h) / 2, width: w, height: h }}>
