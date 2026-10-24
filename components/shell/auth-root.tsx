@@ -12,9 +12,8 @@ import { NotificationPill } from "@/components/shell/notification-pill";
 import { UploadDock } from "@/components/create/upload-dock";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { PwaRegister } from "@/components/pwa/pwa-register";
+import { PushSync } from "@/components/pwa/push-sync";
 
-// Reads the session cookie on the server (runtime data), so it must live under a Suspense boundary.
-// The layout supplies the splash fallback; once this resolves, the very first real paint already knows who is signed in.
 export async function AuthRoot({ children }: { children: React.ReactNode }) {
   const initialAuth = await resolveInitialAuth();
   return (
@@ -29,6 +28,7 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
                 <Suspense fallback={null}><NotificationPill /></Suspense>
                 <Suspense fallback={null}><UploadDock /></Suspense>
                 <PwaRegister />
+                <PushSync />
                 <Suspense fallback={null}><InstallPrompt /></Suspense>
                 </ShareProvider>
               </PlaybackProvider>

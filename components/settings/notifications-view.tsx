@@ -5,9 +5,18 @@ import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type NotifPrefs } from "@/lib/api/settings";
 import { useCached } from "@/lib/cache/swr";
+import { usePush, type PushState } from "@/lib/push/web-push";
 import { Footnote, Group, SectionLabel, SettingsPage, Toggle, useRequireAuth, useToast } from "./settings-kit";
 
 const fmtHour = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h >= 12 ? "PM" : "AM"}`;
+
+const DEVICE_NOTE: Record<PushState, string> = {
+  unsupported: "This browser can't receive push notifications.",
+  "needs-install": "On iPhone and iPad, add Anaija to your Home Screen first (Share, then Add to Home Screen), then turn this on.",
+  blocked: "Notifications are blocked for Anaija in your browser settings. Allow them there, then come back.",
+  off: "Get likes, comments and messages even when Anaija is closed.",
+  on: "This device gets notifications according to the settings below.",
+};
 
 function HourRow({ label, value, disabled, onChange }: { label: string; value: number; disabled: boolean; onChange: (h: number) => void }) {
   return (
@@ -34,6 +43,7 @@ function HourRow({ label, value, disabled, onChange }: { label: string; value: n
 export function NotificationsView() {
   const ready = useRequireAuth();
   const { toast, show } = useToast();
+  const push = usePush();
 
   // Instant from cache, quiet revalidation behind it.
   const { data: p, error, refresh, mutate } = useCached<NotifPrefs>(
@@ -54,6 +64,14 @@ export function NotificationsView() {
     }
   }
 
+  async function toggleDevice(on: boolean) {
+    try {
+      await push.toggle(on);
+    } catch (e) {
+      show(e instanceof Error && e.message ? e.message : "Couldn't change notifications");
+    }
+  }
+
   let body;
   if (!p) {
     body = error ? (
@@ -71,8 +89,26 @@ export function NotificationsView() {
     const on = p.push_enabled;
     const start = p.quiet_hours_start ?? 22;
     const end = p.quiet_hours_end ?? 7;
+    const deviceState = push.state;
     body = (
       <>
+        {deviceState && (
+          <>
+            <SectionLabel>This device</SectionLabel>
+            <Group>
+              <Toggle
+                icon="bell"
+                label="Notifications on this device"
+                value={deviceState === "on"}
+                disabled={push.busy || (deviceState !== "on" && deviceState !== "off")}
+                onChange={(v) => void toggleDevice(v)}
+              />
+            </Group>
+            <Footnote>{DEVICE_NOTE[deviceState]}</Footnote>
+            <div className="h-6" />
+          </>
+        )}
+
         <SectionLabel>Push</SectionLabel>
         <Group>
           <Toggle icon="bell" label="Push notifications" value={on} onChange={(v) => void save({ ...p, push_enabled: v })} />

@@ -58,6 +58,14 @@ export function AuthProvider({ children, initial }: { children: React.ReactNode;
   }, []);
 
   const signOut = useCallback(async () => {
+    // Unregister this device's push token while we're still signed in, so the next person on a shared
+    // device never receives this account's notifications. Bounded: it must not hold up sign-out.
+    try {
+      const { disablePush } = await import("@/lib/push/web-push");
+      await Promise.race([disablePush(false), new Promise((r) => setTimeout(r, 3000))]);
+    } catch {
+      // best effort
+    }
     try {
       await authApi.logout();
     } finally {
