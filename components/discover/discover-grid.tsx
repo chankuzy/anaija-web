@@ -58,7 +58,7 @@ export function DiscoverGrid({
   }, [items]);
 
   return (
-    <div className="flex gap-[3px] overflow-hidden rounded-t-xl">
+    <div className="flex gap-[3px] overflow-hidden">
       {columns.map((col, c) => (
         <div key={c} className="flex min-w-0 flex-1 flex-col gap-[3px]">
           {col.map(({ item, index }) => (
@@ -82,7 +82,7 @@ const RATIOS = [0.78, 1.05, 0.7, 0.95, 0.72, 0.88, 1.0, 0.75, 0.9];
 
 export function DiscoverSkeleton() {
   return (
-    <div className="flex gap-[3px] overflow-hidden rounded-t-xl" aria-hidden="true">
+    <div className="flex gap-[3px] overflow-hidden" aria-hidden="true">
       {Array.from({ length: COLS }, (_, c) => (
         <div key={c} className="flex min-w-0 flex-1 flex-col gap-[3px]">
           {Array.from({ length: 5 }, (_, i) => (

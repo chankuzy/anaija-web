@@ -40,14 +40,14 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "info", label: "About" },
 ];
 
-// Official Solar icons: outline when inactive, bold when active.
-const TAB_ICON: Record<TabId, { name: IconName; glow: string }> = {
-  posts: { name: "galleryWide", glow: "text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.55)]" },
-  reels: { name: "clapperboard", glow: "text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.55)]" },
-  reposts: { name: "repeat", glow: "text-orange-400 drop-shadow-[0_0_10px_rgba(251,146,60,0.55)]" },
-  saved: { name: "bookmark", glow: "text-amber-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.55)]" },
-  liked: { name: "heart", glow: "text-rose-600 drop-shadow-[0_0_10px_rgba(225,29,72,0.55)]" },
-  info: { name: "infoCircle", glow: "text-info drop-shadow-[0_0_10px_rgba(76,141,255,0.55)]" },
+// Official Solar icons: outline when inactive, bold when active. Brand yellow is only used on the active tab.
+const TAB_ICON: Record<TabId, IconName> = {
+  posts: "galleryWide",
+  reels: "clapperboard",
+  reposts: "repeat",
+  saved: "bookmark",
+  liked: "heart",
+  info: "infoCircle",
 };
 
 const EMPTY_POSTS: Post[] = [];
@@ -74,6 +74,10 @@ const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
 
 const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
+
+// Message state: visible tonal glass with a hairline ring so it never melts into the cover.
+const MESSAGE_MOBILE = "bg-white/15 text-white ring-1 ring-inset ring-white/25 backdrop-blur-md hover:bg-white/20";
+const MESSAGE_DESKTOP = "bg-surface-interactive text-white ring-1 ring-inset ring-white/15 hover:bg-surface-elevated";
 
 function safeHref(raw: string): { href: string; label: string } | null {
   const t = raw.trim();
@@ -141,7 +145,7 @@ function Stat({ value, label, href, inline }: { value: number; label: string; hr
   ) : (
     <>
       <p className="text-[21px] font-extrabold leading-none tracking-tight text-white text-shadow">{formatCount(value)}</p>
-      <p className="mt-1.5 text-body text-white/55">{label}</p>
+      <p className="mt-1 text-body text-white/55">{label}</p>
     </>
   );
   return href ? (
@@ -204,48 +208,117 @@ function NameRow({ profile, className }: { profile: UserProfile; className: stri
   );
 }
 
+// Link chip shown under the bio. First link only; "+N" jumps to the About tab for the rest.
+function BioLink({ links, onMore }: { links: string[]; onMore: () => void }) {
+  const parsed = links.map(safeHref).filter((x): x is { href: string; label: string } => x !== null);
+  const first = parsed[0];
+  if (!first) return null;
+  const extra = parsed.length - 1;
+  return (
+    <div className="mt-3 flex min-w-0 items-center gap-2">
+      <a
+        href={first.href}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/10 py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-white/15 active:scale-98"
+      >
+        <Icon name="link" weight="strong" className="size-4 shrink-0 text-info" />
+        <span className="truncate">{first.label}</span>
+      </a>
+      {extra > 0 && (
+        <button type="button" onClick={onMore} className="shrink-0 text-[13px] font-semibold text-white/55 transition hover:text-white">
+          +{extra} more
+        </button>
+      )}
+    </div>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  href,
+  tile = "bg-white/[0.07] text-white/70",
+}: {
+  icon: IconName;
+  label: string;
+  value: string;
+  href?: string;
+  tile?: string;
+}) {
+  const inner = (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span className={`grid size-9 shrink-0 place-items-center rounded-xl ${tile}`}>
+        <Icon name={icon} filled className="size-[19.4px]" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/40">{label}</p>
+        <p className={`mt-0.5 truncate text-[15px] font-semibold ${href ? "text-info" : "text-white"}`}>{value}</p>
+      </div>
+    </div>
+  );
+  return href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="block transition hover:bg-white/[0.04] active:bg-white/[0.06]">
+      {inner}
+    </a>
+  ) : (
+    <div>{inner}</div>
+  );
+}
+
 function InfoPanel({ profile }: { profile: UserProfile }) {
   const tagline = (profile.tagline ?? "").trim();
   const location = (profile.location ?? "").trim();
   const campus = profile.institution ? (profile.institution.short_name ?? profile.institution.name) : "";
-  const links = profile.links.map((l) => ({ raw: l, parsed: safeHref(l) }));
+  const links = profile.links.map((l) => ({ raw: l, parsed: safeHref(l) })).filter((l) => l.raw.trim());
   const empty = !tagline && !location && !campus && links.length === 0;
 
   if (empty) return <TabMessage title="Nothing here yet" sub="Tagline, location and links show up here" />;
 
-  const row = "flex items-start gap-3 rounded-2xl bg-surface-subtle px-4 py-3.5 text-body text-white/90";
+  const card = "divide-y divide-white/[0.06] overflow-hidden rounded-2xl bg-surface-subtle ring-1 ring-inset ring-white/[0.06]";
+  const label = "mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-white/40";
+
   return (
-    <div className="space-y-2.5 px-4 py-5 md:px-0">
+    <div className="space-y-5 px-4 py-4 md:px-0">
       {tagline && (
-        <div className={row}>
-          <Icon name="chatRoundDots" filled className="mt-0.5 size-[19.4px] shrink-0 text-white/60" />
-          <span className="whitespace-pre-line leading-snug">{tagline}</span>
+        <div className="rounded-2xl bg-surface-subtle p-4 ring-1 ring-inset ring-white/[0.06]">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/[0.07] text-white/70">
+              <Icon name="chatRoundDots" filled className="size-[19.4px]" />
+            </span>
+            <p className="min-w-0 flex-1 whitespace-pre-line pt-1.5 text-[15px] font-medium leading-snug text-white">{tagline}</p>
+          </div>
         </div>
       )}
-      {location && (
-        <div className={row}>
-          <Icon name="pointOnMap" filled className="mt-0.5 size-[19.4px] shrink-0 text-white/60" />
-          <span>{location}</span>
-        </div>
+
+      {(campus || location) && (
+        <section>
+          <p className={label}>Details</p>
+          <div className={card}>
+            {campus && <InfoRow icon="buildings" label="Campus" value={campus} tile="bg-brand/15 text-brand" />}
+            {location && <InfoRow icon="pointOnMap" label="Location" value={location} />}
+          </div>
+        </section>
       )}
-      {campus && (
-        <div className={row}>
-          <Icon name="buildings" filled className="mt-0.5 size-[19.4px] shrink-0 text-brand" />
-          <span className="font-bold text-brand">{campus}</span>
-        </div>
+
+      {links.length > 0 && (
+        <section>
+          <p className={label}>Links</p>
+          <div className={card}>
+            {links.map(({ raw, parsed }) => (
+              <InfoRow
+                key={raw}
+                icon="link"
+                label="Website"
+                value={parsed ? parsed.label : raw}
+                href={parsed?.href}
+                tile="bg-info/15 text-info"
+              />
+            ))}
+          </div>
+        </section>
       )}
-      {links.map(({ raw, parsed }) => (
-        <div key={raw} className={row}>
-          <Icon name="link" filled className="mt-0.5 size-[19.4px] shrink-0 text-info" />
-          {parsed ? (
-            <a href={parsed.href} target="_blank" rel="noopener noreferrer nofollow" className="min-w-0 break-all font-semibold text-info hover:underline">
-              {parsed.label}
-            </a>
-          ) : (
-            <span className="min-w-0 break-all text-white/70">{raw}</span>
-          )}
-        </div>
-      ))}
     </div>
   );
 }
@@ -389,6 +462,7 @@ export function ProfileView({ username }: { username: string }) {
   const total = profile.counts.posts + profile.counts.listings;
   const viewAvatar = () => profile.avatar && setLightbox({ url: profile.avatar, round: true });
   const addStory = () => router.push(STORY_COMPOSER_HREF);
+  const goInfo = () => selectTab("info");
 
   let body: React.ReactNode;
   if (isInfo) {
@@ -464,12 +538,12 @@ export function ProfileView({ username }: { username: string }) {
           </div>
         </div>
 
-        <div className="relative px-4 pb-5" style={{ paddingTop: "calc(env(safe-area-inset-top) + 76px)" }}>
+        <div className="relative px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 64px)" }}>
           <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1 pt-2">
+            <div className="min-w-0 flex-1 pt-1">
               <NameRow profile={profile} className="text-[25px] leading-[1.1] text-white text-shadow" />
-              <p className="mt-1 truncate text-[15px] text-white/55 text-shadow">@{profile.username}</p>
-              <div className="mt-5 flex items-start gap-7">
+              <p className="mt-0.5 truncate text-[15px] text-white/55 text-shadow">@{profile.username}</p>
+              <div className="mt-3.5 flex items-start gap-7">
                 <Stat value={profile.counts.following} label="Following" href={`/u/${profile.username}/following`} />
                 <Stat value={profile.counts.followers} label="Followers" href={`/u/${profile.username}/followers`} />
                 <Stat value={total} label="Posts" />
@@ -479,14 +553,15 @@ export function ProfileView({ username }: { username: string }) {
           </div>
 
           {/* Bio spans the full width, like TikTok: it is not boxed into the stats column. */}
-          {bio && <p className="mt-4 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.45] text-white/90 text-shadow">{bio}</p>}
+          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-white/90 text-shadow">{bio}</p>}
+          <BioLink links={profile.links} onMore={goInfo} />
 
           {!own && (
             <button
               type="button"
               onClick={() => (following ? onMessage() : void onFollow())}
-              className={`mt-4 h-11 w-full rounded-xl text-[15px] font-bold transition active:scale-98 ${
-                following ? "bg-black/45 text-white" : "bg-brand text-brand-fg hover:bg-brand-hover"
+              className={`mt-3.5 h-11 w-full rounded-xl text-[15px] font-bold transition active:scale-98 ${
+                following ? MESSAGE_MOBILE : "bg-brand text-brand-fg hover:bg-brand-hover"
               }`}
             >
               {following ? "Message" : "Follow"}
@@ -513,7 +588,7 @@ export function ProfileView({ username }: { username: string }) {
               <Stat inline value={total} label="Posts" />
             </div>
 
-            <div className="mt-5 flex items-center gap-2.5">
+            <div className="mt-4 flex items-center gap-2.5">
               {own ? (
                 <>
                   <button
@@ -532,7 +607,7 @@ export function ProfileView({ username }: { username: string }) {
                   type="button"
                   onClick={() => (following ? onMessage() : void onFollow())}
                   className={`h-11 min-w-[148px] rounded-full px-7 text-[15px] font-bold transition active:scale-98 ${
-                    following ? "bg-surface-interactive text-white hover:bg-surface-elevated" : "bg-brand text-brand-fg hover:bg-brand-hover"
+                    following ? MESSAGE_DESKTOP : "bg-brand text-brand-fg hover:bg-brand-hover"
                   }`}
                 >
                   {following ? "Message" : "Follow"}
@@ -548,7 +623,8 @@ export function ProfileView({ username }: { username: string }) {
               )}
             </div>
 
-            {bio && <p className="mt-5 max-w-[620px] whitespace-pre-line text-[15px] leading-[1.5] text-white/90">{bio}</p>}
+            {bio && <p className="mt-4 max-w-[620px] whitespace-pre-line text-[15px] leading-[1.45] text-white/90">{bio}</p>}
+            <BioLink links={profile.links} onMore={goInfo} />
           </div>
         </div>
       </section>
@@ -558,7 +634,6 @@ export function ProfileView({ username }: { username: string }) {
         <div role="tablist" className="no-scrollbar flex w-full min-w-0 items-center overflow-x-auto md:w-auto md:gap-10 md:overflow-visible">
           {TABS.map((t) => {
             const active = t.id === tab;
-            const ic = TAB_ICON[t.id];
             return (
               <button
                 key={t.id}
@@ -567,11 +642,11 @@ export function ProfileView({ username }: { username: string }) {
                 aria-selected={active}
                 aria-label={t.label}
                 onClick={() => selectTab(t.id)}
-                className={`relative flex shrink-0 items-center justify-center gap-2.5 px-5 pb-3.5 pt-3.5 text-label font-bold transition md:px-0 md:pb-3 md:pt-2.5 ${
+                className={`relative flex shrink-0 items-center justify-center gap-2.5 px-5 py-2.5 text-label font-bold transition md:px-0 md:pb-3 md:pt-2.5 ${
                   active ? "text-white" : "text-white/45 hover:text-white/75"
                 }`}
               >
-                <Icon name={ic.name} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? "text-brand" : "text-white"}`} />
+                <Icon name={TAB_ICON[t.id]} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? "text-brand" : "text-white"}`} />
                 <span className="hidden md:inline">{t.label}</span>
                 {active && (
                   <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-brand md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
@@ -580,7 +655,6 @@ export function ProfileView({ username }: { username: string }) {
             );
           })}
         </div>
-
       </div>
 
       <div className="pt-0.5 md:px-6 md:pt-4">{body}</div>

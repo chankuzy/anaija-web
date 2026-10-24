@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#09090B",
+  themeColor: "#0A0A0A",
   colorScheme: "dark",
   viewportFit: "cover",
 };
@@ -45,10 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <CacheCurtain />
         <Suspense fallback={<Splash />}>
           <AuthRoot>{children}</AuthRoot>
         </Suspense>
+        <CacheCurtain />
       </body>
     </html>
   );
