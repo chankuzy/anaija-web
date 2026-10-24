@@ -17,17 +17,19 @@ import { ExitSheet, Toast } from "./ui";
 
 type Step = "pick" | "edit" | "publish";
 
-export function Composer({ initialKind }: { initialKind: ContentKind }) {
+function ComposerInner({ initialKind, onReset }: { initialKind: ContentKind; onReset: () => void }) {
   const router = useRouter();
   const { status } = useAuth();
   const c = useComposer(initialKind);
   const [step, setStep] = useState<Step>("pick");
   const [exiting, setExiting] = useState(false);
 
+  // Next keeps the previous page alive, so leaving must also wipe this composer or it comes back stale.
   const leave = useCallback(() => {
     if (window.history.length > 1) router.back();
     else router.replace("/");
-  }, [router]);
+    onReset();
+  }, [router, onReset]);
 
   useEffect(() => {
     if (status === "guest") router.replace(loginHref());
@@ -92,4 +94,10 @@ export function Composer({ initialKind }: { initialKind: ContentKind }) {
       <Toast toast={c.toast} />
     </div>
   );
+}
+
+export function Composer({ initialKind }: { initialKind: ContentKind }) {
+  const [gen, setGen] = useState(0);
+  const reset = useCallback(() => setGen((g) => g + 1), []);
+  return <ComposerInner key={gen} initialKind={initialKind} onReset={reset} />;
 }

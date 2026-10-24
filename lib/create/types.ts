@@ -16,6 +16,10 @@ export interface DraftMedia {
   file: File;
   type: "image" | "video";
   durationSeconds?: number;
+  /** Known from the first probe, so the upload never has to re-read the video. */
+  durationMs?: number;
+  width?: number;
+  height?: number;
   /** Custom video cover (JPEG). Absent = automatic frame. */
   cover?: Blob | null;
 }

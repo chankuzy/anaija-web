@@ -229,11 +229,16 @@ async function prepare(t: UploadTask): Promise<Map<string, Prepared>> {
     guard(t);
     if (m.storageKey) continue; // already in R2
     if (m.isVideo) {
-      let info;
-      try {
-        info = await probeVideo(m.source);
-      } catch {
-        throw new ProcessingError("We couldn't read this video.", false);
+      let info: { durationMs: number; width: number; height: number };
+      if (m.durationMs && m.width && m.height) {
+        info = { durationMs: m.durationMs, width: m.width, height: m.height };
+      } else {
+        try {
+          info = await probeVideo(m.source);
+        } catch (e) {
+          console.error("UploadManager: probeVideo failed", e);
+          throw new ProcessingError("We couldn't read this video.", true);
+        }
       }
       const limit = checkVideo(m.source.size, info.durationMs);
       if (limit) throw new MediaLimitError(limit);
@@ -256,8 +261,9 @@ async function prepare(t: UploadTask): Promise<Map<string, Prepared>> {
       let p;
       try {
         p = await prepareImage(m.source);
-      } catch {
-        throw new ProcessingError("This image format isn't supported. Use JPG, PNG or WebP.", false);
+      } catch (e) {
+        console.error("UploadManager: prepareImage failed", e);
+        throw new ProcessingError("This image format isn't supported. Use JPG, PNG or WebP.", true);
       }
       m.contentType = p.contentType;
       m.fileName = `feed.${p.ext}`;
@@ -539,6 +545,7 @@ async function enqueue(
       fileName: "",
       contentType: "",
       sizeBytes: m.file.size,
+      ...(m.type === "video" ? { durationMs: m.durationMs, width: m.width, height: m.height } : {}),
     }));
 
     const targets: UploadTarget[] = [{ clientRequestId: o.taskId, kind: draft.kind }];

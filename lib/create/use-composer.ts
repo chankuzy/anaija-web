@@ -193,7 +193,16 @@ export function useComposer(initialKind: ContentKind) {
             preview = URL.createObjectURL(f);
           }
           if (preview) urls.current.add(preview);
-          const item: DraftMedia = { id, original: f, file: f, type: isVideo ? "video" : "image", durationSeconds };
+          const item: DraftMedia = {
+            id,
+            original: f,
+            file: f,
+            type: isVideo ? "video" : "image",
+            durationSeconds,
+            ...(isVideo && size && durationSeconds !== undefined
+              ? { width: size.w, height: size.h, durationMs: Math.round(durationSeconds * 1000) }
+              : {}),
+          };
           putEdits((e) => ({ ...e, [id]: { ...blankEdit(), size } }));
           setPreviews((p) => ({ ...p, [id]: preview }));
           apply((d) => ({ ...d, media: [...d.media, item] }));
@@ -278,6 +287,7 @@ export function useComposer(initialKind: ContentKind) {
     try {
       await uploadManager.enqueue(d, { taskId, ownerId: user.id, alsoShareRequestId: alsoShare ? twinId : null });
       if (d.draftId) await deleteDraft(d.draftId).catch(() => {});
+      setBusy(false);
       return true;
     } catch {
       setBusy(false);
