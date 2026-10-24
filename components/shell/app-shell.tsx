@@ -99,12 +99,17 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   };
   const hrefFor = (n: NavItem) => (n.auth && status === "guest" ? "/login" : n.href);
   const fullBleed = pathname === "/";
+  // Inside a conversation the thread owns the whole screen: no bottom tabs, and nothing reserves room for them.
+  const inChat = /^\/messages\/\d+/.test(pathname);
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
 
   return (
-    <div className={`flex min-h-dvh w-full ${fullBleed ? "" : "mx-auto max-w-[1440px]"}`}>
+    <div
+      className={`flex min-h-dvh w-full ${fullBleed ? "" : "mx-auto max-w-[1440px]"}`}
+      style={inChat ? ({ "--nav-h": "0px" } as React.CSSProperties) : undefined}
+    >
       {/* Rail (md+): reserves 76px. The aside grows over the page on hover and shrinks back on leave; while the
           notifications panel is open it stays icon-only and the panel slides out beside it. */}
       <div className="relative z-40 hidden w-[76px] shrink-0 md:block">
@@ -238,7 +243,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
 
       {/* Mobile bottom tabs (glass, per _BottomNav) */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex bg-[rgba(10,10,10,0.72)] backdrop-blur-[24px] md:hidden"
+        className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-[rgba(10,10,10,0.72)] backdrop-blur-[24px] md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {NAV.filter((n) => n.mobile).map((n) =>

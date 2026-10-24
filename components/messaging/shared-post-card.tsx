@@ -18,8 +18,8 @@ function clock(sec: number) {
 
 function Unavailable() {
   return (
-    <div className="mb-1 flex w-56 flex-col items-center gap-2 rounded-[22px] border border-line bg-card px-5 py-8 text-center">
-      <Icon name="eyeClosed" className="size-6 text-white/60" />
+    <div className="mb-1 flex w-[190px] flex-col items-center gap-2 rounded-[19px] border border-line bg-card px-4 py-7 text-center">
+      <Icon name="eyeClosed" className="size-5 text-white/60" />
       <p className="text-secondary font-semibold text-fg">Post unavailable</p>
       <p className="text-supporting text-muted">It may have been deleted or made private.</p>
     </div>
@@ -37,7 +37,7 @@ function Card({ post }: { post: SharedPost }) {
 
   return (
     <div
-      className={`group/card relative mb-1 w-56 overflow-hidden rounded-[22px] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
+      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
         video ? "aspect-[9/15]" : "aspect-[4/5]"
       }`}
     >
@@ -66,7 +66,7 @@ function Card({ post }: { post: SharedPost }) {
           className="absolute inset-0 grid place-items-center"
           style={{ background: "linear-gradient(160deg,#1d1d24 0%,#0b0b0f 100%)" }}
         >
-          <Icon name={video ? "videocamera" : "gallery"} className="size-10 text-white/25" />
+          <Icon name={video ? "videocamera" : "gallery"} className="size-[34px] text-white/25" />
         </div>
       )}
 
@@ -79,24 +79,24 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Scrims */}
       <span
-        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-20"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-[68px]"
         style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0))" }}
       />
       <span
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-32"
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[109px]"
         style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))" }}
       />
 
       {/* Top-right: clapperboard for video/reels, copy for multi-image posts */}
       {(video || multi) && (
-        <span className="pointer-events-none absolute right-3 top-3 z-[3] text-white">
-          <Icon name={video ? "clapperboard" : "copy"} filled className={`size-[22px] ${GLYPH_SHADOW}`} />
+        <span className="pointer-events-none absolute right-2.5 top-2.5 z-[3] text-white">
+          <Icon name={video ? "clapperboard" : "copy"} filled className={`size-[19px] ${GLYPH_SHADOW}`} />
         </span>
       )}
 
       {/* Top-left: price on listings */}
       {post.price && (
-        <span className="pointer-events-none absolute left-3 top-3 z-[3] rounded-full bg-white px-2.5 py-1 text-supporting font-extrabold text-black">
+        <span className="pointer-events-none absolute left-2.5 top-2.5 z-[3] rounded-full bg-white px-2 py-[3px] text-[11px] font-extrabold text-black">
           ₦{post.price}
         </span>
       )}
@@ -107,31 +107,31 @@ function Card({ post }: { post: SharedPost }) {
           <Icon
             name="play"
             filled
-            className={`size-14 transition-transform duration-200 group-hover/card:scale-110 ${GLYPH_SHADOW}`}
+            className={`size-12 transition-transform duration-200 group-hover/card:scale-110 ${GLYPH_SHADOW}`}
           />
         </span>
       )}
 
       {/* Bottom-left: caption + author row */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-start gap-2 p-3">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-start gap-1.5 p-2.5">
         {post.caption && (
-          <p className="text-shadow w-full truncate text-[12.5px] font-medium leading-none text-white/90">{post.caption}</p>
+          <p className="text-shadow w-full truncate text-[11px] font-medium leading-none text-white/90">{post.caption}</p>
         )}
         {post.author && (
           <Link
             href={`/u/${post.author}`}
             className="pointer-events-auto flex max-w-full items-center gap-2 transition-opacity hover:opacity-80"
           >
-            <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={26} className="ring-2 ring-white/80" />
-            <span className="text-shadow truncate text-[13px] font-bold leading-none text-white">{post.author}</span>
-            {post.author_verified && <Icon name="verifiedCheck" filled className="size-3.5 shrink-0 text-sky-400" />}
+            <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={22} className="ring-2 ring-white/80" />
+            <span className="text-shadow truncate text-[11px] font-bold leading-none text-white">{post.author}</span>
+            {post.author_verified && <Icon name="verifiedCheck" filled className="size-3 shrink-0 text-sky-400" />}
           </Link>
         )}
       </div>
 
       {/* Bottom-right: duration */}
       {video && post.duration !== null && (
-        <span className="text-shadow pointer-events-none absolute bottom-3.5 right-3 z-[3] text-[11.5px] font-bold leading-none tabular-nums text-white">
+        <span className="text-shadow pointer-events-none absolute bottom-3 right-2.5 z-[3] text-[10px] font-bold leading-none tabular-nums text-white">
           {clock(post.duration)}
         </span>
       )}
