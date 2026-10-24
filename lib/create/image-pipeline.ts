@@ -10,9 +10,9 @@ export interface Crop {
 export const FULL_CROP: Crop = { left: 0, top: 0, right: 1, bottom: 1 };
 export const isFullCrop = (r: Crop) => r.left <= 0.001 && r.top <= 0.001 && r.right >= 0.999 && r.bottom >= 0.999;
 
-const MAX_EDGE = 8000;
+const MAX_EDGE = 2560;
 // Safari/iOS cap canvas area around 16.7 MP; stay under it so a big crop never silently fails.
-const MAX_PIXELS = 16_000_000;
+const MAX_PIXELS = 6_000_000;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -126,4 +126,41 @@ export async function prepareImage(source: Blob): Promise<PreparedImage> {
   } finally {
     bmp.close();
   }
+}
+
+const PREVIEW_EDGE = 1280;
+
+/** One decode gives both the true (orientation-corrected) size and a light preview, so the picker never holds originals. */
+export async function makePreview(file: Blob): Promise<{ blob: Blob; width: number; height: number }> {
+  const bmp = await decode(file);
+  try {
+    const width = bmp.width;
+    const height = bmp.height;
+    const scale = Math.min(1, PREVIEW_EDGE / Math.max(width, height));
+    const c = canvas(Math.max(1, Math.round(width * scale)), Math.max(1, Math.round(height * scale)));
+    const ctx = c.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
+    return { blob: await toBlob(c, "image/jpeg", 0.85), width, height };
+  } finally {
+    bmp.close();
+  }
+}
+
+const isHeic = (f: File) => /^image\/hei[cf]$/i.test(f.type) || /\.hei[cf]$/i.test(f.name);
+
+/** HEIC/HEIF the browser can't decode (Chrome, Android, most desktops) becomes JPEG once, at pick time. */
+export async function normalizeImage(f: File): Promise<File> {
+  if (!isHeic(f)) return f;
+  try {
+    (await decode(f)).close();
+    return f; // Safari decodes it natively
+  } catch {
+    /* convert below */
+  }
+  const { default: heic2any } = await import("heic2any");
+  const out = await heic2any({ blob: f, toType: "image/jpeg", quality: 0.9 });
+  const blob = Array.isArray(out) ? out[0] : out;
+  return new File([blob], `${f.name.replace(/\.hei[cf]$/i, "")}.jpg`, { type: "image/jpeg" });
 }

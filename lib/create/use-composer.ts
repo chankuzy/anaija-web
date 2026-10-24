@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { deleteDraft, saveDraft as persistDraft } from "./drafts-store";
-import { FULL_CROP, exportEdited, isFullCrop, readImageSize, type Crop } from "./image-pipeline";
+import { FULL_CROP, exportEdited, isFullCrop, makePreview, normalizeImage, type Crop } from "./image-pipeline";
 import { MediaLimits, checkVideo, tooLargeMessage } from "./limits";
 import { LISTING_DEFAULTS, listingError } from "./listing";
 import { IMAGE_FILTERS } from "./presets";
@@ -191,6 +191,7 @@ export function useComposer(initialKind: ContentKind) {
           continue;
         }
         const id = crypto.randomUUID();
+        let file = f;
         try {
           let preview: string | null = null;
           let size: { w: number; h: number } | null = null;
@@ -210,24 +211,24 @@ export function useComposer(initialKind: ContentKind) {
               preview = null;
             }
           } else {
-            // The tile shows immediately from the file itself; the size read can be slow or fail without blocking.
-            preview = URL.createObjectURL(f);
             try {
-              const s = await withTimeout(readImageSize(f), 8000);
-              size = { w: s.width, h: s.height };
+              file = await withTimeout(normalizeImage(f), 20000);
+              const p = await withTimeout(makePreview(file), 8000);
+              preview = URL.createObjectURL(p.blob);
+              size = { w: p.width, h: p.height };
             } catch (e) {
               if (!timedOut(e)) {
-                URL.revokeObjectURL(preview);
                 err = "This photo can't be read. Use JPG, PNG or WebP.";
                 continue;
               }
+              preview = URL.createObjectURL(file); // slow decode: show the original, don't block
             }
           }
           if (preview) urls.current.add(preview);
           const item: DraftMedia = {
             id,
-            original: f,
-            file: f,
+            original: file,
+            file,
             type: isVideo ? "video" : "image",
             durationSeconds,
             ...(isVideo && size && durationSeconds !== undefined
