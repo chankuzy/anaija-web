@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import type { DiscoverFilter, DiscoverItem } from "@/lib/api/discover";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useDiscover } from "@/lib/discover/use-discover";
+import { usePullRefresh } from "@/lib/ui/use-pull-refresh";
+import { PullIndicator } from "@/components/ui/pull-indicator";
 import { DiscoverGrid, DiscoverSkeleton } from "./discover-grid";
 import { CheckGlyph, ChevronDownGlyph, RefreshGlyph, SearchGlyph } from "./glyphs";
 import { PostViewer } from "./post-viewer";
@@ -89,6 +91,8 @@ export function DiscoverView() {
     filter,
   });
 
+  const pr = usePullRefresh({ onRefresh: reload, enabled: authed && !viewer });
+
   // Discover needs a signed-in user (the backend requires it), same as Flutter's tab rule.
   useEffect(() => {
     if (status === "guest") router.replace("/login");
@@ -170,6 +174,7 @@ export function DiscoverView() {
 
   return (
     <div className="mx-auto w-full max-w-[935px] px-0 pb-6 md:px-4">
+      <PullIndicator pull={pr.pull} refreshing={pr.refreshing} />
       <header
         className="sticky top-0 z-30 -mx-0 bg-bg/80 backdrop-blur-xl"
         style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}

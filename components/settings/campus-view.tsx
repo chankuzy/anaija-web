@@ -8,6 +8,7 @@ import { inputClass } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type CampusProfile, type Institution } from "@/lib/api/settings";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCached } from "@/lib/cache/swr";
 import { Group, SectionLabel, SettingsPage, Tile, useRequireAuth, useToast } from "./settings-kit";
 
 const LEVELS = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"];
@@ -108,7 +109,7 @@ function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose
   );
 }
 
-function CampusForm({ initial }: { initial: CampusProfile }) {
+function CampusForm({ initial, onSaved }: { initial: CampusProfile; onSaved: () => void }) {
   const router = useRouter();
   const { refresh } = useAuth();
   const { toast, show } = useToast();
@@ -130,6 +131,7 @@ function CampusForm({ initial }: { initial: CampusProfile }) {
         level,
         campus_role: role,
       });
+      onSaved();
       await refresh();
       router.replace("/settings");
     } catch (e) {
@@ -190,34 +192,22 @@ function CampusForm({ initial }: { initial: CampusProfile }) {
 
 export function CampusView() {
   const ready = useRequireAuth();
-  const [data, setData] = useState<CampusProfile | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
 
-  useEffect(() => {
-    if (!ready) return;
-    const ac = new AbortController();
-    settingsApi
-      .campus(ac.signal)
-      .then((p) => {
-        if (ac.signal.aborted) return;
-        setData(p);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof ApiError ? e.message : "Something went wrong.");
-      });
-    return () => ac.abort();
-  }, [ready, nonce]);
+  // Cached copy opens the form instantly; staleMs 0 re-reads the server on every visit in the background.
+  const { data, error, refresh } = useCached<CampusProfile>(
+    ready ? "settings:campus" : null,
+    () => settingsApi.campus(),
+    { staleMs: 0 },
+  );
 
-  if (data) return <CampusForm initial={data} />;
+  if (data) return <CampusForm initial={data} onSaved={() => void refresh()} />;
   return (
     <SettingsPage title="Campus & Institution" backHref="/settings">
       {error ? (
         <div className="py-16 text-center">
           <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
           <p className="mt-1 text-body text-muted">{error}</p>
-          <button type="button" onClick={() => setNonce((n) => n + 1)} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
             Try again
           </button>
         </div>

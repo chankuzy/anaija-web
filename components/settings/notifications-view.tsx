@@ -1,10 +1,10 @@
 "use client";
 import { SettingsGroupsSkeleton } from "@/components/ui/skeleton";
 
-import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type NotifPrefs } from "@/lib/api/settings";
+import { useCached } from "@/lib/cache/swr";
 import { Footnote, Group, SectionLabel, SettingsPage, Toggle, useRequireAuth, useToast } from "./settings-kit";
 
 const fmtHour = (h: number) => `${h % 12 === 0 ? 12 : h % 12}:00 ${h >= 12 ? "PM" : "AM"}`;
@@ -34,34 +34,22 @@ function HourRow({ label, value, disabled, onChange }: { label: string; value: n
 export function NotificationsView() {
   const ready = useRequireAuth();
   const { toast, show } = useToast();
-  const [p, setP] = useState<NotifPrefs | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
 
-  useEffect(() => {
-    if (!ready) return;
-    const ac = new AbortController();
-    settingsApi
-      .notifPrefs(ac.signal)
-      .then((r) => {
-        if (ac.signal.aborted) return;
-        setP(r);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof ApiError ? e.message : "Something went wrong.");
-      });
-    return () => ac.abort();
-  }, [ready, nonce]);
+  // Instant from cache, quiet revalidation behind it.
+  const { data: p, error, refresh, mutate } = useCached<NotifPrefs>(
+    ready ? "settings:notif-prefs" : null,
+    () => settingsApi.notifPrefs(),
+    { staleMs: 5 * 60_000 },
+  );
 
   // Optimistic: flips immediately, reverts if the save fails.
   async function save(next: NotifPrefs) {
     const prev = p;
-    setP(next);
+    mutate(() => next);
     try {
       await settingsApi.setNotifPrefs(next);
     } catch (e) {
-      setP(prev);
+      if (prev) mutate(() => prev);
       show(e instanceof ApiError ? e.message : "Couldn't save");
     }
   }
@@ -72,7 +60,7 @@ export function NotificationsView() {
       <div className="py-16 text-center">
         <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => setNonce((n) => n + 1)} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
           Try again
         </button>
       </div>

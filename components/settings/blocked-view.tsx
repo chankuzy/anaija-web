@@ -1,42 +1,31 @@
 "use client";
 import { UserRowsSkeleton } from "@/components/ui/skeleton";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type BlockedUser } from "@/lib/api/settings";
+import { useCached } from "@/lib/cache/swr";
 import { Group, SettingsPage, useRequireAuth, useToast } from "./settings-kit";
 
 export function BlockedView() {
   const ready = useRequireAuth();
   const { toast, show } = useToast();
-  const [users, setUsers] = useState<BlockedUser[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<ReadonlySet<number>>(() => new Set());
-  const [nonce, setNonce] = useState(0);
 
-  useEffect(() => {
-    if (!ready) return;
-    const ac = new AbortController();
-    settingsApi
-      .blocked(ac.signal)
-      .then((l) => {
-        if (ac.signal.aborted) return;
-        setUsers(l);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof ApiError ? e.message : "Something went wrong.");
-      });
-    return () => ac.abort();
-  }, [ready, nonce]);
+  // The list paints instantly from cache; a quiet revalidation reconciles it.
+  const { data: users, error, refresh, mutate } = useCached<BlockedUser[]>(
+    ready ? "settings:blocked" : null,
+    () => settingsApi.blocked(),
+    { staleMs: 60_000 },
+  );
 
   async function unblock(u: BlockedUser) {
     if (busy.has(u.id)) return;
     setBusy((p) => new Set(p).add(u.id));
     try {
       await settingsApi.unblock(u.id);
-      setUsers((p) => p?.filter((x) => x.id !== u.id) ?? p);
+      mutate((old) => old.filter((x) => x.id !== u.id));
       show(`Unblocked @${u.username ?? ""}`);
     } catch (e) {
       show(e instanceof ApiError ? e.message : "Couldn't unblock");
@@ -50,21 +39,21 @@ export function BlockedView() {
   }
 
   let body;
-  if (users === null && error) {
+  if (!users && error) {
     body = (
       <div className="py-16 text-center">
         <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
         <button
           type="button"
-          onClick={() => setNonce((n) => n + 1)}
+          onClick={() => void refresh()}
           className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black"
         >
           Try again
         </button>
       </div>
     );
-  } else if (users === null) {
+  } else if (!users) {
     body = <UserRowsSkeleton />;
   } else if (users.length === 0) {
     body = (

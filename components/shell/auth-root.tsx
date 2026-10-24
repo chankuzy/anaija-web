@@ -5,6 +5,7 @@ import { ActivityProvider } from "@/lib/activity/activity-context";
 import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
 import { PlaybackProvider } from "@/components/feed/playback-context";
 import { MessagesUnreadProvider } from "@/lib/messaging/unread-context";
+import { MessagesProvider } from "@/components/messaging/messages-context";
 import { AppShell } from "@/components/shell/app-shell";
 import { NotificationPill } from "@/components/shell/notification-pill";
 import { UploadDock } from "@/components/create/upload-dock";
@@ -20,13 +21,15 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
       <ActivityProvider>
         <NotificationsPanelProvider>
           <MessagesUnreadProvider>
-            <PlaybackProvider>
-              <AppShell>{children}</AppShell>
-              <Suspense fallback={null}><NotificationPill /></Suspense>
-              <Suspense fallback={null}><UploadDock /></Suspense>
-              <PwaRegister />
-              <Suspense fallback={null}><InstallPrompt /></Suspense>
-            </PlaybackProvider>
+            <MessagesProvider>
+              <PlaybackProvider>
+                <AppShell>{children}</AppShell>
+                <Suspense fallback={null}><NotificationPill /></Suspense>
+                <Suspense fallback={null}><UploadDock /></Suspense>
+                <PwaRegister />
+                <Suspense fallback={null}><InstallPrompt /></Suspense>
+              </PlaybackProvider>
+            </MessagesProvider>
           </MessagesUnreadProvider>
         </NotificationsPanelProvider>
       </ActivityProvider>

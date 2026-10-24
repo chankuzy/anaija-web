@@ -9,8 +9,10 @@ import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
 import { ApiError } from "@/lib/api/client";
 import { profileApi, type ProfileUpdate } from "@/lib/api/profile";
-import { usersApi, type UserProfile } from "@/lib/api/users";
+import type { UserProfile } from "@/lib/api/users";
 import { useAuth } from "@/lib/auth/auth-context";
+import { put } from "@/lib/cache/swr";
+import { useProfile } from "@/lib/profile/use-profile";
 import { ImageCropper, type CropSpec } from "./image-cropper";
 import { SectionLabel, SettingsPage, useRequireAuth, useToast } from "./settings-kit";
 
@@ -26,6 +28,9 @@ const SPECS: Record<Kind, CropSpec> = {
 
 const areaCls =
   "w-full resize-none rounded-input border border-line bg-card px-5 py-4 text-[15px] leading-[1.4] text-fg outline-none placeholder:text-muted focus-visible:ring-1 focus-visible:ring-white/20";
+
+// Same key the profile page reads, so the page you return to already shows the new values.
+const profileKey = (username: string) => `profile:${username.toLowerCase()}`;
 
 function EditForm({ profile }: { profile: UserProfile }) {
   const router = useRouter();
@@ -103,8 +108,15 @@ function EditForm({ profile }: { profile: UserProfile }) {
     setCrop(null);
     setUploading(kind);
     try {
-      if (kind === "avatar") setAvatar(await profileApi.uploadAvatar(blob));
-      else setCover(await profileApi.uploadCover(blob));
+      if (kind === "avatar") {
+        const url = await profileApi.uploadAvatar(blob);
+        setAvatar(url);
+        put(profileKey(profile.username), { ...profile, avatar: url } as UserProfile);
+      } else {
+        const url = await profileApi.uploadCover(blob);
+        setCover(url);
+        put(profileKey(profile.username), { ...profile, cover: url } as UserProfile);
+      }
       show(kind === "avatar" ? "Avatar updated" : "Cover updated");
       void refresh();
     } catch (e) {
@@ -126,6 +138,20 @@ function EditForm({ profile }: { profile: UserProfile }) {
     if (location.trim() !== (profile.location ?? "")) body.location = location.trim();
     try {
       await profileApi.update(body);
+      // Update the cached profile now, so /me shows the new values the instant you land on it.
+      if (username.trim() === profile.username) {
+        put(
+          profileKey(profile.username),
+          {
+            ...profile,
+            name: name.trim(),
+            tagline: tagline.trim() || null,
+            bio: bio.trim() || null,
+            location: location.trim() || null,
+            links: cleanLinks,
+          } as UserProfile,
+        );
+      }
       await refresh();
       router.replace("/me");
     } catch (e) {
@@ -300,25 +326,9 @@ export function EditProfileView() {
   const ready = useRequireAuth();
   const { user } = useAuth();
   const username = user?.username ?? null;
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [nonce, setNonce] = useState(0);
 
-  useEffect(() => {
-    if (!ready || !username) return;
-    const ac = new AbortController();
-    usersApi
-      .profile(username, ac.signal)
-      .then((p) => {
-        if (ac.signal.aborted) return;
-        setProfile(p);
-        setError(null);
-      })
-      .catch((e: unknown) => {
-        if (!ac.signal.aborted) setError(e instanceof ApiError ? e.message : "Something went wrong.");
-      });
-    return () => ac.abort();
-  }, [ready, username, nonce]);
+  // Shares the profile page's cache entry: the form opens instantly if you came from your profile.
+  const { profile, error, reload } = useProfile(username ?? "", ready && !!username);
 
   if (profile) return <EditForm key={profile.id} profile={profile} />;
   return (
@@ -326,8 +336,8 @@ export function EditProfileView() {
       {error ? (
         <div className="py-16 text-center">
           <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
-          <p className="mt-1 text-body text-muted">{error}</p>
-          <button type="button" onClick={() => setNonce((n) => n + 1)} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <p className="mt-1 text-body text-muted">{error.message}</p>
+          <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
             Try again
           </button>
         </div>
