@@ -35,6 +35,27 @@ export interface ToastMsg {
   text: string;
 }
 
+const VIDEO_EXT = new Set(["mp4", "mov", "m4v", "webm", "3gp"]);
+const IMAGE_EXT = new Set(["jpg", "jpeg", "png", "webp", "gif", "heic", "heif", "avif"]);
+
+/** Rejects with Error("timeout") so one stuck decode can never block the rest of a selection. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
+const timedOut = (e: unknown) => e instanceof Error && e.message === "timeout";
+
 export function useComposer(initialKind: ContentKind) {
   const { user } = useAuth();
   const [draft, setDraft] = useState<ContentDraft>(() => ({ ...createDraft(initialKind), ...(initialKind === "listing" ? LISTING_DEFAULTS : {}) }));
@@ -145,8 +166,9 @@ export function useComposer(initialKind: ContentKind) {
       const kind = draftRef.current.kind;
       const max = maxSelection(kind);
       for (const f of files) {
-        const isVideo = f.type.startsWith("video/");
-        const isImage = f.type.startsWith("image/");
+        const ext = (f.name.split(".").pop() ?? "").toLowerCase();
+        const isVideo = f.type.startsWith("video/") || (!f.type && VIDEO_EXT.has(ext));
+        const isImage = f.type.startsWith("image/") || (!f.type && IMAGE_EXT.has(ext));
         if (!isVideo && !isImage) {
           err = "Only photos and videos are supported";
           continue;
@@ -174,7 +196,7 @@ export function useComposer(initialKind: ContentKind) {
           let size: { w: number; h: number } | null = null;
           let durationSeconds: number | undefined;
           if (isVideo) {
-            const info = await probeVideo(f);
+            const info = await withTimeout(probeVideo(f), 12000);
             const limit = checkVideo(f.size, info.durationMs);
             if (limit) {
               err = limit;
@@ -183,14 +205,23 @@ export function useComposer(initialKind: ContentKind) {
             durationSeconds = info.durationMs / 1000;
             size = { w: info.width, h: info.height };
             try {
-              preview = URL.createObjectURL(await grabFrame(f, posterTimeSec(durationSeconds), 720, 0.8));
+              preview = URL.createObjectURL(await withTimeout(grabFrame(f, posterTimeSec(durationSeconds), 720, 0.8), 6000));
             } catch {
               preview = null;
             }
           } else {
-            const s = await readImageSize(f);
-            size = { w: s.width, h: s.height };
+            // The tile shows immediately from the file itself; the size read can be slow or fail without blocking.
             preview = URL.createObjectURL(f);
+            try {
+              const s = await withTimeout(readImageSize(f), 8000);
+              size = { w: s.width, h: s.height };
+            } catch (e) {
+              if (!timedOut(e)) {
+                URL.revokeObjectURL(preview);
+                err = "This photo can't be read. Use JPG, PNG or WebP.";
+                continue;
+              }
+            }
           }
           if (preview) urls.current.add(preview);
           const item: DraftMedia = {
@@ -207,7 +238,11 @@ export function useComposer(initialKind: ContentKind) {
           setPreviews((p) => ({ ...p, [id]: preview }));
           apply((d) => ({ ...d, media: [...d.media, item] }));
         } catch (e) {
-          err = e instanceof Error && isVideo ? e.message : "This file couldn't be read. Use JPG, PNG, WebP or MP4.";
+          err = timedOut(e)
+            ? "This video took too long to read. Try an MP4."
+            : e instanceof Error && isVideo
+              ? e.message
+              : "This file couldn't be read. Use JPG, PNG or WebP.";
         }
       }
       if (err) flash("err", err);
