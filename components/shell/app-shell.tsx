@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense, useEffect, useSyncExternalStore } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
 import { needsProfileSetup } from "@/lib/auth/guards";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useActivity } from "@/lib/activity/activity-context";
@@ -15,6 +15,8 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { AppLogo } from "@/components/ui/app-logo";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationsView } from "@/components/notifications/notifications-view";
+import { CreateSheet } from "@/components/create/create-sheet";
+import { PublishShare } from "@/components/create/publish-share";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
@@ -73,6 +75,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const { count: msgUnread, refresh: refreshMsgs } = useMessagesUnread();
   const { open: panelOpen, toggle: togglePanel, hide: closePanel } = useNotificationsPanel();
   const desktop = useIsDesktop();
+  const [createOpen, setCreateOpen] = useState(false);
   // Reading a chat on /messages then navigating away should drop the badge right away.
   useEffect(() => {
     refreshMsgs();
@@ -105,6 +108,12 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
+  // Signed-in users get the kind picker; guests keep the plain link to sign-in.
+  const openCreate = (e: React.MouseEvent) => {
+    if (status !== "authed") return;
+    e.preventDefault();
+    setCreateOpen(true);
+  };
 
   return (
     <div
@@ -197,6 +206,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
             <Link
               href={hrefFor(CREATE)}
               title="Create"
+              onClick={openCreate}
               className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-brand px-3 text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.98]"
             >
               <Icon name="plus" weight="strong" className="size-7 shrink-0" />
@@ -249,7 +259,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
       >
         {NAV.filter((n) => n.mobile).map((n) =>
           n.mobile === "create" ? (
-            <Link key={n.href} href={hrefFor(n)} aria-label="Create" className="flex flex-1 items-center justify-center">
+            <Link key={n.href} href={hrefFor(n)} aria-label="Create" onClick={openCreate} className="flex flex-1 items-center justify-center">
               <span className="grid h-[32px] w-12 place-items-center rounded-xl bg-brand text-brand-fg transition-transform active:scale-95">
                 <Icon name="plus" weight="strong" className="size-[22px]" />
               </span>
@@ -275,6 +285,9 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           ),
         )}
       </nav>
+
+      {createOpen && <CreateSheet onClose={() => setCreateOpen(false)} />}
+      <PublishShare />
 
       {/* Mobile: the same panel as a full-screen sheet. */}
       {panelOpen && !desktop && (

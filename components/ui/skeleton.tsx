@@ -129,7 +129,7 @@ export function SettingsGroupsSkeleton({ groups = 2, rows = 3 }: { groups?: numb
       {Array.from({ length: groups }, (_, g) => (
         <div key={g}>
           <Sk className="mb-3 ml-1.5 h-2.5 w-24 rounded-full" />
-          <div className="divide-y divide-white/8 overflow-hidden rounded-[20px] border border-white/10 bg-white/5">
+          <div className="overflow-hidden rounded-[20px] bg-white/5">
             {Array.from({ length: rows }, (_, r) => (
               <div key={r} className="flex items-center gap-3.5 px-4 py-4">
                 <Sk className="size-6 shrink-0 rounded-md" />

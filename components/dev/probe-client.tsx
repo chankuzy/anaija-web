@@ -68,7 +68,7 @@ export function ProbeClient() {
           >
             Copy
           </Button>
-          <pre className="mt-3 max-h-[70dvh] overflow-auto rounded-card border border-line bg-card p-4 text-xs leading-relaxed">
+          <pre className="mt-3 max-h-[70dvh] overflow-auto rounded-card bg-card p-4 text-xs leading-relaxed">
             {out}
           </pre>
         </>

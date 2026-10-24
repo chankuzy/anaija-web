@@ -85,7 +85,7 @@ export function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 export function Group({ children }: { children: ReactNode }) {
-  return <div className="divide-y divide-white/5 overflow-hidden rounded-[20px] bg-surface-subtle">{children}</div>;
+  return <div className="overflow-hidden rounded-[20px] bg-surface-subtle">{children}</div>;
 }
 
 export function Footnote({ children }: { children: ReactNode }) {

@@ -415,7 +415,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           <>
             <div className="my-5" />
             <h2 className="mb-1 text-[15px] font-bold text-fg">Details</h2>
-            <div className="divide-y divide-line/40">
+            <div>
               {d.pickup_info && <Row label="Location" value={d.pickup_info} />}
               {d.contact_phone && ["whatsapp", "call", "any"].includes(d.contact_preference ?? "") && <Row label="Phone" value={d.contact_phone} />}
               <Row label="Contact" value={(d.contact_preference ?? "chat").replaceAll("_", " ").toUpperCase()} />

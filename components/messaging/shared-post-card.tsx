@@ -122,7 +122,7 @@ function Card({ post }: { post: SharedPost }) {
             href={`/u/${post.author}`}
             className="pointer-events-auto flex max-w-full items-center gap-2 transition-opacity hover:opacity-80"
           >
-            <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={22} className="ring-2 ring-white/80" />
+            <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={22} />
             <span className="text-shadow truncate text-[11px] font-bold leading-none text-white">{post.author}</span>
             {post.author_verified && <Icon name="verifiedCheck" filled className="size-3 shrink-0 text-sky-400" />}
           </Link>

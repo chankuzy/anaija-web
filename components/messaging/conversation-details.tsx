@@ -393,7 +393,7 @@ export function ConversationDetails({
 
   if (variant === "dock") {
     return (
-      <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/5" aria-label="Conversation details">
+      <aside className="flex w-[340px] shrink-0 flex-col" aria-label="Conversation details">
         <div className="flex items-center gap-2 px-4 py-3.5">
           <h2 className="flex-1 text-[15px] font-bold text-fg">Details</h2>
           <button type="button" aria-label="Close details" onClick={onClose} className="grid size-9 place-items-center rounded-full text-white/60 hover:bg-white/8 hover:text-white">
