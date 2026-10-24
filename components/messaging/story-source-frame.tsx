@@ -49,7 +49,7 @@ function PricePill({ src, onOpen }: { src: StorySource; onOpen: () => void }) {
         onOpen();
       }}
       className={`pointer-events-auto inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-extrabold ${
-        sold ? "bg-white/25 text-white" : "bg-white text-black"
+        sold ? "bg-white/25 text-white" : "bg-brand text-brand-fg"
       }`}
     >
       {sold ? "Sold" : price}
@@ -137,7 +137,7 @@ export function SourceFrame({
       <div
         {...hold}
         onClick={onTap}
-        className="pointer-events-auto relative cursor-pointer overflow-hidden rounded-[26px] bg-[#18181b] shadow-[0_18px_40px_rgba(0,0,0,0.5)]"
+        className="pointer-events-auto relative cursor-pointer overflow-hidden rounded-[26px] bg-surface-subtle shadow-[0_18px_40px_rgba(0,0,0,0.5)]"
         style={{ width: `min(100cqw, calc(100cqh * ${ratio}))`, aspectRatio: String(ratio) }}
       >
         {children}
@@ -179,10 +179,10 @@ export function SourceFrame({
               e.stopPropagation();
               onOpen();
             }}
-            className="flex items-center gap-1 rounded-full bg-black/70 py-2.5 pl-[18px] pr-3.5 text-[14px] font-bold text-white"
+            className="flex items-center gap-1 rounded-full bg-brand py-2.5 pl-[18px] pr-3.5 text-[14px] font-extrabold text-brand-fg"
           >
             View post
-            <Icon name="chevronRight" weight="strong" className="size-4 text-white/70" />
+            <Icon name="chevronRight" weight="strong" className="size-4 text-brand-fg/70" />
           </button>
         </div>
       </div>

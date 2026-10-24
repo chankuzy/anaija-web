@@ -266,59 +266,6 @@ body {
 /* ───── story viewer (sv-*) ───── */
 .sv-stage { --h: 100dvh; --w: 100vw; }
 @media (min-width: 768px) {
-  .sv-stage { --h: min(90dvh, 860px); --w: calc(var(--h) * 0.5625); }
-}
-.sv-card {
-  position: absolute; left: 50%; top: 50%;
-  width: var(--w); height: var(--h);
-  overflow: hidden; background: #000;
-  opacity: 0; pointer-events: none;
-  transform: translate(-50%, -50%);
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
-  will-change: transform, opacity;
-}
-.sv-card[data-o="0"] { opacity: 1; pointer-events: auto; }
-.sv-card[data-o="-1"], .sv-card[data-o="-2"], .sv-card[data-o="-3"] { transform: translate(calc(-50% - 100%), -50%); }
-.sv-card[data-o="1"], .sv-card[data-o="2"], .sv-card[data-o="3"] { transform: translate(calc(-50% + 100%), -50%); }
-.sv-cover { transition: opacity 0.3s ease 0.12s; }
-.sv-card[data-o="0"] .sv-cover { opacity: 0; }
-.sv-dim { opacity: 0; background: rgba(0, 0, 0, 0.5); transition: opacity 0.35s ease; }
-.sv-meta { opacity: 0; transition: opacity 0.3s ease; }
-@media (min-width: 768px) {
-  .sv-card { border-radius: 22px; }
-  .sv-card[data-o="-1"], .sv-card[data-o="1"], .sv-card[data-o="-2"], .sv-card[data-o="2"] {
-    opacity: 1; pointer-events: auto; cursor: pointer;
-  }
-  .sv-card[data-o="-1"] { transform: translate(calc(-50% - var(--w) * 0.82), -50%) scale(0.4); }
-  .sv-card[data-o="1"] { transform: translate(calc(-50% + var(--w) * 0.82), -50%) scale(0.4); }
-  .sv-card[data-o="-2"] { transform: translate(calc(-50% - var(--w) * 1.33), -50%) scale(0.4); }
-  .sv-card[data-o="2"] { transform: translate(calc(-50% + var(--w) * 1.33), -50%) scale(0.4); }
-  .sv-card[data-o="-3"] { transform: translate(calc(-50% - var(--w) * 1.84), -50%) scale(0.36); }
-  .sv-card[data-o="3"] { transform: translate(calc(-50% + var(--w) * 1.84), -50%) scale(0.36); }
-  .sv-card:not([data-o="0"]) .sv-dim { opacity: 1; }
-  .sv-card:not([data-o="0"]):hover .sv-dim { opacity: 0.55; }
-  .sv-card:not([data-o="0"]) .sv-meta { opacity: 1; }
-  .sv-card:not([data-o="0"]) .sv-meta-inner { transform: scale(2.5); }
-}
-@keyframes sv-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-.sv-fill { transform-origin: left center; animation-name: sv-fill; animation-timing-function: linear; animation-fill-mode: forwards; will-change: transform; }
-@keyframes sv-in { from { opacity: 0; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }
-.sv-in { animation: sv-in 0.3s ease-out both; }
-@keyframes sv-fadein { from { opacity: 0; } to { opacity: 1; } }
-.sv-overlay { animation: sv-fadein 0.25s ease both; }
-@keyframes sv-pop { 0% { transform: scale(1); } 35% { transform: scale(1.35); } 70% { transform: scale(0.92); } 100% { transform: scale(1); } }
-.sv-pop { animation: sv-pop 0.42s cubic-bezier(0.22, 1, 0.36, 1); }
-@keyframes sv-toast { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
-.sv-toast { animation: sv-toast 0.25s ease-out both; }
-@keyframes sv-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.sv-rise { animation: sv-rise 0.22s ease-out both; }
-@media (prefers-reduced-motion: reduce) {
-  .sv-card, .sv-in, .sv-pop, .sv-toast, .sv-rise, .sv-overlay { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-}
-
-/* ───── story viewer (sv-*) ───── */
-.sv-stage { --h: 100dvh; --w: 100vw; }
-@media (min-width: 768px) {
   .sv-stage { --h: min(calc(100dvh - 28px), 920px); --w: calc(var(--h) * 0.5625); }
 }
 .sv-card {

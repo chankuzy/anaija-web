@@ -73,7 +73,7 @@ const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
 
-const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,179,64,0.10),transparent_70%)]";
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
 
 function safeHref(raw: string): { href: string; label: string } | null {
   const t = raw.trim();
@@ -112,7 +112,7 @@ function GlassBtn({ label, onClick, children }: { label: string; onClick: () => 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-10 place-items-center rounded-full border border-white/10 bg-black/30 text-white backdrop-blur-md transition active:scale-92"
+      className="grid size-10 place-items-center rounded-full bg-black/45 text-white transition active:scale-92"
     >
       {children}
     </button>
@@ -125,7 +125,7 @@ function RoundBtn({ label, onClick, children }: { label: string; onClick: () => 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-11 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/16 active:scale-92"
+      className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated active:scale-92"
     >
       {children}
     </button>
@@ -186,7 +186,7 @@ function AvatarBlock({
           type="button"
           aria-label="Add to your story"
           onClick={onAddStory}
-          className="absolute bottom-[3%] right-[3%] grid size-[30px] place-items-center rounded-full bg-info text-white ring-[3px] ring-black transition active:scale-90"
+          className="absolute bottom-[3%] right-[3%] grid size-[30px] place-items-center rounded-full bg-brand text-brand-fg ring-[3px] ring-bg transition active:scale-90"
         >
           <Icon name="plus" weight="strong" className="size-[19.4px]" />
         </button>
@@ -199,7 +199,7 @@ function NameRow({ profile, className }: { profile: UserProfile; className: stri
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <h1 className={`truncate font-extrabold tracking-tight ${className}`}>{profile.name ?? profile.username}</h1>
-      {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[19.4px] shrink-0 text-warm" />}
+      {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[19.4px] shrink-0 text-brand" />}
     </div>
   );
 }
@@ -213,7 +213,7 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
 
   if (empty) return <TabMessage title="Nothing here yet" sub="Tagline, location and links show up here" />;
 
-  const row = "flex items-start gap-3 rounded-2xl bg-white/5 px-4 py-3.5 text-body text-white/90";
+  const row = "flex items-start gap-3 rounded-2xl bg-surface-subtle px-4 py-3.5 text-body text-white/90";
   return (
     <div className="space-y-2.5 px-4 py-5 md:px-0">
       {tagline && (
@@ -230,8 +230,8 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
       )}
       {campus && (
         <div className={row}>
-          <Icon name="buildings" filled className="mt-0.5 size-[19.4px] shrink-0 text-warm" />
-          <span className="font-semibold text-warm">{campus}</span>
+          <Icon name="buildings" filled className="mt-0.5 size-[19.4px] shrink-0 text-brand" />
+          <span className="font-bold text-brand">{campus}</span>
         </div>
       )}
       {links.map(({ raw, parsed }) => (
@@ -376,7 +376,7 @@ export function ProfileView({ username }: { username: string }) {
             {notFound ? "This account doesn't exist or isn't available." : (error?.message ?? "Check your connection and try again.")}
           </p>
           {!notFound && (
-            <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+            <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
               Reload profile
             </button>
           )}
@@ -486,7 +486,7 @@ export function ProfileView({ username }: { username: string }) {
               type="button"
               onClick={() => (following ? onMessage() : void onFollow())}
               className={`mt-4 h-11 w-full rounded-xl text-[15px] font-bold transition active:scale-98 ${
-                following ? "border border-white/25 bg-black/30 text-white" : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
+                following ? "bg-black/45 text-white" : "bg-brand text-brand-fg hover:bg-brand-hover"
               }`}
             >
               {following ? "Message" : "Follow"}
@@ -519,7 +519,7 @@ export function ProfileView({ username }: { username: string }) {
                   <button
                     type="button"
                     onClick={() => router.push("/settings/edit")}
-                    className="h-11 rounded-full bg-white/10 px-6 text-[15px] font-semibold text-white transition hover:bg-white/16 active:scale-98"
+                    className="h-11 rounded-full bg-surface-interactive px-6 text-[15px] font-bold text-white transition hover:bg-surface-elevated active:scale-98"
                   >
                     Edit profile
                   </button>
@@ -532,7 +532,7 @@ export function ProfileView({ username }: { username: string }) {
                   type="button"
                   onClick={() => (following ? onMessage() : void onFollow())}
                   className={`h-11 min-w-[148px] rounded-full px-7 text-[15px] font-bold transition active:scale-98 ${
-                    following ? "bg-white/10 text-white hover:bg-white/16" : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
+                    following ? "bg-surface-interactive text-white hover:bg-surface-elevated" : "bg-brand text-brand-fg hover:bg-brand-hover"
                   }`}
                 >
                   {following ? "Message" : "Follow"}
@@ -554,7 +554,7 @@ export function ProfileView({ username }: { username: string }) {
       </section>
 
       {/* Tabs: icon-only on mobile, labelled from md up. */}
-      <div className="flex items-center justify-between border-b border-white/10 md:px-6">
+      <div className="flex items-center justify-between md:px-6">
         <div role="tablist" className="no-scrollbar flex w-full min-w-0 items-center overflow-x-auto md:w-auto md:gap-10 md:overflow-visible">
           {TABS.map((t) => {
             const active = t.id === tab;
@@ -571,10 +571,10 @@ export function ProfileView({ username }: { username: string }) {
                   active ? "text-white" : "text-white/45 hover:text-white/75"
                 }`}
               >
-                <Icon name={ic.name} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? ic.glow : "text-white"}`} />
+                <Icon name={ic.name} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? "text-brand" : "text-white"}`} />
                 <span className="hidden md:inline">{t.label}</span>
                 {active && (
-                  <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-white md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
+                  <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-brand md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
                 )}
               </button>
             );
@@ -618,7 +618,7 @@ function TabMessage({ title, sub, action }: { title: string; sub?: string; actio
         <p className="text-[15px] font-bold text-fg">{title}</p>
         {sub && <p className="mt-1 text-secondary text-muted">{sub}</p>}
         {action && (
-          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             {action.label}
           </button>
         )}

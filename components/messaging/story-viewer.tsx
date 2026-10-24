@@ -301,7 +301,7 @@ function Slide({
         style={{ top: "calc(33px + env(safe-area-inset-top))" }}
       >
         <Avatar url={group.author.avatar} name={group.author.name} size={32} />
-        <span className="text-shadow text-[14px] font-semibold text-white">{group.author.name || group.author.username}</span>
+        <span className="text-shadow text-[14px] font-extrabold text-white">{group.author.name || group.author.username}</span>
         <span className="text-shadow text-[14px] text-white/60">{timeAgo(story.created_at)}</span>
       </div>
 
@@ -396,10 +396,10 @@ function ReplyBar({
           placeholder={`Reply to ${username}...`}
           maxLength={500}
           enterKeyHint="send"
-          className="h-11 min-w-0 flex-1 rounded-full border border-white/60 bg-transparent px-4 text-[14px] text-white outline-none transition-colors placeholder:text-white/70 focus:border-white"
+          className="h-11 min-w-0 flex-1 rounded-full bg-black/40 px-4 text-[14px] font-medium text-white outline-none transition-colors placeholder:text-white/70 focus:bg-black/55 focus-visible:ring-2 focus-visible:ring-brand/60"
         />
         {has ? (
-          <button type="button" onClick={() => void submit(text)} className="text-[14px] font-bold text-white">
+          <button type="button" onClick={() => void submit(text)} className="text-[14px] font-extrabold text-brand">
             Send
           </button>
         ) : (
@@ -410,7 +410,7 @@ function ReplyBar({
               onClick={onLike}
               className="grid size-7 place-items-center text-white transition-transform active:scale-90"
             >
-              <span key={like.liked ? "on" : "off"} className={like.liked ? "sv-pop text-danger" : ""}>
+              <span key={like.liked ? "on" : "off"} className={like.liked ? "sv-pop text-brand" : ""}>
                 <Icon name="heart" filled={like.liked} weight="regular" className="size-6" />
               </span>
             </button>
@@ -418,7 +418,7 @@ function ReplyBar({
               type="button"
               aria-label={shared ? "Added to your story" : "Reshare to your story"}
               onClick={onReshare}
-              className={`grid size-7 place-items-center transition-transform active:scale-90 ${shared ? "text-accent" : "text-white"}`}
+              className={`grid size-7 place-items-center transition-transform active:scale-90 ${shared ? "text-brand" : "text-white"}`}
             >
               <Icon name="repeat" weight="regular" className="size-6" />
             </button>
@@ -442,7 +442,7 @@ function OwnBar({ like, hidden, onCreate }: { like: Like; hidden: boolean; onCre
       <button
         type="button"
         onClick={onCreate}
-        className="ml-auto flex h-11 items-center gap-2 rounded-full border border-white/60 px-5 text-[14px] font-semibold text-white transition-[background,transform] hover:bg-white/10 active:scale-95"
+        className="ml-auto flex h-11 items-center gap-2 rounded-full bg-brand px-5 text-[14px] font-extrabold text-brand-fg transition-[background,transform] hover:bg-brand-hover active:scale-95"
       >
         <Icon name="plus" weight="regular" className="size-[18px]" />
         Add to story
@@ -630,10 +630,10 @@ export function StoryViewer({
     if (Date.now() - holdAt.current < 220) actions.current.togglePause();
   };
   const arrow =
-    "absolute top-1/2 z-10 hidden size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#3a3a3a] text-white/85 transition-colors hover:bg-[#4d4d4d] md:grid";
+    "absolute top-1/2 z-10 hidden size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-surface-interactive text-white/85 transition-colors hover:bg-surface-elevated md:grid";
 
   return (
-    <div className="sv-stage sv-overlay fixed inset-0 z-[60] overflow-hidden bg-[#1b1b1b]" role="dialog" aria-modal="true" aria-label="Stories">
+    <div className="sv-stage sv-overlay fixed inset-0 z-[60] overflow-hidden bg-surface-canvas" role="dialog" aria-modal="true" aria-label="Stories">
       <button type="button" aria-label="Close" onClick={finish} className="absolute inset-0 cursor-default" />
 
       <div className="pointer-events-none absolute left-4 top-[18px] z-20 hidden md:block">
@@ -722,7 +722,7 @@ export function StoryViewer({
         <div
           key={toast.id}
           role="status"
-          className="sv-toast pointer-events-none fixed left-1/2 z-[70] max-w-[85vw] truncate rounded-full bg-white px-4 py-2 text-secondary font-semibold text-black shadow-lg"
+          className="sv-toast pointer-events-none fixed left-1/2 z-[70] max-w-[85vw] truncate rounded-full bg-surface-elevated px-4 py-2 text-secondary font-bold text-white shadow-lg"
           style={{ bottom: "calc(28px + env(safe-area-inset-bottom))" }}
         >
           {toast.text}

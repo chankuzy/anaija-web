@@ -55,10 +55,10 @@ function Price({ d, size, prefix }: { d: NonNullable<ListingFull["listing"]>; si
   return (
     <span className="inline-flex items-baseline gap-1">
       {prefix && <span className="text-muted" style={{ fontSize: size * 0.75 }}>{prefix}</span>}
-      <span className="font-bold text-accent" style={{ fontSize: size * 0.75 }}>₦</span>
+      <span className="font-bold text-brand" style={{ fontSize: size * 0.75 }}>₦</span>
       <span className="font-bold text-fg" style={{ fontSize: size }}>{d.formatted_price}</span>
       {d.price_type === "negotiable" && (
-        <span className="ml-1 rounded-full bg-warm/12 px-2 py-0.5 font-semibold text-warm" style={{ fontSize: size * 0.5 }}>Nego</span>
+        <span className="ml-1 rounded-full bg-brand/15 px-2 py-0.5 font-bold text-brand" style={{ fontSize: size * 0.5 }}>Nego</span>
       )}
     </span>
   );
@@ -66,7 +66,7 @@ function Price({ d, size, prefix }: { d: NonNullable<ListingFull["listing"]>; si
 
 function Badge({ children, color = "#7a7a85" }: { children: React.ReactNode; color?: string }) {
   return (
-    <span className="rounded-lg border px-2.5 py-1 text-supporting font-semibold" style={{ color, borderColor: `${color}55`, backgroundColor: `${color}1f` }}>
+    <span className="rounded-lg px-2.5 py-1 text-supporting font-bold" style={{ color, backgroundColor: `${color}1f` }}>
       {children}
     </span>
   );
@@ -105,7 +105,7 @@ function Gallery({ urls, onOpen }: { urls: string[]; onOpen: (u: string) => void
         ))}
       </div>
       {urls.length > 1 && (
-        <span className="absolute bottom-3 right-3 rounded-[10px] bg-black/45 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur">
+        <span className="absolute bottom-3 right-3 rounded-[10px] bg-black/55 px-2.5 py-1 text-xs font-semibold text-white">
           {idx + 1} / {urls.length}
         </span>
       )}
@@ -122,7 +122,7 @@ function StatusControl({ current, busy, onChange }: { current: ListingStatus; bu
   return (
     <div>
       <h2 className="mb-3 text-[15px] font-bold text-fg">Listing status</h2>
-      <div className="flex gap-1 rounded-[14px] border border-line bg-card p-1">
+      <div className="flex gap-1 rounded-[14px] bg-card p-1">
         {opts.map(([id, label, color]) => (
           <button
             key={id}
@@ -183,7 +183,7 @@ function Inquiries({ id }: { id: number }) {
             </div>
             <span className="text-xs text-muted">{timeAgo(/(Z|[+-]\d\d(:?\d\d)?)$/i.test(q.created_at) ? q.created_at : `${q.created_at}Z`)}</span>
             {q.conversation_id && (
-              <Link href={`/messages/${q.conversation_id}`} className="rounded-full border border-white/28 px-3 py-1 text-xs font-bold text-fg">
+              <Link href={`/messages/${q.conversation_id}`} className="rounded-full bg-surface-interactive px-3 py-1 text-xs font-bold text-fg">
                 Chat
               </Link>
             )}
@@ -247,7 +247,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
       type="button"
       aria-label="Back"
       onClick={() => (window.history.length > 1 ? router.back() : router.replace("/"))}
-      className="absolute left-3 z-10 grid size-9 place-items-center rounded-full bg-white text-black shadow-lg"
+      className="absolute left-3 z-10 grid size-9 place-items-center rounded-full bg-black/55 text-white"
       style={{ top: "calc(12px + env(safe-area-inset-top))" }}
     >
       <Icon name="back" className="size-[18px]" />
@@ -336,7 +336,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           type="button"
           aria-label="Share"
           onClick={() => void share()}
-          className="absolute right-3 z-10 grid size-9 place-items-center rounded-full bg-white text-black shadow-lg"
+          className="absolute right-3 z-10 grid size-9 place-items-center rounded-full bg-black/55 text-white"
           style={{ top: "calc(12px + env(safe-area-inset-top))" }}
         >
           <Icon name="share" className="size-[18px]" />
@@ -350,13 +350,13 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           <>
             <h1 className="flex items-center gap-2 text-[23px] font-bold tracking-tight text-fg">
               {d?.business_name ?? caption}
-              {d?.verification_status === "verified" && <Icon name="check" className="size-5 text-warm" />}
+              {d?.verification_status === "verified" && <Icon name="check" className="size-5 text-brand" />}
             </h1>
             {(d?.business_description || caption) && <p className="mt-2 text-sm leading-[1.55] text-muted">{d?.business_description ?? caption}</p>}
             <div className="mt-4 flex flex-wrap gap-2">
               {hours && <Badge color={open ? "#00e676" : "#ff5c5c"}>{open ? "Open now" : "Closed"}</Badge>}
-              {accepting && <Badge color="#4cc38a">Accepting orders</Badge>}
-              {d?.delivery_available && <Badge color="#4cc38a">Delivery available</Badge>}
+              {accepting && <Badge color="#a1a1aa">Accepting orders</Badge>}
+              {d?.delivery_available && <Badge color="#a1a1aa">Delivery available</Badge>}
               {d?.estimated_delivery != null && <Badge>{eta(d.estimated_delivery)}</Badge>}
             </div>
             {d && <div className="mt-4"><Price d={d} size={20} prefix="Starting from " /></div>}
@@ -366,7 +366,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
             <h1 className="text-[23px] font-bold tracking-tight text-fg">{caption}</h1>
             <p className="mt-1.5 text-sm text-muted">by {l.author?.name ?? l.author?.username}</p>
             <div className="mt-4 flex flex-wrap gap-2">
-              {d?.service_radius_km != null && <Badge color="#4cc38a">{d.service_radius_km}km radius</Badge>}
+              {d?.service_radius_km != null && <Badge color="#a1a1aa">{d.service_radius_km}km radius</Badge>}
               {d?.fulfillment_type && <Badge>{FULFIL[d.fulfillment_type] ?? d.fulfillment_type}</Badge>}
               {d?.verification_status === "verified" && <Badge color="#ffb340">Verified</Badge>}
             </div>
@@ -374,7 +374,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           </>
         ) : type === "wanted" ? (
           <>
-            <span className="inline-block rounded-lg border border-warm/35 bg-warm/14 px-2.5 py-1 text-supporting font-bold tracking-wide text-warm">LOOKING FOR</span>
+            <span className="inline-block rounded-lg bg-brand/15 px-2.5 py-1 text-supporting font-bold tracking-wide text-brand">LOOKING FOR</span>
             <p className="mt-3.5 text-lg leading-[1.55] text-fg">{caption}</p>
             {d && <div className="mt-3.5"><Price d={d} size={22} prefix="Budget: " /></div>}
           </>
@@ -383,16 +383,16 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
             {d && <Price d={d} size={30} />}
             {caption && <p className="mt-3.5 whitespace-pre-wrap text-base leading-[1.55] text-fg">{caption}</p>}
             <div className="mt-3.5 flex flex-wrap gap-2">
-              {d?.condition && <Badge color="#4cc38a">{COND[d.condition] ?? "Used"}</Badge>}
+              {d?.condition && <Badge color="#a1a1aa">{COND[d.condition] ?? "Used"}</Badge>}
               {curStatus !== "available" && <Badge color={curStatus === "sold" ? "#ff5c5c" : "#ffb340"}>{curStatus.toUpperCase()}</Badge>}
-              {type === "rental" && <Badge color="#4cc38a">RENTAL</Badge>}
+              {type === "rental" && <Badge color="#a1a1aa">RENTAL</Badge>}
             </div>
           </>
         )}
 
-        <hr className="my-6 border-line/60" />
+        <div className="my-5" />
 
-        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-line bg-card p-4">
+        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card bg-card p-4">
           <ProfileHoverCard username={l.author?.username}><Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={46} /></ProfileHoverCard>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[15px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
@@ -404,16 +404,16 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
 
         {isOwn && (
           <>
-            <hr className="my-6 border-line/60" />
+            <div className="my-5" />
             <StatusControl current={curStatus} busy={busy} onChange={(s) => void changeStatus(s)} />
-            <hr className="my-6 border-line/60" />
+            <div className="my-5" />
             <Inquiries id={n} />
           </>
         )}
 
         {d && (
           <>
-            <hr className="my-6 border-line/60" />
+            <div className="my-5" />
             <h2 className="mb-1 text-[15px] font-bold text-fg">Details</h2>
             <div className="divide-y divide-line/40">
               {d.pickup_info && <Row label="Location" value={d.pickup_info} />}
@@ -469,15 +469,15 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
 
       {!isOwn && (
         <div
-          className="sticky z-30 mt-6 border-t border-line/60 bg-bg/80 px-5 py-3.5 backdrop-blur-xl"
+          className="sticky z-30 mt-6 bg-bg/95 px-5 py-3.5"
           style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
         >
           <button
             type="button"
             disabled={!enabled || busy}
             onClick={() => void sendInquiry()}
-            className={`h-[52px] w-full rounded-full text-[15px] font-bold transition disabled:opacity-60 ${
-              !enabled ? "border border-line bg-card text-muted" : inquired ? "border border-white/50 text-white" : "bg-white text-black"
+            className={`h-[52px] w-full rounded-full text-[15px] font-extrabold transition disabled:opacity-60 ${
+              !enabled ? "bg-card-elevated text-muted" : inquired ? "bg-card-elevated text-white" : "bg-brand text-brand-fg"
             }`}
           >
             {busy ? "…" : cta}

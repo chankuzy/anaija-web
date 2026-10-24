@@ -62,15 +62,15 @@ function Glyph({ kind }: { kind: string }) {
   const g = GLYPH[kind] ?? FALLBACK;
   if (g.shape === "bare") {
     return (
-      <span style={{ color: g.color }}>
+      <span className="text-brand">
         <Icon name={g.icon ?? "heart"} filled className="size-8" />
       </span>
     );
   }
   return (
     <span
-      className={`grid size-[30px] place-items-center text-white ${g.shape === "square" ? "rounded-[9px]" : "rounded-full"}`}
-      style={{ backgroundColor: g.color }}
+      className={`grid size-[30px] place-items-center bg-surface-interactive text-brand ${g.shape === "square" ? "rounded-[9px]" : "rounded-full"}`}
+      style={undefined}
     >
       {g.icon ? <Icon name={g.icon} className="size-[18px]" /> : <span className="text-[17px] font-extrabold leading-none">@</span>}
     </span>
@@ -126,7 +126,7 @@ function Covers({ id, count, onOpen }: { id: number; count: number; onOpen: (pos
                 type="button"
                 aria-label="Open post"
                 onClick={() => onOpen(posts, i)}
-                className="relative size-16 shrink-0 overflow-hidden rounded-2xl border border-line bg-card"
+                className="relative size-16 shrink-0 overflow-hidden rounded-2xl bg-card"
               >
                 {src && (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -193,7 +193,7 @@ function Row({
             type="button"
             onClick={onFollowBack}
             className={`pointer-events-auto mt-2 h-[30px] rounded-full px-3 text-micro font-bold ${
-              item.follow_back ? "border border-white/50 text-fg" : "bg-white text-black"
+              item.follow_back ? "bg-surface-interactive text-fg" : "bg-brand text-brand-fg"
             }`}
           >
             {item.follow_back ? "Following" : "Follow back"}
@@ -201,7 +201,7 @@ function Row({
         )}
         <p className="mt-1 flex items-center gap-2 text-[13px] text-muted">
           {timeAgo(utc(item.last_event_at))}
-          {unread && <span className="size-[7px] rounded-full bg-accent" />}
+          {unread && <span className="size-[7px] rounded-full bg-brand" />}
         </p>
         {coversId && (
           <div className="pointer-events-auto relative mt-2.5">
@@ -210,11 +210,11 @@ function Row({
         )}
       </div>
       {item.kind === "message" ? (
-        <span className="relative rounded-full bg-white/8 px-3.5 py-2 text-secondary font-bold text-fg">Message</span>
+        <span className="relative rounded-full bg-surface-interactive px-3.5 py-2 text-secondary font-bold text-fg">Message</span>
       ) : !coversId && item.thumb ? (
         <button type="button" onClick={onThumb} aria-label="Open content" className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.thumb} alt="" loading="lazy" className="size-[68px] rounded-2xl border border-line object-cover" />
+          <img src={item.thumb} alt="" loading="lazy" className="size-[68px] rounded-2xl object-cover" />
           {item.thumb_count >= MULTI_MIN && <MultiBadge small className="right-1 top-1" />}
         </button>
       ) : null}
@@ -398,7 +398,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     body = (
       <div className="py-24 text-center">
         <p className="text-[15px] font-bold text-fg">Couldn&apos;t load activity</p>
-        <button type="button" onClick={list.reload} className="mt-4 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+        <button type="button" onClick={list.reload} className="mt-4 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
           Try again
         </button>
       </div>
@@ -446,7 +446,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
           <button type="button" aria-label="Back" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8 md:hidden">
             <Icon name="back" className="size-6" />
           </button>
-          <h1 className="flex-1 px-1 text-[24px] font-semibold tracking-tight text-fg">Activity</h1>
+          <h1 className="flex-1 px-1 text-[24px] font-extrabold tracking-tight text-fg">Activity</h1>
           {unread > 0 && (
             <button type="button" onClick={() => void markAll()} className="h-9 rounded-full px-3 text-secondary font-semibold text-muted hover:bg-white/8 hover:text-fg">
               Mark all read
@@ -467,8 +467,8 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
               key={f.id}
               type="button"
               onClick={() => setFilter(f.id)}
-              className={`h-9 shrink-0 rounded-full px-4 text-secondary font-semibold ${
-                f.id === filter ? "bg-white text-black" : "border border-line bg-card text-fg"
+              className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold ${
+                f.id === filter ? "bg-brand text-brand-fg" : "bg-surface-interactive text-fg"
               }`}
             >
               {f.label}

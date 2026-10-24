@@ -32,7 +32,7 @@ export function useToast() {
   );
   const toast = msg ? (
     <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center">
-      <span className="rounded-full bg-white px-4 py-2 text-secondary font-semibold text-black shadow-lg">{msg}</span>
+      <span className="rounded-full bg-surface-elevated px-4 py-2 text-secondary font-bold text-white shadow-lg">{msg}</span>
     </div>
   ) : null;
   return { toast, show };
@@ -59,7 +59,7 @@ export function SettingsPage({
             type="button"
             onClick={onBack}
             aria-label="Back"
-            className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-white transition hover:bg-white/10"
+            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated"
           >
             <Icon name="back" className="size-6" />
           </button>
@@ -67,12 +67,12 @@ export function SettingsPage({
           <Link
             href={backHref}
             aria-label="Back"
-            className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-white transition hover:bg-white/10"
+            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated"
           >
             <Icon name="back" className="size-6" />
           </Link>
         )}
-        <h1 className="min-w-0 flex-1 truncate text-[20px] font-bold tracking-tight text-white">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-tight text-white">{title}</h1>
         {action}
       </header>
       {children}
@@ -85,7 +85,7 @@ export function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 export function Group({ children }: { children: ReactNode }) {
-  return <div className="divide-y divide-white/8 overflow-hidden rounded-[20px] border border-white/10 bg-white/5">{children}</div>;
+  return <div className="divide-y divide-white/5 overflow-hidden rounded-[20px] bg-surface-subtle">{children}</div>;
 }
 
 export function Footnote({ children }: { children: ReactNode }) {
@@ -152,9 +152,9 @@ export function Toggle({
         aria-label={label}
         disabled={disabled}
         onClick={() => onChange(!value)}
-        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${value ? "bg-white" : "bg-white/12"}`}
+        className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${value ? "bg-brand" : "bg-surface-elevated"}`}
       >
-        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-black" : "left-0.5 bg-white/70"}`} />
+        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-brand-fg" : "left-0.5 bg-white/70"}`} />
       </button>
     </div>
   );

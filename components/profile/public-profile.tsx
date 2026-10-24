@@ -18,7 +18,7 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
         <Link
           href="/"
           aria-label="Anaija home"
-          className="absolute left-3 rounded-full bg-black/45 px-3 py-1.5 text-supporting font-bold text-white backdrop-blur"
+          className="absolute left-3 rounded-full bg-black/55 px-3 py-1.5 text-supporting font-bold text-white"
           style={{ top: "calc(12px + env(safe-area-inset-top))" }}
         >
           Anaija
@@ -30,12 +30,12 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
           <div className="rounded-full border-4 border-bg">
             <Avatar url={p.avatar} name={p.name ?? p.username} size={80} />
           </div>
-          <Link href={login} className="mb-1 rounded-full bg-white px-5 py-2 text-[14px] font-bold text-black">
+          <Link href={login} className="mb-1 rounded-full bg-brand px-5 py-2 text-[14px] font-extrabold text-brand-fg">
             Follow
           </Link>
         </div>
 
-        <h1 className="mt-3 text-[20px] font-bold text-fg">{p.name ?? p.username}</h1>
+        <h1 className="mt-3 text-[20px] font-extrabold text-fg">{p.name ?? p.username}</h1>
         <p className="text-secondary text-muted">
           @{p.username}
           {p.institution ? ` · ${p.institution}` : ""}
@@ -72,7 +72,7 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
       )}
 
       <div className="mt-8 px-5 text-center">
-        <Link href={login} className="inline-block rounded-full border border-white/25 px-5 py-2.5 text-[14px] font-bold text-fg">
+        <Link href={login} className="inline-block rounded-full bg-surface-interactive px-5 py-2.5 text-[14px] font-bold text-fg">
           Join Anaija to follow @{p.username}
         </Link>
       </div>
