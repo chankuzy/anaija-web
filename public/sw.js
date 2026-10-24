@@ -1,4 +1,4 @@
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = `anaija-static-${VERSION}`;
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
@@ -54,8 +54,22 @@ function parsePush(event) {
   return { d: raw.data || (raw.notification && raw.notification.data) || raw, n: raw.notification || {} };
 }
 
+// Chromium lets a page that is visible and focused skip the system notification (the in-app banner takes over).
+// Safari and iOS require a system notification for every push, so they never skip.
+function canSkipSystemNotification() {
+  const ua = self.navigator.userAgent || "";
+  return /(Chrome|Edg)\//.test(ua) && !/(iPhone|iPad|iPod)/.test(ua);
+}
+
 async function showPush(event) {
   const { d, n } = parsePush(event);
+  const allWins = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  const live = allWins.find((w) => w.visibilityState === "visible" && w.focused);
+  if (live && canSkipSystemNotification()) {
+    live.postMessage({ type: "anaija:banner", data: d });
+    for (const w of allWins) w.postMessage({ type: "anaija:push", kind: d.type || "" });
+    return;
+  }
   const title = d.title || n.title || "Anaija";
   const options = {
     body: d.body || n.body || "",

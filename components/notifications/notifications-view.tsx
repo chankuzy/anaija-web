@@ -20,6 +20,7 @@ import { usePaged, type Page } from "@/lib/paged/use-paged";
 import { StoryViewer } from "@/components/messaging/story-viewer";
 import { resolveTarget, type Target } from "@/lib/activity/route";
 import { storiesApi, type StoryGroup } from "@/lib/api/stories";
+import { PushHint } from "@/components/notifications/push-hint";
 
 const FILTERS: { id: ActivityFilter; label: string }[] = [
   { id: "all", label: "All" },
@@ -480,6 +481,8 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
           <div className="h-full w-1/3 animate-pulse rounded bg-white/50" />
         </div>
       </header>
+
+      <PushHint />
 
       <div ref={scrollRef} data-notif-scroll className="no-scrollbar min-h-0 flex-1 overscroll-contain overflow-y-auto pb-6">
         {body}

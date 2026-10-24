@@ -15,6 +15,7 @@ import { timeAgo } from "@/lib/format";
 import { useInterval } from "@/lib/messaging/use-interval";
 import { useNotificationsPanel } from "@/lib/notifications/panel-context";
 import { useMessagesUnread } from "@/lib/messaging/unread-context";
+import { emitBanner } from "@/lib/notifications/banner-bus";
 
 type Tab = "chats" | "activity";
 type Peek = { key: string; avatar: string | null; name: string; text: string; conv?: number; act?: ActivityItem };
@@ -330,9 +331,19 @@ export function NotificationPill() {
 
   const showPeek = useCallback((p: Peek) => {
     if (openRef.current) return;
-    setPeek(p);
-    if (peekTimer.current !== null) window.clearTimeout(peekTimer.current);
-    peekTimer.current = window.setTimeout(() => setPeek(null), 6500);
+    // The in-app banner (components/shell/in-app-banner.tsx) is the transient surface now.
+    emitBanner({
+      source: "poll",
+      key: p.key,
+      title: p.act ? p.act.title : p.name,
+      body: p.act ? (p.act.preview ? (p.act.quote ? `\u201C${p.act.preview}\u201D` : p.act.preview) : null) : p.text,
+      avatar: p.avatar,
+      image: p.act?.thumb ?? null,
+      kind: p.act ? p.act.kind : "message",
+      chat: p.conv !== undefined,
+      conv: p.conv,
+      act: p.act,
+    });
   }, []);
 
   const loadConvs = useCallback(() => {
