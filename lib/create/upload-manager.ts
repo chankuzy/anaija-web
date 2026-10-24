@@ -171,8 +171,14 @@ function notifyThrottled() {
 
 /** Serialized persistence; Files/Blobs are structured-cloned into IndexedDB. */
 function save(t: UploadTask): Promise<void> {
+  // A stalled IndexedDB write must never freeze the queue: give up on it after 4s and move on.
   saveChain = saveChain.then(() =>
-    idbPut("uploads", { ...t, progress: null, cancelRequested: false }).catch((e) => console.error("UploadManager: persist failed", e)),
+    Promise.race([
+      idbPut("uploads", { ...t, progress: null, cancelRequested: false })
+        .catch((e) => console.error("UploadManager: persist failed", e))
+        .then(() => undefined),
+      new Promise<void>((r) => setTimeout(r, 4000)),
+    ]),
   );
   return saveChain;
 }
@@ -245,7 +251,12 @@ async function prepare(t: UploadTask): Promise<Map<string, Prepared>> {
       let thumb: Blob | null = m.cover ?? null;
       if (!thumb) {
         try {
-          thumb = await grabFrame(m.source, posterTimeSec(info.durationMs / 1000), 720, 0.8);
+          thumb = await Promise.race([
+            grabFrame(m.source, posterTimeSec(info.durationMs / 1000), 720, 0.8),
+            sleep(8000).then((): never => {
+              throw new Error("poster timeout");
+            }),
+          ]);
         } catch {
           thumb = null; // a missing poster never blocks a post
         }
@@ -574,7 +585,7 @@ async function enqueue(
       cancelRequested: false,
     };
     tasks.push(task);
-    await save(task);
+    void save(task);
     notify();
     void pump();
     return o.taskId;

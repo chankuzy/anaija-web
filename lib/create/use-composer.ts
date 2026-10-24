@@ -285,7 +285,10 @@ export function useComposer(initialKind: ContentKind) {
     }
     setBusy(true);
     try {
-      await uploadManager.enqueue(d, { taskId, ownerId: user.id, alsoShareRequestId: alsoShare ? twinId : null });
+      await Promise.race([
+        uploadManager.enqueue(d, { taskId, ownerId: user.id, alsoShareRequestId: alsoShare ? twinId : null }),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("enqueue timeout")), 10000)),
+      ]);
       if (d.draftId) await deleteDraft(d.draftId).catch(() => {});
       setBusy(false);
       return true;
