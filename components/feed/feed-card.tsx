@@ -7,6 +7,7 @@ import { postsApi } from "@/lib/api/posts";
 import { socialApi } from "@/lib/api/social";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { loginHref } from "@/lib/auth/next";
 import { toggleFollow, useIsFollowing } from "@/lib/feed/follow-store";
 import { useShare } from "@/lib/share/share-context";
 import { Icon } from "@/components/ui/icon";
@@ -83,12 +84,12 @@ export function FeedCard({
 
   function requireAuth(): boolean {
     if (status === "authed") return true;
-    router.push("/login");
+    router.push(loginHref());
     return false;
   }
 
   function onAuthFailure(e: unknown) {
-    if (e instanceof ApiError && e.status === 401) router.push("/login");
+    if (e instanceof ApiError && e.status === 401) router.push(loginHref());
   }
 
   function showToast(msg: string) {

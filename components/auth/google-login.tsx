@@ -10,6 +10,7 @@ import { authApi } from "@/lib/api/auth";
 import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { needsProfileSetup } from "@/lib/auth/guards";
+import { readNext } from "@/lib/auth/next";
 import { Showcase } from "./showcase";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "500", display: "swap" });
@@ -40,7 +41,7 @@ export function GoogleLogin() {
 
   // Mirrors _navigate(): new / incomplete profiles go to setup, everyone else to the feed.
   useEffect(() => {
-    if (status === "authed") router.replace(needsProfileSetup(user) ? "/setup" : "/");
+    if (status === "authed") router.replace(needsProfileSetup(user) ? "/setup" : readNext());
   }, [status, user, router]);
 
   // Kept in a ref so the Google callback (registered once) never goes stale.

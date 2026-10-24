@@ -7,7 +7,7 @@ const FN_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 // Sub-path segments (e.g. the post id). Must start alphanumeric so "." and ".." can never pass.
 const SEG_RE = /^[A-Za-z0-9][A-Za-z0-9_.~-]{0,63}$/;
 // Dedicated routes handle otp-verify; the rest must never be reachable from a browser.
-const BLOCKED = new Set(["otp-request", "otp-verify", "social-auth", "dev-login", "feed-debug"]);
+const BLOCKED = new Set(["public-post", "public-profile", "otp-request", "otp-verify", "social-auth", "dev-login", "feed-debug"]);
 // Guests only. The backend ignores tokens here, so never send one.
 const NEVER_AUTHENTICATED = new Set(["feed-public"]);
 const NULL_BODY = new Set([204, 205, 304]);

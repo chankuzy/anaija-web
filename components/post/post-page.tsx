@@ -1,7 +1,7 @@
 "use client";
 import { FeedSkeleton } from "@/components/feed/feed-states";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FeedCard } from "@/components/feed/feed-card";
 import { Icon } from "@/components/ui/icon";
@@ -10,15 +10,15 @@ import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear, useCached } from "@/lib/cache/swr";
-import { useEffect } from "react";
 
 // HTTP status of the last failed load per post (404 gone, 410 expired story, 0 network).
 const failures = new Map<string, number>();
 onCacheClear(() => failures.clear());
 
-// Target of share links (/p/{id}). Same card as the feed, full screen. posts-show needs a signed-in user.
-// Cached in memory for a short while, so going back and forth is instant; likes etc. are applied on top.
-export function PostPage({ id }: { id: string }) {
+// Target of share links (/p/{id}). Same card as the feed, full screen.
+// Signed in: posts-show (viewer flags, cached briefly). Everyone else: `initial`, the public copy the server
+// fetched for the page and its link preview (null = not available / not public, undefined = couldn't load).
+export function PostPage({ id, initial }: { id: string; initial?: Post | null }) {
   const router = useRouter();
   const sp = useSearchParams();
   const cParam = Number(sp.get("comment"));
@@ -28,10 +28,7 @@ export function PostPage({ id }: { id: string }) {
   const n = Number(id);
   const valid = Number.isInteger(n) && n > 0;
   const k = `post:${n}`;
-
-  useEffect(() => {
-    if (status === "guest") router.replace("/login");
-  }, [status, router]);
+  const [local, setLocal] = useState<Partial<Post>>({});
 
   const fetcher = useCallback(async () => {
     try {
@@ -44,16 +41,29 @@ export function PostPage({ id }: { id: string }) {
     }
   }, [n, k]);
 
-  const { data: post, error, mutate } = useCached<Post>(authed && valid ? k : null, fetcher, { staleMs: 30_000, persist: false });
+  const { data: cached, error, mutate } = useCached<Post>(authed && valid ? k : null, fetcher, { staleMs: 30_000, persist: false });
 
   const noop = useCallback(() => {}, []);
-  const patch = useCallback((_id: number, p: Partial<Post>) => mutate((old) => ({ ...old, ...p })), [mutate]);
+  const patch = useCallback(
+    (_id: number, p: Partial<Post>) => {
+      if (authed) mutate((old) => ({ ...old, ...p }));
+      else setLocal((o) => ({ ...o, ...p }));
+    },
+    [authed, mutate],
+  );
   const gone = useCallback(() => router.replace("/"), [router]);
 
-  const code = error && !post ? (failures.get(k) ?? 0) : null;
+  const post: Post | undefined = authed ? cached : initial ? { ...initial, ...local } : undefined;
+
+  let code: number | null = null;
+  if (!valid) code = 404;
+  else if (authed) code = error && !cached ? (failures.get(k) ?? 0) : null;
+  else if (initial === null) code = 404;
+  else if (initial === undefined && status === "guest") code = 0;
+
   let content: React.ReactNode;
-  if (!valid || code === 404) {
-    content = <Msg title="This post isn't available" sub="It may have been deleted." />;
+  if (code === 404) {
+    content = <Msg title="This post isn't available" sub="It may have been deleted or isn't public." />;
   } else if (code === 410) {
     content = <Msg title="This story has expired" />;
   } else if (code !== null) {
