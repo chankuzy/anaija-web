@@ -28,7 +28,7 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
           <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
           <span className="block truncate text-xs text-muted">@{u.username}</span>
           {mutual ? (
-            <span className="mt-1 inline-block rounded-full border border-white/14 bg-white/8 px-2 py-0.5 text-micro font-bold text-white/85">Mutual</span>
+            <span className="mt-1 inline-block rounded-full bg-surface-interactive px-2 py-0.5 text-micro font-bold text-white/85">Mutual</span>
           ) : (
             followsMe && <span className="mt-1 block text-supporting font-medium text-muted">Follows you</span>
           )}
@@ -39,7 +39,7 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
           type="button"
           onClick={() => void toggleFollow(u.id, following)}
           className={`h-[34px] shrink-0 rounded-full px-4 text-secondary font-bold transition active:scale-[0.96] ${
-            following ? "border border-white/28 text-fg" : "bg-white text-black"
+            following ? "bg-surface-interactive text-fg" : "bg-brand text-brand-fg"
           }`}
         >
           {following ? "Following" : followsMe ? "Follow back" : "Follow"}
@@ -90,7 +90,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
       href={`/u/${username}/${k}`}
       replace
       className={`grid h-[38px] flex-1 place-items-center rounded-full text-body ${
-        k === kind ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
+        k === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
       }`}
     >
       {label}
@@ -136,13 +136,13 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
             type="button"
             aria-label="Back"
             onClick={() => router.back()}
-            className="grid size-11 place-items-center rounded-full border border-white/12 bg-white/6 text-fg"
+            className="grid size-11 place-items-center rounded-full bg-surface-subtle text-fg"
           >
             <Icon name="back" className="size-5" />
           </button>
           <h1 className="min-w-0 flex-1 truncate text-xl font-bold tracking-tight text-fg">@{username}</h1>
         </div>
-        <div className="flex gap-0.5 rounded-full border border-white/10 bg-white/5 p-[3px]">
+        <div className="flex gap-0.5 rounded-full bg-surface-subtle p-[3px]">
           {seg("followers", "Followers")}
           {seg("following", "Following")}
         </div>

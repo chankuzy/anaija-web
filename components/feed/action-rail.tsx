@@ -100,7 +100,7 @@ export function ActionRail({
           </button>
         ))}
       <RailButton aria="Like" side={side} pressed={post.is_liked} label={formatCount(post.likes_count)} onClick={onLike}>
-        <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-brand" : "text-white"}`} />
+        <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-like" : "text-white"}`} />
       </RailButton>
       <RailButton aria="Comments" side={side} label={formatCount(post.comments_count)} onClick={onComment}>
         <Icon name="message" filled className={big} />

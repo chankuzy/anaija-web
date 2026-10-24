@@ -351,3 +351,8 @@ body {
   background: linear-gradient(135deg, #ffd84d 0%, #ffca28 58%, #ffad32 100%);
   color: #17130a;
 }
+
+/* Semantic: red means "liked". Yellow (brand) stays for app actions and selection. */
+@theme {
+  --color-like: #ff3b5c;
+}

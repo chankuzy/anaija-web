@@ -8,7 +8,7 @@ function Phone({ className, delay, children }: { className: string; delay: numbe
   return (
     <div className={`login-rise absolute ${className}`} style={{ animationDelay: `${delay}ms` }}>
       <div className="login-float" style={{ animationDelay: `${delay * 3}ms` }}>
-        <div className="relative h-[440px] w-[216px] overflow-hidden rounded-[34px] border border-white/12 bg-black shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
+        <div className="relative h-[440px] w-[216px] overflow-hidden rounded-[34px] bg-black shadow-[0_30px_60px_rgba(0,0,0,0.6)]">
           <span className="absolute left-1/2 top-2 z-10 h-[10px] w-[54px] -translate-x-1/2 rounded-full bg-black" />
           {children}
         </div>
@@ -24,7 +24,7 @@ export function Showcase() {
       <div className="absolute left-1/2 top-0 h-[520px] w-[520px] origin-top -translate-x-1/2 scale-[0.62] md:scale-100">
         <div
           className="login-glow absolute left-1/2 top-1/2 size-[480px] -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{ background: "radial-gradient(closest-side, rgba(200,250,0,0.22), transparent)" }}
+          style={{ background: "radial-gradient(closest-side, rgba(255,216,77,0.2), transparent)" }}
         />
         <Phone className="left-0 top-[70px] -rotate-[9deg] scale-[0.92]" delay={250}>
           <Screen src="/brand/auth/profile.jpg" />

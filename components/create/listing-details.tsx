@@ -5,14 +5,14 @@ import { CONDITIONS, CONTACT, LISTING_TYPES, SUBTYPES, needsCondition } from "@/
 import type { Composer } from "@/lib/create/use-composer";
 import { Switch } from "./ui";
 
-const inputCls = "h-12 w-full rounded-input border border-line bg-surface px-4 text-[15px] text-fg outline-none placeholder:text-muted";
+const inputCls = "h-12 w-full rounded-input bg-surface-interactive px-4 text-[15px] font-medium text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60";
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-2 text-secondary ${on ? "border-white bg-white font-semibold text-black" : "border-line bg-card text-fg"}`}
+      className={`rounded-full px-3.5 py-2 text-secondary ${on ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-fg"}`}
     >
       {children}
     </button>

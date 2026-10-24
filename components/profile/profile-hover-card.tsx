@@ -27,7 +27,7 @@ const SHOWN_POSTS = 6;
 // Same cover treatment as the mobile profile header.
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
-const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,179,64,0.10),transparent_70%)]";
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
 
 type HoverData = { profile: UserProfile; posts: Post[] };
 type Entry = { at: number; value: HoverData | null; p: Promise<HoverData> };
@@ -95,7 +95,7 @@ function Tile({ post }: { post: Post }) {
         </span>
       )}
       {price && (
-        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white backdrop-blur">
+        <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/65 px-2 py-0.5 text-[11px] font-bold text-white">
           {price}
         </span>
       )}
@@ -117,7 +117,7 @@ function CardSkeleton() {
         <div className="h-4 w-56 animate-pulse rounded bg-card/70" />
         <div className="h-10 w-full animate-pulse rounded-full bg-card" />
       </div>
-      <div className="grid grid-cols-3 gap-0.5 border-t border-white/8 p-0.5">
+      <div className="grid grid-cols-3 gap-0.5 p-0.5">
         {Array.from({ length: SHOWN_POSTS }, (_, i) => (
           <div key={i} className="aspect-[3/4] animate-pulse bg-card/70" />
         ))}
@@ -183,7 +183,7 @@ function Loaded({ data }: { data: HoverData }) {
               <span className="text-shadow truncate text-[18px] font-extrabold leading-tight tracking-tight text-white">
                 {profile.name ?? profile.username}
               </span>
-              {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[18px] shrink-0 text-warm" />}
+              {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[18px] shrink-0 text-brand" />}
             </Link>
             <p className="text-shadow truncate text-[14px] text-white/55">@{profile.username}</p>
           </div>
@@ -202,7 +202,7 @@ function Loaded({ data }: { data: HoverData }) {
           disabled={busy}
           onClick={() => (following ? onMessage() : void onFollow())}
           className={`mt-3.5 h-10 w-full rounded-full text-[14px] font-bold transition active:scale-98 disabled:opacity-60 ${
-            following ? "bg-white/10 text-white hover:bg-white/16" : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
+            following ? "bg-surface-interactive text-white hover:bg-surface-elevated" : "bg-brand text-brand-fg hover:bg-brand-hover"
           }`}
         >
           {following ? "Message" : "Follow"}
@@ -210,7 +210,7 @@ function Loaded({ data }: { data: HoverData }) {
         {err && <p className="mt-2 text-center text-supporting text-danger">{err}</p>}
       </section>
 
-      <div className="border-t border-white/8">
+      <div>
         {shown.length === 0 ? (
           <p className="px-4 py-8 text-center text-secondary text-muted">No posts yet</p>
         ) : (
@@ -296,7 +296,7 @@ function HoverCard({
       onClickCapture={(e) => {
         if ((e.target as HTMLElement).closest("a")) onClose();
       }}
-      className="fixed z-[55] w-[340px] overflow-hidden rounded-2xl border border-white/10 bg-[#0d0d0f] shadow-[0_24px_60px_rgba(0,0,0,0.65)] transition-[opacity,transform] duration-150 ease-out"
+      className="fixed z-[55] w-[340px] overflow-hidden rounded-2xl bg-surface-subtle shadow-[0_24px_60px_rgba(0,0,0,0.65)] transition-[opacity,transform] duration-150 ease-out"
       style={{
         left: pos?.left ?? 0,
         top: pos?.top ?? 0,

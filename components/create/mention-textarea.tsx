@@ -15,7 +15,7 @@ export interface MentionHandle {
 const renderRuns = (s: string, key: string) =>
   splitMentions(s).map((p, i) =>
     p.mention ? (
-      <span key={key + i} className="text-accent">
+      <span key={key + i} className="text-brand">
         {p.text}
       </span>
     ) : (
@@ -155,7 +155,7 @@ export function MentionTextarea({
         onKeyDown={onKeyDown}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        className="no-scrollbar block max-h-[190px] min-h-[104px] w-full resize-none bg-transparent px-5 text-[15px] leading-[1.35] text-transparent caret-white outline-none [field-sizing:content] placeholder:text-muted"
+        className="no-scrollbar block max-h-[190px] min-h-[104px] w-full resize-none bg-transparent px-5 text-[15px] leading-[1.35] text-transparent caret-brand outline-none [field-sizing:content] placeholder:text-muted"
       />
 
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -179,7 +179,7 @@ export function MentionTextarea({
       {shown.length > 0 && pos && (
         <ul
           role="listbox"
-          className="absolute z-20 w-[260px] overflow-hidden rounded-floating border border-line bg-card-elevated py-1 shadow-[0_8px_28px_rgba(0,0,0,0.5)]"
+          className="absolute z-20 w-[260px] overflow-hidden rounded-floating bg-surface-interactive py-1 shadow-[0_8px_28px_rgba(0,0,0,0.5)]"
           style={{ left: pos.left, top: pos.top }}
         >
           {shown.map((u, i) => (

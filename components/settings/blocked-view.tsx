@@ -47,7 +47,7 @@ export function BlockedView() {
         <button
           type="button"
           onClick={() => void refresh()}
-          className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black"
+          className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg"
         >
           Try again
         </button>
@@ -76,7 +76,7 @@ export function BlockedView() {
               type="button"
               disabled={busy.has(u.id)}
               onClick={() => void unblock(u)}
-              className="h-9 rounded-full border border-white/28 px-4 text-supporting font-bold text-white transition hover:bg-white/8 disabled:opacity-50"
+              className="h-9 rounded-full bg-surface-interactive px-4 text-supporting font-bold text-white transition hover:bg-surface-elevated disabled:opacity-50"
             >
               {busy.has(u.id) ? "…" : "Unblock"}
             </button>

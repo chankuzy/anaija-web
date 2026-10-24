@@ -41,7 +41,7 @@ function Row({
 
   const display = u.name || u.username || "";
   return (
-    <div className="flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/7 py-3 pl-3 pr-1.5">
+    <div className="flex items-center gap-2 rounded-[18px] bg-surface-interactive py-3 pl-3 pr-1.5">
       <Link
         href={u.username ? `/u/${u.username}` : "#"}
         onClick={() => onOpen(u.id)}

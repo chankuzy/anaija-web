@@ -74,10 +74,10 @@ function ToggleRow({
         <span className="block text-[15px] font-medium text-fg">{label}</span>
         {hint && <span className="block truncate text-supporting text-muted">{hint}</span>}
       </span>
-      <span aria-hidden="true" className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${on ? "bg-white" : "bg-white/14"}`}>
+      <span aria-hidden="true" className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${on ? "bg-brand" : "bg-surface-elevated"}`}>
         <span
           className={`absolute left-[3px] top-[3px] size-5 rounded-full transition-transform duration-200 ${
-            on ? "translate-x-5 bg-black" : "translate-x-0 bg-white/80"
+            on ? "translate-x-5 bg-brand-fg" : "translate-x-0 bg-white/80"
           }`}
         />
       </span>
@@ -88,7 +88,7 @@ function ToggleRow({
 function Tile({ it }: { it: SharedItem }) {
   const box = "relative block aspect-square overflow-hidden rounded-[10px] bg-card";
   if (it.kind === "post") {
-    const href = `${it.postType === "listing" ? "/listing" : "/p"}/${it.postId}`;
+    const href = `${it.postType === "listing" ? "/l" : "/p"}/${it.postId}`;
     return (
       <Link href={href} className={box}>
         {it.thumb ? (
@@ -260,14 +260,14 @@ export function ConversationDetails({
         {username && (
           <Link
             href={`/u/${username}`}
-            className="mt-4 inline-flex h-10 items-center rounded-full bg-white/10 px-5 text-secondary font-semibold text-fg transition-colors hover:bg-white/16"
+            className="mt-4 inline-flex h-10 items-center rounded-full bg-surface-interactive px-5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated"
           >
             View profile
           </Link>
         )}
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[20px] bg-white/5">
+      <div className="mt-6 overflow-hidden rounded-[20px] bg-surface-subtle">
         <ToggleRow
           icon={conv.is_muted ? "bellOff" : "bell"}
           label="Mute messages"
@@ -278,7 +278,7 @@ export function ConversationDetails({
         />
         {direct && following && (
           <>
-            <div className="ml-14 h-px bg-white/7" />
+            <div className="h-0.5" />
             <ToggleRow
               icon="bell"
               label="Post notifications"
@@ -291,7 +291,7 @@ export function ConversationDetails({
         )}
       </div>
 
-      <div className="mt-7 flex gap-6 border-b border-white/8 px-1">
+      <div className="mt-7 flex gap-6 px-1">
         {tabs.map(([id, label, n]) => (
           <button
             key={id}
@@ -304,7 +304,7 @@ export function ConversationDetails({
           >
             {label}
             {n > 0 && <span className="ml-1.5 text-supporting font-semibold text-muted">{n}</span>}
-            {tab === id && <span className="absolute inset-x-0 -bottom-px h-[2px] bg-white" />}
+            {tab === id && <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-brand" />}
           </button>
         ))}
       </div>
@@ -319,7 +319,7 @@ export function ConversationDetails({
         ) : failed ? (
           <div className="py-8 text-center">
             <p className="text-secondary text-muted">Couldn&apos;t load shared items.</p>
-            <button type="button" onClick={() => void refreshItems()} className="mt-3 h-9 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+            <button type="button" onClick={() => void refreshItems()} className="mt-3 h-9 rounded-full bg-brand px-5 text-[13px] font-extrabold text-brand-fg">
               Try again
             </button>
           </div>
@@ -338,7 +338,7 @@ export function ConversationDetails({
               <button
                 type="button"
                 onClick={() => setLimit((l) => l + PAGE)}
-                className="mx-auto mt-4 block h-9 rounded-full border border-white/14 px-5 text-secondary font-semibold text-fg hover:bg-white/6"
+                className="mx-auto mt-4 block h-9 rounded-full bg-surface-interactive px-5 text-secondary font-bold text-fg hover:bg-surface-elevated"
               >
                 Show more
               </button>
@@ -348,7 +348,7 @@ export function ConversationDetails({
       </div>
 
       {direct && (
-        <div className="mt-8 border-t border-white/8 pt-2">
+        <div className="mt-8 pt-2">
           <button
             type="button"
             disabled={blockBusy || blocked === undefined}
@@ -393,8 +393,8 @@ export function ConversationDetails({
 
   if (variant === "dock") {
     return (
-      <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/8" aria-label="Conversation details">
-        <div className="flex items-center gap-2 border-b border-white/8 px-4 py-3.5">
+      <aside className="flex w-[340px] shrink-0 flex-col border-l border-white/5" aria-label="Conversation details">
+        <div className="flex items-center gap-2 px-4 py-3.5">
           <h2 className="flex-1 text-[15px] font-bold text-fg">Details</h2>
           <button type="button" aria-label="Close details" onClick={onClose} className="grid size-9 place-items-center rounded-full text-white/60 hover:bg-white/8 hover:text-white">
             <Icon name="close" className="size-[18px]" />

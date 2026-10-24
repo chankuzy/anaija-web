@@ -24,8 +24,8 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`rounded-full border px-4 py-2 text-[14px] transition ${
-        selected ? "border-white/40 bg-white/14 font-bold text-white" : "border-white/14 font-medium text-white/70 hover:text-white"
+      className={`rounded-full px-4 py-2 text-[14px] transition ${
+        selected ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-white/70 hover:text-white"
       }`}
     >
       {label}
@@ -83,8 +83,8 @@ function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label="Your institution">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60 backdrop-blur-xs" />
-      <div className="glass relative flex h-[min(78dvh,600px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] bg-black/80 md:rounded-[28px]">
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60" />
+      <div className="glass relative flex h-[min(78dvh,600px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] md:rounded-[28px]">
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
           <h2 className="text-[17px] font-bold tracking-tight text-white">Your institution</h2>
           <button type="button" aria-label="Close" onClick={onClose} className="grid size-10 place-items-center rounded-full text-white/60 hover:bg-white/8 hover:text-white">
@@ -92,7 +92,7 @@ function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose
           </button>
         </div>
         <div className="px-4 pb-2">
-          <div className="flex h-11 items-center gap-2.5 rounded-full border border-white/12 bg-white/6 px-4">
+          <div className="flex h-11 items-center gap-2.5 rounded-full bg-surface-interactive px-4">
             <Icon name="search" className="size-5 shrink-0 text-muted" />
             <input
               autoFocus
@@ -171,7 +171,7 @@ function CampusForm({ initial, onSaved }: { initial: CampusProfile; onSaved: () 
         type="button"
         onClick={() => void save()}
         disabled={busy}
-        className="mt-8 h-12 w-full rounded-full bg-white text-[15px] font-bold text-black transition hover:bg-white/90 active:scale-[0.99] disabled:opacity-50"
+        className="mt-8 h-12 w-full rounded-full bg-brand text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.99] disabled:opacity-50"
       >
         {busy ? "Saving…" : "Save"}
       </button>
@@ -207,7 +207,7 @@ export function CampusView() {
         <div className="py-16 text-center">
           <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
           <p className="mt-1 text-body text-muted">{error}</p>
-          <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             Try again
           </button>
         </div>

@@ -410,7 +410,7 @@ function ReplyBar({
               onClick={onLike}
               className="grid size-7 place-items-center text-white transition-transform active:scale-90"
             >
-              <span key={like.liked ? "on" : "off"} className={like.liked ? "sv-pop text-brand" : ""}>
+              <span key={like.liked ? "on" : "off"} className={like.liked ? "sv-pop text-like" : ""}>
                 <Icon name="heart" filled={like.liked} weight="regular" className="size-6" />
               </span>
             </button>

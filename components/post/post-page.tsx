@@ -81,7 +81,7 @@ export function PostPage({ id, initial }: { id: string; initial?: Post | null })
         type="button"
         aria-label="Back"
         onClick={() => (window.history.length > 1 ? router.back() : router.replace("/"))}
-        className="absolute left-3 z-10 grid size-10 place-items-center rounded-full border border-white/12 bg-black/40 text-white backdrop-blur"
+        className="absolute left-3 z-10 grid size-10 place-items-center rounded-full bg-black/55 text-white"
         style={{ top: "calc(12px + env(safe-area-inset-top))" }}
       >
         <Icon name="back" className="size-5" />

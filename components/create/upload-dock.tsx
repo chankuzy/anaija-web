@@ -11,11 +11,11 @@ import { useUploads } from "@/lib/create/use-uploads";
 
 function Bar({ value }: { value: number | null }) {
   return (
-    <div className="relative h-0.5 overflow-hidden bg-white/12">
+    <div className="relative h-0.5 overflow-hidden bg-white/10">
       {value === null ? (
-        <div className="absolute inset-y-0 w-[35%] animate-pulse bg-white/70" />
+        <div className="absolute inset-y-0 w-[35%] animate-pulse bg-brand" />
       ) : (
-        <div className="h-full bg-white transition-[width] duration-[600ms] ease-out" style={{ width: `${Math.round(value * 100)}%` }} />
+        <div className="h-full bg-brand transition-[width] duration-[600ms] ease-out" style={{ width: `${Math.round(value * 100)}%` }} />
       )}
     </div>
   );
@@ -27,14 +27,14 @@ function Strip({ t, others }: { t: UploadTask; others: number }) {
   const cancellable = t.phase === "queued" || isActive(t);
   const pct = t.phase === "uploading" && t.progress != null ? ` · ${Math.floor(t.progress * 100)}%` : "";
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/8 bg-[#070B09]/94 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+    <div className="overflow-hidden rounded-2xl bg-surface-interactive shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
       <Bar value={published ? 1 : failed ? 0 : t.progress} />
       <div className="flex items-center gap-2.5 py-2 pl-4 pr-2">
         <span className="grid size-[18px] shrink-0 place-items-center">
           {published ? (
-            <Icon name="check" className="size-[17px] text-white" />
+            <Icon name="check" className="size-[17px] text-brand" />
           ) : failed ? (
-            <Icon name="dangerCircle" className="size-[17px] text-warm" />
+            <Icon name="dangerCircle" className="size-[17px] text-danger" />
           ) : (
             <span className="size-3.5 animate-spin rounded-full border-2 border-white/25 border-t-white/80" />
           )}
@@ -45,7 +45,7 @@ function Strip({ t, others }: { t: UploadTask; others: number }) {
           {others > 0 ? `  (+${others} more)` : ""}
         </p>
         {failed && t.retryable && (
-          <button type="button" onClick={() => uploadManager.retry(t.id)} className="px-2.5 py-1 text-[12.5px] font-bold text-warm">
+          <button type="button" onClick={() => uploadManager.retry(t.id)} className="px-2.5 py-1 text-[12.5px] font-extrabold text-brand">
             Retry
           </button>
         )}

@@ -87,10 +87,10 @@ export function ProfileMenu({
   const row = "flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-semibold text-white transition hover:bg-white/10 active:bg-white/15";
   return (
     <div className="fixed inset-0 z-50">
-      <button type="button" aria-label="Close menu" onClick={onClose} className="absolute inset-0 cursor-default bg-black/40 backdrop-blur-xs" />
+      <button type="button" aria-label="Close menu" onClick={onClose} className="absolute inset-0 cursor-default bg-black/40" />
       <div
         role="menu"
-        className="glass absolute right-3 w-[252px] overflow-hidden rounded-card border border-white/15 bg-black/80 py-1.5 backdrop-blur-xl shadow-2xl"
+        className="glass absolute right-3 w-[252px] overflow-hidden rounded-card py-1.5 shadow-2xl"
         style={{ top: "calc(60px + env(safe-area-inset-top))" }}
       >
         {following && (
@@ -108,13 +108,13 @@ export function ProfileMenu({
               Unfollow
             </button>
             <button type="button" role="menuitem" className={row} onClick={() => void toggleNotify()}>
-              <Icon name="bell" filled={notify === true} className={`size-5 ${notify ? "text-amber-400" : "text-white"}`} />
+              <Icon name="bell" filled={notify === true} className={`size-5 ${notify ? "text-brand" : "text-white"}`} />
               <span className="flex-1">Notify me of posts</span>
-              <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-all ${notify ? "justify-end bg-amber-400" : "justify-start bg-white/25"}`}>
-                <span className={`size-4 rounded-full ${notify ? "bg-black" : "bg-white"}`} />
+              <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-all ${notify ? "justify-end bg-brand" : "justify-start bg-white/25"}`}>
+                <span className={`size-4 rounded-full ${notify ? "bg-brand-fg" : "bg-white"}`} />
               </span>
             </button>
-            <div className="mx-3.5 my-1 h-px bg-white/12" />
+            <div className="my-1 h-1.5" />
           </>
         )}
         {blocked === true ? (
@@ -123,8 +123,8 @@ export function ProfileMenu({
             Unblock @{profile.username}
           </button>
         ) : (
-          <button type="button" role="menuitem" className={`${row} !text-rose-500`} onClick={() => void block()}>
-            <Icon name="forbidden" className="size-5 text-rose-500" />
+          <button type="button" role="menuitem" className={`${row} !text-danger`} onClick={() => void block()}>
+            <Icon name="forbidden" className="size-5 text-danger" />
             Block @{profile.username}
           </button>
         )}

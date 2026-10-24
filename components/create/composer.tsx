@@ -71,7 +71,7 @@ export function Composer({ initialKind }: { initialKind: ContentKind }) {
   return (
     <div className="fixed inset-0 z-[60] flex justify-center bg-bg md:static md:inset-auto md:z-auto md:h-[calc(100dvh-var(--nav-h,0px))] md:w-full md:items-center md:bg-transparent md:px-6">
       <div
-        className="relative flex h-full w-full max-w-[520px] flex-col md:h-[min(880px,calc(100dvh-48px))] md:max-w-[760px] md:overflow-hidden md:rounded-[28px] md:border md:border-white/8 md:bg-bg"
+        className="relative flex h-full w-full max-w-[520px] flex-col md:h-[min(880px,calc(100dvh-48px))] md:max-w-[760px] md:overflow-hidden md:rounded-[28px] md:border md:border-white/5 md:bg-bg"
         style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {step === "pick" && <PickStep c={c} onNext={fromPick} onClose={close} />}

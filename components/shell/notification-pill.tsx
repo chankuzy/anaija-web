@@ -64,7 +64,7 @@ function ActRow({ it, onOpen, onThumb, onFollow }: { it: ActivityItem; onOpen: (
       <button type="button" aria-label="Open" onClick={onOpen} className="absolute inset-0" />
       <span className="pointer-events-none relative shrink-0">
         <Avatar url={a?.avatar} name={a?.name} size={46} />
-        <span className="absolute -bottom-1 -right-1 grid size-[20px] place-items-center rounded-full text-white ring-2 ring-[#151518]" style={{ backgroundColor: k.color }}>
+        <span className={`absolute -bottom-1 -right-1 grid size-[20px] place-items-center rounded-full bg-surface-elevated ring-2 ring-surface-subtle ${it.kind === "like" || it.kind === "story_like" ? "text-like" : "text-brand"}`}>
           <Icon name={k.icon} filled className="size-[11px]" />
         </span>
       </span>
@@ -75,20 +75,20 @@ function ActRow({ it, onOpen, onThumb, onFollow }: { it: ActivityItem; onOpen: (
           <button
             type="button"
             onClick={onFollow}
-            className={`pointer-events-auto relative mt-1.5 h-7 rounded-full px-3 text-micro font-bold ${it.follow_back ? "border border-white/40 text-fg" : "bg-white text-black"}`}
+            className={`pointer-events-auto relative mt-1.5 h-7 rounded-full px-3 text-micro font-bold ${it.follow_back ? "bg-surface-interactive text-fg" : "bg-brand text-brand-fg"}`}
           >
             {it.follow_back ? "Following" : "Follow back"}
           </button>
         )}
         <p className="mt-0.5 flex items-center gap-1.5 text-supporting text-muted">
           {timeAgo(utc(it.last_event_at))}
-          {unread && <span className="size-[6px] rounded-full bg-warm" />}
+          {unread && <span className="size-[6px] rounded-full bg-brand" />}
         </p>
       </div>
       {it.thumb && (
         <button type="button" onClick={onThumb} aria-label="Open content" className="relative shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={it.thumb} alt="" loading="lazy" className="size-[46px] rounded-xl border border-line object-cover" />
+          <img src={it.thumb} alt="" loading="lazy" className="size-[46px] rounded-xl object-cover" />
         </button>
       )}
     </div>
@@ -181,7 +181,7 @@ function MiniChat({
 
   return (
     <div className="flex h-[min(540px,calc(100dvh-140px))] flex-col">
-      <header className="flex items-center gap-2 border-b border-white/8 px-2 py-2.5">
+      <header className="flex items-center gap-2 px-2 py-2.5">
         <button type="button" aria-label="Back" onClick={onBack} className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/8">
           <Icon name="back" className="size-5" />
         </button>
@@ -219,7 +219,7 @@ function MiniChat({
               <div className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[78%] overflow-hidden rounded-[20px] text-[14px] leading-[1.35] ${
-                    mine ? "bg-white text-black" : "bg-white/10 text-fg"
+                    mine ? "bubble-sent" : "bg-surface-interactive text-fg"
                   } ${img || m.shared_post ? "p-1" : "px-3.5 py-2"}`}
                 >
                   {m.is_deleted ? (
@@ -254,7 +254,7 @@ function MiniChat({
         {outbox.map((o) => (
           <div key={o.key} className="flex justify-end">
             <div className="flex max-w-[78%] flex-col items-end gap-1">
-              <div className={`rounded-[20px] bg-white px-3.5 py-2 text-[14px] leading-[1.35] text-black ${o.failed ? "opacity-100" : "opacity-60"}`}>{o.body}</div>
+              <div className={`bubble-sent rounded-[20px] px-3.5 py-2 text-[14px] leading-[1.35] ${o.failed ? "opacity-100" : "opacity-60"}`}>{o.body}</div>
               {o.failed && (
                 <button type="button" onClick={() => void send(o.body, o.key)} className="text-micro font-semibold text-danger">
                   Not sent. Tap to retry
@@ -265,20 +265,20 @@ function MiniChat({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 border-t border-white/8 p-3">
+      <div className="flex items-center gap-2 p-3">
         <input
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && submit()}
           placeholder="Message…"
-          className="h-11 min-w-0 flex-1 rounded-full bg-white/8 px-4 text-body text-fg outline-none placeholder:text-muted focus:bg-white/12"
+          className="h-11 min-w-0 flex-1 rounded-full bg-surface-interactive px-4 text-body text-fg outline-none placeholder:text-muted focus:bg-surface-elevated"
         />
         <button
           type="button"
           aria-label="Send"
           disabled={!text.trim()}
           onClick={submit}
-          className="grid size-11 shrink-0 place-items-center rounded-full bg-white text-black transition active:scale-95 disabled:opacity-35"
+          className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition active:scale-95 disabled:opacity-35"
         >
           <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />
@@ -511,7 +511,7 @@ export function NotificationPill() {
       {open && (
         <section
           aria-label="Messages and activity"
-          className="pill-card w-[392px] max-w-[calc(100vw-48px)] overflow-hidden rounded-[28px] border border-white/10 bg-[rgba(20,20,23,0.9)] shadow-[0_24px_80px_rgba(0,0,0,0.65),inset_0_1px_0_rgba(255,255,255,0.06)] backdrop-blur-2xl"
+          className="pill-card w-[392px] max-w-[calc(100vw-48px)] overflow-hidden rounded-[28px] bg-surface-subtle shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
         >
           {active ? (
             <MiniChat
@@ -532,7 +532,7 @@ export function NotificationPill() {
           ) : (
             <>
               <div className="p-3 pb-2">
-                <div className="flex gap-1 rounded-full bg-white/6 p-1">
+                <div className="flex gap-1 rounded-full bg-surface-interactive p-1">
                   {(["chats", "activity"] as Tab[]).map((t) => {
                     const n = t === "chats" ? chatUnread + reqUnread : unseen;
                     const on = tab === t;
@@ -542,11 +542,11 @@ export function NotificationPill() {
                         type="button"
                         onClick={() => pickTab(t)}
                         className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-full text-secondary font-semibold transition-colors ${
-                          on ? "bg-white text-black" : "text-white/60 hover:text-white"
+                          on ? "bg-brand font-extrabold text-brand-fg" : "text-white/60 hover:text-white"
                         }`}
                       >
                         {t === "chats" ? "Chats" : "Activity"}
-                        {!on && <Count n={n} className="bg-warm text-black" />}
+                        {!on && <Count n={n} className="bg-brand text-brand-fg" />}
                       </button>
                     );
                   })}
@@ -562,7 +562,7 @@ export function NotificationPill() {
                         onClick={() => go("/messages")}
                         className="mx-3 mb-1 flex w-[calc(100%-24px)] items-center gap-3 rounded-2xl bg-white/6 px-3 py-2.5 text-left transition-colors hover:bg-white/10"
                       >
-                        <span className="grid size-9 place-items-center rounded-full bg-warm/15 text-warm">
+                        <span className="grid size-9 place-items-center rounded-full bg-brand/15 text-brand">
                           <Icon name="userPlus" className="size-[18px]" />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -571,13 +571,13 @@ export function NotificationPill() {
                             {reqs.length} {reqs.length === 1 ? "person wants" : "people want"} to chat
                           </span>
                         </span>
-                        <Count n={reqUnread} className="bg-warm text-black" />
+                        <Count n={reqUnread} className="bg-brand text-brand-fg" />
                       </button>
                     )}
                     {list.length === 0 && reqs.length === 0 && (
                       <div className="px-6 py-12 text-center">
                         <p className="text-[15px] font-bold text-fg">No conversations yet</p>
-                        <button type="button" onClick={() => go("/discover")} className="mt-3 h-9 rounded-full bg-white px-4 text-secondary font-bold text-black">
+                        <button type="button" onClick={() => go("/discover")} className="mt-3 h-9 rounded-full bg-brand px-4 text-secondary font-extrabold text-brand-fg">
                           Find people
                         </button>
                       </div>
@@ -597,7 +597,7 @@ export function NotificationPill() {
                             </span>
                             <span className={`block truncate text-secondary ${unread ? "font-medium text-fg" : "text-muted"}`}>{previewOf(c) || "Say hi"}</span>
                           </span>
-                          {unread && <Count n={c.unread_count} className="pointer-events-none relative bg-warm text-black" />}
+                          {unread && <Count n={c.unread_count} className="pointer-events-none relative bg-brand text-brand-fg" />}
                         </div>
                       );
                     })}
@@ -623,8 +623,8 @@ export function NotificationPill() {
                   ))}
               </div>
 
-              {note && <p className="px-4 pb-1 text-supporting font-semibold text-warm">{note}</p>}
-              <div className="border-t border-white/8 p-2">
+              {note && <p className="px-4 pb-1 text-supporting font-bold text-brand">{note}</p>}
+              <div className="p-2">
                 <button
                   type="button"
                   onClick={() => (tab === "chats" ? go("/messages") : openFull())}
@@ -648,14 +648,14 @@ export function NotificationPill() {
             if (p.conv) openChat(p.conv);
             else if (p.act) openAct(p.act, p.act.destination);
           }}
-          className="pill-card flex w-[320px] max-w-[calc(100vw-48px)] items-center gap-3 rounded-[24px] border border-white/10 bg-[rgba(20,20,23,0.9)] p-3 text-left shadow-[0_16px_48px_rgba(0,0,0,0.55)] backdrop-blur-2xl transition-colors hover:bg-[rgba(30,30,36,0.92)]"
+          className="pill-card flex w-[320px] max-w-[calc(100vw-48px)] items-center gap-3 rounded-[24px] bg-surface-subtle p-3 text-left shadow-[0_16px_48px_rgba(0,0,0,0.55)] transition-colors hover:bg-surface-interactive"
         >
           <Avatar url={peek.avatar} name={peek.name} size={42} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-body font-semibold text-fg">{peek.name}</span>
             <span className="line-clamp-2 text-secondary leading-[1.3] text-white/65">{peek.text}</span>
           </span>
-          <span className="size-2 shrink-0 rounded-full bg-warm" />
+          <span className="size-2 shrink-0 rounded-full bg-brand" />
         </button>
       )}
 
@@ -664,7 +664,7 @@ export function NotificationPill() {
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={`relative flex h-14 items-center gap-3 rounded-full border border-white/10 bg-[rgba(22,22,26,0.78)] pl-2 pr-5 text-fg shadow-[0_12px_40px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl transition hover:bg-[rgba(32,32,38,0.85)] active:scale-[0.97] ${
+        className={`relative flex h-14 items-center gap-3 rounded-full bg-surface-interactive pl-2 pr-5 text-fg shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition hover:bg-surface-elevated active:scale-[0.97] ${
           badge > 0 && !open ? "pill-glow" : ""
         }`}
       >
@@ -675,13 +675,13 @@ export function NotificationPill() {
         ) : stack.length > 0 ? (
           <span className="flex pl-1">
             {stack.map((c, i) => (
-              <span key={c.id} className="rounded-full ring-2 ring-[#18181c]" style={{ marginLeft: i ? -12 : 0 }}>
+              <span key={c.id} className="rounded-full ring-2 ring-surface-interactive" style={{ marginLeft: i ? -12 : 0 }}>
                 <Avatar url={convAvatar(c)} name={convName(c)} size={36} />
               </span>
             ))}
           </span>
         ) : (
-          <span className="grid size-10 place-items-center rounded-full bg-gradient-to-br from-warm to-[#ff8a2b] text-black">
+          <span className="grid size-10 place-items-center rounded-full bg-brand text-brand-fg">
             <Icon name="message" filled className="size-5" />
           </span>
         )}

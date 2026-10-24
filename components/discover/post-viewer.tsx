@@ -106,7 +106,7 @@ export function PostViewer({
         type="button"
         aria-label="Close"
         onClick={() => history.back()}
-        className="absolute left-3 z-10 grid size-10 place-items-center rounded-full border border-white/12 bg-black/40 text-white backdrop-blur"
+        className="absolute left-3 z-10 grid size-10 place-items-center rounded-full bg-black/55 text-white"
         style={{ top: "calc(12px + env(safe-area-inset-top))" }}
       >
         <Icon name="close" className="size-5" />

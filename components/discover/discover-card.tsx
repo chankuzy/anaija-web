@@ -127,7 +127,7 @@ export function DiscoverCard({
       type="button"
       onClick={onOpen}
       {...hoverProps}
-      className="group relative block w-full overflow-hidden bg-card text-left outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-inset"
+      className="group relative block w-full overflow-hidden bg-card text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-inset"
       style={{ aspectRatio: String(aspect), backgroundColor: cover.color ?? undefined }}
     >
       <TileMedia key={cover.url ?? "none"} url={cover.url ?? null} caption={caption} fallback={fallback} />
@@ -165,7 +165,7 @@ export function DiscoverCard({
       )}
 
       {isListing && price && (
-        <span className="absolute bottom-2 right-2 z-[2] max-w-[calc(100%-16px)] truncate rounded-full border border-white/16 bg-black/65 px-2.5 py-[3px] text-micro font-bold text-white backdrop-blur-sm">
+        <span className="absolute bottom-2 right-2 z-[2] max-w-[calc(100%-16px)] truncate rounded-full bg-black/65 px-2.5 py-[3px] text-micro font-bold text-white">
           ₦{price}
         </span>
       )}

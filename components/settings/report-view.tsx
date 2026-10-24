@@ -59,8 +59,8 @@ export function ReportView() {
                 key={value}
                 type="button"
                 onClick={() => setCat(value)}
-                className={`rounded-full border px-4 py-2 text-[14px] transition ${
-                  cat === value ? "border-white/40 bg-white/14 font-bold text-white" : "border-white/14 font-medium text-white/70 hover:text-white"
+                className={`rounded-full px-4 py-2 text-[14px] transition ${
+                  cat === value ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-white/70 hover:text-white"
                 }`}
               >
                 {label}
@@ -75,7 +75,7 @@ export function ReportView() {
             onChange={(e) => setText(e.target.value)}
             maxLength={1000}
             placeholder={cat === "safety" ? "Include their username and what happened" : "What happened? What did you expect?"}
-            className="min-h-[160px] w-full resize-none rounded-input border border-line bg-card px-5 py-4 text-[15px] leading-[1.4] text-fg outline-none placeholder:text-muted focus-visible:ring-1 focus-visible:ring-white/20"
+            className="min-h-[160px] w-full resize-none rounded-input bg-surface-interactive px-5 py-4 text-[15px] font-medium leading-[1.4] text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60"
           />
           <p className="mt-1 px-1 text-right text-supporting text-muted">{text.length}/1000</p>
 

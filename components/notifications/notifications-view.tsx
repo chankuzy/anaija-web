@@ -62,7 +62,7 @@ function Glyph({ kind }: { kind: string }) {
   const g = GLYPH[kind] ?? FALLBACK;
   if (g.shape === "bare") {
     return (
-      <span className="text-brand">
+      <span className="text-like">
         <Icon name={g.icon ?? "heart"} filled className="size-8" />
       </span>
     );

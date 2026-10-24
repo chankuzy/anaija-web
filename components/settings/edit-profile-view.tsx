@@ -27,7 +27,7 @@ const SPECS: Record<Kind, CropSpec> = {
 };
 
 const areaCls =
-  "w-full resize-none rounded-input border border-line bg-card px-5 py-4 text-[15px] leading-[1.4] text-fg outline-none placeholder:text-muted focus-visible:ring-1 focus-visible:ring-white/20";
+  "w-full resize-none rounded-input bg-surface-interactive px-5 py-4 text-[15px] font-medium leading-[1.4] text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60";
 
 // Same key the profile page reads, so the page you return to already shows the new values.
 const profileKey = (username: string) => `profile:${username.toLowerCase()}`;
@@ -192,7 +192,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
       type="button"
       onClick={() => void save()}
       disabled={!canSave}
-      className="h-9 min-w-[76px] rounded-full bg-white px-5 text-[14px] font-bold text-black transition active:scale-97 disabled:opacity-40"
+      className="h-9 min-w-[76px] rounded-full bg-brand px-5 text-[14px] font-extrabold text-brand-fg transition active:scale-97 disabled:opacity-40"
     >
       {busy ? "Saving…" : "Save"}
     </button>
@@ -204,7 +204,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
       <input ref={coverInput} type="file" accept="image/*" hidden onChange={(e) => pick("cover", e)} />
 
       <div className="relative mb-14">
-        <div className="relative aspect-[3/1] overflow-hidden rounded-[20px] border border-white/10 bg-[linear-gradient(135deg,#1c1c20,#121214)]">
+        <div className="relative aspect-[3/1] overflow-hidden rounded-[20px] bg-surface-subtle">
           {cover && <img src={cover} alt="" className="size-full object-cover" />}
           <button
             type="button"
@@ -212,7 +212,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
             onClick={() => coverInput.current?.click()}
             className="absolute inset-0 grid place-items-center bg-black/25 text-white transition hover:bg-black/35"
           >
-            <span className="grid size-12 place-items-center rounded-full bg-black/45 backdrop-blur">
+            <span className="grid size-12 place-items-center rounded-full bg-black/55">
               {uploading === "cover" ? <span className="text-supporting font-bold">…</span> : <Icon name="camera" filled className="size-6" />}
             </span>
           </button>
@@ -223,10 +223,10 @@ function EditForm({ profile }: { profile: UserProfile }) {
           onClick={() => avatarInput.current?.click()}
           className="absolute -bottom-10 left-4 rounded-full"
         >
-          <span className="block rounded-full border-4 border-black bg-black">
+          <span className="block rounded-full border-4 border-bg bg-bg">
             <Avatar url={avatar} name={name || profile.username} size={84} />
           </span>
-          <span className="absolute bottom-0.5 right-0 grid size-8 place-items-center rounded-full border-[3px] border-black bg-white text-black">
+          <span className="absolute bottom-0.5 right-0 grid size-8 place-items-center rounded-full border-[3px] border-bg bg-brand text-brand-fg">
             {uploading === "avatar" ? <span className="text-micro font-bold">…</span> : <Icon name="camera" filled className="size-4" />}
           </span>
         </button>
@@ -301,7 +301,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
             <button
               type="button"
               onClick={() => setLinks((p) => [...p, ""])}
-              className="mt-3 inline-flex h-10 items-center gap-2 rounded-full border border-white/20 px-4 text-secondary font-semibold text-white transition hover:bg-white/8"
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-white transition hover:bg-surface-elevated"
             >
               <Icon name="plus" className="size-5" />
               Add link
@@ -337,7 +337,7 @@ export function EditProfileView() {
         <div className="py-16 text-center">
           <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
           <p className="mt-1 text-body text-muted">{error.message}</p>
-          <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             Try again
           </button>
         </div>

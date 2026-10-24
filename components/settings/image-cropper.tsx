@@ -133,7 +133,7 @@ export function ImageCropper({
           type="button"
           onClick={confirm}
           disabled={!img || busy}
-          className="h-9 w-20 rounded-full bg-white text-[14px] font-bold text-black transition disabled:opacity-40"
+          className="h-9 w-20 rounded-full bg-brand text-[14px] font-extrabold text-brand-fg transition disabled:opacity-40"
         >
           {busy ? "…" : "Done"}
         </button>
@@ -189,13 +189,13 @@ export function ImageCropper({
             value={Math.min(max, Math.max(min, view.s))}
             disabled={!img}
             onChange={(e) => setView((v) => clamp(Number(e.target.value), v.x, v.y))}
-            className="h-1 flex-1 accent-white"
+            className="h-1 flex-1 accent-[#ffd84d]"
           />
           <button
             type="button"
             disabled={!img}
             onClick={() => setView({ s: min, x: 0, y: 0 })}
-            className="text-secondary font-bold text-white disabled:opacity-40"
+            className="text-secondary font-extrabold text-brand disabled:opacity-40"
           >
             Reset
           </button>

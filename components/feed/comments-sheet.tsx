@@ -70,7 +70,7 @@ function Row({
           {c.body}
         </p>
         <div className="mt-1.5 flex items-center gap-4">
-          <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-brand" : ""}`}>
+          <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-like" : ""}`}>
             <Icon name="heart" filled={c.is_liked} className="size-3.5" />
             {c.likes_count > 0 && c.likes_count}
           </button>

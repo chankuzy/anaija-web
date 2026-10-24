@@ -73,7 +73,7 @@ export function InstallPrompt() {
     <div
       role="region"
       aria-label="Install Anaija"
-      className="fixed inset-x-3 z-50 mx-auto flex max-w-[420px] items-center gap-3 rounded-floating border border-line bg-card-elevated p-3 shadow-[0_8px_28px_rgba(0,0,0,0.5)] md:left-auto md:right-6 md:mx-0 md:w-[380px]"
+      className="fixed inset-x-3 z-50 mx-auto flex max-w-[420px] items-center gap-3 rounded-floating bg-surface-interactive p-3 shadow-[0_8px_28px_rgba(0,0,0,0.5)] md:left-auto md:right-6 md:mx-0 md:w-[380px]"
       style={{ bottom: "calc(var(--nav-h, 0px) + env(safe-area-inset-bottom) + 12px)" }}
     >
       <img src="/icons/icon-192.png" alt="" className="size-10 shrink-0 rounded-[10px]" />
@@ -84,7 +84,7 @@ export function InstallPrompt() {
         </p>
       </div>
       {evt && (
-        <button type="button" onClick={() => void install()} className="h-9 shrink-0 rounded-full bg-white px-4 text-[13px] font-bold text-black">
+        <button type="button" onClick={() => void install()} className="h-9 shrink-0 rounded-full bg-brand px-4 text-[13px] font-extrabold text-brand-fg">
           Install
         </button>
       )}

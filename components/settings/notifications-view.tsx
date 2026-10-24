@@ -19,10 +19,10 @@ function HourRow({ label, value, disabled, onChange }: { label: string; value: n
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-10 rounded-full border border-white/14 bg-white/8 px-3 text-secondary font-semibold text-white outline-none"
+        className="h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-white outline-none"
       >
         {Array.from({ length: 24 }, (_, h) => (
-          <option key={h} value={h} className="bg-[#121214]">
+          <option key={h} value={h} className="bg-[#26262b]">
             {fmtHour(h)}
           </option>
         ))}
@@ -60,7 +60,7 @@ export function NotificationsView() {
       <div className="py-16 text-center">
         <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
           Try again
         </button>
       </div>

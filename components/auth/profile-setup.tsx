@@ -95,7 +95,7 @@ export function ProfileSetup() {
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col justify-center px-6 py-10">
-      <h1 className="text-[32px] font-bold leading-tight tracking-tight">
+      <h1 className="text-[32px] font-extrabold leading-tight tracking-tight">
         Set up your
         <br />
         profile
@@ -131,7 +131,7 @@ export function ProfileSetup() {
 
         <div>
           <textarea
-            className="min-h-[104px] w-full resize-none rounded-input border border-line bg-card px-5 py-4 text-[15px] text-fg outline-none placeholder:text-muted focus-visible:ring-1 focus-visible:ring-white/20"
+            className="min-h-[104px] w-full resize-none rounded-input bg-surface-interactive px-5 py-4 text-[15px] font-medium text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60"
             placeholder="Bio (optional)"
             maxLength={160}
             value={bio}

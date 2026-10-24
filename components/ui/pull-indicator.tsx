@@ -14,7 +14,7 @@ export function PullIndicator({ pull, refreshing }: { pull: number; refreshing: 
         transition: refreshing ? "transform 200ms ease, opacity 200ms ease" : "none",
       }}
     >
-      <span className="grid size-9 place-items-center rounded-full bg-white text-black shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+      <span className="grid size-9 place-items-center rounded-full bg-brand text-brand-fg shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
         <svg
           viewBox="0 0 24 24"
           className={`size-[18px] ${refreshing ? "animate-spin" : ""}`}
