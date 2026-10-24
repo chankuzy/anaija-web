@@ -8,6 +8,7 @@ import { socialApi } from "@/lib/api/social";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { toggleFollow, useIsFollowing } from "@/lib/feed/follow-store";
+import { useShare } from "@/lib/share/share-context";
 import { Icon } from "@/components/ui/icon";
 import { ActionRail } from "./action-rail";
 import { CommentsSheet } from "./comments-sheet";
@@ -40,6 +41,8 @@ export function FeedCard({
   onRemove: (id: number) => void;
 }) {
   const router = useRouter();
+  const openShare = useShare();
+  const shareCount = useRef(post.shares_count);
   const { status, user } = useAuth();
   const sectionRef = useRef<HTMLElement>(null);
   const [expanded, setExpanded] = useState(false);
@@ -162,30 +165,14 @@ export function FeedCard({
     return r;
   }
 
-  // Web counts a share when the link is actually shared or copied (Flutter counts on send-to-person,
-  // which needs messaging). The server never counts your own post and dedupes per user.
-  async function share() {
-    const url = `${window.location.origin}/p/${post.id}`;
-    let done = false;
-    try {
-      if (navigator.share) {
-        await navigator.share({ url, text: post.caption ?? undefined });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast("Link copied");
-      }
-      done = true;
-    } catch {
-      /* user cancelled, or clipboard unavailable */
-    }
-    if (done && status === "authed" && !isOwn) {
-      try {
-        const r = await socialApi.share(post.id);
-        patch(post.id, { shares_count: r.shares_count });
-      } catch {
-        /* the link was still shared */
-      }
-    }
+  // Opens the share sheet (people, more, story). The count moves optimistically per person sent, then snaps to
+  // the server's number (it never counts your own post and dedupes per user).
+  function share() {
+    shareCount.current = post.shares_count;
+    openShare(post, (delta, serverCount) => {
+      shareCount.current = serverCount ?? Math.max(0, shareCount.current + delta);
+      patch(post.id, { shares_count: shareCount.current });
+    });
   }
 
   function notInterested() {

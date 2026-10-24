@@ -1,0 +1,98 @@
+"use client";
+
+import { useSyncExternalStore } from "react";
+import { ApiError } from "@/lib/api/client";
+import { shareApi } from "@/lib/api/share";
+import { onCacheClear } from "@/lib/cache/swr";
+
+// Who a post has already been sent to this session (postId -> userIds). Immutable snapshots, so rows can
+// subscribe cheaply and a "Sent" tick survives closing and reopening the sheet.
+const EMPTY: ReadonlySet<number> = new Set();
+let sent = new Map<number, ReadonlySet<number>>();
+const listeners = new Set<() => void>();
+const emit = () => listeners.forEach((l) => l());
+const subscribe = (l: () => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
+// One idempotency key per recipient until it succeeds, so a retry after a lost response can't deliver twice.
+const tempIds = new Map<string, string>();
+const requestIds = new Map<number, string>();
+const storyBusy = new Set<number>();
+
+onCacheClear(() => {
+  sent = new Map();
+  tempIds.clear();
+  requestIds.clear();
+  emit();
+});
+
+export const useSentTo = (postId: number): ReadonlySet<number> =>
+  useSyncExternalStore(subscribe, () => sent.get(postId) ?? EMPTY, () => EMPTY);
+
+const hasSent = (postId: number, userId: number) => sent.get(postId)?.has(userId) === true;
+
+function setSent(postId: number, userId: number, on: boolean) {
+  const next = new Set(sent.get(postId) ?? EMPTY);
+  if (on) next.add(userId);
+  else next.delete(userId);
+  sent = new Map(sent).set(postId, next);
+  emit();
+}
+
+async function deliver(postId: number, userId: number, conversationId: number | null, onCount: (n: number) => void) {
+  const key = `${postId}:${userId}`;
+  let tempId = tempIds.get(key);
+  if (!tempId) {
+    tempId = `share-${postId}-${userId}-${crypto.randomUUID()}`;
+    tempIds.set(key, tempId);
+  }
+  const cid = conversationId ?? (await shareApi.openConversation(userId));
+  await shareApi.sendPost(cid, postId, tempId);
+  tempIds.delete(key);
+  void shareApi.count(postId).then((n) => {
+    if (n !== null) onCount(n);
+  });
+}
+
+/**
+ * Optimistic: flips to "Sent" and bumps the share count on the tap; the request runs in the background and
+ * rolls both back (with a message) only if it fails. Everything it needs is captured up front, so it still
+ * completes, or rolls back, if the sheet is closed mid-send.
+ */
+export function sendToUser(
+  postId: number,
+  userId: number,
+  conversationId: number | null,
+  hooks: { name: string; onShared?: (delta: number, serverCount?: number) => void; onError: (message: string) => void },
+) {
+  if (hasSent(postId, userId)) return;
+  setSent(postId, userId, true);
+  hooks.onShared?.(1);
+  deliver(postId, userId, conversationId, (n) => hooks.onShared?.(0, n)).catch((e: unknown) => {
+    setSent(postId, userId, false);
+    hooks.onShared?.(-1);
+    hooks.onError(e instanceof ApiError ? e.message : `Couldn't send to ${hooks.name}`);
+  });
+}
+
+/** "Add an already-published post to my story": the server reuses the post's files. Throws on failure. */
+export async function addPostToStory(postId: number): Promise<"busy" | "added" | "duplicate"> {
+  if (storyBusy.has(postId)) return "busy";
+  storyBusy.add(postId);
+  try {
+    let id = requestIds.get(postId);
+    if (!id) {
+      id = crypto.randomUUID();
+      requestIds.set(postId, id);
+    }
+    const r = await shareApi.addToStory(postId, id);
+    requestIds.delete(postId);
+    return r.duplicate === true ? "duplicate" : "added";
+  } finally {
+    storyBusy.delete(postId);
+  }
+}

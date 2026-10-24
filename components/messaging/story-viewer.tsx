@@ -12,6 +12,7 @@ import { postsApi } from "@/lib/api/posts";
 import { coverOfGroup, storiesApi, type StoryGroup, type StoryItem } from "@/lib/api/stories";
 import { timeAgo } from "@/lib/format";
 import { RingFrame } from "./ring-avatar";
+import { FrameSlides, SourceFrame, frameCaption, sourceHref, type FrameHold } from "./story-source-frame";
 
 const IMAGE_MS = 5000;
 const REACTIONS = ["❤️", "🔥", "😂", "😮", "😢", "👏"];
@@ -80,6 +81,8 @@ function Slide({
   onCreate,
   onClose,
   onDone,
+  hold,
+  onCardTap,
 }: {
   group: StoryGroup;
   story: StoryItem;
@@ -91,6 +94,8 @@ function Slide({
   onCreate: () => void;
   onClose: () => void;
   onDone: () => void;
+  hold: FrameHold;
+  onCardTap: () => void;
 }) {
   const m = story.media[0];
   const isVideo = m?.type === "video";
@@ -108,6 +113,63 @@ function Slide({
   };
   const bg = m?.dominant_color ? `#${m.dominant_color.replace("#", "")}` : "#0a0a0a";
   const fitClass = fit === "cover" ? "object-cover" : "object-contain";
+
+  // A story made from a post ("add to story") is drawn as the post's frame, like the Flutter app.
+  const router = useRouter();
+  const source = m?.type === "audio" ? null : (story.source ?? null);
+  const framed = source !== null;
+  const frameImages = (source?.media ?? []).filter((x) => x.type !== "video" && x.type !== "audio" && !!x.url);
+  const slides = framed && !isVideo && frameImages.length > 1 && !!source?.slideshow.enabled;
+  const slideMs = source?.slideshow.interval_ms ?? 2800;
+  const durationMs = slides ? Math.min(20000, Math.max(5000, frameImages.length * slideMs)) : IMAGE_MS;
+  const [measured, setMeasured] = useState<number | null>(null);
+  const frameRatio = Math.min(1.5, Math.max(0.6, m?.aspect_ratio ?? frameImages[0]?.aspect_ratio ?? measured ?? 0.8));
+  const openSource = () => {
+    if (!source) return;
+    const href = sourceHref(source);
+    onClose();
+    router.push(href);
+  };
+  const content =
+    source === null ? null : isVideo && url ? (
+      <video
+        ref={vref}
+        src={url}
+        muted
+        playsInline
+        preload="auto"
+        onEnded={onDone}
+        onLoadedMetadata={(e) => {
+          const v = e.currentTarget;
+          if (v.videoWidth > 0 && v.videoHeight > 0) setMeasured(v.videoWidth / v.videoHeight);
+        }}
+        className="absolute inset-0 size-full object-cover"
+      />
+    ) : slides ? (
+      <FrameSlides
+        urls={frameImages.map((x) => x.url as string)}
+        intervalMs={slideMs}
+        active={!halted && ready}
+        onReady={(r) => {
+          if (r) setMeasured(r);
+          setReady(true);
+        }}
+      />
+    ) : (
+      <img
+        src={frameImages[0]?.url ?? url ?? undefined}
+        alt=""
+        decoding="async"
+        draggable={false}
+        onLoad={(e) => {
+          const i = e.currentTarget;
+          if (i.naturalHeight > 0) setMeasured(i.naturalWidth / i.naturalHeight);
+          setReady(true);
+        }}
+        onError={() => setReady(true)}
+        className="absolute inset-0 size-full object-cover"
+      />
+    );
 
   useEffect(() => {
     const el = vref.current;
@@ -151,7 +213,7 @@ function Slide({
   return (
     <>
       <div className="sv-in absolute inset-0 overflow-hidden" style={{ backgroundColor: bg }}>
-        {backdrop && fit === "contain" && (
+        {backdrop && (fit === "contain" || framed) && (
           <img
             src={backdrop}
             alt=""
@@ -161,7 +223,9 @@ function Slide({
             className="absolute inset-0 size-full scale-125 object-cover opacity-80 blur-[36px]"
           />
         )}
-        {isVideo && url ? (
+        {framed ? (
+          <div className="absolute inset-0 bg-black/60" />
+        ) : isVideo && url ? (
           <video
             ref={vref}
             src={url}
@@ -191,9 +255,23 @@ function Slide({
           </div>
         )}
       </div>
+      {framed && source && (
+        <SourceFrame
+          ratio={frameRatio}
+          src={source}
+          caption={frameCaption(story.caption, source)}
+          multi={frameImages.length > 1}
+          tip={manualPause}
+          hold={hold}
+          onTap={onCardTap}
+          onOpen={openSource}
+        >
+          {content}
+        </SourceFrame>
+      )}
       <div className={`sv-shade-top pointer-events-none absolute inset-x-0 top-0 h-28 ${fade(chromeHidden)}`} />
       <div className={`sv-shade-bottom pointer-events-none absolute inset-x-0 bottom-0 h-36 ${fade(chromeHidden)}`} />
-      {story.caption && url && (
+      {story.caption && url && !framed && (
         <p className="text-shadow pointer-events-none absolute inset-x-4 bottom-[84px] text-body text-white">{story.caption}</p>
       )}
 
@@ -210,7 +288,7 @@ function Slide({
               ) : (
                 <div
                   className="sv-fill h-full bg-white"
-                  style={{ animationDuration: `${IMAGE_MS}ms`, animationPlayState: halted || !ready ? "paused" : "running" }}
+                  style={{ animationDuration: `${durationMs}ms`, animationPlayState: halted || !ready ? "paused" : "running" }}
                   onAnimationEnd={onDone}
                 />
               ))}
@@ -548,6 +626,9 @@ export function StoryViewer({
   const tap = (direction: "next" | "prev") => () => {
     if (Date.now() - holdAt.current < 220) actions.current[direction]();
   };
+  const cardTap = () => {
+    if (Date.now() - holdAt.current < 220) actions.current.togglePause();
+  };
   const arrow =
     "absolute top-1/2 z-10 hidden size-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-[#3a3a3a] text-white/85 transition-colors hover:bg-[#4d4d4d] md:grid";
 
@@ -588,6 +669,8 @@ export function StoryViewer({
                   onCreate={create}
                   onClose={finish}
                   onDone={next}
+                  hold={hold}
+                  onCardTap={cardTap}
                 />
                 <button type="button" aria-label="Previous" onClick={tap("prev")} {...hold} className="absolute bottom-24 left-0 top-16 z-10 w-[35%]" />
                 <button type="button" aria-label="Next" onClick={tap("next")} {...hold} className="absolute bottom-24 right-0 top-16 z-10 w-[65%]" />

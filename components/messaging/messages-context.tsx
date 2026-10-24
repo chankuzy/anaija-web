@@ -14,6 +14,7 @@ type Ctx = {
   conversations: Conversation[] | null;
   inboxError: string | null;
   reloadInbox: () => void;
+  reloadStories: () => void;
   patchConversation: (id: number, p: Partial<Conversation>) => void;
   upsertLast: (id: number, body: string) => void;
   groups: StoryGroup[];
@@ -238,8 +239,8 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   const conversations = mine.convs;
   const inboxError = mine.error;
   const value = useMemo<Ctx>(
-    () => ({ conversations, inboxError, reloadInbox, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse }),
-    [conversations, inboxError, reloadInbox, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse],
+    () => ({ conversations, inboxError, reloadInbox, reloadStories: loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse }),
+    [conversations, inboxError, reloadInbox, loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse],
   );
   return <MessagesCtx.Provider value={value}>{children}</MessagesCtx.Provider>;
 }
