@@ -33,7 +33,7 @@ export function Quick({
       onClick={onClick}
       className="flex flex-1 flex-col items-center gap-2 text-white transition-transform active:scale-95 disabled:opacity-60"
     >
-      <span className="grid size-14 place-items-center rounded-full border border-white/12 bg-white/6 transition-colors hover:bg-white/12">
+      <span className="grid size-14 place-items-center rounded-full bg-surface-interactive transition-colors hover:bg-surface-elevated">
         {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""}`} />)}
       </span>
       <span className="text-supporting font-semibold text-white/85">{label}</span>
@@ -54,7 +54,7 @@ function Row({ t, sent, onSend }: { t: ShareTarget; sent: boolean; onSend: () =>
         disabled={sent}
         onClick={onSend}
         className={`flex h-8 min-w-[76px] items-center justify-center gap-1 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 ${
-          sent ? "border border-white/20 text-muted" : "bg-white text-black"
+          sent ? "bg-surface-interactive text-muted" : "bg-brand text-brand-fg"
         }`}
       >
         {sent ? (
@@ -258,7 +258,7 @@ export function ShareSheet({
         </div>
 
         <div className="shrink-0 px-4 pt-5">
-          <label className="flex h-11 items-center gap-2.5 rounded-full border border-white/12 bg-white/6 px-3.5">
+          <label className="flex h-11 items-center gap-2.5 rounded-full bg-surface-interactive px-3.5">
             <Icon name="search" className="size-[18px] shrink-0 text-muted" />
             <input
               value={query}
@@ -279,7 +279,7 @@ export function ShareSheet({
           ) : data?.error && people.length === 0 ? (
             <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
               <p className="text-secondary text-muted">Couldn&apos;t load your people.</p>
-              <button type="button" onClick={reload} className="h-9 rounded-full bg-white px-5 text-[13px] font-bold text-black">
+              <button type="button" onClick={reload} className="h-9 rounded-full bg-brand px-5 text-[13px] font-extrabold text-brand-fg">
                 Try again
               </button>
             </div>

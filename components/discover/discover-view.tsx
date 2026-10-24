@@ -33,7 +33,7 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
         onClick={() => setOpen((o) => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-9 items-center gap-1 rounded-full bg-white/8 px-3.5 text-secondary font-semibold text-fg transition-colors hover:bg-white/14"
+        className="flex h-9 items-center gap-1 rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated"
       >
         {label}
         <ChevronDownGlyph className={`size-4 text-muted transition-transform ${open ? "rotate-180" : ""}`} />
@@ -71,7 +71,7 @@ function Message({ title, body, action }: { title: string; body: string; action?
         <p className="text-[15px] font-bold text-fg">{title}</p>
         <p className="mt-1 text-secondary text-muted">{body}</p>
         {action && (
-          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             {action.label}
           </button>
         )}
@@ -177,11 +177,11 @@ export function DiscoverView() {
     <div className="mx-auto w-full max-w-[935px] px-0 pb-6 md:px-4">
       <PullIndicator pull={pr.pull} refreshing={pr.refreshing} />
       <header
-        className="sticky top-0 z-30 -mx-0 bg-bg/80 backdrop-blur-xl"
+        className="sticky top-0 z-30 -mx-0 bg-bg/95"
         style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}
       >
         <div className="flex items-center justify-center gap-2 px-3 pb-3 md:px-0 md:pb-5 md:pt-6">
-          <div className="flex h-11 min-w-0 flex-1 items-center rounded-full border border-white/10 bg-white/7 pl-4 pr-1.5 transition-colors focus-within:border-white/25 hover:bg-white/9 md:max-w-[560px]">
+          <div className="flex h-11 min-w-0 flex-1 items-center rounded-full bg-surface-subtle pl-4 pr-1.5 transition-colors hover:bg-surface-interactive md:max-w-[560px]">
             <Link href="/search" className="flex min-w-0 flex-1 items-center gap-2.5 text-muted">
               <SearchGlyph className="size-[18px] shrink-0" />
               <span className="truncate text-body">Search people, posts, listings...</span>
@@ -192,13 +192,13 @@ export function DiscoverView() {
             type="button"
             onClick={refreshNow}
             aria-label="Refresh"
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/7 text-fg transition-colors hover:bg-white/12 active:scale-95"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive active:scale-95"
           >
             <RefreshGlyph className={`size-[18px] ${refreshing ? "animate-spin" : ""}`} />
           </button>
         </div>
         {/* Silent background reconcile: a hairline, never a spinner over the content. */}
-        <div className={`h-[2px] w-full bg-white/25 transition-opacity duration-300 ${refreshing ? "animate-pulse opacity-100" : "opacity-0"}`} />
+        <div className={`h-[2px] w-full bg-brand/40 transition-opacity duration-300 ${refreshing ? "animate-pulse opacity-100" : "opacity-0"}`} />
       </header>
 
       {view?.notice && (

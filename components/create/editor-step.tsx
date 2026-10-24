@@ -42,7 +42,7 @@ function RailButton({ icon, label, active, onClick }: { icon: IconName; label: s
     <button type="button" onClick={onClick} className="mb-3.5 flex flex-col items-center">
       <span
         className={`grid size-11 place-items-center rounded-full transition-colors duration-150 ${
-          active ? "bg-white text-black" : "border border-white/24 bg-black/45 text-white"
+          active ? "bg-brand text-brand-fg" : "bg-black/45 text-white"
         }`}
       >
         <Icon name={icon} filled className="size-[19px]" />
@@ -176,8 +176,8 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
                     key={r.label}
                     type="button"
                     onClick={() => selectRatio(i)}
-                    className={`shrink-0 rounded-full border px-3.5 text-[12px] font-bold ${
-                      curEdit.ratioIdx === i ? "border-white bg-white text-black" : "border-white/24 bg-white/8 text-white"
+                    className={`shrink-0 rounded-full px-3.5 text-[12px] font-bold ${
+                      curEdit.ratioIdx === i ? "bg-brand text-brand-fg" : "bg-white/12 text-white"
                     }`}
                   >
                     {r.label}
@@ -188,7 +188,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
                 <button
                   type="button"
                   onClick={() => c.setEdit(cur.id, { crop: FULL_CROP, ratioIdx: 0 })}
-                  className="px-4 py-2 text-[12.5px] font-bold text-white"
+                  className="px-4 py-2 text-[12.5px] font-bold text-brand"
                 >
                   Reset crop
                 </button>
@@ -199,7 +199,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
             <div className="no-scrollbar flex h-[92px] gap-2.5 overflow-x-auto px-4">
               {IMAGE_FILTERS.map((f, i) => (
                 <button key={f.label} type="button" onClick={() => c.setEdit(cur.id, { filterIdx: i })} className="flex shrink-0 flex-col items-center">
-                  <span className={`size-[60px] overflow-hidden rounded-[10px] border-2 ${curEdit.filterIdx === i ? "border-white" : "border-transparent"}`}>
+                  <span className={`size-[60px] overflow-hidden rounded-[10px] border-2 ${curEdit.filterIdx === i ? "border-brand" : "border-transparent"}`}>
                     <img src={previews[cur.id] ?? ""} alt="" draggable={false} className="size-full rounded-[8px] object-cover" style={{ filter: filterCss(i) }} />
                   </span>
                   <span className={`mt-1 text-[10px] ${curEdit.filterIdx === i ? "font-bold text-white" : "text-white/70"}`}>{f.label}</span>
@@ -222,7 +222,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
                 type="button"
                 aria-label={`Photo ${i + 1}`}
                 onClick={() => goto(i)}
-                className={`my-1 size-[52px] shrink-0 overflow-hidden rounded-[10px] ${i === index ? "border-2 border-white" : "border border-white/24"}`}
+                className={`my-1 size-[52px] shrink-0 overflow-hidden rounded-[10px] ${i === index ? "border-2 border-brand" : "border-2 border-transparent"}`}
               >
                 <img src={previews[m.id] ?? ""} alt="" draggable={false} className="size-full rounded-[8px] object-cover" />
               </button>

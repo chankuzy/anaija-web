@@ -150,16 +150,16 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
           </button>
         </div>
 
-        <div className="mt-3.5 border-t border-line/60">
+        <div className="mt-3.5">
           {rows.map((r, i) => (
-            <div key={i} className={i > 0 ? "ml-14 border-t border-line/60" : ""}>
+            <div key={i} className={i > 0 ? "ml-14" : ""}>
               <div className={i > 0 ? "-ml-14" : ""}>{r}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="flex gap-2.5 border-t border-line/60 bg-bg px-4 pb-3 pt-2.5">
+      <div className="flex gap-2.5 bg-bg px-4 pb-3 pt-2.5">
         <GhostButton label="Save draft" icon="notebookMinimalistic" disabled={c.busy} onClick={() => void save()} />
         <PrimaryButton label={postLabel} loading={c.busy} onClick={() => void post()} className="flex-1" />
       </div>
@@ -179,7 +179,7 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
               >
                 <Icon name={v.icon} filled className="size-6 text-white" />
                 <span className="flex-1 text-[15.5px] text-fg">{v.label}</span>
-                {d.visibility === v.id && <Icon name="check" className="size-5 text-white" />}
+                {d.visibility === v.id && <Icon name="check" className="size-5 text-brand" />}
               </button>
             ))}
           </div>

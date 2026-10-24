@@ -35,7 +35,7 @@ export function WhitePill({ label, onClick, enabled = true, loading = false }: {
       type="button"
       disabled={!enabled || loading}
       onClick={onClick}
-      className={`inline-flex min-w-[96px] items-center justify-center rounded-full bg-white px-6 py-3 text-[14px] font-bold text-black transition-opacity ${enabled ? "" : "opacity-30"}`}
+      className={`inline-flex min-w-[96px] items-center justify-center rounded-full bg-brand px-6 py-3 text-[14px] font-extrabold text-brand-fg transition-opacity ${enabled ? "" : "opacity-30"}`}
     >
       {loading ? <Spinner dark size={14} /> : label}
     </button>
@@ -48,7 +48,7 @@ export function PrimaryButton({ label, onClick, loading = false, disabled = fals
       type="button"
       disabled={disabled || loading}
       onClick={onClick}
-      className={`flex h-[50px] items-center justify-center rounded-full bg-white text-[15px] font-bold text-black transition active:scale-[0.99] disabled:opacity-50 ${className}`}
+      className={`flex h-[50px] items-center justify-center rounded-full bg-brand text-[15px] font-extrabold text-brand-fg transition active:scale-[0.99] disabled:opacity-50 ${className}`}
     >
       {loading ? <Spinner dark /> : label}
     </button>
@@ -80,9 +80,9 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
         e.stopPropagation();
         onChange(!on);
       }}
-      className={`relative h-[30px] w-[50px] shrink-0 rounded-full transition-colors ${on ? "bg-accent" : "bg-white/16"}`}
+      className={`relative h-[30px] w-[50px] shrink-0 rounded-full transition-colors ${on ? "bg-brand" : "bg-surface-elevated"}`}
     >
-      <span className={`absolute top-[3px] size-6 rounded-full bg-white shadow transition-[left] duration-150 ${on ? "left-[23px]" : "left-[3px]"}`} />
+      <span className={`absolute top-[3px] size-6 rounded-full transition-[left] duration-150 ${on ? "left-[23px] bg-brand-fg" : "left-[3px] bg-white/80"}`} />
     </button>
   );
 }
@@ -120,7 +120,7 @@ export function SettingsRow({
       <span className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
         {value ? (
           <>
-            {highlight && <span className="size-1.5 rounded-full bg-warm" />}
+            {highlight && <span className="size-1.5 rounded-full bg-brand" />}
             <span className={`truncate text-secondary font-semibold ${highlight ? "text-white" : "text-muted"}`}>{value}</span>
           </>
         ) : null}
@@ -196,14 +196,14 @@ export function Dialog({
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center p-5" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60" />
-      <div className="relative w-full max-w-sm rounded-floating border border-line bg-card p-5">
+      <div className="relative w-full max-w-sm rounded-floating bg-surface-interactive p-5">
         <p className="text-[17px] font-bold text-fg">{title}</p>
         <div className="mt-4">{children}</div>
         <div className="mt-5 flex justify-end gap-1">
           <button type="button" onClick={onClose} className="h-10 rounded-full px-4 text-sm font-semibold text-muted hover:bg-white/8">
             Cancel
           </button>
-          <button type="button" onClick={onSave} className="h-10 rounded-full px-4 text-sm font-bold text-white hover:bg-white/8">
+          <button type="button" onClick={onSave} className="h-10 rounded-full px-4 text-sm font-extrabold text-brand hover:bg-white/8">
             Save
           </button>
         </div>
@@ -214,7 +214,7 @@ export function Dialog({
 
 export function ExitSheet({ onSave, onDiscard, onKeep }: { onSave: () => void; onDiscard: () => void; onKeep: () => void }) {
   const opt = (label: string, cls: string, fn: () => void) => (
-    <button type="button" onClick={fn} className={`w-full border-t border-line py-4 text-[15px] hover:bg-white/4 ${cls}`}>
+    <button type="button" onClick={fn} className={`w-full py-4 text-[15px] hover:bg-white/4 ${cls}`}>
       {label}
     </button>
   );

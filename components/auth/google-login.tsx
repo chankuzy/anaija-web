@@ -91,7 +91,7 @@ export function GoogleLogin() {
       >
         <div className="mb-6 hidden max-w-[480px] text-center md:block">
           <h2 className={`${playfair.className} text-[44px] font-medium leading-[1.1] tracking-[-0.02em] text-fg`}>
-            Hustle. Flex. <span className="text-[#C8FA00]">Earn.</span>
+            Hustle. Flex. <span className="text-brand">Earn.</span>
           </h2>
           <p className="mt-3 text-[15px] leading-normal text-white/55">Reels, stories and a campus marketplace, all in one app.</p>
         </div>
@@ -102,7 +102,7 @@ export function GoogleLogin() {
 
       {/* sign in */}
       <section
-        className="relative z-10 flex flex-1 flex-col justify-end px-7 md:justify-center md:border-l md:border-white/8 md:bg-white/[0.02] md:px-12"
+        className="relative z-10 flex flex-1 flex-col justify-end px-7 md:justify-center md:bg-white/[0.02] md:px-12"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
       >
         <div className="mx-auto w-full max-w-[380px]">

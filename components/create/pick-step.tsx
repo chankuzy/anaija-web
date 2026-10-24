@@ -99,7 +99,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
           FILTERS.map((f) => (
             <button key={f.id} type="button" onClick={() => setFilter(f.id)} className="mr-5 flex flex-col items-center">
               <span className={`text-[13.5px] font-bold transition-colors ${filter === f.id ? "text-fg" : "text-muted"}`}>{f.label}</span>
-              <span className={`mt-1 h-0.5 rounded-sm bg-white transition-[width] duration-200 ${filter === f.id ? "w-4" : "w-0"}`} />
+              <span className={`mt-1 h-0.5 rounded-sm bg-brand transition-[width] duration-200 ${filter === f.id ? "w-4" : "w-0"}`} />
             </button>
           ))}
         <span className="ml-auto text-[11.5px] text-muted">{max > 1 ? `Select up to ${max}` : "Choose one"}</span>
@@ -108,7 +108,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
       {/* grid */}
       <div className="no-scrollbar relative mt-1.5 min-h-0 flex-1 overflow-y-auto">
         {n === 0 ? (
-          <button type="button" onClick={browse} className="group mx-3.5 mb-3 flex h-[calc(100%-12px)] w-[calc(100%-28px)] flex-col items-center justify-center gap-3 rounded-[22px] border border-dashed border-white/20 text-center transition-colors hover:border-white/40">
+          <button type="button" onClick={browse} className="group mx-3.5 mb-3 flex h-[calc(100%-12px)] w-[calc(100%-28px)] flex-col items-center justify-center gap-3 rounded-[22px] bg-surface-subtle text-center transition-colors hover:bg-surface-interactive">
             <span className="grid size-16 place-items-center rounded-full bg-card">
               <Icon name="gallery" filled className="size-7 text-white" />
             </span>
@@ -132,7 +132,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
                 {m.type === "video" && m.durationSeconds != null && (
                   <span className="absolute bottom-[5px] left-1.5 text-[11.5px] font-bold text-white text-shadow">{fmt(m.durationSeconds)}</span>
                 )}
-                <span className="absolute right-[7px] top-[7px] grid size-[22px] place-items-center rounded-full border-[1.5px] border-white bg-white text-[12px] font-bold text-black">
+                <span className="absolute right-[7px] top-[7px] grid size-[22px] place-items-center rounded-full bg-brand text-[12px] font-extrabold text-brand-fg">
                   {max > 1 ? i + 1 : <Icon name="check" className="size-3.5" />}
                 </span>
               </button>
@@ -145,14 +145,14 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
           </div>
         )}
         {dragging && (
-          <div className="pointer-events-none absolute inset-2 grid place-items-center rounded-[22px] border-2 border-dashed border-white/60 bg-black/60 text-[15px] font-bold text-white">
+          <div className="pointer-events-none absolute inset-2 grid place-items-center rounded-[22px] bg-black/70 ring-2 ring-brand/70 text-[15px] font-bold text-white">
             Drop to add
           </div>
         )}
       </div>
 
       {/* bottom bar */}
-      <div className="flex items-center justify-between border-t border-line/60 bg-bg px-4 pb-3 pt-2.5">
+      <div className="flex items-center justify-between bg-bg px-4 pb-3 pt-2.5">
         <p className="text-[13.5px] font-bold text-fg">
           {n > 0 ? `${n} selected` : `Up to ${max}`}
           {totalVideo > 0 && <span className="ml-1 text-[12px] font-normal text-muted"> · {fmt(totalVideo)}</span>}

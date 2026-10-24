@@ -247,7 +247,7 @@ export function SearchView() {
             <SectionTitle action={{ label: "Clear all", onClick: clearRecents }}>Recent</SectionTitle>
             <div className="flex flex-wrap gap-2">
               {recents.slice(0, 8).map((r) => (
-                <span key={r} className="flex items-center rounded-full border border-white/12 bg-white/6 pl-3 text-body text-fg">
+                <span key={r} className="flex items-center rounded-full bg-surface-interactive pl-3 text-body text-fg">
                   <button type="button" onClick={() => runTerm(r)} className="max-w-[170px] truncate py-1.5 font-medium">
                     {r}
                   </button>
@@ -264,7 +264,7 @@ export function SearchView() {
             <SectionTitle>Popular searches</SectionTitle>
             <div className="flex flex-wrap gap-2">
               {terms.map((x) => (
-                <button key={x} type="button" onClick={() => runTerm(x)} className="rounded-full border border-white/12 bg-white/6 px-3.5 py-2 text-secondary text-fg">
+                <button key={x} type="button" onClick={() => runTerm(x)} className="rounded-full bg-surface-interactive px-3.5 py-2 text-secondary font-medium text-fg">
                   {x}
                 </button>
               ))}
@@ -283,7 +283,7 @@ export function SearchView() {
                     <span className="text-supporting text-muted">{formatCount(h.posts_count)} posts</span>
                   </span>
                   <span className="mt-2 block h-0.5 rounded bg-white/8">
-                    <span className="block h-full rounded bg-white/60" style={{ width: `${Math.max(5, (h.posts_count / max) * 100)}%` }} />
+                    <span className="block h-full rounded bg-brand" style={{ width: `${Math.max(5, (h.posts_count / max) * 100)}%` }} />
                   </span>
                 </span>
               </button>
@@ -306,7 +306,7 @@ export function SearchView() {
               {isUser ? (
                 <Avatar url={s.avatar} name={s.name ?? s.value} size={42} />
               ) : (
-                <span className="grid size-[42px] place-items-center rounded-full border border-white/12 bg-white/6 text-lg font-bold text-fg">#</span>
+                <span className="grid size-[42px] place-items-center rounded-full bg-surface-interactive text-lg font-bold text-brand">#</span>
               )}
               <span className="min-w-0 flex-1 text-left">
                 <span className="block truncate text-[15px] font-semibold text-fg/60">{highlight(isUser ? (s.name ?? s.value) : `#${s.value}`, t)}</span>
@@ -355,7 +355,7 @@ export function SearchView() {
                   <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
                   <span className="block text-xs text-muted">@{u.username}</span>
                 </span>
-                <span className="rounded-full border border-white/28 px-3.5 py-1.5 text-secondary font-bold text-fg">View</span>
+                <span className="rounded-full bg-surface-interactive px-3.5 py-1.5 text-secondary font-bold text-fg">View</span>
               </Link>
             ))}
           </div>
@@ -373,7 +373,7 @@ export function SearchView() {
               <div className="no-scrollbar flex gap-3.5 overflow-x-auto">
                 {results.users.map((u) => (
                   <Link key={u.id} href={`/u/${u.username}`} onClick={() => addRecent(t)} className="w-[72px] shrink-0 text-center">
-                    <span className="mx-auto block w-fit rounded-full border border-white/22 p-0.5">
+                    <span className="mx-auto block w-fit rounded-full p-0.5">
                       <ProfileHoverCard username={u.username}><Avatar url={u.avatar} name={u.name ?? u.username} size={54} /></ProfileHoverCard>
                     </span>
                     <span className="mt-1.5 block truncate text-supporting font-semibold text-fg">{u.name ?? u.username}</span>
@@ -397,11 +397,11 @@ export function SearchView() {
             type="button"
             aria-label="Back"
             onClick={() => router.back()}
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-white/12 bg-white/6 text-fg"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-surface-subtle text-fg"
           >
             <Icon name="back" className="size-5" />
           </button>
-          <div className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-3xl border border-white/12 bg-white/6 pl-4 pr-1.5 focus-within:border-white/34 focus-within:bg-white/9">
+          <div className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-3xl bg-surface-subtle pl-4 pr-1.5 focus-within:bg-surface-interactive">
             <Icon name="search" className="size-[19px] shrink-0 text-muted" />
             <input
               ref={inputRef}
@@ -438,7 +438,7 @@ export function SearchView() {
           </div>
         </div>
         {hasQuery && (
-          <div className="mt-2 flex gap-0.5 rounded-full border border-white/10 bg-white/5 p-[3px]">
+          <div className="mt-2 flex gap-0.5 rounded-full bg-surface-subtle p-[3px]">
             {TABS.map((x) => {
               const n = !results ? 0 : x.id === "people" ? results.users.length : x.id === "posts" ? results.posts.length : x.id === "listings" ? results.listings.length : 0;
               return (
@@ -447,7 +447,7 @@ export function SearchView() {
                   type="button"
                   onClick={() => changeTab(x.id)}
                   className={`flex h-[38px] flex-1 items-center justify-center gap-1.5 rounded-full text-body ${
-                    x.id === tab ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
+                    x.id === tab ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
                   }`}
                 >
                   {x.label}
@@ -458,7 +458,7 @@ export function SearchView() {
           </div>
         )}
         <div className={`mt-1.5 h-0.5 overflow-hidden rounded bg-transparent transition-opacity ${stale ? "opacity-100" : "opacity-0"}`}>
-          <div className="h-full w-1/3 animate-pulse rounded bg-white/60" />
+          <div className="h-full w-1/3 animate-pulse rounded bg-brand" />
         </div>
       </header>
 

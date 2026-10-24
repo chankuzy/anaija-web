@@ -87,8 +87,8 @@ function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; chi
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3.5 py-2 text-secondary ${
-        on ? "border-white bg-white font-semibold text-black" : "border-line bg-card text-fg"
+      className={`rounded-full px-3.5 py-2 text-secondary ${
+        on ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-fg"
       }`}
     >
       {children}
@@ -305,12 +305,12 @@ export function CreateView({
           >
             <Icon name="back" className="size-5" />
           </button>
-          <h1 className="flex-1 text-[22px] font-bold tracking-tight text-fg">{embedded ? "New listing" : "Create"}</h1>
+          <h1 className="flex-1 text-[22px] font-extrabold tracking-tight text-fg">{embedded ? "New listing" : "Create"}</h1>
         </div>
         {embedded ? (
           <div className="mt-1">{embedded.switcher(busy)}</div>
         ) : (
-        <div className="mt-1 flex gap-0.5 rounded-full border border-white/10 bg-white/5 p-[3px]">
+        <div className="mt-1 flex gap-0.5 rounded-full bg-surface-subtle p-[3px]">
           {KINDS.map((k) => (
             <button
               key={k.id}
@@ -318,7 +318,7 @@ export function CreateView({
               disabled={busy}
               onClick={() => setKind(k.id)}
               className={`h-[38px] flex-1 rounded-full text-body ${
-                k.id === kind ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
+                k.id === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
               }`}
             >
               {k.label}
@@ -378,7 +378,7 @@ export function CreateView({
               type="button"
               disabled={busy}
               onClick={() => fileRef.current?.click()}
-              className="grid h-[124px] w-[92px] shrink-0 place-items-center rounded-xl border border-dashed border-white/25 text-muted"
+              className="grid h-[124px] w-[92px] shrink-0 place-items-center rounded-xl bg-surface-subtle text-muted"
             >
               <span className="flex flex-col items-center gap-1 text-supporting font-semibold">
                 <Icon name="plus" className="size-6" />
@@ -439,7 +439,7 @@ export function CreateView({
             </div>
             <label className="mt-3 flex items-center justify-between text-body text-muted">
               Negotiable
-              <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} className="size-5 accent-white" />
+              <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} className="size-5 accent-[#ffd84d]" />
             </label>
 
             {needsCondition && (
@@ -490,7 +490,7 @@ export function CreateView({
         {kind !== "story" && (
           <label className="mt-6 flex items-center justify-between text-[15px] text-fg">
             Allow comments
-            <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="size-5 accent-white" />
+            <input type="checkbox" checked={allowComments} onChange={(e) => setAllowComments(e.target.checked)} className="size-5 accent-[#ffd84d]" />
           </label>
         )}
 
@@ -502,19 +502,19 @@ export function CreateView({
       </div>
 
       <div
-        className="sticky z-30 mt-8 border-t border-line/60 bg-bg/80 px-4 py-3.5 backdrop-blur-xl"
+        className="sticky z-30 mt-8 bg-bg/95 px-4 py-3.5"
         style={{ bottom: embedded ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
       >
         {busy && stage === "uploading" && (
           <div className="mb-2.5 h-1 overflow-hidden rounded bg-white/10">
-            <div className="h-full bg-white transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
+            <div className="h-full bg-brand transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
         )}
         <button
           type="button"
           disabled={!ready || busy}
           onClick={() => void publish()}
-          className="h-[52px] w-full rounded-full bg-white text-[15px] font-bold text-black disabled:opacity-50"
+          className="h-[52px] w-full rounded-full bg-brand text-[15px] font-extrabold text-brand-fg disabled:opacity-50"
         >
           {stageLabel ?? cta}
         </button>

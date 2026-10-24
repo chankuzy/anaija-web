@@ -70,7 +70,7 @@ function Row({
           {c.body}
         </p>
         <div className="mt-1.5 flex items-center gap-4">
-          <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-danger" : ""}`}>
+          <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-brand" : ""}`}>
             <Icon name="heart" filled={c.is_liked} className="size-3.5" />
             {c.likes_count > 0 && c.likes_count}
           </button>
@@ -360,7 +360,7 @@ export function CommentsSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label="Comments">
       <button type="button" aria-label="Close comments" onClick={onClose} className="absolute inset-0 cursor-default bg-black/50" />
       <div className="glass relative flex h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-sheet md:rounded-sheet">
-        <div className="flex items-center justify-center gap-2 border-b border-line/70 px-4 py-3.5">
+        <div className="flex items-center justify-center gap-2 px-4 py-3.5">
           <span className="text-[15px] font-bold tracking-tight text-fg">Comments</span>
           <span className="rounded-[10px] bg-white/8 px-2 py-0.5 text-xs font-bold text-white/70">{count}</span>
           <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60 hit-area">
@@ -447,7 +447,7 @@ export function CommentsSheet({
           </div>
         )}
 
-        <div className="border-t border-line/70 bg-surface" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
+        <div className="bg-surface" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {replyTo && (
             <div className="flex items-center justify-between bg-card px-4 py-1.5 text-xs font-semibold text-white/70">
               <span>Replying to @{replyTo.username}</span>
@@ -478,14 +478,14 @@ export function CommentsSheet({
                 }
               }}
               placeholder={replyTo ? `Reply to @${replyTo.username}...` : "Add a comment..."}
-              className="max-h-28 min-h-[40px] flex-1 resize-none rounded-full border border-line/60 bg-card px-4 py-2.5 text-sm text-fg outline-none placeholder:text-muted focus:border-white/30"
+              className="max-h-28 min-h-[40px] flex-1 resize-none rounded-full bg-surface-interactive px-4 py-2.5 text-sm font-medium text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60"
             />
             <button
               type="button"
               aria-label="Send"
               disabled={!text.trim()}
               onClick={() => void submit()}
-              className="grid size-[38px] shrink-0 place-items-center rounded-full bg-white text-black transition disabled:bg-white/8 disabled:text-white/25"
+              className="grid size-[38px] shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition disabled:bg-surface-interactive disabled:text-white/25"
             >
               <Icon name="send" filled className="size-4" />
             </button>

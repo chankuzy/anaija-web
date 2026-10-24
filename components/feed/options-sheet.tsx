@@ -51,7 +51,7 @@ function Insights({ post }: { post: Post }) {
     ["Shares", post.shares_count],
   ];
   return (
-    <div className="mx-4 mb-2 mt-1 flex justify-evenly rounded-2xl border border-line py-3">
+    <div className="mx-4 mb-2 mt-1 flex justify-evenly rounded-2xl bg-surface-interactive py-3">
       {stats.map(([label, n]) => (
         <div key={label} className="flex flex-col items-center">
           <span className="text-sm font-bold text-fg">{formatCount(n)}</span>

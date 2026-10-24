@@ -24,7 +24,7 @@ export function Lightbox({ url, round = false, onClose }: { url: string; round?:
         type="button"
         aria-label="Close"
         onClick={onClose}
-        className="absolute right-3 grid size-10 place-items-center rounded-full border border-white/12 bg-black/40 text-white"
+        className="absolute right-3 grid size-10 place-items-center rounded-full bg-black/55 text-white"
         style={{ top: "calc(12px + env(safe-area-inset-top))" }}
       >
         <Icon name="close" className="size-5" />
