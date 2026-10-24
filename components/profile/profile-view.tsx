@@ -76,8 +76,8 @@ const COVER_MASK =
 const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
 
 // Message state: visible tonal glass with a hairline ring so it never melts into the cover.
-const MESSAGE_MOBILE = "bg-white/15 text-white ring-1 ring-inset ring-white/25 backdrop-blur-md hover:bg-white/20";
-const MESSAGE_DESKTOP = "bg-surface-interactive text-white ring-1 ring-inset ring-white/15 hover:bg-surface-elevated";
+const MESSAGE_MOBILE = "bg-white/25 text-white backdrop-blur-md hover:bg-white/30";
+const MESSAGE_DESKTOP = "bg-surface-elevated text-white hover:bg-white/20";
 
 function safeHref(raw: string): { href: string; label: string } | null {
   const t = raw.trim();
@@ -220,7 +220,7 @@ function BioLink({ links, onMore }: { links: string[]; onMore: () => void }) {
         href={first.href}
         target="_blank"
         rel="noopener noreferrer nofollow"
-        className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/10 py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold text-white ring-1 ring-inset ring-white/15 transition hover:bg-white/15 active:scale-98"
+        className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/10 py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold text-white transition hover:bg-white/15 active:scale-98"
       >
         <Icon name="link" weight="strong" className="size-4 shrink-0 text-info" />
         <span className="truncate">{first.label}</span>
@@ -276,13 +276,13 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
 
   if (empty) return <TabMessage title="Nothing here yet" sub="Tagline, location and links show up here" />;
 
-  const card = "divide-y divide-white/[0.06] overflow-hidden rounded-2xl bg-surface-subtle ring-1 ring-inset ring-white/[0.06]";
+  const card = "overflow-hidden rounded-2xl bg-surface-subtle";
   const label = "mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-white/40";
 
   return (
     <div className="space-y-5 px-4 py-4 md:px-0">
       {tagline && (
-        <div className="rounded-2xl bg-surface-subtle p-4 ring-1 ring-inset ring-white/[0.06]">
+        <div className="rounded-2xl bg-surface-subtle p-4">
           <div className="flex items-start gap-3">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/[0.07] text-white/70">
               <Icon name="chatRoundDots" filled className="size-[19.4px]" />
