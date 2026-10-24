@@ -1,4 +1,5 @@
 "use client";
+import { loginHref } from "@/lib/auth/next";
 
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
@@ -30,7 +31,7 @@ function Row({
 
   async function follow() {
     if (status !== "authed") {
-      router.push("/login");
+      router.push(loginHref());
       return;
     }
     if (following) return;

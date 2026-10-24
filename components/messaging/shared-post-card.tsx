@@ -30,7 +30,7 @@ function Card({ post }: { post: SharedPost }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const href = post.type === "listing" ? `/listing/${post.id}` : `/p/${post.id}`;
+  const href = post.type === "listing" ? `/l/${post.id}` : `/p/${post.id}`;
   const video = post.is_video;
   const multi = !video && post.image_count >= MULTI_MIN;
   const showImage = !!post.image && !failed;

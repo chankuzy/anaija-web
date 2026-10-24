@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { loginHref } from "@/lib/auth/next";
 import { CreateSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useRef, useState } from "react";
@@ -139,7 +140,7 @@ export function CreateView({
   });
   useEffect(() => () => itemsRef.current.forEach((i) => URL.revokeObjectURL(i.url)), []);
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
 
   const busy = stage !== "idle";
@@ -271,7 +272,7 @@ export function CreateView({
       }
 
       const res = await publishApi.store(body);
-      if (kind === "listing") router.push(`/listing/${res.post_id}`);
+      if (kind === "listing") router.push(`/l/${res.post_id}`);
       else if (kind === "post") router.push(`/p/${res.post_id}`);
       else router.push("/");
     } catch (e) {

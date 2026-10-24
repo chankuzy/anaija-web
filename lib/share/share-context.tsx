@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import { GuestShareSheet } from "@/components/share/guest-share-sheet";
 import { ShareSheet } from "@/components/share/share-sheet";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -13,9 +13,9 @@ type OpenShare = (post: Post, onShared?: OnShared) => void;
 const ShareCtx = createContext<OpenShare>(() => {});
 
 // One share sheet for the whole app: any screen calls `useShare()(post, onShared)`. The toast lives here, so a
-// confirmation ("Added to your story") survives the sheet closing.
+// confirmation ("Added to your story") survives the sheet closing. Signed-in people get the full sheet; everyone
+// else gets the link-only one (sharing outward needs no account).
 export function ShareProvider({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const { status } = useAuth();
   const [active, setActive] = useState<{ post: Post; onShared?: OnShared } | null>(null);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
@@ -28,22 +28,18 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const open = useCallback<OpenShare>(
-    (post, onShared) => {
-      if (status === "guest") {
-        router.push("/login");
-        return;
-      }
-      setActive({ post, onShared });
-    },
-    [status, router],
-  );
+  const open = useCallback<OpenShare>((post, onShared) => setActive({ post, onShared }), []);
   const close = useCallback(() => setActive(null), []);
 
   return (
     <ShareCtx.Provider value={open}>
       {children}
-      {active && <ShareSheet key={active.post.id} post={active.post} onShared={active.onShared} onClose={close} flash={flash} />}
+      {active &&
+        (status === "authed" ? (
+          <ShareSheet key={active.post.id} post={active.post} onShared={active.onShared} onClose={close} flash={flash} />
+        ) : (
+          <GuestShareSheet key={active.post.id} post={active.post} onClose={close} flash={flash} />
+        ))}
       {toast && (
         <div
           key={toast.id}

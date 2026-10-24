@@ -75,7 +75,7 @@ function Tile({ post }: { post: Post }) {
     (m && m.type !== "video" ? mediaUrl(m.url ?? null) : null);
   const c = m?.dominant_color?.replace("#", "") ?? "";
   const color = /^[0-9a-f]{6}$/i.test(c) ? `#${c}` : undefined;
-  const href = post.type === "listing" ? `/listing/${post.id}` : `/p/${post.id}`;
+  const href = post.type === "listing" ? `/l/${post.id}` : `/p/${post.id}`;
   const price = post.type === "listing" ? post.listing?.formatted_price : null;
   return (
     <Link href={href} className="group/tile relative block aspect-[3/4] overflow-hidden bg-card" style={{ backgroundColor: color }}>

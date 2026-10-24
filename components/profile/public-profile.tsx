@@ -57,7 +57,7 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
           {p.tiles.map((t) => (
             <Link
               key={t.id}
-              href={t.type === "listing" ? `/listing/${t.id}` : `/p/${t.id}`}
+              href={t.type === "listing" ? `/l/${t.id}` : `/p/${t.id}`}
               className="relative aspect-[3/4] overflow-hidden bg-card"
             >
               {t.thumbnail && <img src={t.thumbnail} alt="" loading="lazy" decoding="async" className="size-full object-cover" />}

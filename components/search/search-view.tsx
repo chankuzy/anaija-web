@@ -1,4 +1,5 @@
 "use client";
+import { loginHref } from "@/lib/auth/next";
 
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
@@ -136,7 +137,7 @@ export function SearchView() {
   }, []);
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
   // Only pop the keyboard on a fresh search, not when coming back to results.
   useEffect(() => {

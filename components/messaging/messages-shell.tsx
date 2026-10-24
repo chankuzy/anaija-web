@@ -1,4 +1,5 @@
 "use client";
+import { loginHref } from "@/lib/auth/next";
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,7 +15,7 @@ export function MessagesShell({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
 
   const open = /^\/messages\/\d+/.test(pathname);

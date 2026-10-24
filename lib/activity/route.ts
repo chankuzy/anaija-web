@@ -22,7 +22,7 @@ function direct(it: ActivityItem, d: ActivityDest, me?: string | null): Target |
       return d.post_id ? { type: "url", url: `/p/${d.post_id}${d.comment_id ? `?comment=${d.comment_id}` : ""}` } : null;
     case "listing":
       // Sellers asking "who's interested" land on the inquiries section.
-      return d.post_id ? { type: "url", url: `/listing/${d.post_id}${it.kind === "inquiry" ? "#inquiries" : ""}` } : null;
+      return d.post_id ? { type: "url", url: `/l/${d.post_id}${it.kind === "inquiry" ? "#inquiries" : ""}` } : null;
     case "profile":
       return d.username ? { type: "url", url: profileUrl(d.username) } : null;
     case "followers":

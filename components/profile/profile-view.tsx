@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { loginHref } from "@/lib/auth/next";
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
@@ -266,7 +267,7 @@ export function ProfileView({ username }: { username: string }) {
   const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
   useEffect(
     () => () => {

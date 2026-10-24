@@ -16,7 +16,7 @@ export interface FrameHold {
 }
 
 export const sourceHref = (s: StorySource) =>
-  s.price !== null || s.type === "listing" ? `/listing/${s.post_id}` : `/p/${s.post_id}`;
+  s.price !== null || s.type === "listing" ? `/l/${s.post_id}` : `/p/${s.post_id}`;
 
 // The story's own caption wins; otherwise the post's caption with any hashtags it doesn't already show.
 export function frameCaption(own: string | null, src: StorySource): string {

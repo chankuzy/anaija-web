@@ -11,6 +11,9 @@ import { Lightbox } from "@/components/ui/lightbox";
 import { ApiError } from "@/lib/api/client";
 import { listingApi, type DayHours, type Inquiry, type ListingFull, type ListingStatus } from "@/lib/api/listing";
 import { useAuth } from "@/lib/auth/auth-context";
+import { loginHref } from "@/lib/auth/next";
+import { useShare } from "@/lib/share/share-context";
+import type { Post } from "@/lib/api/feed-types";
 import { timeAgo } from "@/lib/format";
 
 interface Data {
@@ -191,9 +194,10 @@ function Inquiries({ id }: { id: number }) {
   );
 }
 
-export function ListingView({ id }: { id: string }) {
+export function ListingView({ id, initial }: { id: string; initial?: ListingFull | null }) {
   const router = useRouter();
   const { status, user } = useAuth();
+  const openShare = useShare();
   const authed = status === "authed";
   const n = Number(id);
   const valid = Number.isInteger(n) && n > 0;
@@ -205,9 +209,6 @@ export function ListingView({ id }: { id: string }) {
   const [busy, setBusy] = useState(false);
   const toastTimer = useRef<number | null>(null);
 
-  useEffect(() => {
-    if (status === "guest") router.replace("/login");
-  }, [status, router]);
   useEffect(
     () => () => {
       if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -230,7 +231,15 @@ export function ListingView({ id }: { id: string }) {
     toastTimer.current = window.setTimeout(() => setToast(null), 2200);
   }
 
-  const cur = data && data.id === id ? data : null;
+  // Signed in: marketplace-show (viewer flags). Everyone else: the public copy the server fetched for this page.
+  // initial: ListingFull = public listing, null = not available / not public, undefined = could not load.
+  const publicData: Data | null =
+    initial !== undefined
+      ? { id, listing: initial, status: initial ? 200 : 404 }
+      : status === "guest"
+        ? { id, listing: null, status: 0 }
+        : null;
+  const cur = authed ? (data && data.id === id ? data : null) : publicData;
   const ov = override && override.id === id ? override : null;
 
   const back = (
@@ -277,6 +286,10 @@ export function ListingView({ id }: { id: string }) {
 
   async function sendInquiry() {
     if (busy) return;
+    if (!authed) {
+      router.push(loginHref());
+      return;
+    }
     if (inquired) {
       if (convId) router.push(`/messages/${convId}`);
       return;
@@ -308,17 +321,8 @@ export function ListingView({ id }: { id: string }) {
     }
   }
 
-  async function share() {
-    const url = `${window.location.origin}/listing/${l.id}`;
-    try {
-      if (navigator.share) await navigator.share({ url, text: l.caption ?? undefined });
-      else {
-        await navigator.clipboard.writeText(url);
-        flash("Link copied");
-      }
-    } catch {
-      /* cancelled */
-    }
+  function share() {
+    openShare(l as unknown as Post);
   }
 
   const caption = (l.caption ?? "").trim();
@@ -416,7 +420,7 @@ export function ListingView({ id }: { id: string }) {
               {d.contact_phone && ["whatsapp", "call", "any"].includes(d.contact_preference ?? "") && <Row label="Phone" value={d.contact_phone} />}
               <Row label="Contact" value={(d.contact_preference ?? "chat").replaceAll("_", " ").toUpperCase()} />
               {(d.views_count ?? 0) > 0 && <Row label="Views" value={String(d.views_count)} />}
-              <Row label="Inquiries" value={`${d.inquiries_count ?? 0} interested`} />
+              {d.inquiries_count != null && <Row label="Inquiries" value={`${d.inquiries_count} interested`} />}
               {(type === "product" || type === "rental") && <Row label="Quantity" value={`${d.quantity ?? 1} available`} />}
               {type === "rental" && d.fulfillment_type && <Row label="Arrangement" value={FULFIL[d.fulfillment_type] ?? d.fulfillment_type} />}
               {type === "business" && (

@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import { profileApi } from "@/lib/api/profile";
 import { useAuth } from "@/lib/auth/auth-context";
 import { needsProfileSetup } from "@/lib/auth/guards";
+import { readNext } from "@/lib/auth/next";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 
@@ -26,7 +27,7 @@ export function ProfileSetup() {
 
   useEffect(() => {
     if (status === "guest") router.replace("/login");
-    else if (status === "authed" && !needsProfileSetup(user)) router.replace("/");
+    else if (status === "authed" && !needsProfileSetup(user)) router.replace(readNext());
   }, [status, user, router]);
 
   useEffect(
@@ -72,7 +73,7 @@ export function ProfileSetup() {
         bio: bio.trim() || undefined,
       });
       await refresh();
-      router.replace("/"); // TODO(next batch): continue to school onboarding like Flutter
+      router.replace(readNext()); // TODO(next batch): continue to school onboarding like Flutter
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) setAvail("taken");
       setError(err instanceof ApiError ? err.message : "Something went wrong.");

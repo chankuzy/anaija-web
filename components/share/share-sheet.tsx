@@ -9,31 +9,23 @@ import type { Post } from "@/lib/api/feed-types";
 import { shareApi, type ShareTarget } from "@/lib/api/share";
 import { useAuth } from "@/lib/auth/auth-context";
 import { usePaged, type Page } from "@/lib/paged/use-paged";
-import { postLink } from "@/lib/share/link";
+import { copyLink as copyPostLink, nativeShare, openWhatsapp } from "@/lib/share/external";
+import { WhatsappGlyph } from "@/components/share/whatsapp-glyph";
 import { addPostToStory, sendToUser, useSentTo } from "@/lib/share/send";
 
-async function copyText(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    try {
-      const ta = document.createElement("textarea");
-      ta.value = text;
-      ta.style.position = "fixed";
-      ta.style.opacity = "0";
-      document.body.appendChild(ta);
-      ta.select();
-      const ok = document.execCommand("copy");
-      ta.remove();
-      return ok;
-    } catch {
-      return false;
-    }
-  }
-}
-
-function Quick({ icon, label, busy, onClick }: { icon: IconName; label: string; busy?: boolean; onClick: () => void }) {
+export function Quick({
+  icon,
+  glyph,
+  label,
+  busy,
+  onClick,
+}: {
+  icon?: IconName;
+  glyph?: React.ReactNode;
+  label: string;
+  busy?: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -42,7 +34,7 @@ function Quick({ icon, label, busy, onClick }: { icon: IconName; label: string; 
       className="flex flex-1 flex-col items-center gap-2 text-white transition-transform active:scale-95 disabled:opacity-60"
     >
       <span className="grid size-14 place-items-center rounded-full border border-white/12 bg-white/6 transition-colors hover:bg-white/12">
-        <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""}`} />
+        {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""}`} />)}
       </span>
       <span className="text-supporting font-semibold text-white/85">{label}</span>
     </button>
@@ -191,21 +183,18 @@ export function ShareSheet({
   };
 
   const copyLink = async () => {
-    flash((await copyText(postLink(post))) ? "Link copied" : "Couldn't copy the link");
+    flash((await copyPostLink(post)) ? "Link copied" : "Couldn't copy the link");
   };
 
+  // A dismissed OS sheet is not a share and shows nothing. No OS sheet (most desktops) falls back to copying.
   const more = async () => {
-    const link = postLink(post);
-    const text = post.caption?.trim() ? post.caption.trim() : "Check this out on Anaija";
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ text, url: link });
-      } catch {
-        // dismissed
-      }
-      return;
-    }
-    flash((await copyText(link)) ? "Link copied" : "Couldn't copy the link");
+    const r = await nativeShare(post);
+    if (r === "failed") flash("Couldn't open sharing");
+    else if (r === "unsupported") await copyLink();
+  };
+
+  const whatsapp = () => {
+    openWhatsapp(post);
   };
 
   const toStory = async () => {
@@ -263,6 +252,7 @@ export function ShareSheet({
 
         <div className="flex shrink-0 px-4 pt-2">
           {canStory && <Quick icon="plus" label="Add to story" busy={storyBusy} onClick={() => void toStory()} />}
+          <Quick glyph={<WhatsappGlyph className="size-[22px]" />} label="WhatsApp" onClick={whatsapp} />
           <Quick icon="copy" label="Copy link" onClick={() => void copyLink()} />
           <Quick icon="shareArrow" label="More" onClick={() => void more()} />
         </div>

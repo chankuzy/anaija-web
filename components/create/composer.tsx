@@ -1,4 +1,5 @@
 "use client";
+import { loginHref } from "@/lib/auth/next";
 
 // Composer shell. Owns the step machine. Below md it is a full-screen overlay (like a pushed route in Flutter),
 // so the app shell's tab bar stays out of the way. From md up it is a contained studio panel inside <main>,
@@ -29,7 +30,7 @@ export function Composer({ initialKind }: { initialKind: ContentKind }) {
   }, [router]);
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
 
   // Only the mobile overlay locks page scroll; the desktop studio scrolls inside its own panel.

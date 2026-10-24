@@ -97,7 +97,8 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
     if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
     return matches(href);
   };
-  const hrefFor = (n: NavItem) => (n.auth && status === "guest" ? "/login" : n.href);
+  const hrefFor = (n: NavItem) =>
+    n.auth && status === "guest" ? (n.href === "/notifications" ? "/login" : `/login?next=${encodeURIComponent(n.href)}`) : n.href;
   const fullBleed = pathname === "/";
   // Inside a conversation the thread owns the whole screen: no bottom tabs, and nothing reserves room for them.
   const inChat = /^\/messages\/\d+/.test(pathname);
@@ -224,7 +225,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               </div>
             )}
             {status === "guest" && (
-              <Link href="/login" title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black">
+              <Link href={`/login?next=${encodeURIComponent(pathname)}`} title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black">
                 <Icon name="user" className="size-7 shrink-0" />
                 <span className={label}>Sign in</span>
               </Link>

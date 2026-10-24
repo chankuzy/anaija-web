@@ -41,7 +41,10 @@ export function GoogleLogin() {
 
   // Mirrors _navigate(): new / incomplete profiles go to setup, everyone else to the feed.
   useEffect(() => {
-    if (status === "authed") router.replace(needsProfileSetup(user) ? "/setup" : readNext());
+    if (status === "authed") {
+      const next = readNext();
+      router.replace(needsProfileSetup(user) ? `/setup?next=${encodeURIComponent(next)}` : next);
+    }
   }, [status, user, router]);
 
   // Kept in a ref so the Google callback (registered once) never goes stale.

@@ -129,12 +129,12 @@ export function OptionsSheet({
         ) : isOwn ? (
           <>
             <Insights post={post} />
-            {isListing && <Tile icon="bag" label="View listing" href={`/listing/${post.id}`} />}
+            {isListing && <Tile icon="bag" label="View listing" href={`/l/${post.id}`} />}
             <Tile icon="trash" label={isListing ? "Delete listing" : "Delete post"} destructive onClick={() => setConfirming(true)} />
           </>
         ) : (
           <>
-            {isListing && <Tile icon="bag" label="View product" href={`/listing/${post.id}`} />}
+            {isListing && <Tile icon="bag" label="View product" href={`/l/${post.id}`} />}
             {username && (
               <Tile
                 icon={following ? "check" : "plus"}

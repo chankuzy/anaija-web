@@ -1,4 +1,5 @@
 "use client";
+import { loginHref } from "@/lib/auth/next";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,7 @@ export function useRequireAuth() {
   const router = useRouter();
   const { status } = useAuth();
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(loginHref());
   }, [status, router]);
   return status === "authed";
 }

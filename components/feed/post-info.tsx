@@ -173,7 +173,7 @@ export function PostInfo({
     <div className="flex flex-col items-start">
       {d && !expanded && (
         <Link
-          href={`/listing/${post.id}`}
+          href={`/l/${post.id}`}
           className="mb-2 inline-flex items-center gap-2 rounded-[14px] border border-white/20 bg-white/12 py-2.5 pl-3.5 pr-2.5 backdrop-blur-[18px]"
         >
           <span className="text-white">
