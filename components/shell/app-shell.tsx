@@ -102,7 +102,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   };
   const hrefFor = (n: NavItem) =>
     n.auth && status === "guest" ? (n.href === "/notifications" ? "/login" : `/login?next=${encodeURIComponent(n.href)}`) : n.href;
-  const fullBleed = pathname === "/";
+  const fullBleed = pathname === "/" || pathname.startsWith("/p/");
   // Inside a conversation the thread owns the whole screen: no bottom tabs, and nothing reserves room for them.
   const inChat = /^\/messages\/\d+/.test(pathname);
   const railPanel = panelOpen && desktop;

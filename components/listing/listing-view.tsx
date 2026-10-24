@@ -15,6 +15,7 @@ import { loginHref } from "@/lib/auth/next";
 import { useShare } from "@/lib/share/share-context";
 import type { Post } from "@/lib/api/feed-types";
 import { timeAgo } from "@/lib/format";
+import { MoreLikeThis } from "./more-like-this";
 
 interface Data {
   id: string;
@@ -466,6 +467,8 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           </>
         )}
       </div>
+
+      <MoreLikeThis key={n} excludeId={n} type={type} />
 
       {!isOwn && (
         <div

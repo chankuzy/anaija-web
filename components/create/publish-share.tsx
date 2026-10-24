@@ -10,6 +10,7 @@ import { canNativeShare, copyText } from "@/lib/share/external";
 interface Published {
   isListing: boolean;
   path: string;
+  id: number;
   title: string;
   text: string;
 }
@@ -31,10 +32,11 @@ function describe(t: UploadTask): Published | null {
     const title = (d.businessName ?? "").trim() || caption || "New listing";
     const n = Number(d.price);
     const price = d.price && Number.isFinite(n) ? `₦${n.toLocaleString("en-NG")}` : "";
-    return { isListing: true, path: `/l/${target.postId}`, title, text: `${price ? `${title} · ${price}` : title} on Anaija` };
+    return { isListing: true, id: target.postId, path: `/l/${target.postId}`, title, text: `${price ? `${title} · ${price}` : title} on Anaija` };
   }
   return {
     isListing: false,
+    id: target.postId,
     path: `/p/${target.postId}`,
     title: caption || "New reel on Anaija",
     text: caption ? `${caption} on Anaija` : "Watch my new reel on Anaija",
@@ -73,7 +75,7 @@ export function PublishShare() {
 
   if (!item || pathname.startsWith("/create")) return null;
   const close = () => setItem(null);
-  const link = () => url(item.path);
+  const link = () => url(`/p/${item.id}`);
 
   const whatsapp = () => open(`https://wa.me/?text=${encodeURIComponent(`${item.text}\n${link()}`)}`);
   const facebook = () => open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link())}`);

@@ -2,7 +2,7 @@
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import type { FeedItem, FeedScope } from "@/lib/api/feed-types";
+import type { FeedItem, FeedScope, Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
 import { useDocumentFocus } from "@/lib/feed/focus";
@@ -37,10 +37,12 @@ function LeaveWhenVisible({ children }: { children: ReactNode }) {
   return <div ref={ref}>{children}</div>;
 }
 
-export function FeedView() {
+// `pinned`: a shared post/listing shown first, with the For You feed continuing under it. It lives only on screen:
+// it is never written into the feed cache, never changes the remembered position, and is dropped from the list below.
+export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null; pinnedFocus?: number }) {
   const { status } = useAuth();
   const authed = status === "authed";
-  const [scope, setScopeState] = useState<FeedScope>(() => rememberedScope);
+  const [scope, setScopeState] = useState<FeedScope>(() => (pinned ? "for_you" : rememberedScope));
   const setScope = useCallback((s: FeedScope) => {
     rememberedScope = s;
     setScopeState(s);
@@ -48,6 +50,14 @@ export function FeedView() {
   const effScope: FeedScope = authed ? scope : "for_you";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const [storyOpen, setStoryOpen] = useState(false);
+
+  const [pinnedLocal, setPinnedLocal] = useState<Partial<Post>>({});
+  const [pinnedGone, setPinnedGone] = useState(false);
+  const pinnedPost = useMemo<Post | null>(
+    () => (pinned && !pinnedGone && effScope === "for_you" ? { ...pinned, ...pinnedLocal } : null),
+    [pinned, pinnedLocal, pinnedGone, effScope],
+  );
+  const usingPinned = pinnedPost !== null;
 
   const {
     data,
@@ -68,6 +78,21 @@ export function FeedView() {
     scope: effScope,
   });
 
+  const patch = useCallback(
+    (id: number, p: Partial<Post>) => {
+      if (pinned && id === pinned.id) setPinnedLocal((o) => ({ ...o, ...p }));
+      patchPost(id, p);
+    },
+    [pinned, patchPost],
+  );
+  const remove = useCallback(
+    (id: number) => {
+      if (pinned && id === pinned.id) setPinnedGone(true);
+      removePost(id);
+    },
+    [pinned, removePost],
+  );
+
   // Behavioural events are for signed-in users only. (Follow state is wiped by the cache on account change.)
   useEffect(() => {
     feedEvents.setEnabled(authed);
@@ -75,8 +100,14 @@ export function FeedView() {
   }, [authed]);
 
   // Active entry: local state while scrolling, the store's remembered position when we (re)mount.
+  // With a pinned post the viewer always starts on it, whatever position was remembered.
   const [activeState, setActiveState] = useState({ key: "", gen: -1, index: 0 });
-  const active = activeState.key === storeKey && activeState.gen === gen ? activeState.index : getPosition();
+  const active =
+    activeState.key === storeKey && (usingPinned || activeState.gen === gen)
+      ? activeState.index
+      : usingPinned
+        ? 0
+        : getPosition();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const focused = useDocumentFocus();
   const windowFor = usePrefetchWindow(active);
@@ -87,23 +118,29 @@ export function FeedView() {
     else feedEvents.hold("focus");
   }, [focused]);
 
-  // Rendered entries: posts, plus people units minus anyone dismissed (a unit with nobody left is dropped).
+  // Rendered entries: the pinned post, then posts, plus people units minus anyone dismissed.
   const entries = useMemo<FeedItem[]>(() => {
-    if (!data) return [];
     const out: FeedItem[] = [];
-    for (const it of data.items) {
-      if (it.type === "post") out.push(it);
-      else {
+    if (pinnedPost) out.push({ type: "post", post: pinnedPost } as FeedItem);
+    for (const it of data?.items ?? []) {
+      if (it.type === "post") {
+        if (pinnedPost && it.post.id === pinnedPost.id) continue;
+        out.push(it);
+      } else {
         const users = it.users.filter((u) => !dismissed.has(`${it.id}:${u.id}`));
         if (users.length > 0) out.push({ ...it, users });
       }
     }
     return out;
-  }, [data, dismissed]);
+  }, [data, dismissed, pinnedPost]);
 
-  const latest = useRef<{ entries: FeedItem[]; sessionId: string | null }>({ entries: [], sessionId: null });
+  const latest = useRef<{ entries: FeedItem[]; sessionId: string | null; offset: number }>({
+    entries: [],
+    sessionId: null,
+    offset: 0,
+  });
   useEffect(() => {
-    latest.current = { entries, sessionId: data?.sessionId ?? null };
+    latest.current = { entries, sessionId: data?.sessionId ?? null, offset: usingPinned ? 1 : 0 };
   });
   const seenUnits = useRef(new Set<string>());
 
@@ -118,9 +155,9 @@ export function FeedView() {
         restoreGuard.current = null;
       }
       setActiveState({ key: storeKey, gen, index: i });
-      setPosition(i);
-      maybeLoadMore(i);
-      const { entries: es, sessionId } = latest.current;
+      const { entries: es, sessionId, offset } = latest.current;
+      if (offset === 0) setPosition(i); // a pinned list is offset by one: never store its indexes
+      maybeLoadMore(Math.max(0, i - offset));
       const e = es[i];
       if (!e) return;
       if (e.type === "post") {
@@ -141,13 +178,17 @@ export function FeedView() {
     [storeKey, gen, setPosition, maybeLoadMore],
   );
 
-  // Back on the feed: jump (before paint) to the post the viewer was on.
+  // Back on the feed: jump (before paint) to the post the viewer was on. A pinned post always starts at the top.
   const restoredFor = useRef<string | null>(null);
-  const hasList = !!data && entries.length > 0;
+  const hasList = entries.length > 0 && (usingPinned || !!data);
   useLayoutEffect(() => {
     const sc = scrollerRef.current;
     if (!sc || !hasList || restoredFor.current === storeKey) return;
     restoredFor.current = storeKey;
+    if (usingPinned) {
+      sc.scrollTop = 0;
+      return;
+    }
     const idx = Math.min(getPosition(), entries.length - 1);
     if (idx > 0) {
       restoreGuard.current = idx;
@@ -159,7 +200,7 @@ export function FeedView() {
     } else {
       sc.scrollTop = 0;
     }
-  }, [hasList, storeKey, entries.length, getPosition]);
+  }, [hasList, usingPinned, storeKey, entries.length, getPosition]);
 
   // The list was replaced (refresh / "New posts"): start from the top.
   const seenGen = useRef<{ key: string; gen: number } | null>(null);
@@ -180,7 +221,7 @@ export function FeedView() {
 
   const topBar = <FeedTopBar authed={authed} scope={effScope} onScope={setScope} />;
 
-  if (!data) {
+  if (!data && !usingPinned) {
     return (
       <div className="relative h-dvh">
         {topBar}
@@ -188,7 +229,7 @@ export function FeedView() {
       </div>
     );
   }
-  if (data.error && entries.length === 0) {
+  if (data?.error && entries.length === 0) {
     return (
       <div className="relative h-dvh">
         {topBar}
@@ -205,12 +246,14 @@ export function FeedView() {
     );
   }
 
+  const sessionId = data?.sessionId ?? null;
+
   return (
     <div className="relative h-dvh">
       <div
         ref={scrollerRef}
         className={`no-scrollbar relative h-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain transition-opacity duration-200 ${
-          loading ? "opacity-40" : "opacity-100"
+          loading && data ? "opacity-40" : "opacity-100"
         }`}
       >
         {entries.map((it, i) =>
@@ -222,9 +265,10 @@ export function FeedView() {
               active={i === active && !storyOpen}
               near={windowFor(i).near}
               warm={windowFor(i).warm}
+              commentFocus={pinnedPost && it.post.id === pinnedPost.id ? pinnedFocus : undefined}
               onActivate={onActivate}
-              patch={patchPost}
-              onRemove={removePost}
+              patch={patch}
+              onRemove={remove}
             />
           ) : (
             <PeopleUnit
@@ -232,21 +276,21 @@ export function FeedView() {
               item={it}
               index={i}
               onActivate={onActivate}
-              onOpen={(uid) => feedEvents.suggestion("suggestion_open", uid, data.sessionId)}
-              onFollowed={(uid) => feedEvents.suggestion("suggestion_follow", uid, data.sessionId)}
+              onOpen={(uid) => feedEvents.suggestion("suggestion_open", uid, sessionId)}
+              onFollowed={(uid) => feedEvents.suggestion("suggestion_follow", uid, sessionId)}
               onDismiss={(uid) => {
-                feedEvents.suggestion("suggestion_dismiss", uid, data.sessionId);
+                feedEvents.suggestion("suggestion_dismiss", uid, sessionId);
                 setDismissed((prev) => new Set(prev).add(`${it.id}:${uid}`));
               }}
             />
           ),
         )}
-        {data.caughtUp && (
+        {data?.caughtUp && (
           <LeaveWhenVisible>
             <CaughtUp actions={data.nextActions} isGuest={!authed} busy={loading} onRefresh={reload} />
           </LeaveWhenVisible>
         )}
-        {data.loadingMore && <MoreSkeleton />}
+        {(!data || data.loadingMore) && <MoreSkeleton />}
         <FeedStories onViewerChange={setStoryOpen} />
       </div>
       {topBar}
@@ -265,7 +309,7 @@ export function FeedView() {
           </button>
         </div>
       ) : (
-        data.notice && (
+        data?.notice && (
           <div className="pointer-events-none absolute inset-x-0 top-[76px] z-30 flex justify-center">
             <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">{data.notice}</span>
           </div>
