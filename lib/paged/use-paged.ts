@@ -20,7 +20,6 @@ export interface PagedData<T, C> {
   firstLen: number; // size of the first page; only that part is persisted for cold starts
 }
 
-const STALE_MS = 60_000;
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const moreBusy = new Set<string>();
 
@@ -45,20 +44,25 @@ function mergePaged<T extends { id: number }, C>(
   return { ...old, items: [...next.items, ...tail], firstLen: next.items.length };
 }
 
-function save<T, C>(k: string, d: PagedData<T, C>) {
-  const first = !d.error && d.items.length <= d.firstLen;
+function save<T, C>(k: string, d: PagedData<T, C>, allowDisk: boolean) {
+  const first = allowDisk && !d.error && d.items.length <= d.firstLen;
   put(k, d, { persist: first, persistAs: first ? { ...d, loadingMore: false, moreError: false } : undefined });
 }
 
-// Cached paged list: instant from memory/disk, silent revalidation when stale, no spinner on revisit.
+// Cached paged list: instant from memory (and disk, unless persist=false), silent revalidation when older than
+// staleMs (0 = every mount), no spinner on revisit. persist=false keeps sensitive lists (activity) memory-only.
 export function usePaged<T extends { id: number }, C>({
   id,
   enabled,
   load,
+  staleMs = 60_000,
+  persist = true,
 }: {
   id: string;
   enabled: boolean;
   load: (cursor: C | null, signal?: AbortSignal) => Promise<Page<T, C>>;
+  staleMs?: number;
+  persist?: boolean;
 }) {
   const k = `paged:${id}`;
   const sub = useCallback((cb: () => void) => subscribeKey(k, cb), [k]);
@@ -71,6 +75,11 @@ export function usePaged<T extends { id: number }, C>({
   useEffect(() => {
     loadRef.current = load;
   });
+
+  const persistFn = useCallback(
+    (v: PagedData<T, C>) => persist && !v.error && v.items.length <= v.firstLen,
+    [persist],
+  );
 
   const fetchFirst = useCallback(async (): Promise<PagedData<T, C>> => {
     const p = await loadRef.current(null);
@@ -102,24 +111,21 @@ export function usePaged<T extends { id: number }, C>({
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    void hydrate(k).then(() => {
+    void (persist ? hydrate(k) : Promise.resolve()).then(() => {
       if (!alive) return;
       const e = peek<PagedData<T, C>>(k);
-      if (e && !e.data.error && Date.now() - e.at < STALE_MS) return;
-      revalidate<PagedData<T, C>>(k, fetchFirst, {
-        merge: mergePaged,
-        persist: (v) => !v.error && v.items.length <= v.firstLen,
-      }).catch(onFail);
+      if (e && !e.data.error && Date.now() - e.at < staleMs) return;
+      revalidate<PagedData<T, C>>(k, fetchFirst, { merge: mergePaged, persist: persistFn }).catch(onFail);
     });
     return () => {
       alive = false;
     };
-  }, [enabled, k, fetchFirst, onFail, epochNow]);
+  }, [enabled, k, fetchFirst, onFail, persist, persistFn, staleMs, epochNow]);
 
   // Explicit refresh (pull-to-refresh, "try again"): replace the list with the fresh first page.
   const reload = useCallback(() => {
-    revalidate<PagedData<T, C>>(k, fetchFirst, { merge: (_old, next) => next }).catch(onFail);
-  }, [k, fetchFirst, onFail]);
+    revalidate<PagedData<T, C>>(k, fetchFirst, { merge: (_old, next) => next, persist: persistFn }).catch(onFail);
+  }, [k, fetchFirst, onFail, persistFn]);
 
   const loadMore = useCallback(
     (force = false) => {
@@ -127,37 +133,41 @@ export function usePaged<T extends { id: number }, C>({
       if (!d || !d.hasMore || d.cursor === null || d.loadingMore || moreBusy.has(k)) return;
       if (d.moreError && !force) return;
       moreBusy.add(k);
-      save(k, { ...d, loadingMore: true, moreError: false });
+      save(k, { ...d, loadingMore: true, moreError: false }, persist);
       loadRef
         .current(d.cursor)
         .then((p) => {
           const cur = peek<PagedData<T, C>>(k)?.data ?? d;
           const ids = new Set(cur.items.map((i) => i.id));
-          save(k, {
-            ...cur,
-            items: [...cur.items, ...p.items.filter((i) => !ids.has(i.id))],
-            cursor: p.cursor,
-            hasMore: p.hasMore,
-            loadingMore: false,
-          });
+          save(
+            k,
+            {
+              ...cur,
+              items: [...cur.items, ...p.items.filter((i) => !ids.has(i.id))],
+              cursor: p.cursor,
+              hasMore: p.hasMore,
+              loadingMore: false,
+            },
+            persist,
+          );
         })
         .catch(() => {
           const cur = peek<PagedData<T, C>>(k)?.data ?? d;
-          save(k, { ...cur, loadingMore: false, moreError: true });
+          save(k, { ...cur, loadingMore: false, moreError: true }, persist);
         })
         .finally(() => {
           moreBusy.delete(k);
         });
     },
-    [k],
+    [k, persist],
   );
 
   const patch = useCallback(
     (itemId: number, partial: Partial<T>) => {
       const d = peek<PagedData<T, C>>(k)?.data;
-      if (d) save(k, { ...d, items: d.items.map((i) => (i.id === itemId ? { ...i, ...partial } : i)) });
+      if (d) save(k, { ...d, items: d.items.map((i) => (i.id === itemId ? { ...i, ...partial } : i)) }, persist);
     },
-    [k],
+    [k, persist],
   );
 
   const remove = useCallback(
@@ -165,9 +175,9 @@ export function usePaged<T extends { id: number }, C>({
       const d = peek<PagedData<T, C>>(k)?.data;
       if (!d) return;
       const items = d.items.filter((i) => i.id !== itemId);
-      save(k, { ...d, items, firstLen: Math.min(d.firstLen, items.length) });
+      save(k, { ...d, items, firstLen: Math.min(d.firstLen, items.length) }, persist);
     },
-    [k],
+    [k, persist],
   );
 
   const loading = enabled && data === null;

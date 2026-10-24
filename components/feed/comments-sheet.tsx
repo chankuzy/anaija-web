@@ -9,6 +9,7 @@ import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
 import { commentsApi, type Comment } from "@/lib/api/comments";
 import { useAuth } from "@/lib/auth/auth-context";
+import { onCacheClear } from "@/lib/cache/swr";
 import { timeAgo } from "@/lib/format";
 
 type Top = { items: Comment[]; cursor: string | null; hasMore: boolean; loading: boolean; more: boolean; error: string | null };
@@ -23,6 +24,21 @@ const merge = (a: Comment[], b: Comment[]) => {
   const seen = new Set(a.map((c) => c.id));
   return [...a, ...b.filter((c) => !seen.has(c.id))];
 };
+
+// First page of each post's comments, memory only: reopening a post's comments paints instantly and the fetch
+// below reconciles it. Wiped on sign-out / account change.
+type FirstPage = { items: Comment[]; cursor: string | null; hasMore: boolean };
+const firstPages = new Map<number, FirstPage>();
+onCacheClear(() => firstPages.clear());
+function rememberFirst(postId: number, p: FirstPage) {
+  firstPages.delete(postId);
+  firstPages.set(postId, p);
+  while (firstPages.size > 30) {
+    const oldest = firstPages.keys().next().value;
+    if (oldest === undefined) break;
+    firstPages.delete(oldest);
+  }
+}
 
 function Row({
   c,
@@ -86,7 +102,12 @@ export function CommentsSheet({
   onClose: () => void;
 }) {
   const { user } = useAuth();
-  const [top, setTop] = useState<Top>({ items: [], cursor: null, hasMore: false, loading: true, more: false, error: null });
+  const [top, setTop] = useState<Top>(() => {
+    const c = firstPages.get(postId);
+    return c
+      ? { items: c.items, cursor: c.cursor, hasMore: c.hasMore, loading: false, more: false, error: null }
+      : { items: [], cursor: null, hasMore: false, loading: true, more: false, error: null };
+  });
   const [threads, setThreads] = useState<Record<number, Thread>>({});
   const [count, setCount] = useState(initialCount);
   const countRef = useRef(initialCount);
@@ -96,16 +117,22 @@ export function CommentsSheet({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  // Always reconcile with the server, even when a cached page is already on screen.
   useEffect(() => {
     let off = false;
     commentsApi
       .list(postId)
       .then((r) => {
         if (off) return;
-        setTop({ items: r.data ?? [], cursor: r.next_cursor ?? null, hasMore: !!r.has_more, loading: false, more: false, error: null });
+        const fresh = r.data ?? [];
+        const cursor = r.next_cursor ?? null;
+        const hasMore = !!r.has_more;
+        rememberFirst(postId, { items: fresh, cursor, hasMore });
+        setTop((t) => ({ items: [...t.items.filter((c) => c.pending), ...fresh], cursor, hasMore, loading: false, more: false, error: null }));
       })
       .catch((e: unknown) => {
-        if (!off) setTop((t) => ({ ...t, loading: false, error: msg(e) }));
+        if (off) return;
+        setTop((t) => (t.items.length > 0 ? { ...t, loading: false } : { ...t, loading: false, error: msg(e) }));
       });
     return () => {
       off = true;
@@ -252,6 +279,8 @@ export function CommentsSheet({
       bump(-1);
       try {
         await commentsApi.remove(c.id);
+        const f = firstPages.get(postId);
+        if (f) rememberFirst(postId, { ...f, items: f.items.filter((x) => x.id !== c.id) });
       } catch {
         setTop((t) => ({ ...t, items: prev }));
         bump(1);
@@ -317,6 +346,8 @@ export function CommentsSheet({
     try {
       const real = await commentsApi.create(postId, body);
       setTop((t) => ({ ...t, items: t.items.map((x) => (x.id === temp.id ? real : x)) }));
+      const f = firstPages.get(postId);
+      if (f) rememberFirst(postId, { ...f, items: [real, ...f.items] });
     } catch (e) {
       setTop((t) => ({ ...t, items: t.items.filter((x) => x.id !== temp.id) }));
       bump(-1);

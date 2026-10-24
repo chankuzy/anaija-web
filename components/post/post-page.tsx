@@ -1,7 +1,7 @@
 "use client";
 import { FeedSkeleton } from "@/components/feed/feed-states";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FeedCard } from "@/components/feed/feed-card";
 import { Icon } from "@/components/ui/icon";
@@ -9,14 +9,15 @@ import { ApiError } from "@/lib/api/client";
 import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
+import { onCacheClear, useCached } from "@/lib/cache/swr";
+import { useEffect } from "react";
 
-interface Data {
-  id: string;
-  post: Post | null;
-  status: number;
-}
+// HTTP status of the last failed load per post (404 gone, 410 expired story, 0 network).
+const failures = new Map<string, number>();
+onCacheClear(() => failures.clear());
 
 // Target of share links (/p/{id}). Same card as the feed, full screen. posts-show needs a signed-in user.
+// Cached in memory for a short while, so going back and forth is instant; likes etc. are applied on top.
 export function PostPage({ id }: { id: string }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -26,42 +27,39 @@ export function PostPage({ id }: { id: string }) {
   const authed = status === "authed";
   const n = Number(id);
   const valid = Number.isInteger(n) && n > 0;
-  const [data, setData] = useState<Data | null>(null);
+  const k = `post:${n}`;
 
   useEffect(() => {
     if (status === "guest") router.replace("/login");
   }, [status, router]);
 
-  useEffect(() => {
-    if (!authed || !valid) return;
-    const ac = new AbortController();
-    postDetailApi
-      .get(n, ac.signal)
-      .then((post) => {
-        if (!ac.signal.aborted) setData({ id, post, status: 200 });
-      })
-      .catch((e: unknown) => {
-        if (!ac.signal.aborted) setData({ id, post: null, status: e instanceof ApiError ? e.status : 0 });
-      });
-    return () => ac.abort();
-  }, [authed, valid, n, id]);
+  const fetcher = useCallback(async () => {
+    try {
+      const p = await postDetailApi.get(n);
+      failures.delete(k);
+      return p;
+    } catch (e) {
+      failures.set(k, e instanceof ApiError ? e.status : 0);
+      throw e;
+    }
+  }, [n, k]);
+
+  const { data: post, error, mutate } = useCached<Post>(authed && valid ? k : null, fetcher, { staleMs: 30_000, persist: false });
 
   const noop = useCallback(() => {}, []);
-  const patch = useCallback((_id: number, p: Partial<Post>) => {
-    setData((d) => (d?.post ? { ...d, post: { ...d.post, ...p } } : d));
-  }, []);
+  const patch = useCallback((_id: number, p: Partial<Post>) => mutate((old) => ({ ...old, ...p })), [mutate]);
   const gone = useCallback(() => router.replace("/"), [router]);
 
-  const cur = data && data.id === id ? data : null;
+  const code = error && !post ? (failures.get(k) ?? 0) : null;
   let content: React.ReactNode;
-  if (!valid || cur?.status === 404) {
+  if (!valid || code === 404) {
     content = <Msg title="This post isn't available" sub="It may have been deleted." />;
-  } else if (cur?.status === 410) {
+  } else if (code === 410) {
     content = <Msg title="This story has expired" />;
-  } else if (cur && !cur.post) {
+  } else if (code !== null) {
     content = <Msg title="Couldn't load this post" sub="Check your connection and try again." />;
-  } else if (cur?.post) {
-    content = <FeedCard key={`${cur.post.id}:${focus ?? ""}`} post={cur.post} index={0} active near commentFocus={focus} onActivate={noop} patch={patch} onRemove={gone} />;
+  } else if (post) {
+    content = <FeedCard key={`${post.id}:${focus ?? ""}`} post={post} index={0} active near commentFocus={focus} onActivate={noop} patch={patch} onRemove={gone} />;
   } else {
     content = <FeedSkeleton />;
   }

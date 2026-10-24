@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthRoot } from "@/components/shell/auth-root";
+import { CacheCurtain } from "@/components/shell/cache-curtain";
 import { AppLogo } from "@/components/ui/app-logo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={inter.variable}>
       <body>
+        <CacheCurtain />
         <Suspense fallback={<Splash />}>
           <AuthRoot>{children}</AuthRoot>
         </Suspense>

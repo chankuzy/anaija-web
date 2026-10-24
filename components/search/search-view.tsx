@@ -3,7 +3,7 @@
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { DiscoverGrid, DiscoverSkeleton } from "@/components/discover/discover-grid";
 import { PostViewer } from "@/components/discover/post-viewer";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,6 +12,7 @@ import type { DiscoverItem } from "@/lib/api/discover";
 import type { Post } from "@/lib/api/feed-types";
 import { searchApi, type SearchUser, type Suggestion, type SuggestionsRes } from "@/lib/api/search";
 import { useAuth } from "@/lib/auth/auth-context";
+import { onCacheClear, useCached } from "@/lib/cache/swr";
 import { formatCount } from "@/lib/format";
 import {
   addRecent,
@@ -35,6 +36,33 @@ interface Results {
   users: SearchUser[];
   posts: Post[];
   listings: Post[];
+}
+
+// Where you were survives leaving Search (tap a person, press back: same query, tab and scroll), and repeat
+// queries are instant. Memory only (searches are personal), wiped on sign-out / account change.
+const memo = { q: "", tab: "top" as Tab, scroll: 0 };
+const resultCache = new Map<string, { at: number; data: Results }>();
+const RESULT_TTL = 60_000;
+const RESULT_MAX = 30;
+onCacheClear(() => {
+  resultCache.clear();
+  memo.q = "";
+  memo.tab = "top";
+  memo.scroll = 0;
+});
+
+const keyOf = (q: string) => q.trim().toLowerCase();
+const same = (a: string, b: string) => keyOf(a) === keyOf(b);
+
+function cachePut(data: Results) {
+  const k = keyOf(data.q);
+  resultCache.delete(k);
+  resultCache.set(k, { at: Date.now(), data });
+  while (resultCache.size > RESULT_MAX) {
+    const oldest = resultCache.keys().next().value;
+    if (oldest === undefined) break;
+    resultCache.delete(oldest);
+  }
 }
 
 const toItems = (posts: Post[], kind: "post" | "listing"): DiscoverItem[] =>
@@ -80,43 +108,48 @@ export function SearchView() {
   const router = useRouter();
   const { status } = useAuth();
   const authed = status === "authed";
-  const [q, setQ] = useState("");
-  const [tab, setTab] = useState<Tab>("top");
-  const [landing, setLanding] = useState<SuggestionsRes | null>(null);
+  const [q, setQ] = useState(() => memo.q);
+  const [tab, setTab] = useState<Tab>(() => memo.tab);
   const [ac, setAc] = useState<{ q: string; items: Suggestion[] } | null>(null);
-  const [results, setResults] = useState<Results | null>(null);
+  const [latest, setLatest] = useState<Results | null>(() => resultCache.get(keyOf(memo.q))?.data ?? null);
   const [failed, setFailed] = useState<string | null>(null);
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; index: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const startedEmpty = useRef(q.trim() === "");
+
+  // Trending / popular: instant from cache, quietly refreshed.
+  const { data: landing } = useCached<SuggestionsRes>(authed ? "search:landing" : null, () => searchApi.suggestions(""), {
+    staleMs: 5 * 60_000,
+  });
 
   const rawRecents = useSyncExternalStore(recentsSubscribe, recentsSnapshot, recentsServerSnapshot);
   const recents = useMemo(() => parseRecents(rawRecents), [rawRecents]);
 
-  useEffect(() => {
-    if (status === "guest") router.replace("/login");
-  }, [status, router]);
-  useEffect(() => {
-    inputRef.current?.focus();
+  const setQuery = useCallback((v: string) => {
+    memo.q = v;
+    memo.scroll = 0;
+    setQ(v);
+  }, []);
+  const changeTab = useCallback((t: Tab) => {
+    memo.tab = t;
+    setTab(t);
   }, []);
 
   useEffect(() => {
-    if (!authed) return;
-    let off = false;
-    searchApi
-      .suggestions("")
-      .then((r) => {
-        if (!off) setLanding(r);
-      })
-      .catch(() => {});
-    return () => {
-      off = true;
-    };
-  }, [authed]);
+    if (status === "guest") router.replace("/login");
+  }, [status, router]);
+  // Only pop the keyboard on a fresh search, not when coming back to results.
+  useEffect(() => {
+    if (startedEmpty.current) inputRef.current?.focus();
+  }, []);
 
-  // One character -> autocomplete; two or more -> full search (debounced; a newer keystroke aborts the older request).
+  // One character -> autocomplete; two or more -> full search (debounced; a newer keystroke aborts the older
+  // request). A query searched in the last minute is served from memory with no request at all.
   useEffect(() => {
     const t = q.trim();
     if (!authed || t.length === 0) return;
+    const hit = resultCache.get(keyOf(t));
+    if (t.length >= 2 && hit && Date.now() - hit.at < RESULT_TTL) return;
     const ac$ = new AbortController();
     const id = window.setTimeout(
       () => {
@@ -129,7 +162,9 @@ export function SearchView() {
           searchApi
             .all(t, ac$.signal)
             .then((r) => {
-              setResults({ q: t, ...r });
+              const res: Results = { q: t, ...r };
+              cachePut(res);
+              setLatest(res);
               setFailed(null);
             })
             .catch(() => {
@@ -145,30 +180,54 @@ export function SearchView() {
     };
   }, [q, authed]);
 
-  const runTerm = useCallback((term: string) => {
-    setQ(term);
-    setTab("top");
-    addRecent(term);
-  }, []);
-
-  const patchPost = useCallback((id: number, p: Partial<Post>) => {
-    setResults((r) =>
-      r
-        ? {
-            ...r,
-            posts: r.posts.map((x) => (x.id === id ? { ...x, ...p } : x)),
-            listings: r.listings.map((x) => (x.id === id ? { ...x, ...p } : x)),
-          }
-        : r,
-    );
-  }, []);
-  const removePost = useCallback((id: number) => {
-    setResults((r) => (r ? { ...r, posts: r.posts.filter((x) => x.id !== id), listings: r.listings.filter((x) => x.id !== id) } : r));
-  }, []);
+  const runTerm = useCallback(
+    (term: string) => {
+      setQuery(term);
+      changeTab("top");
+      addRecent(term);
+    },
+    [setQuery, changeTab],
+  );
 
   const t = q.trim();
   const hasQuery = t.length >= 2;
-  const stale = hasQuery && results !== null && results.q !== t;
+  const hit = hasQuery ? resultCache.get(keyOf(t)) : undefined;
+  const results: Results | null = latest && same(latest.q, t) ? latest : (hit?.data ?? latest);
+  const stale = hasQuery && results !== null && !same(results.q, t);
+
+  const mapResults = useCallback((fn: (r: Results) => Results) => {
+    setLatest((r) => (r ? fn(r) : r));
+    for (const [k, e] of resultCache) resultCache.set(k, { ...e, data: fn(e.data) });
+  }, []);
+  const patchPost = useCallback(
+    (id: number, p: Partial<Post>) =>
+      mapResults((r) => ({
+        ...r,
+        posts: r.posts.map((x) => (x.id === id ? { ...x, ...p } : x)),
+        listings: r.listings.map((x) => (x.id === id ? { ...x, ...p } : x)),
+      })),
+    [mapResults],
+  );
+  const removePost = useCallback(
+    (id: number) => mapResults((r) => ({ ...r, posts: r.posts.filter((x) => x.id !== id), listings: r.listings.filter((x) => x.id !== id) })),
+    [mapResults],
+  );
+
+  // Remember scroll while a query is showing; restore it once when coming back to results.
+  useEffect(() => {
+    const onScroll = () => {
+      if (memo.q.trim().length >= 2) memo.scroll = window.scrollY;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const restored = useRef(false);
+  const hasResults = results !== null;
+  useLayoutEffect(() => {
+    if (restored.current || !hasResults) return;
+    restored.current = true;
+    if (memo.scroll > 0) window.scrollTo({ top: memo.scroll });
+  }, [hasResults]);
 
   const open = (items: DiscoverItem[], index: number) => {
     addRecent(t);
@@ -309,7 +368,7 @@ export function SearchView() {
         <>
           {results.users.length > 0 && (
             <div className="px-5 pb-5">
-              <SectionTitle action={{ label: "See all", onClick: () => setTab("people") }}>People</SectionTitle>
+              <SectionTitle action={{ label: "See all", onClick: () => changeTab("people") }}>People</SectionTitle>
               <div className="no-scrollbar flex gap-3.5 overflow-x-auto">
                 {results.users.map((u) => (
                   <Link key={u.id} href={`/u/${u.username}`} onClick={() => addRecent(t)} className="w-[72px] shrink-0 text-center">
@@ -346,7 +405,7 @@ export function SearchView() {
             <input
               ref={inputRef}
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   addRecent(q);
@@ -364,8 +423,8 @@ export function SearchView() {
                 type="button"
                 aria-label="Clear"
                 onClick={() => {
-                  setQ("");
-                  setTab("top");
+                  setQuery("");
+                  changeTab("top");
                   inputRef.current?.focus();
                 }}
                 className="grid size-9 place-items-center"
@@ -385,7 +444,7 @@ export function SearchView() {
                 <button
                   key={x.id}
                   type="button"
-                  onClick={() => setTab(x.id)}
+                  onClick={() => changeTab(x.id)}
                   className={`flex h-[38px] flex-1 items-center justify-center gap-1.5 rounded-full text-body ${
                     x.id === tab ? "border border-white/26 bg-white/15 font-bold text-fg" : "font-medium text-white/60"
                   }`}

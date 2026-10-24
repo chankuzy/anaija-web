@@ -4,8 +4,8 @@ import { useCallback, useEffect, useSyncExternalStore } from "react";
 import { ApiError } from "@/lib/api/client";
 import { feedApi } from "@/lib/api/feed";
 import type { FeedItem, FeedScope, Post } from "@/lib/api/feed-types";
-import { cacheEpoch, onCacheClear, useCacheEpoch } from "@/lib/cache/swr";
-import { kvGet, kvSet } from "@/lib/cache/kv";
+import { cacheEpoch, onCacheClear, peek, put, useCacheEpoch } from "@/lib/cache/swr";
+import { kvGet } from "@/lib/cache/kv";
 import { resetFollows, seedFollows } from "./follow-store";
 
 export interface FeedData {
@@ -30,7 +30,7 @@ interface FeedSlot {
 
 const EMPTY: FeedSlot = { data: null, at: 0, fresh: null, loading: false, gen: 0 };
 const STALE_MS = 5 * 60_000; // beyond this, returning to the feed reconciles in the background
-const DISK_MAX_AGE_MS = 30 * 60_000; // a cold start may show a persisted first page up to this old
+const DISK_MAX_AGE_MS = 7 * 24 * 60 * 60_000; // a cold start shows the last feed, however long the app was closed
 
 type Res = Awaited<ReturnType<typeof feedApi.page>>;
 
@@ -48,7 +48,22 @@ const subscribe = (l: () => void) => {
     listeners.delete(l);
   };
 };
-const slotOf = (k: string): FeedSlot => slots.get(k) ?? EMPTY;
+// A first page restored by the boot warm-up is adopted synchronously, so the very first render already shows
+// the last feed instead of a skeleton frame.
+function seedFromWarm(k: string): FeedSlot | null {
+  const v = peek<FeedData>(`feed:${k}`);
+  if (!v || Date.now() - v.at > DISK_MAX_AGE_MS || v.data.items.length === 0) return null;
+  const s: FeedSlot = {
+    data: { ...v.data, loadingMore: false, error: null, notice: null },
+    at: v.at,
+    fresh: null,
+    loading: false,
+    gen: 1,
+  };
+  slots.set(k, s);
+  return s;
+}
+const slotOf = (k: string): FeedSlot => slots.get(k) ?? seedFromWarm(k) ?? EMPTY;
 function setSlot(k: string, patch: Partial<FeedSlot>) {
   slots.set(k, { ...slotOf(k), ...patch });
   emit();
@@ -145,7 +160,7 @@ async function fetchFirst(k: string, authed: boolean, scope: FeedScope, mode: Mo
       positions.set(k, 0);
       setSlot(k, { data: next, at: Date.now(), fresh: null, loading: false, gen: cur.gen + 1 });
     }
-    void kvSet(`feed:${k}`, { data: next, at: Date.now() });
+    put(`feed:${k}`, next);
   } catch (e) {
     const cur = slotOf(k);
     if (cur.data && cur.data.items.length > 0 && !cur.data.error) {

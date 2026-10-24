@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { ApiError } from "@/lib/api/client";
-import { kvClear, kvGet, kvSet } from "./kv";
+import { kvAll, kvClear, kvGet, kvSet } from "./kv";
 
 // Stale-while-revalidate cache: memory first, IndexedDB behind it. Cached data renders instantly, a silent
 // background fetch reconciles it, and subscribers only re-render when the data actually changed.
@@ -211,3 +211,47 @@ export function useCached<T>(
     mutate,
   };
 }
+
+// ---- Cold-start warm-up ----------------------------------------------------------------------------
+// One bulk read of the whole IndexedDB store into memory before any screen mounts. After that, every hook's
+// first render already has its last-seen data: no skeleton frame, no async hydrate gap.
+let cacheReady = false;
+let warming: Promise<void> | null = null;
+const readyListeners = new Set<() => void>();
+
+const isEntry = (v: unknown): v is Entry<unknown> =>
+  typeof v === "object" && v !== null && typeof (v as { at?: unknown }).at === "number" && "data" in v;
+
+export function warmCache(): Promise<void> {
+  if (warming) return warming;
+  const e = epoch;
+  warming = kvAll()
+    .then((rows) => {
+      if (e !== epoch) return;
+      for (const [k, v] of rows) {
+        if (mem.has(k) || !isEntry(v)) continue;
+        mem.set(k, v);
+        emit(k);
+      }
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      cacheReady = true;
+      readyListeners.forEach((l) => l());
+    });
+  return warming;
+}
+
+export const useCacheReady = () =>
+  useSyncExternalStore(
+    (cb) => {
+      readyListeners.add(cb);
+      return () => {
+        readyListeners.delete(cb);
+      };
+    },
+    () => cacheReady,
+    () => false,
+  );
+
+if (typeof window !== "undefined") void warmCache();

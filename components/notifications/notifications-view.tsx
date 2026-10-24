@@ -13,6 +13,7 @@ import { activityApi, type ActivityDest, type ActivityFilter, type ActivityItem 
 import type { DiscoverItem } from "@/lib/api/discover";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { onCacheClear } from "@/lib/cache/swr";
 import { toggleFollow } from "@/lib/feed/follow-store";
 import { timeAgo } from "@/lib/format";
 import { usePaged, type Page } from "@/lib/paged/use-paged";
@@ -76,9 +77,15 @@ function Glyph({ kind }: { kind: string }) {
   );
 }
 
-// "Liked N of your posts": covers of those posts in a horizontal strip, fetched when the row scrolls into view.
+// Memory-only, wiped on sign-out / account change: activity is personal and never written to disk.
 const coverCache = new Map<string, Post[]>();
+const unreadByFilter = new Map<ActivityFilter, number>();
+onCacheClear(() => {
+  coverCache.clear();
+  unreadByFilter.clear();
+});
 
+// "Liked N of your posts": covers of those posts in a horizontal strip, fetched when the row scrolls into view.
 function Covers({ id, count, onOpen }: { id: number; count: number; onOpen: (posts: Post[], index: number) => void }) {
   const key = `${id}:${count}`;
   const ref = useRef<HTMLDivElement>(null);
@@ -232,12 +239,19 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
   const { version, clearUnseen } = useActivity();
   const authed = status === "authed";
   const [filter, setFilter] = useState<ActivityFilter>("all");
-  const [unread, setUnread] = useState(0);
+  const [unreadState, setUnreadState] = useState<{ filter: ActivityFilter; n: number } | null>(null);
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; start: number } | null>(null);
   const [storyView, setStoryView] = useState<{ groups: StoryGroup[]; storyId: number } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // The last known count shows instantly (cached list, no flash of an empty "Mark all read"), the server corrects it.
+  const unread = unreadState && unreadState.filter === filter ? unreadState.n : (unreadByFilter.get(filter) ?? 0);
+  function setUnread(n: number) {
+    unreadByFilter.set(filter, n);
+    setUnreadState({ filter, n });
+  }
 
   const push = useCallback(
     (url: string) => {
@@ -258,7 +272,8 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     async (cursor: string | null, signal?: AbortSignal): Promise<Page<ActivityItem, string>> => {
       const r = await activityApi.list(filter, cursor, signal);
       if (!cursor) {
-        setUnread(r.unread);
+        unreadByFilter.set(filter, r.unread);
+        setUnreadState({ filter, n: r.unread });
         // Opening the panel clears the bell (items that arrive later stay unseen).
         if (r.items[0]) {
           clearUnseen();
@@ -269,7 +284,9 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     },
     [filter, clearUnseen],
   );
-  const list = usePaged<ActivityItem, string>({ id: `activity:${filter}`, enabled: authed, load });
+  // staleMs 0: every open paints the cached list instantly and quietly re-reads the server (which also clears the
+  // bell). persist=false: activity includes message previews, so it stays in memory and never touches disk.
+  const list = usePaged<ActivityItem, string>({ id: `activity:${filter}`, enabled: authed, load, staleMs: 0, persist: false });
   const items = list.data?.items ?? [];
   const hasMore = list.data?.hasMore ?? false;
   const loadingMore = list.data?.loadingMore ?? false;
@@ -308,7 +325,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
   function markRead(it: ActivityItem) {
     if (it.id < 0 || it.is_read) return; // conversation rows clear when the chat is read
     list.patch(it.id, { is_read: true });
-    setUnread((n) => Math.max(0, n - 1));
+    setUnread(Math.max(0, unread - 1));
     void activityApi.read(it.id).catch(() => {});
   }
 
@@ -457,6 +474,10 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
               {f.label}
             </button>
           ))}
+        </div>
+        {/* Silent background reconcile: a hairline, never a spinner over the list. */}
+        <div className={`mt-1.5 h-[2px] overflow-hidden rounded transition-opacity duration-300 ${list.refreshing ? "opacity-100" : "opacity-0"}`}>
+          <div className="h-full w-1/3 animate-pulse rounded bg-white/50" />
         </div>
       </header>
 

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { ApiError } from "@/lib/api/client";
 import { asUtc, messagingApi, type Conversation } from "@/lib/api/messaging";
 import { useAuth } from "@/lib/auth/auth-context";
+import { peek, put, useCacheReady } from "@/lib/cache/swr";
 import { subscribeBroadcast } from "@/lib/realtime/client";
 
 interface State {
@@ -25,12 +26,19 @@ interface Ctx {
 const ts = (c: Conversation) => Date.parse(asUtc(c.last_message_at ?? "1970-01-01T00:00:00Z"));
 const sortConv = (l: Conversation[]) => [...l].sort((a, b) => ts(b) - ts(a));
 const InboxCtx = createContext<Ctx | null>(null);
+const inboxKey = (uid: number) => `inbox:${uid}`;
 
 export function InboxProvider({ children }: { children: React.ReactNode }) {
   const { status, user } = useAuth();
   const uid = status === "authed" ? (user?.id ?? null) : null;
-  const [state, setState] = useState<State>({ userId: null, items: [], error: null });
+  const [state, setState] = useState<State>(() => {
+    const cached = uid === null ? undefined : peek<Conversation[]>(inboxKey(uid));
+    return cached && uid !== null
+      ? { userId: uid, items: sortConv(cached.data), error: null }
+      : { userId: null, items: [], error: null };
+  });
   const [nonce, setNonce] = useState(0);
+  const cacheReady = useCacheReady();
   const itemsRef = useRef<Conversation[]>([]);
   const activeRef = useRef<number | null>(null);
 
@@ -38,8 +46,22 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
     itemsRef.current = state.items;
   });
 
+  // The warm-up can land after first render: adopt the last-seen inbox the moment it does.
+  useEffect(() => {
+    if (!cacheReady || uid === null) return;
+    const c = peek<Conversation[]>(inboxKey(uid));
+    if (c) setState((p) => (p.userId === uid ? p : { userId: uid, items: sortConv(c.data), error: null }));
+  }, [cacheReady, uid]);
+
+  // Last-seen inbox survives cold starts (cleared with the rest of the cache on sign-out / account change).
+  useEffect(() => {
+    if (state.userId !== null && !state.error) put(inboxKey(state.userId), state.items);
+  }, [state]);
+
   useEffect(() => {
     if (uid === null) return;
+    const cached = peek<Conversation[]>(inboxKey(uid));
+    if (cached) setState((p) => (p.userId === uid ? p : { userId: uid, items: sortConv(cached.data), error: null }));
     const ac = new AbortController();
     messagingApi
       .inbox(ac.signal)

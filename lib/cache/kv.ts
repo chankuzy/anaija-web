@@ -48,3 +48,27 @@ export const kvGet = <T>(key: string) => run<T>("readonly", (s) => s.get(key));
 export const kvSet = (key: string, value: unknown) => run("readwrite", (s) => s.put(value, key)).then(() => undefined);
 export const kvDelete = (key: string) => run("readwrite", (s) => s.delete(key)).then(() => undefined);
 export const kvClear = () => run("readwrite", (s) => s.clear()).then(() => undefined);
+
+/** Every entry in one transaction. Used once at boot to warm the in-memory cache. */
+export function kvAll(): Promise<[string, unknown][]> {
+  return open()
+    .then(
+      (db) =>
+        new Promise<[string, unknown][]>((res) => {
+          const out: [string, unknown][] = [];
+          const tx = db.transaction(STORE, "readonly");
+          const req = tx.objectStore(STORE).openCursor();
+          req.onsuccess = () => {
+            const c = req.result;
+            if (c) {
+              out.push([String(c.key), c.value]);
+              c.continue();
+            }
+          };
+          tx.oncomplete = () => res(out);
+          tx.onerror = () => res([]);
+          tx.onabort = () => res([]);
+        }),
+    )
+    .catch(() => [] as [string, unknown][]);
+}
