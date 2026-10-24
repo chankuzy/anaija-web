@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi, type ContentSettings } from "@/lib/api/settings";
 import { usePlayback } from "@/components/feed/playback-context";
 import { useAuth } from "@/lib/auth/auth-context";
+import { useCached } from "@/lib/cache/swr";
 import { Footnote, Group, SectionLabel, SettingsPage, Tile, Toggle, useRequireAuth, useToast } from "./settings-kit";
 
 export function SettingsView() {
@@ -14,33 +15,29 @@ export function SettingsView() {
   const { signOut } = useAuth();
   const { setPrefs } = usePlayback();
   const { toast, show } = useToast();
-  const [s, setS] = useState<ContentSettings | null>(null);
+
+  // Toggles render instantly from the cache; a quiet revalidation reconciles them.
+  const { data: s, error, mutate } = useCached<ContentSettings>(
+    ready ? "settings:content" : null,
+    () => settingsApi.content(),
+    { staleMs: 5 * 60_000 },
+  );
 
   useEffect(() => {
-    if (!ready) return;
-    const ac = new AbortController();
-    settingsApi
-      .content(ac.signal)
-      .then((r) => {
-        if (!ac.signal.aborted) setS(r);
-      })
-      .catch(() => {
-        if (!ac.signal.aborted) show("Couldn't load your settings");
-      });
-    return () => ac.abort();
-  }, [ready, show]);
+    if (error) show("Couldn't load your settings");
+  }, [error, show]);
 
   // Optimistic: flips instantly, reverts if the server says no.
   async function change(patch: Partial<ContentSettings>) {
     if (!s) return;
     const prev = s;
-    setS({ ...s, ...patch });
+    mutate((old) => ({ ...old, ...patch }));
     try {
       await settingsApi.setContent(patch);
       if (patch.feed_start_muted !== undefined) setPrefs({ startMuted: patch.feed_start_muted });
       if (patch.feed_autoplay_video !== undefined) setPrefs({ autoplay: patch.feed_autoplay_video });
     } catch (e) {
-      setS(prev);
+      mutate(() => prev);
       show(e instanceof ApiError ? e.message : "Couldn't save");
     }
   }

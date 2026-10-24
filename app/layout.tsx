@@ -2,16 +2,8 @@ import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/lib/auth/auth-context";
-import { ActivityProvider } from "@/lib/activity/activity-context";
-import { NotificationsPanelProvider } from "@/lib/notifications/panel-context";
-import { PlaybackProvider } from "@/components/feed/playback-context";
-import { MessagesUnreadProvider } from "@/lib/messaging/unread-context";
-import { AppShell } from "@/components/shell/app-shell";
-import { NotificationPill } from "@/components/shell/notification-pill";
-import { UploadDock } from "@/components/create/upload-dock";
-import { InstallPrompt } from "@/components/pwa/install-prompt";
-import { PwaRegister } from "@/components/pwa/pwa-register";
+import { AuthRoot } from "@/components/shell/auth-root";
+import { AppLogo } from "@/components/ui/app-logo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -39,25 +31,22 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+// Shown from the first byte until the session is known, so a guest/login screen can never flash.
+function Splash() {
+  return (
+    <div className="fixed inset-0 grid place-items-center bg-bg">
+      <AppLogo size={56} showWordmark={false} />
+    </div>
+  );
+}
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={inter.variable}>
       <body>
-        <AuthProvider>
-          <ActivityProvider>
-            <NotificationsPanelProvider>
-              <MessagesUnreadProvider>
-              <PlaybackProvider>
-                <AppShell>{children}</AppShell>
-                <Suspense fallback={null}><NotificationPill /></Suspense>
-                <Suspense fallback={null}><UploadDock /></Suspense>
-                <PwaRegister />
-                <Suspense fallback={null}><InstallPrompt /></Suspense>
-              </PlaybackProvider>
-              </MessagesUnreadProvider>
-            </NotificationsPanelProvider>
-          </ActivityProvider>
-        </AuthProvider>
+        <Suspense fallback={<Splash />}>
+          <AuthRoot>{children}</AuthRoot>
+        </Suspense>
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { DiscoverFilter, DiscoverItem } from "@/lib/api/discover";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -15,6 +15,10 @@ const FILTERS: { id: DiscoverFilter; label: string }[] = [
   { id: "for_you", label: "For You" },
   { id: "marketplace", label: "Marketplace" },
 ];
+
+// Survives leaving Discover and coming back: the chosen filter and where the viewer was scrolled to.
+let rememberedFilter: DiscoverFilter = "for_you";
+const scrollPos = new Map<string, number>();
 
 function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: DiscoverFilter) => void }) {
   const [open, setOpen] = useState(false);
@@ -77,9 +81,9 @@ export function DiscoverView() {
   const router = useRouter();
   const { status, user } = useAuth();
   const authed = status === "authed";
-  const [filter, setFilter] = useState<DiscoverFilter>("for_you");
+  const [filter, setFilterState] = useState<DiscoverFilter>(() => rememberedFilter);
   const [viewer, setViewer] = useState<{ items: DiscoverItem[]; index: number } | null>(null);
-  const { view, loading, reload, maybeLoadMore, patchPost, removePost } = useDiscover({
+  const { view, loading, refreshing, reload, maybeLoadMore, patchPost, removePost } = useDiscover({
     enabled: authed,
     userId: user?.id ?? 0,
     filter,
@@ -94,6 +98,24 @@ export function DiscoverView() {
   const hasMore = view?.hasMore ?? false;
   const loadingMore = view?.loadingMore ?? false;
 
+  // Remember where the viewer was, per account + filter.
+  const scrollKey = `${user?.id ?? 0}:${filter}`;
+  useEffect(() => {
+    const onScroll = () => scrollPos.set(scrollKey, window.scrollY);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [scrollKey]);
+
+  // Coming back: jump (before paint) to where they left off.
+  const restoredFor = useRef<string | null>(null);
+  const hasItems = items.length > 0;
+  useLayoutEffect(() => {
+    if (!hasItems || restoredFor.current === scrollKey) return;
+    restoredFor.current = scrollKey;
+    const y = scrollPos.get(scrollKey) ?? 0;
+    if (y > 0) window.scrollTo({ top: y });
+  }, [hasItems, scrollKey]);
+
   // Load the next page well before the fold. Re-observing after each page re-fires if the sentinel is still near.
   const sentinel = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -106,8 +128,13 @@ export function DiscoverView() {
 
   function selectFilter(f: DiscoverFilter) {
     if (f === filter) return;
-    setFilter(f);
-    window.scrollTo({ top: 0 });
+    rememberedFilter = f;
+    setFilterState(f);
+  }
+
+  function refreshNow() {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    reload();
   }
 
   let body: React.ReactNode;
@@ -126,15 +153,13 @@ export function DiscoverView() {
   } else {
     body = (
       <>
-        <div className={`transition-opacity duration-200 ${loading ? "opacity-60" : "opacity-100"}`}>
-          <DiscoverGrid items={items} onOpen={(i) => setViewer({ items, index: i })} />
-        </div>
+        <DiscoverGrid items={items} onOpen={(i) => setViewer({ items, index: i })} />
         <div ref={sentinel} className="h-px" />
         {loadingMore && <MoreSkeleton />}
         {!hasMore && !loading && !view?.fromCache && (
           <div className="px-6 pb-4 pt-7 text-center text-secondary text-muted">
             That&apos;s everything for now.
-            <button type="button" onClick={reload} className="ml-1 font-semibold text-fg underline-offset-2 hover:underline">
+            <button type="button" onClick={refreshNow} className="ml-1 font-semibold text-fg underline-offset-2 hover:underline">
               Refresh
             </button>
           </div>
@@ -146,28 +171,32 @@ export function DiscoverView() {
   return (
     <div className="mx-auto w-full max-w-[935px] px-0 pb-6 md:px-4">
       <header
-        className="sticky top-0 z-30 -mx-0 flex items-center justify-center gap-2 bg-bg/80 px-3 pb-3 pt-2 backdrop-blur-xl md:px-0 md:pb-5 md:pt-6"
+        className="sticky top-0 z-30 -mx-0 bg-bg/80 backdrop-blur-xl"
         style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}
       >
-        <div className="flex h-11 min-w-0 flex-1 items-center rounded-full border border-white/10 bg-white/7 pl-4 pr-1.5 transition-colors focus-within:border-white/25 hover:bg-white/9 md:max-w-[560px]">
-          <Link href="/search" className="flex min-w-0 flex-1 items-center gap-2.5 text-muted">
-            <SearchGlyph className="size-[18px] shrink-0" />
-            <span className="truncate text-body">Search people, posts, listings...</span>
-          </Link>
-          <FilterMenu value={filter} onChange={selectFilter} />
+        <div className="flex items-center justify-center gap-2 px-3 pb-3 md:px-0 md:pb-5 md:pt-6">
+          <div className="flex h-11 min-w-0 flex-1 items-center rounded-full border border-white/10 bg-white/7 pl-4 pr-1.5 transition-colors focus-within:border-white/25 hover:bg-white/9 md:max-w-[560px]">
+            <Link href="/search" className="flex min-w-0 flex-1 items-center gap-2.5 text-muted">
+              <SearchGlyph className="size-[18px] shrink-0" />
+              <span className="truncate text-body">Search people, posts, listings...</span>
+            </Link>
+            <FilterMenu value={filter} onChange={selectFilter} />
+          </div>
+          <button
+            type="button"
+            onClick={refreshNow}
+            aria-label="Refresh"
+            className="grid size-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/7 text-fg transition-colors hover:bg-white/12 active:scale-95"
+          >
+            <RefreshGlyph className={`size-[18px] ${refreshing ? "animate-spin" : ""}`} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={reload}
-          aria-label="Refresh"
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/10 bg-white/7 text-fg transition-colors hover:bg-white/12"
-        >
-          <RefreshGlyph className={`size-[18px] ${loading && view ? "animate-spin" : ""}`} />
-        </button>
+        {/* Silent background reconcile: a hairline, never a spinner over the content. */}
+        <div className={`h-[2px] w-full bg-white/25 transition-opacity duration-300 ${refreshing ? "animate-pulse opacity-100" : "opacity-0"}`} />
       </header>
 
       {view?.notice && (
-        <p className="px-3 pb-2 text-center text-xs font-semibold text-muted">{view.notice}</p>
+        <p className="px-3 pb-2 pt-2 text-center text-xs font-semibold text-muted">{view.notice}</p>
       )}
 
       {body}

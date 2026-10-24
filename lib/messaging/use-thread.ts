@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
 import { ApiError } from "@/lib/api/client";
 import { messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
+import { onCacheClear } from "@/lib/cache/swr";
 import { subscribeBroadcast } from "@/lib/realtime/client";
 import { useInterval } from "./use-interval";
 
@@ -11,6 +12,24 @@ type TState = { id: number; items: Message[]; cursor: string | null; error: stri
 
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const isLocal = (m: Message) => m.status !== undefined;
+
+// Recently opened threads, kept in memory only (chat content is never written to disk), so reopening a chat
+// paints instantly and the fetch below reconciles quietly. Wiped on sign-out / account change.
+const MAX_THREADS = 20;
+const threadCache = new Map<number, TState>();
+onCacheClear(() => threadCache.clear());
+
+function remember(t: TState) {
+  const items = t.items.filter((m) => !isLocal(m));
+  if (items.length === 0) return;
+  threadCache.delete(t.id);
+  threadCache.set(t.id, { ...t, items, error: null, loadingOlder: false });
+  while (threadCache.size > MAX_THREADS) {
+    const oldest = threadCache.keys().next().value;
+    if (oldest === undefined) break;
+    threadCache.delete(oldest);
+  }
+}
 
 // Server window replaces what it covers; older pages already loaded and unconfirmed local sends are kept.
 function mergeLatest(prev: TState | null, id: number, server: Message[], cursor: string | null): TState {
@@ -35,13 +54,21 @@ export function useThread(conversationId: number, myId: number | undefined) {
   const { pulse, live } = useMessages();
   const pulseN = pulse.id === conversationId ? pulse.n : 0;
   const [joined, setJoined] = useState(false);
-  const [state, setState] = useState<TState | null>(null);
-  const s = state && state.id === conversationId ? state : null;
+  const [state, setState] = useState<TState | null>(() => threadCache.get(conversationId) ?? null);
+  const s = state && state.id === conversationId ? state : (threadCache.get(conversationId) ?? null);
+
+  useEffect(() => {
+    if (state) remember(state);
+  }, [state]);
 
   const fetchLatest = useCallback(() => {
     messagingApi
       .messages(conversationId)
-      .then(({ items, nextCursor }) => setState((p) => mergeLatest(p, conversationId, items, nextCursor)))
+      .then(({ items, nextCursor }) =>
+        setState((p) =>
+          mergeLatest(p && p.id === conversationId ? p : (threadCache.get(conversationId) ?? null), conversationId, items, nextCursor),
+        ),
+      )
       .catch((e: unknown) =>
         setState((p) =>
           p && p.id === conversationId

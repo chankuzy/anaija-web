@@ -1,11 +1,10 @@
 "use client";
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { FeedItem, FeedScope } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
-import { resetFollows } from "@/lib/feed/follow-store";
 import { useDocumentFocus } from "@/lib/feed/focus";
 import { usePrefetchWindow } from "@/lib/feed/net";
 import { useFeed } from "@/lib/feed/use-feed";
@@ -16,6 +15,9 @@ import { FeedTopBar } from "./feed-top-bar";
 import { PeopleUnit } from "./people-unit";
 import { ScrollArrows } from "./scroll-arrows";
 import { postHasVideo } from "./post-media";
+
+// Which tab you were on survives leaving the feed and coming back.
+let rememberedScope: FeedScope = "for_you";
 
 // Closes out the current post's dwell time once the caught-up page is what's on screen.
 function LeaveWhenVisible({ children }: { children: ReactNode }) {
@@ -38,27 +40,43 @@ function LeaveWhenVisible({ children }: { children: ReactNode }) {
 export function FeedView() {
   const { status } = useAuth();
   const authed = status === "authed";
-  const [scope, setScope] = useState<FeedScope>("for_you");
+  const [scope, setScopeState] = useState<FeedScope>(() => rememberedScope);
+  const setScope = useCallback((s: FeedScope) => {
+    rememberedScope = s;
+    setScopeState(s);
+  }, []);
   const effScope: FeedScope = authed ? scope : "for_you";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const [storyOpen, setStoryOpen] = useState(false);
 
-  const { data, loading, reload, maybeLoadMore, patchPost, removePost } = useFeed({
+  const {
+    data,
+    hasFresh,
+    gen,
+    storeKey,
+    loading,
+    reload,
+    applyFresh,
+    maybeLoadMore,
+    getPosition,
+    setPosition,
+    patchPost,
+    removePost,
+  } = useFeed({
     enabled: status !== "loading",
     authed,
     scope: effScope,
   });
 
-  // Behavioural events are for signed-in users only; follow state belongs to one account.
+  // Behavioural events are for signed-in users only. (Follow state is wiped by the cache on account change.)
   useEffect(() => {
-    resetFollows();
     feedEvents.setEnabled(authed);
     return () => feedEvents.leave();
   }, [authed]);
 
-  const dataKey = data?.key ?? "";
-  const [activeState, setActiveState] = useState({ key: "", index: 0 });
-  const active = activeState.key === dataKey ? activeState.index : 0;
+  // Active entry: local state while scrolling, the store's remembered position when we (re)mount.
+  const [activeState, setActiveState] = useState({ key: "", gen: -1, index: 0 });
+  const active = activeState.key === storeKey && activeState.gen === gen ? activeState.index : getPosition();
   const scrollerRef = useRef<HTMLDivElement>(null);
   const focused = useDocumentFocus();
   const windowFor = usePrefetchWindow(active);
@@ -89,9 +107,18 @@ export function FeedView() {
   });
   const seenUnits = useRef(new Set<string>());
 
+  // While we jump back to where the viewer left off, ignore stray activations of other cards.
+  const restoreGuard = useRef<number | null>(null);
+
   const onActivate = useCallback(
     (i: number) => {
-      setActiveState({ key: dataKey, index: i });
+      const g = restoreGuard.current;
+      if (g !== null) {
+        if (i !== g) return;
+        restoreGuard.current = null;
+      }
+      setActiveState({ key: storeKey, gen, index: i });
+      setPosition(i);
       maybeLoadMore(i);
       const { entries: es, sessionId } = latest.current;
       const e = es[i];
@@ -111,12 +138,45 @@ export function FeedView() {
         }
       }
     },
-    [dataKey, maybeLoadMore],
+    [storeKey, gen, setPosition, maybeLoadMore],
   );
 
-  useEffect(() => {
-    scrollerRef.current?.scrollTo({ top: 0 });
-  }, [dataKey]);
+  // Back on the feed: jump (before paint) to the post the viewer was on.
+  const restoredFor = useRef<string | null>(null);
+  const hasList = !!data && entries.length > 0;
+  useLayoutEffect(() => {
+    const sc = scrollerRef.current;
+    if (!sc || !hasList || restoredFor.current === storeKey) return;
+    restoredFor.current = storeKey;
+    const idx = Math.min(getPosition(), entries.length - 1);
+    if (idx > 0) {
+      restoreGuard.current = idx;
+      const el = sc.children[idx] as HTMLElement | undefined;
+      if (el) sc.scrollTop = el.offsetTop;
+      window.setTimeout(() => {
+        restoreGuard.current = null;
+      }, 700);
+    } else {
+      sc.scrollTop = 0;
+    }
+  }, [hasList, storeKey, entries.length, getPosition]);
+
+  // The list was replaced (refresh / "New posts"): start from the top.
+  const seenGen = useRef<{ key: string; gen: number } | null>(null);
+  useLayoutEffect(() => {
+    const prev = seenGen.current;
+    seenGen.current = { key: storeKey, gen };
+    if (prev && prev.key === storeKey && prev.gen !== gen) scrollerRef.current?.scrollTo({ top: 0 });
+  }, [gen, storeKey]);
+
+  // Auth still resolving: show the skeleton only. No top bar, so a guest "Sign in" can never flash.
+  if (status === "loading") {
+    return (
+      <div className="relative h-dvh">
+        <FeedSkeleton />
+      </div>
+    );
+  }
 
   const topBar = <FeedTopBar authed={authed} scope={effScope} onScope={setScope} />;
 
@@ -191,10 +251,25 @@ export function FeedView() {
       </div>
       {topBar}
       <ScrollArrows scroller={scrollerRef} index={active} count={entries.length} />
-      {data.notice && (
+      {hasFresh ? (
         <div className="pointer-events-none absolute inset-x-0 top-[76px] z-30 flex justify-center">
-          <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">{data.notice}</span>
+          <button
+            type="button"
+            onClick={applyFresh}
+            className="sv-rise pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-[0_8px_28px_rgba(0,0,0,0.45)] transition active:scale-95"
+          >
+            <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 19V5M5 12l7-7 7 7" />
+            </svg>
+            New posts
+          </button>
         </div>
+      ) : (
+        data.notice && (
+          <div className="pointer-events-none absolute inset-x-0 top-[76px] z-30 flex justify-center">
+            <span className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white">{data.notice}</span>
+          </div>
+        )
       )}
     </div>
   );
