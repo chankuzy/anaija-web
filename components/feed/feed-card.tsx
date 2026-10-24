@@ -236,7 +236,7 @@ export function FeedCard({
           {burst && (
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
               <div className="heart-burst" onAnimationEnd={() => setBurst(false)}>
-                <Icon name="heart" filled className="icon-shadow size-24 text-danger" />
+                <Icon name="heart" filled className="icon-shadow size-24 text-brand" />
               </div>
             </div>
           )}

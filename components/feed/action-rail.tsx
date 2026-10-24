@@ -30,7 +30,7 @@ function RailButton({
         onClick={onClick}
         className="flex flex-col items-center gap-1 text-white transition-transform active:scale-90"
       >
-        <span className="grid size-12 place-items-center rounded-full bg-white/12 backdrop-blur-sm transition-colors hover:bg-white/20">
+        <span className="grid size-12 place-items-center rounded-full bg-surface-interactive transition-colors hover:bg-surface-elevated">
           {children}
         </span>
         {label ? <span className="text-supporting font-semibold text-white/80">{label}</span> : null}
@@ -85,7 +85,7 @@ export function ActionRail({
             type="button"
             aria-label={muted ? "Unmute" : "Mute"}
             onClick={toggleMute}
-            className="mb-1 grid size-12 place-items-center rounded-full bg-white/12 text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+            className="mb-1 grid size-12 place-items-center rounded-full bg-surface-interactive text-white transition-colors hover:bg-surface-elevated"
           >
             <Icon name={muted ? "volumeOff" : "volumeOn"} className="size-6" />
           </button>
@@ -94,20 +94,20 @@ export function ActionRail({
             type="button"
             aria-label={muted ? "Unmute" : "Mute"}
             onClick={toggleMute}
-            className="mb-1 grid size-[38px] place-items-center rounded-full border border-white/30 bg-black/45 text-white shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
+            className="mb-1 grid size-[38px] place-items-center rounded-full bg-black/45 text-white"
           >
             <Icon name={muted ? "volumeOff" : "volumeOn"} className="size-[19px]" />
           </button>
         ))}
       <RailButton aria="Like" side={side} pressed={post.is_liked} label={formatCount(post.likes_count)} onClick={onLike}>
-        <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-danger" : "text-white"}`} />
+        <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-brand" : "text-white"}`} />
       </RailButton>
       <RailButton aria="Comments" side={side} label={formatCount(post.comments_count)} onClick={onComment}>
         <Icon name="message" filled className={big} />
       </RailButton>
       {post.type === "post" && (
         <RailButton aria="Repost" side={side} pressed={post.is_reposted} label={formatCount(post.reposts_count)} onClick={onRepost}>
-          <Icon name="repeat" className={`${mid} ${post.is_reposted ? "text-accent" : "text-white"}`} />
+          <Icon name="repeat" className={`${mid} ${post.is_reposted ? "text-brand" : "text-white"}`} />
         </RailButton>
       )}
       <RailButton
@@ -117,7 +117,7 @@ export function ActionRail({
         label={formatCount(post.bookmarks_count)}
         onClick={onBookmark}
       >
-        <Icon name="bookmark" filled className={`${big} ${post.is_bookmarked ? "text-warm" : "text-white"}`} />
+        <Icon name="bookmark" filled className={`${big} ${post.is_bookmarked ? "text-brand" : "text-white"}`} />
       </RailButton>
       <RailButton aria="Share" side={side} label={formatCount(post.shares_count)} onClick={onShare}>
         <Icon name="shareArrow" filled className={big} />

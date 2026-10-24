@@ -19,8 +19,8 @@ export function FollowPill({
       aria-pressed={following}
       className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-[14px] font-bold transition-[background,transform,box-shadow] duration-200 active:scale-95 ${
         following
-          ? "border border-white/30 bg-white/12 text-white backdrop-blur-md"
-          : "bg-brand text-brand-fg shadow-[0_0_18px_var(--color-brand-glow)] hover:bg-brand-hover"
+          ? "bg-black/50 text-white"
+          : "bg-brand text-brand-fg hover:bg-brand-hover"
       } ${className}`}
     >
       <Icon name={following ? "check" : "plus"} weight="strong" className="size-4" />

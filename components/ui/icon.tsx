@@ -11,8 +11,8 @@ export type { IconName };
 // paths (no path data is edited). "regular" is the untouched official glyph.
 const WEIGHT = {
   regular: "",
-  medium: "[stroke:currentColor] [stroke-width:0.45px] [stroke-linejoin:round]",
-  strong: "[stroke:currentColor] [stroke-width:0.8px] [stroke-linejoin:round]",
+  medium: "[stroke:currentColor] [stroke-width:0.6px] [stroke-linejoin:round]",
+  strong: "[stroke:currentColor] [stroke-width:1px] [stroke-linejoin:round]",
 } as const;
 
 export type IconWeight = keyof typeof WEIGHT;

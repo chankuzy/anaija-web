@@ -163,7 +163,7 @@ export function PostInfo({
         <StoryRingAvatar url={a?.avatar} name={a?.name ?? a?.username} size={38} ring={ring} />
       </ProfileHoverCard>
       <span className="min-w-0">
-        <span className="text-shadow block truncate text-[15px] font-bold text-white">{a?.username ?? ""}</span>
+        <span className="text-shadow block truncate text-[15px] font-extrabold text-white">{a?.username ?? ""}</span>
         <span className="block text-supporting text-white/70">{timeAgo(post.created_at)}</span>
       </span>
     </>
@@ -174,19 +174,19 @@ export function PostInfo({
       {d && !expanded && (
         <Link
           href={`/l/${post.id}`}
-          className="mb-2 inline-flex items-center gap-2 rounded-[14px] border border-white/20 bg-white/12 py-2.5 pl-3.5 pr-2.5 backdrop-blur-[18px]"
+          className="mb-2 inline-flex items-center gap-2 rounded-2xl bg-black/50 py-2.5 pl-3.5 pr-2.5 transition-transform active:scale-[0.97]"
         >
           <span className="text-white">
             <span className="text-secondary font-bold text-white/75">₦</span>
             <span className="text-lg font-extrabold tracking-tight">{d.formatted_price}</span>
           </span>
           {d.price_type === "negotiable" && d.status !== "sold" && (
-            <span className="rounded-full bg-warm/12 px-1.5 py-0.5 text-micro font-bold text-warm">Nego</span>
+            <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-micro font-bold text-brand">Nego</span>
           )}
           {(d.status === "sold" || d.status === "reserved") && (
             <span className="text-xs font-bold text-white/70">{d.status === "sold" ? "Sold" : "Reserved"}</span>
           )}
-          <Icon name="chevronRight" className="size-5 text-white/70" />
+          <Icon name="chevronRight" className="size-5 text-brand" />
         </Link>
       )}
 

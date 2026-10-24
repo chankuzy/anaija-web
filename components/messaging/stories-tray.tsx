@@ -19,7 +19,7 @@ function Label({
   big?: boolean;
 }) {
   const tone = onDark ? `text-shadow ${dim ? "text-white/70" : "text-white"}` : dim ? "text-muted" : "text-fg";
-  return <span className={`w-full truncate font-medium ${big ? "text-secondary" : "text-supporting"} ${tone}`}>{children}</span>;
+  return <span className={`w-full truncate font-bold ${big ? "text-secondary" : "text-supporting"} ${tone}`}>{children}</span>;
 }
 
 // Port of InboxStoriesRow: "Your story" first, then people with unwatched stories, then watched ones.
@@ -71,7 +71,7 @@ export function StoriesTray({
           <Link
             href="/create/new?mode=story"
             aria-label="Add to your story"
-            className="absolute grid size-6 place-items-center rounded-full border-2 border-bg bg-white text-black transition-transform hover:scale-110 active:scale-95"
+            className="absolute grid size-6 place-items-center rounded-full border-2 border-bg bg-brand text-brand-fg transition-transform hover:scale-110 active:scale-95"
             style={{ top: outer - 24, right: 3 }}
           >
             <Icon name="plus" weight="strong" className="size-3.5" />

@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0a0a0a;
-  --color-surface: #121214;
-  --color-card: #18181c;
-  --color-card-alt: #141416;
-  --color-card-elevated: #1e1e23;
-  --color-line: #26262c;
+  --color-bg: #09090b;
+  --color-surface: #19191d;
+  --color-card: #19191d;
+  --color-card-alt: #19191d;
+  --color-card-elevated: #26262b;
+  --color-line: #26262b;
 
   --color-accent: #4cc38a;
   --color-warm: #ffb340;
   --color-info: #4c8dff;
 
-  --color-fg: #ededed;
-  --color-muted: #7a7a85;
+  --color-fg: #f4f4f6;
+  --color-muted: #85858f;
   --color-success: #00e676;
   --color-danger: #ff5c5c;
 
@@ -76,8 +76,8 @@ body {
 
 /* AppGlass: floating/modal material only (sheets, popovers). */
 .glass {
-  background: rgba(24, 24, 26, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(38, 38, 43, 0.9);
+  /* borderless: separation comes from the tonal surface */
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
@@ -374,9 +374,33 @@ body {
 
 /* ───── brand accent: warm amber (Follow button, highlights) ───── */
 @theme {
-  --color-brand: #ffbe0b;
-  --color-brand-hover: #ffd23f;
-  --color-brand-soft: #ffdf6b;
-  --color-brand-fg: #1a1300;
-  --color-brand-glow: rgba(255, 190, 11, 0.45);
+  --color-brand: #ffd84d;
+  --color-brand-hover: #ffe27a;
+  --color-brand-soft: #ffe9a0;
+  --color-brand-fg: #17130a;
+  --color-brand-glow: rgba(255, 216, 77, 0.3);
+}
+
+/* ───── Anaija design tokens (canonical). Legacy names above alias the same values. ───── */
+@theme {
+  --color-brand-primary: #ffd84d;
+  --color-brand-accent: #ffca28;
+  --color-brand-text-on-yellow: #17130a;
+  --color-surface-canvas: #09090b;
+  --color-surface-subtle: #19191d;
+  --color-surface-interactive: #26262b;
+  --color-surface-elevated: #34343a;
+  --color-text-primary: #f4f4f6;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #85858f;
+  --radius-pill: 9999px;
+  --radius-control: 16px;
+  --radius-bubble: 22px;
+  --radius-bubble-edge: 8px;
+}
+
+/* ───── Messaging: sent bubble. Experimental warm gradient; swap for solid by replacing with `background: #ffd84d`. ───── */
+.bubble-sent {
+  background: linear-gradient(135deg, #ffd84d 0%, #ffca28 58%, #ffad32 100%);
+  color: #17130a;
 }

@@ -38,7 +38,7 @@ export function FeedTopBar({
               type="button"
               onClick={() => setOpen((o) => !o)}
               aria-expanded={open}
-              className="text-shadow flex w-max items-center gap-1.5 whitespace-nowrap rounded-full bg-black/35 py-2 pl-4 pr-3 text-[15px] font-bold text-white backdrop-blur-md xl:absolute xl:right-full xl:top-0 xl:mr-9"
+              className="text-shadow flex w-max items-center gap-1.5 whitespace-nowrap rounded-full bg-black/45 py-2 pl-4 pr-3 text-[15px] font-extrabold text-white xl:absolute xl:right-full xl:top-0 xl:mr-9"
             >
               {current.label}
               <Icon name="chevronDown" className="size-4" />
@@ -52,10 +52,10 @@ export function FeedTopBar({
               <Link
                 href="/notifications"
                 aria-label={`${unseen} unread notifications`}
-                className="text-shadow flex w-max items-center gap-2 whitespace-nowrap rounded-full bg-black/35 py-1.5 pl-3 pr-1.5 text-white backdrop-blur-md transition active:scale-95"
+                className="text-shadow flex w-max items-center gap-2 whitespace-nowrap rounded-full bg-black/45 py-1.5 pl-3 pr-1.5 text-white transition active:scale-95"
               >
                 <Icon name="bell" filled className="size-[22px]" />
-                <span className="grid h-[24px] min-w-[24px] place-items-center rounded-full bg-danger px-1.5 text-[12px] font-bold leading-none text-white">
+                <span className="grid h-[24px] min-w-[24px] place-items-center rounded-full bg-brand px-1.5 text-[12px] font-extrabold leading-none text-brand-fg">
                   {unseen > 99 ? "99+" : unseen}
                 </span>
               </Link>
@@ -65,7 +65,7 @@ export function FeedTopBar({
               </Link>
             )
           ) : (
-            <Link href="/login" className="rounded-full bg-white px-[18px] py-[9px] text-body font-bold text-black">
+            <Link href="/login" className="rounded-full bg-brand px-[18px] py-[9px] text-body font-extrabold text-brand-fg">
               Sign in
             </Link>
           )}
@@ -88,7 +88,7 @@ export function FeedTopBar({
                       <span className="block text-[15px] font-semibold text-white">{o.label}</span>
                       <span className="block text-xs text-white/55">{o.sub}</span>
                     </span>
-                    {o.value === scope && <Icon name="check" className="size-4 text-accent" />}
+                    {o.value === scope && <Icon name="check" className="size-4 text-brand" />}
                   </button>
                 ))}
               </div>

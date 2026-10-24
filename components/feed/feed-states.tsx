@@ -115,8 +115,8 @@ export function CaughtUp({
           {list.map((a, i) => {
             const cls =
               i === 0
-                ? "h-12 w-full rounded-full bg-white text-[15px] font-bold text-black disabled:opacity-60 inline-flex items-center justify-center"
-                : "h-12 w-full rounded-full border border-white/40 text-[15px] font-semibold text-white inline-flex items-center justify-center";
+                ? "h-12 w-full rounded-full bg-brand text-[15px] font-extrabold text-brand-fg disabled:opacity-60 inline-flex items-center justify-center"
+                : "h-12 w-full rounded-full bg-white/12 text-[15px] font-bold text-white inline-flex items-center justify-center";
             return a === "refresh" ? (
               <button key={a} type="button" disabled={busy} onClick={onRefresh} className={cls}>
                 {busy ? "Refreshing…" : ACTION_LABELS[a]}

@@ -18,7 +18,7 @@ function clock(sec: number) {
 
 function Unavailable() {
   return (
-    <div className="mb-1 flex w-[190px] flex-col items-center gap-2 rounded-[19px] border border-line bg-card px-4 py-7 text-center">
+    <div className="mb-1 flex w-[190px] flex-col items-center gap-2 rounded-[19px] bg-card px-4 py-7 text-center">
       <Icon name="eyeClosed" className="size-5 text-white/60" />
       <p className="text-secondary font-semibold text-fg">Post unavailable</p>
       <p className="text-supporting text-muted">It may have been deleted or made private.</p>
@@ -37,7 +37,7 @@ function Card({ post }: { post: SharedPost }) {
 
   return (
     <div
-      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.5)] ring-1 ring-white/10 transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
+      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
         video ? "aspect-[9/15]" : "aspect-[4/5]"
       }`}
     >
@@ -96,7 +96,7 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Top-left: price on listings */}
       {post.price && (
-        <span className="pointer-events-none absolute left-2.5 top-2.5 z-[3] rounded-full bg-white px-2 py-[3px] text-[11px] font-extrabold text-black">
+        <span className="pointer-events-none absolute left-2.5 top-2.5 z-[3] rounded-full bg-brand px-2 py-[3px] text-[11px] font-extrabold text-brand-fg">
           ₦{post.price}
         </span>
       )}

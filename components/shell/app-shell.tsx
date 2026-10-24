@@ -34,14 +34,14 @@ const SIDE = NAV.filter((n) => n.mobile !== "create");
 const CREATE = NAV.find((n) => n.mobile === "create")!;
 
 const ASIDE_BASE =
-  "group/side sticky top-0 z-[2] flex h-dvh w-[76px] flex-col justify-between overflow-hidden border-r border-white/8 px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out";
+  "group/side sticky top-0 z-[2] flex h-dvh w-[76px] flex-col justify-between overflow-hidden px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out";
 // Expand on hover or keyboard focus only (focus-visible), so a mouse click never leaves the rail stuck open.
 const ASIDE_EXPAND =
   "hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_48px_rgba(0,0,0,0.55)] hover:backdrop-blur-xl has-[:focus-visible]:w-[256px] has-[:focus-visible]:bg-bg/92 has-[:focus-visible]:shadow-[12px_0_48px_rgba(0,0,0,0.55)] has-[:focus-visible]:backdrop-blur-xl";
 const LABEL_BASE = "whitespace-nowrap opacity-0 transition-opacity duration-150";
 const LABEL_SHOW = "group-hover/side:opacity-100 group-has-[:focus-visible]/side:opacity-100";
 const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
-const ACTIVE = "bg-white/10 font-bold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]";
+const ACTIVE = "bg-white/8 font-bold text-brand";
 const IDLE = "font-medium text-white/60 hover:bg-white/6 hover:text-white";
 
 const MD = "(min-width: 768px)";
@@ -121,7 +121,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               <div
                 role="dialog"
                 aria-label="Notifications"
-                className="notif-panel absolute left-full top-0 h-dvh w-[400px] max-w-[calc(100vw-76px)] overflow-hidden rounded-r-[28px] border-r border-white/8 bg-bg shadow-[12px_0_48px_rgba(0,0,0,0.55)]"
+                className="notif-panel absolute left-full top-0 h-dvh w-[400px] max-w-[calc(100vw-76px)] overflow-hidden rounded-r-[28px] bg-bg shadow-[12px_0_48px_rgba(0,0,0,0.55)]"
               >
                 <NotificationsView onClose={closePanel} />
               </div>
@@ -197,7 +197,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
             <Link
               href={hrefFor(CREATE)}
               title="Create"
-              className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black shadow-[0_8px_28px_rgba(255,255,255,0.14)] transition hover:bg-white/92 hover:shadow-[0_10px_34px_rgba(255,255,255,0.24)] active:scale-[0.98]"
+              className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-brand px-3 text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.98]"
             >
               <Icon name="plus" weight="strong" className="size-7 shrink-0" />
               <span className={label}>Create</span>
@@ -206,7 +206,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
 
           <div className="flex flex-col gap-1.5">
             {status === "authed" && (
-              <div className="flex flex-col gap-1.5 border-t border-white/8 pt-4">
+              <div className="flex flex-col gap-1.5 pt-4">
                 <Link href="/me" title="Profile" className="flex h-[52px] items-center gap-3 rounded-full px-[7px] transition-colors hover:bg-white/6">
                   <Avatar url={avatar} name={user?.name ?? user?.username} size={38} />
                   <span className={`min-w-0 ${label}`}>
@@ -225,7 +225,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               </div>
             )}
             {status === "guest" && (
-              <Link href={`/login?next=${encodeURIComponent(pathname)}`} title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-white px-3 text-[15px] font-bold text-black">
+              <Link href={`/login?next=${encodeURIComponent(pathname)}`} title="Sign in" className="flex h-12 items-center gap-2.5 rounded-full bg-brand px-3 text-[15px] font-extrabold text-brand-fg">
                 <Icon name="user" className="size-7 shrink-0" />
                 <span className={label}>Sign in</span>
               </Link>
@@ -244,14 +244,14 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
 
       {/* Mobile bottom tabs (glass, per _BottomNav) */}
       <nav
-        className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-[rgba(10,10,10,0.72)] backdrop-blur-[24px] md:hidden`}
+        className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-[rgba(9,9,11,0.9)] md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {NAV.filter((n) => n.mobile).map((n) =>
           n.mobile === "create" ? (
             <Link key={n.href} href={hrefFor(n)} aria-label="Create" className="flex flex-1 items-center justify-center">
-              <span className="grid h-[30px] w-11 place-items-center rounded-[10px] bg-white text-black">
-                <Icon name="plus" className="size-[22px]" />
+              <span className="grid h-[32px] w-12 place-items-center rounded-xl bg-brand text-brand-fg transition-transform active:scale-95">
+                <Icon name="plus" weight="strong" className="size-[22px]" />
               </span>
             </Link>
           ) : (
@@ -259,7 +259,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               key={n.href}
               href={hrefFor(n)}
               className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-micro ${
-                isActive(n.href) ? "font-bold text-white" : "font-medium text-white/60"
+                isActive(n.href) ? "font-bold text-brand" : "font-bold text-white/60"
               }`}
             >
               <span className="relative inline-flex">

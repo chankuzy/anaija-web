@@ -67,7 +67,7 @@ function Media({ m }: { m: Message }) {
   if (m.type === "video") return <video src={m.media_url} controls preload="metadata" className="mb-1 max-h-80 max-w-full rounded-2xl" />;
   if (m.type === "audio") return <audio src={m.media_url} controls preload="none" className="mb-1 max-w-full" />;
   return (
-    <a href={m.media_url} target="_blank" rel="noreferrer" className="mb-1 inline-flex items-center gap-2 rounded-2xl border border-line bg-card px-4 py-3 text-body text-fg hover:bg-card-alt">
+    <a href={m.media_url} target="_blank" rel="noreferrer" className="mb-1 inline-flex items-center gap-2 rounded-2xl bg-card-elevated px-4 py-3 text-body text-fg hover:bg-surface-elevated">
       <Icon name="paperclip" className="size-5" />
       Attachment
     </a>
@@ -137,8 +137,8 @@ function Bubble({
         {showText && (
           <span
             onClick={m.status === "failed" ? onRetry : undefined}
-            className={`whitespace-pre-wrap break-words rounded-[22px] px-4 py-2.5 text-[14.5px] font-medium leading-[1.42] ${
-              mine ? "bg-white text-black" : "bg-card-elevated text-fg"
+            className={`whitespace-pre-wrap break-words rounded-[22px] ${lastInBlock ? (mine ? "rounded-br-[8px]" : "rounded-bl-[8px]") : ""} px-4 py-2.5 text-[14.5px] font-medium leading-[1.42] ${
+              mine ? "bubble-sent" : "bg-card-elevated text-fg"
             } ${m.is_deleted ? "italic opacity-60" : ""} ${m.status ? "opacity-80" : ""} ${m.status === "failed" ? "cursor-pointer" : ""}`}
           >
             {text}
@@ -153,7 +153,7 @@ function Bubble({
                   key={emoji}
                   type="button"
                   onClick={() => onReact(emoji)}
-                  className={`flex items-center gap-1 rounded-xl border px-2 py-[3px] text-[13px] ${own ? "border-white/55 bg-white/16" : "border-line bg-white/7"}`}
+                  className={`flex items-center gap-1 rounded-xl px-2 py-[3px] text-[13px] ${own ? "bg-brand/25" : "bg-card-elevated"}`}
                 >
                   {emoji}
                   {ids.length > 1 && <span className="text-[11.5px] font-bold text-fg">{ids.length}</span>}
@@ -182,7 +182,7 @@ export function EmptyThread() {
   return (
     <div className="grid h-full place-items-center px-6 text-center">
       <div>
-        <span className="mx-auto grid size-24 place-items-center rounded-full border-2 border-white/80 text-white">
+        <span className="mx-auto grid size-24 place-items-center rounded-full bg-surface-interactive text-brand">
           <Icon name="message" className="size-11" />
         </span>
         <p className="mt-5 text-xl font-semibold text-fg">Your messages</p>
@@ -280,7 +280,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   return (
     <div className="relative flex h-full min-h-0">
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-      <header className="flex items-center gap-3 border-b border-white/8 px-3 py-2.5">
+      <header className="flex items-center gap-3 px-3 py-2.5">
         <Link href="/messages" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8 md:hidden">
           <Icon name="back" className="size-6" />
         </Link>
@@ -305,7 +305,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           aria-label={xl && details ? "Hide details" : "Show details"}
           aria-pressed={xl ? details : sheet}
           onClick={() => (xl ? setDetails((d) => !d) : setSheet(true))}
-          className={`ml-auto grid size-10 place-items-center rounded-full transition-colors hover:bg-white/8 ${xl && details ? "text-fg" : "text-white/60"}`}
+          className={`ml-auto grid size-10 place-items-center rounded-full transition-colors hover:bg-white/8 ${xl && details ? "text-brand" : "text-white/60"}`}
         >
           <Icon name="infoCircle" filled={xl && details} className="size-6" />
         </button>
@@ -321,7 +321,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                 anchor.current = scroller.current?.scrollHeight ?? null;
                 t.loadOlder();
               }}
-              className="h-9 rounded-full border border-white/14 px-4 text-secondary font-semibold text-fg hover:bg-white/6 disabled:opacity-50"
+              className="h-9 rounded-full bg-card-elevated px-4 text-secondary font-bold text-fg hover:bg-surface-elevated disabled:opacity-50"
             >
               {t.loadingOlder ? <span role="status" aria-label="Loading earlier messages" className="sk-block inline-block h-3 w-28 rounded-full align-middle" /> : "Load earlier messages"}
             </button>
@@ -383,14 +383,14 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
         })}
 
         {conv && isPending(conv) && (
-          <div className="mx-auto my-3 max-w-sm rounded-[20px] border border-line bg-surface p-4">
+          <div className="mx-auto my-3 max-w-sm rounded-[20px] bg-surface p-4">
             <p className="text-body font-bold text-fg">This is a message request.</p>
             <p className="mt-1 text-secondary text-muted">You can accept the conversation or decline it.</p>
             <div className="mt-3 flex gap-2">
-              <button type="button" disabled={responding} onClick={() => respond("accept")} className="h-10 flex-1 rounded-full bg-white text-secondary font-bold text-black disabled:opacity-50">
+              <button type="button" disabled={responding} onClick={() => respond("accept")} className="h-10 flex-1 rounded-full bg-brand text-secondary font-extrabold text-brand-fg disabled:opacity-50">
                 Accept
               </button>
-              <button type="button" disabled={responding} onClick={() => respond("decline")} className="h-10 flex-1 rounded-full border border-line text-secondary font-semibold text-fg hover:bg-card disabled:opacity-50">
+              <button type="button" disabled={responding} onClick={() => respond("decline")} className="h-10 flex-1 rounded-full bg-card-elevated text-secondary font-bold text-fg hover:bg-surface-elevated disabled:opacity-50">
                 Decline
               </button>
             </div>
@@ -407,7 +407,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
       </div>
 
       <div className="px-3 pb-3 pt-2" style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}>
-        <div className="glass flex items-end gap-1 rounded-[26px] p-1.5 pl-4">
+        <div className="flex items-end gap-1 rounded-[26px] bg-surface-subtle p-1.5 pl-4">
           <textarea
             ref={area}
             value={text}
@@ -431,7 +431,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             aria-label="Send"
             disabled={!text.trim()}
             onClick={() => void submit()}
-            className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-black transition active:scale-95 disabled:bg-white/12 disabled:text-muted/50"
+            className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition active:scale-95 disabled:bg-surface-interactive disabled:text-muted/50"
           >
             <Icon name="send" filled className="size-[18px]" />
           </button>

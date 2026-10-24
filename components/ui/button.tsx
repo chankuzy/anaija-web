@@ -5,10 +5,10 @@ type Variant = "primary" | "outline" | "ghost";
 
 export function buttonClass(variant: Variant = "primary", extra = "") {
   const base =
-    "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-semibold transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex h-12 items-center justify-center gap-2 rounded-full px-6 text-[15px] font-bold transition-[background-color,transform] duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50";
   const styles: Record<Variant, string> = {
-    primary: "bg-white text-black hover:bg-white/90",
-    outline: "border border-line text-fg hover:bg-card",
+    primary: "bg-brand text-brand-fg hover:bg-brand-hover",
+    outline: "bg-card-elevated text-fg hover:bg-surface-elevated",
     ghost: "text-fg hover:bg-card",
   };
   return `${base} ${styles[variant]} ${extra}`.trim();

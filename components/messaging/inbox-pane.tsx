@@ -48,8 +48,8 @@ function Row({ c, active, ring }: { c: Conversation; active: boolean; ring: bool
           <span className={`min-w-0 flex-1 truncate text-secondary ${unread ? "font-medium text-white/90" : "text-muted"}`}>
             {previewOf(c) || "No messages yet"}
           </span>
-          {isPending(c) && <span className="shrink-0 text-supporting font-semibold text-warm">Request</span>}
-          {unread && <span className="size-2 shrink-0 rounded-full bg-warm" aria-label="Unread" />}
+          {isPending(c) && <span className="shrink-0 text-supporting font-bold text-brand">Request</span>}
+          {unread && <span className="size-2 shrink-0 rounded-full bg-brand" aria-label="Unread" />}
         </span>
       </span>
     </Link>
@@ -115,8 +115,8 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="px-4 pb-3 pt-5">
-        <h1 className="text-[22px] font-bold tracking-tight text-fg">Messages</h1>
-        <label className="mt-3 flex h-11 items-center gap-2.5 rounded-full border border-white/10 bg-white/7 px-4 text-muted transition-colors focus-within:border-white/25">
+        <h1 className="text-[22px] font-extrabold tracking-tight text-fg">Messages</h1>
+        <label className="mt-3 flex h-11 items-center gap-2.5 rounded-full bg-surface-subtle px-4 text-muted transition-colors focus-within:bg-surface-interactive">
           <Icon name="search" className="size-[18px] shrink-0" />
           <input
             value={query}
@@ -145,12 +145,12 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
                   key={f.id}
                   type="button"
                   onClick={() => setFilter(f.id)}
-                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-4 text-secondary transition-colors ${
-                    on ? "border-white/40 bg-white/14 font-bold text-white" : "border-white/14 font-medium text-white/70 hover:bg-white/6"
+                  className={`flex h-9 shrink-0 items-center gap-1.5 rounded-full px-4 text-secondary transition-colors ${
+                    on ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-white/70 hover:bg-surface-elevated"
                   }`}
                 >
                   {f.label}
-                  {n > 0 && <span className="text-supporting font-bold text-warm">{n}</span>}
+                  {n > 0 && <span className={`text-supporting font-extrabold ${on ? "" : "text-brand"}`}>{n}</span>}
                 </button>
               );
             })}
@@ -163,7 +163,7 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
           <div className="px-6 py-16 text-center">
             <p className="text-[15px] font-bold text-fg">Couldn&apos;t load messages</p>
             <p className="mt-1 text-secondary text-muted">{inboxError}</p>
-            <button type="button" onClick={reloadInbox} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-bold text-black">
+            <button type="button" onClick={reloadInbox} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
               Try again
             </button>
           </div>
@@ -173,14 +173,14 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
           <button
             type="button"
             onClick={() => setFilter("requests")}
-            className="flex w-full items-center gap-3 border-b border-white/6 px-4 py-3 text-left transition-colors hover:bg-white/5"
+            className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/5"
           >
-            <span className="grid size-10 place-items-center rounded-full bg-warm/15 text-warm">
+            <span className="grid size-10 place-items-center rounded-full bg-brand/15 text-brand">
               <Icon name="user" filled className="size-5" />
             </span>
             <span className="flex-1">
               <span className="block text-[15px] font-bold text-fg">Message requests</span>
-              <span className="block text-secondary font-semibold text-warm">
+              <span className="block text-secondary font-bold text-brand">
                 {counts.requests === 1 ? "1 new request" : `${counts.requests} new requests`}
               </span>
             </span>
