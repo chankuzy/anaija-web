@@ -4,7 +4,7 @@
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "@/components/ui/icon";
 import {
   convAvatar,
@@ -24,6 +24,20 @@ import { SharedPostCard } from "./shared-post-card";
 
 const QUICK = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const GAP_MS = 15 * 60 * 1000;
+
+// The docked details column only fits on wide screens; below that, details open full-screen over the thread.
+const XL = "(min-width: 1280px)";
+function useXl() {
+  return useSyncExternalStore(
+    (cb) => {
+      const m = window.matchMedia(XL);
+      m.addEventListener("change", cb);
+      return () => m.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(XL).matches,
+    () => true,
+  );
+}
 
 const dayKey = (iso: string) => {
   const d = new Date(iso);
@@ -47,14 +61,6 @@ function dayLabel(iso: string) {
   return `${date}, ${time}`;
 }
 
-function SendGlyph() {
-  return (
-    <svg viewBox="0 0 24 24" className="size-[18px]" fill="currentColor" aria-hidden="true">
-      <path d="M3.4 20.4 21 12 3.4 3.6l-.01 6.5L15 12 3.39 13.9z" />
-    </svg>
-  );
-}
-
 function Media({ m }: { m: Message }) {
   if (m.is_deleted || !m.media_url) return null;
   if (m.type === "image") return <img src={m.media_url} alt="" loading="lazy" decoding="async" className="mb-1 max-h-80 max-w-full rounded-2xl object-cover" />;
@@ -62,7 +68,7 @@ function Media({ m }: { m: Message }) {
   if (m.type === "audio") return <audio src={m.media_url} controls preload="none" className="mb-1 max-w-full" />;
   return (
     <a href={m.media_url} target="_blank" rel="noreferrer" className="mb-1 inline-flex items-center gap-2 rounded-2xl border border-line bg-card px-4 py-3 text-body text-fg hover:bg-card-alt">
-      <Icon name="copy" className="size-5" />
+      <Icon name="paperclip" className="size-5" />
       Attachment
     </a>
   );
@@ -123,7 +129,7 @@ function Bubble({
         )}
         {m.reply_to && (
           <span className="mb-1 max-w-full truncate rounded-xl bg-white/6 px-3 py-1.5 text-supporting text-muted">
-            ↪ {m.reply_to.body ?? "Message"}
+            <Icon name="reply" className="mr-1 inline size-3.5 align-[-2px]" />{m.reply_to.body ?? "Message"}
           </span>
         )}
         {m.shared_post && <SharedPostCard post={m.shared_post} />}
@@ -198,6 +204,8 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const [picker, setPicker] = useState<number | null>(null);
   const [responding, setResponding] = useState(false);
   const [details, setDetails] = useState(true);
+  const [sheet, setSheet] = useState(false);
+  const xl = useXl();
   const scroller = useRef<HTMLDivElement>(null);
   const area = useRef<HTMLTextAreaElement>(null);
   const stick = useRef(true);
@@ -270,16 +278,18 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const username = conv?.other_user?.username;
 
   return (
-    <div className="flex h-full min-h-0">
+    <div className="relative flex h-full min-h-0">
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
       <header className="flex items-center gap-3 border-b border-white/8 px-3 py-2.5">
         <Link href="/messages" aria-label="Back" className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8 md:hidden">
-          <Icon name="chevronRight" className="size-6 rotate-180" />
+          <Icon name="back" className="size-6" />
         </Link>
         {conv ? (
           <>
-            <RingAvatar url={convAvatar(conv)} name={name} size={36} ring={ringFor(conv.other_user?.id)} />
-            <div className="min-w-0">
+            <span className="shrink-0 cursor-pointer" onClick={() => !xl && setSheet(true)}>
+              <RingAvatar url={convAvatar(conv)} name={name} size={36} ring={ringFor(conv.other_user?.id)} />
+            </span>
+            <div className={`min-w-0 ${xl ? "" : "cursor-pointer"}`} onClick={() => !xl && setSheet(true)}>
               <p className="truncate text-[15px] font-bold text-fg">{name}</p>
               {username && <p className="truncate text-supporting text-muted">@{username}</p>}
             </div>
@@ -292,12 +302,12 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
         )}
         <button
           type="button"
-          aria-label={details ? "Hide details" : "Show details"}
-          aria-pressed={details}
-          onClick={() => setDetails((d) => !d)}
-          className={`ml-auto hidden size-10 place-items-center rounded-full transition-colors hover:bg-white/8 xl:grid ${details ? "text-fg" : "text-white/60"}`}
+          aria-label={xl && details ? "Hide details" : "Show details"}
+          aria-pressed={xl ? details : sheet}
+          onClick={() => (xl ? setDetails((d) => !d) : setSheet(true))}
+          className={`ml-auto grid size-10 place-items-center rounded-full transition-colors hover:bg-white/8 ${xl && details ? "text-fg" : "text-white/60"}`}
         >
-          <Icon name="infoCircle" filled={details} className="size-6" />
+          <Icon name="infoCircle" filled={xl && details} className="size-6" />
         </button>
       </header>
 
@@ -423,13 +433,13 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             onClick={() => void submit()}
             className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-black transition active:scale-95 disabled:bg-white/12 disabled:text-muted/50"
           >
-            <SendGlyph />
+            <Icon name="send" filled className="size-[18px]" />
           </button>
         </div>
       </div>
     </div>
-    {details && conv && (
-      <ConversationDetails conv={conv} messages={msgs} ring={ringFor(conv.other_user?.id)} onClose={() => setDetails(false)} />
+    {conv && (xl ? details : sheet) && (
+      <ConversationDetails conv={conv} messages={msgs} ring={ringFor(conv.other_user?.id)} variant={xl ? "dock" : "sheet"} onClose={() => (xl ? setDetails(false) : setSheet(false))} />
     )}
     </div>
   );
