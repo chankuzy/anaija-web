@@ -11,6 +11,7 @@ import { ApiError } from "@/lib/api/client";
 import { postsApi } from "@/lib/api/posts";
 import { coverOfGroup, storiesApi, type StoryGroup, type StoryItem } from "@/lib/api/stories";
 import { timeAgo } from "@/lib/format";
+import { useDocumentFocus } from "@/lib/feed/focus";
 import { RingFrame } from "./ring-avatar";
 import { FrameSlides, SourceFrame, frameCaption, sourceHref, type FrameHold } from "./story-source-frame";
 
@@ -467,7 +468,7 @@ export function StoryViewer({
   onClose: (seenIds: number[]) => void;
 }) {
   const router = useRouter();
-  const { focused } = usePlayback();
+  const focused = useDocumentFocus();
   const [pos, setPos] = useState(() => {
     const list = groups[start]?.stories ?? [];
     const byId = startStoryId !== undefined ? list.findIndex((x) => x.id === startStoryId) : -1;

@@ -207,9 +207,9 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               href={hrefFor(CREATE)}
               title="Create"
               onClick={openCreate}
-              className="mt-6 flex h-12 items-center gap-2.5 rounded-full bg-brand px-3 text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.98]"
+              className={`${ITEM} mt-4 ${IDLE}`}
             >
-              <Icon name="plus" weight="strong" className="size-7 shrink-0" />
+              <Icon name="plus" className="size-8 shrink-0" />
               <span className={label}>Create</span>
             </Link>
           </div>
@@ -260,8 +260,8 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         {NAV.filter((n) => n.mobile).map((n) =>
           n.mobile === "create" ? (
             <Link key={n.href} href={hrefFor(n)} aria-label="Create" onClick={openCreate} className="flex flex-1 items-center justify-center">
-              <span className="grid h-[32px] w-12 place-items-center rounded-xl bg-brand text-brand-fg transition-transform active:scale-95">
-                <Icon name="plus" weight="strong" className="size-[22px]" />
+              <span className="grid h-[32px] w-12 place-items-center text-white/60 transition-transform active:scale-95">
+                <Icon name="plus" className="size-7" />
               </span>
             </Link>
           ) : (

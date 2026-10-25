@@ -7,6 +7,7 @@ import { StoryViewer } from "@/components/messaging/story-viewer";
 import type { StoryGroup } from "@/lib/api/stories";
 import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
+import { holdMedia, releaseMedia } from "@/lib/feed/media-hold";
 
 type Host = {
   /** true when that person has a story and the viewer opened */
@@ -53,7 +54,11 @@ export function StoryHostProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!open) return;
     feedEvents.hold("story");
-    return () => feedEvents.release("story");
+    holdMedia("story");
+    return () => {
+      feedEvents.release("story");
+      releaseMedia("story");
+    };
   }, [open]);
 
   const value = useMemo(() => ({ openById, openByUsername }), [openById, openByUsername]);

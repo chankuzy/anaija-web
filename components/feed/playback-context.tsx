@@ -3,7 +3,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { settingsApi } from "@/lib/api/settings";
 import { useAuth } from "@/lib/auth/auth-context";
+import { feedEvents } from "@/lib/feed/event-tracker";
 import { isFocusedNow, useDocumentFocus } from "@/lib/feed/focus";
+import { holdMedia, isMediaHeld, releaseMedia, useMediaHeld } from "@/lib/feed/media-hold";
+import { useNotificationsPanel } from "@/lib/notifications/panel-context";
 
 type Prefs = { startMuted?: boolean; autoplay?: boolean };
 type Playback = {
@@ -23,7 +26,20 @@ export function PlaybackProvider({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
   const [muted, setMuted] = useState(true);
   const [autoplay, setAutoplay] = useState(true);
-  const focused = useDocumentFocus();
+  const docFocused = useDocumentFocus();
+  const held = useMediaHeld();
+  const focused = docFocused && !held;
+  const { open: panelOpen } = useNotificationsPanel();
+  // The notifications panel sits over the feed: silence it (and stop counting dwell time) while it is open.
+  useEffect(() => {
+    if (!panelOpen) return;
+    holdMedia("panel");
+    feedEvents.hold("panel");
+    return () => {
+      releaseMedia("panel");
+      feedEvents.release("panel");
+    };
+  }, [panelOpen]);
   const touched = useRef(false); // once the viewer mutes/unmutes by hand, the saved default stops overriding
 
   useEffect(() => {
@@ -44,15 +60,21 @@ export function PlaybackProvider({ children }: { children: React.ReactNode }) {
   // and losing focus pauses every audio/video on the page.
   useEffect(() => {
     const guard = (e: Event) => {
-      if (e.target instanceof HTMLMediaElement && !isFocusedNow()) e.target.pause();
+      const el = e.target;
+      if (!(el instanceof HTMLMediaElement)) return;
+      // The story viewer is the one thing allowed to play while something else holds the feed.
+      if (!isFocusedNow() || (isMediaHeld() && !el.closest(".sv-stage"))) el.pause();
     };
     document.addEventListener("play", guard, true);
     return () => document.removeEventListener("play", guard, true);
   }, []);
   useEffect(() => {
     if (focused) return;
-    document.querySelectorAll<HTMLMediaElement>("audio,video").forEach((el) => el.pause());
-  }, [focused]);
+    document.querySelectorAll<HTMLMediaElement>("audio,video").forEach((el) => {
+      if (docFocused && el.closest(".sv-stage")) return;
+      el.pause();
+    });
+  }, [focused, docFocused]);
 
   const toggleMute = useCallback(() => {
     touched.current = true;

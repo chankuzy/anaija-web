@@ -5,6 +5,7 @@ import { GuestShareSheet } from "@/components/share/guest-share-sheet";
 import { ShareSheet } from "@/components/share/share-sheet";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { holdMedia, releaseMedia } from "@/lib/feed/media-hold";
 
 // delta = optimistic change from a tap / rollback; serverCount = the real number once the server confirms.
 type OnShared = (delta: number, serverCount?: number) => void;
@@ -31,6 +32,12 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
 
   const open = useCallback<OpenShare>((post, onShared, onReposted) => setActive({ post, onShared, onReposted }), []);
   const close = useCallback(() => setActive(null), []);
+  const sharing = active !== null;
+  useEffect(() => {
+    if (!sharing) return;
+    holdMedia("share");
+    return () => releaseMedia("share");
+  }, [sharing]);
 
   return (
     <ShareCtx.Provider value={open}>
