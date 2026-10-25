@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -32,6 +31,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { useMessages } from "./messages-context";
 import { RingAvatar } from "./ring-avatar";
 import { ConversationDetails } from "./conversation-details";
+import { PersonSheet } from "./person-sheet";
 import { SharedPostCard } from "./shared-post-card";
 import { VoicePlayer } from "./voice-player";
 import { VoiceRecorderBar } from "./voice-recorder-bar";
@@ -176,6 +176,7 @@ function Bubble({
   onReply,
   onOpenMenu,
   onNavigateToMessage,
+  onAvatarTap,
 }: {
   m: Message;
   mine: boolean;
@@ -191,6 +192,7 @@ function Bubble({
   onReply: (m: Message) => void;
   onOpenMenu: (m: Message, pos?: { x: number; y: number }) => void;
   onNavigateToMessage: (id: number) => void;
+  onAvatarTap: () => void;
 }) {
   const text = m.is_deleted ? "This message was deleted" : (m.body ?? "");
   const audio = isAudioMsg(m);
@@ -340,9 +342,9 @@ function Bubble({
     >
       {!mine &&
         (showAvatar ? (
-          <ProfileHoverCard username={m.sender?.username}>
+          <button type="button" aria-label="Open contact" onClick={onAvatarTap} className="shrink-0 rounded-full transition-transform active:scale-95">
             <Avatar url={m.sender?.avatar} name={m.sender?.name} size={28} />
-          </ProfileHoverCard>
+          </button>
         ) : (
           <span className="w-7 shrink-0" />
         ))}
@@ -522,6 +524,8 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const [responding, setResponding] = useState(false);
   const [details, setDetails] = useState(true);
   const [sheet, setSheet] = useState(false);
+  const [person, setPerson] = useState(false);
+  const openPerson = () => (conv && conv.other_user && conv.type !== "group" ? setPerson(true) : setSheet(true));
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -759,7 +763,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           </Link>
           {conv ? (
             <>
-              <span className="shrink-0 cursor-pointer" onClick={() => !xl && setSheet(true)}>
+              <span className="shrink-0 cursor-pointer" onClick={openPerson}>
                 <RingAvatar
                   url={convAvatar(conv)}
                   name={name}
@@ -767,10 +771,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                   ring={ringFor(conv.other_user?.id)}
                 />
               </span>
-              <div
-                className={`min-w-0 ${xl ? "" : "cursor-pointer"}`}
-                onClick={() => !xl && setSheet(true)}
-              >
+              <div className="min-w-0 cursor-pointer" onClick={openPerson}>
                 <p className="truncate text-[15px] font-bold text-fg">{name}</p>
                 {username && <p className="truncate text-supporting text-muted">@{username}</p>}
               </div>
@@ -890,6 +891,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                   }}
                   onOpenMenu={(target, pos) => setMenuTarget({ m: target, pos })}
                   onNavigateToMessage={navigateToMessage}
+                  onAvatarTap={() => (conv && conv.type !== "group" && conv.other_user ? setPerson(true) : m.sender?.username ? router.push(`/u/${m.sender.username}`) : undefined)}
                 />
               </div>
             );
@@ -1060,6 +1062,8 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           onClose={() => (xl ? setDetails(false) : setSheet(false))}
         />
       )}
+
+      {conv && person && conv.other_user && <PersonSheet conv={conv} onClose={() => setPerson(false)} />}
 
       {menuTarget && (
         <MessageMenu

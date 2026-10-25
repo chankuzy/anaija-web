@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { useOpenStory } from "@/lib/stories/story-host";
 import { loginHref } from "@/lib/auth/next";
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
@@ -174,13 +175,17 @@ function AvatarBlock({
   onAddStory: () => void;
 }) {
   const outer = size + 10;
+  const openStory = useOpenStory();
   return (
     <span className="relative inline-block shrink-0" style={{ width: outer, height: outer }}>
       <button
         type="button"
-        aria-label="View profile picture"
-        disabled={!profile.avatar}
-        onClick={onView}
+        aria-label={ring !== "none" ? "View story" : "View profile picture"}
+        disabled={!profile.avatar && ring === "none"}
+        onClick={() => {
+          if (ring !== "none" && openStory(profile.id)) return;
+          onView();
+        }}
         className="block rounded-full transition hover:opacity-95"
       >
         <StoryRingAvatar url={profile.avatar} name={profile.name ?? profile.username} size={size} ring={ring} />

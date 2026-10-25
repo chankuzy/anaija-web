@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi } from "@/lib/api/settings";
@@ -22,6 +22,13 @@ export function ReportView() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const valid = text.trim().length >= 10;
+  useEffect(() => {
+    const about = new URLSearchParams(window.location.search).get("about");
+    if (about) {
+      setCat("safety");
+      setText(`About @${about}: `);
+    }
+  }, []);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();

@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "@/lib/ui/dialog";
 
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
@@ -63,7 +64,7 @@ export function ProfileMenu({
   }
 
   async function block() {
-    if (!window.confirm(`Block @${profile.username}? You'll stop following each other and your conversation with them will be hidden.`)) return;
+    if (!(await confirmDialog({ title: `Block @${profile.username}?`, message: "You'll stop following each other and your conversation with them will be hidden.", confirmLabel: "Block", danger: true }))) return;
     onClose();
     try {
       await usersApi.toggleBlock(profile.id);

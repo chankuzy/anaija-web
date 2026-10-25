@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { useOpenStory, useStoryHost } from "@/lib/stories/story-host";
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -130,6 +131,7 @@ function Loaded({ data }: { data: HoverData }) {
   const { profile, posts } = data;
   const router = useRouter();
   const ring = useStoryRing(profile.id, true);
+  const openStory = useOpenStory();
   const following = useIsFollowing(profile.id, profile.is_following);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -175,7 +177,14 @@ function Loaded({ data }: { data: HoverData }) {
         )}
 
         <div className="flex items-center gap-3.5">
-          <Link href={href} aria-label="Open profile" className="shrink-0 transition-opacity hover:opacity-95">
+          <Link
+            href={href}
+            aria-label="Open profile"
+            onClick={(e) => {
+              if (ring !== "none" && openStory(profile.id)) e.preventDefault();
+            }}
+            className="shrink-0 transition-opacity hover:opacity-95"
+          >
             <StoryRingAvatar url={profile.avatar} name={profile.name ?? profile.username} size={64} ring={ring} />
           </Link>
           <div className="min-w-0 flex-1">
@@ -329,6 +338,7 @@ export function ProfileHoverCard({
   className?: string;
 }) {
   const { status, user } = useAuth();
+  const storyHost = useStoryHost();
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const anchorRef = useRef<HTMLSpanElement>(null);
@@ -390,10 +400,18 @@ export function ProfileHoverCard({
     cancelClose();
     setOpen(false);
   };
+  // A story ring means you can see their story: tapping the picture opens it (from the first unwatched).
+  const tapStory = (e: React.MouseEvent) => {
+    dismiss();
+    if (storyHost.openByUsername(name)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
 
   return (
     <>
-      <span ref={anchorRef} className={className} onPointerEnter={enter} onPointerLeave={leave} onClickCapture={dismiss}>
+      <span ref={anchorRef} className={className} onPointerEnter={enter} onPointerLeave={leave} onClickCapture={tapStory}>
         {children}
       </span>
       {shown &&

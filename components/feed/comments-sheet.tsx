@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "@/lib/ui/dialog";
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import { CommentsSkeleton } from "@/components/ui/skeleton";
 
@@ -272,7 +273,7 @@ export function CommentsSheet({
   }
 
   async function remove(c: Comment, parentId: number | null) {
-    if (!window.confirm("Delete this comment? This can't be undone.")) return;
+    if (!(await confirmDialog({ title: "Delete comment?", message: "This can't be undone.", confirmLabel: "Delete", danger: true }))) return;
     if (parentId === null) {
       const prev = top.items;
       setTop((t) => ({ ...t, items: t.items.filter((x) => x.id !== c.id) }));

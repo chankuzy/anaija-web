@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { confirmDialog } from "@/lib/ui/dialog";
 import { FormSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useRef, useState } from "react";
@@ -183,8 +184,13 @@ function EditForm({ profile }: { profile: UserProfile }) {
 
   function back() {
     if (busy) return;
-    if (dirty && !window.confirm("Discard changes? Your edits to this profile won't be saved.")) return;
-    router.push("/me");
+    if (!dirty) {
+      router.push("/me");
+      return;
+    }
+    void confirmDialog({ title: "Discard changes?", message: "Your edits to this profile won't be saved.", confirmLabel: "Discard", cancelLabel: "Keep editing", danger: true }).then((ok) => {
+      if (ok) router.push("/me");
+    });
   }
 
   const saveBtn = (

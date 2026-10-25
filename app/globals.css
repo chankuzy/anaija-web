@@ -410,3 +410,15 @@ body {
 .feed-card {
   touch-action: manipulation;
 }
+
+/* ───── No visible scrollbars anywhere (scrolling still works). Unlayered, so it beats the thin-scrollbar base rule. ───── */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}

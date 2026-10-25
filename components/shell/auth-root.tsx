@@ -7,6 +7,8 @@ import { PlaybackProvider } from "@/components/feed/playback-context";
 import { MessagesUnreadProvider } from "@/lib/messaging/unread-context";
 import { MessagesProvider } from "@/components/messaging/messages-context";
 import { ShareProvider } from "@/lib/share/share-context";
+import { DialogProvider } from "@/lib/ui/dialog";
+import { StoryHostProvider } from "@/lib/stories/story-host";
 import { AppShell } from "@/components/shell/app-shell";
 import { NotificationPill } from "@/components/shell/notification-pill";
 import { InAppBanner } from "@/components/shell/in-app-banner";
@@ -26,6 +28,8 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
           <MessagesUnreadProvider>
             <MessagesProvider>
               <PlaybackProvider>
+                <DialogProvider>
+                <StoryHostProvider>
                 <ShareProvider>
                 <AppShell>{children}</AppShell>
                 <Suspense fallback={null}><NotificationPill /></Suspense>
@@ -35,6 +39,8 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
                 <PushSync />
                 <Suspense fallback={null}><AppNudges /></Suspense>
                 </ShareProvider>
+                </StoryHostProvider>
+                </DialogProvider>
               </PlaybackProvider>
             </MessagesProvider>
           </MessagesUnreadProvider>

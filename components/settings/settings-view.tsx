@@ -1,4 +1,5 @@
 "use client";
+import { confirmDialog } from "@/lib/ui/dialog";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -43,7 +44,7 @@ export function SettingsView() {
   }
 
   async function logout() {
-    if (!window.confirm("Log out? You can always log back in with your Google account.")) return;
+    if (!(await confirmDialog({ title: "Log out?", message: "You can always log back in with your Google account.", confirmLabel: "Log out", danger: true }))) return;
     try {
       await signOut();
       router.replace("/");
