@@ -56,6 +56,8 @@ export function useVoiceRecorder() {
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const recordedBlob = useRef<Blob | null>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const durationRef = useRef<number>(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
@@ -106,11 +108,17 @@ export function useVoiceRecorder() {
     chunksRef.current = [];
     recordedBlob.current = null;
 
+    if (previewUrlRef.current) {
+      URL.revokeObjectURL(previewUrlRef.current);
+      previewUrlRef.current = null;
+    }
+
     if (previewUrl) {
       URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
     }
 
+    durationRef.current = 0;
     setDuration(0);
     setLevels(new Array(WAVEFORM_BARS).fill(4));
     setError(null);
@@ -205,6 +213,7 @@ export function useVoiceRecorder() {
         const blob = new Blob(chunksRef.current, { type: mimeRef.current.mimeType });
         recordedBlob.current = blob;
         const url = URL.createObjectURL(blob);
+        previewUrlRef.current = url;
         setPreviewUrl(url);
         setStatus("preview");
       };
@@ -218,10 +227,13 @@ export function useVoiceRecorder() {
       timerRef.current = window.setInterval(() => {
         const elapsed = (Date.now() - startTimeRef.current - pausedDurationRef.current) / 1000;
         if (elapsed >= MAX_RECORDING_SECONDS) {
+          durationRef.current = MAX_RECORDING_SECONDS;
           setDuration(MAX_RECORDING_SECONDS);
           stop();
         } else {
-          setDuration(Math.round(elapsed));
+          const d = Math.round(elapsed);
+          durationRef.current = d;
+          setDuration(d);
         }
       }, 250);
     } catch (err: unknown) {
@@ -263,28 +275,49 @@ export function useVoiceRecorder() {
     timerRef.current = window.setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current - pausedDurationRef.current) / 1000;
       if (elapsed >= MAX_RECORDING_SECONDS) {
+        durationRef.current = MAX_RECORDING_SECONDS;
         setDuration(MAX_RECORDING_SECONDS);
         stop();
       } else {
-        setDuration(Math.round(elapsed));
+        const d = Math.round(elapsed);
+        durationRef.current = d;
+        setDuration(d);
       }
     }, 250);
   }, [stop, updateLevels]);
 
   const uploadAndGetResult = useCallback(async (): Promise<VoiceRecordingResult | null> => {
+    // If the recorder is still active or paused, stop it and wait for onstop to finish
+    if (mediaRecorder.current && mediaRecorder.current.state !== "inactive") {
+      await new Promise<void>((resolve) => {
+        const mr = mediaRecorder.current;
+        if (!mr || mr.state === "inactive") {
+          resolve();
+          return;
+        }
+        const origOnStop = mr.onstop;
+        mr.onstop = (ev) => {
+          if (origOnStop) origOnStop.call(mr, ev);
+          resolve();
+        };
+        stop();
+      });
+    }
+
     const blob = recordedBlob.current;
-    if (!blob || !previewUrl) return null;
+    if (!blob || blob.size === 0) return null;
 
     setStatus("uploading");
     try {
       const { mimeType, ext } = mimeRef.current;
       const filename = `voice_${Date.now()}.${ext}`;
       const mediaKey = await uploadBlob(blob, filename, mimeType);
+      const activeBlobUrl = previewUrlRef.current ?? (previewUrl || URL.createObjectURL(blob));
 
       return {
         blob,
-        blobUrl: previewUrl,
-        durationSeconds: Math.max(1, duration),
+        blobUrl: activeBlobUrl,
+        durationSeconds: Math.max(1, durationRef.current || duration),
         mediaKey,
         mediaType: mimeType,
       };
@@ -292,7 +325,7 @@ export function useVoiceRecorder() {
       setStatus("preview");
       throw err;
     }
-  }, [duration, previewUrl]);
+  }, [duration, previewUrl, stop]);
 
   useEffect(() => {
     return () => {

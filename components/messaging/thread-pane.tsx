@@ -66,25 +66,77 @@ function dayLabel(iso: string) {
   const now = new Date();
   const midnight = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
   const diff = Math.round((midnight(now) - midnight(d)) / 86_400_000);
-  const time = d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
-  if (diff === 0) return `Today, ${time}`;
-  if (diff === 1) return `Yesterday, ${time}`;
-  const date = d.toLocaleDateString("en-NG", {
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  return d.toLocaleDateString("en-NG", {
     day: "numeric",
     month: "short",
     ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" as const } : {}),
   });
-  return `${date}, ${time}`;
 }
 
-function timeLabel(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit" });
+function bubbleCorners(mine: boolean, first: boolean, last: boolean): string {
+  if (mine) {
+    if (first && last) return "rounded-[22px] rounded-br-[8px]";
+    if (first) return "rounded-[22px] rounded-br-[4px]";
+    if (last) return "rounded-[22px] rounded-tr-[4px] rounded-br-[8px]";
+    return "rounded-[22px] rounded-r-[4px]";
+  } else {
+    if (first && last) return "rounded-[22px] rounded-bl-[8px]";
+    if (first) return "rounded-[22px] rounded-bl-[4px]";
+    if (last) return "rounded-[22px] rounded-tl-[4px] rounded-bl-[8px]";
+    return "rounded-[22px] rounded-l-[4px]";
+  }
 }
 
-function Media({ m, mine }: { m: Message; mine: boolean }) {
+function Media({
+  m,
+  mine,
+  firstInBlock,
+  lastInBlock,
+  isRead,
+}: {
+  m: Message;
+  mine: boolean;
+  firstInBlock: boolean;
+  lastInBlock: boolean;
+  isRead: boolean;
+}) {
   if (m.is_deleted || !m.media_url) return null;
+  const isAudio =
+    m.type === "audio" ||
+    (m.media_type?.startsWith("audio/") ?? false) ||
+    (m.media_url?.includes("voice_") ?? false) ||
+    /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
+
+  if (isAudio) {
+    return (
+      <div
+        className={`relative max-w-full ${bubbleCorners(
+          mine,
+          firstInBlock,
+          lastInBlock,
+        )} p-1.5 ${mine ? "bubble-sent text-brand-fg" : "bg-card-elevated text-fg"}`}
+      >
+        <VoicePlayer src={m.media_url} mine={mine} />
+        {mine && (
+          <div className="flex items-center justify-end px-2.5 pb-0.5 -mt-1 text-brand-fg/75">
+            {m.status === "sending" ? (
+              <span className="size-2.5 rounded-full border border-current border-t-transparent animate-spin ml-0.5" />
+            ) : m.status === "failed" ? (
+              <span className="text-danger font-bold ml-0.5">!</span>
+            ) : (
+              <Icon
+                name={isRead ? "checkRead" : "check"}
+                className={`size-3.5 ml-0.5 ${isRead ? "text-brand" : "text-current"}`}
+              />
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (m.type === "image")
     return (
       <img
@@ -92,7 +144,11 @@ function Media({ m, mine }: { m: Message; mine: boolean }) {
         alt=""
         loading="lazy"
         decoding="async"
-        className="mb-1 max-h-80 max-w-full rounded-2xl object-cover"
+        className={`mb-1 max-h-80 max-w-full ${bubbleCorners(
+          mine,
+          firstInBlock,
+          lastInBlock,
+        )} object-cover`}
       />
     );
   if (m.type === "video")
@@ -101,11 +157,13 @@ function Media({ m, mine }: { m: Message; mine: boolean }) {
         src={m.media_url}
         controls
         preload="metadata"
-        className="mb-1 max-h-80 max-w-full rounded-2xl"
+        className={`mb-1 max-h-80 max-w-full ${bubbleCorners(
+          mine,
+          firstInBlock,
+          lastInBlock,
+        )}`}
       />
     );
-  if (m.type === "audio")
-    return <VoicePlayer src={m.media_url} mine={mine} className="my-1" />;
   return (
     <a
       href={m.media_url}
@@ -123,6 +181,7 @@ function Bubble({
   m,
   mine,
   showAvatar,
+  firstInBlock,
   lastInBlock,
   isRead,
   myId,
@@ -137,6 +196,7 @@ function Bubble({
   m: Message;
   mine: boolean;
   showAvatar: boolean;
+  firstInBlock: boolean;
   lastInBlock: boolean;
   isRead: boolean;
   myId: number | undefined;
@@ -149,9 +209,14 @@ function Bubble({
   onNavigateToMessage: (id: number) => void;
 }) {
   const text = m.is_deleted ? "This message was deleted" : (m.body ?? "");
+  const isAudio =
+    m.type === "audio" ||
+    (m.media_type?.startsWith("audio/") ?? false) ||
+    (m.media_url?.includes("voice_") ?? false) ||
+    /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
   const hasMedia =
-    !!m.media_url && !m.is_deleted && ["image", "video", "audio", "file"].includes(m.type);
-  const showText = text.trim() !== "" && !(hasMedia && m.type === "file");
+    !!m.media_url && !m.is_deleted && (["image", "video", "audio", "file"].includes(m.type) || isAudio);
+  const showText = text.trim() !== "" && !(hasMedia && (m.type === "file" || isAudio));
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
 
@@ -330,14 +395,22 @@ function Bubble({
           )}
 
           {m.shared_post && <SharedPostCard post={m.shared_post} />}
-          <Media m={m} mine={mine} />
+          <Media
+            m={m}
+            mine={mine}
+            firstInBlock={firstInBlock}
+            lastInBlock={lastInBlock}
+            isRead={isRead}
+          />
 
           {showText && (
             <div
               onClick={m.status === "failed" ? onRetry : undefined}
-              className={`relative whitespace-pre-wrap break-words rounded-[22px] ${
-                lastInBlock ? (mine ? "rounded-br-[8px]" : "rounded-bl-[8px]") : ""
-              } px-4 py-2.5 text-[14.5px] font-medium leading-[1.42] ${
+              className={`relative whitespace-pre-wrap break-words ${bubbleCorners(
+                mine,
+                firstInBlock,
+                lastInBlock,
+              )} px-4 py-2.5 text-[14.5px] font-medium leading-[1.42] ${
                 mine ? "bubble-sent" : "bg-card-elevated text-fg"
               } ${m.is_deleted ? "italic opacity-60" : ""} ${m.status ? "opacity-80" : ""} ${
                 m.status === "failed" ? "cursor-pointer" : ""
@@ -345,29 +418,30 @@ function Bubble({
             >
               {text}
 
-              {/* Timestamp, edited, and delivery ticks in bubble */}
-              <div
-                className={`mt-1 flex items-center justify-end gap-1 text-[10.5px] select-none ${
-                  mine ? "text-brand-fg/75" : "text-muted"
-                }`}
-              >
-                {m.is_edited && <span className="italic mr-0.5">(edited)</span>}
-                {m.created_at && <span>{timeLabel(m.created_at)}</span>}
-                {mine && (
-                  <>
-                    {m.status === "sending" ? (
-                      <span className="size-2.5 rounded-full border border-current border-t-transparent animate-spin ml-0.5" />
-                    ) : m.status === "failed" ? (
-                      <span className="text-danger font-bold ml-0.5">!</span>
-                    ) : (
-                      <Icon
-                        name={isRead ? "checkRead" : "check"}
-                        className={`size-3.5 ml-0.5 ${isRead ? "text-brand" : "text-current"}`}
-                      />
-                    )}
-                  </>
-                )}
-              </div>
+              {/* Edited label and delivery ticks in bubble (no timestamp) */}
+              {(mine || m.is_edited) && (
+                <div
+                  className={`mt-0.5 flex items-center justify-end gap-1 text-[10.5px] select-none ${
+                    mine ? "text-brand-fg/75" : "text-muted"
+                  }`}
+                >
+                  {m.is_edited && <span className="italic mr-0.5">(edited)</span>}
+                  {mine && (
+                    <>
+                      {m.status === "sending" ? (
+                        <span className="size-2.5 rounded-full border border-current border-t-transparent animate-spin ml-0.5" />
+                      ) : m.status === "failed" ? (
+                        <span className="text-danger font-bold ml-0.5">!</span>
+                      ) : (
+                        <Icon
+                          name={isRead ? "checkRead" : "check"}
+                          className={`size-3.5 ml-0.5 ${isRead ? "text-brand" : "text-current"}`}
+                        />
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -753,6 +827,11 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             const nextM = msgs[i + 1];
             const mine = m.sender_id === myId;
             const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
+            const firstInBlock =
+              !prev ||
+              prev.sender_id !== m.sender_id ||
+              dayKey(prev.created_at) !== dayKey(m.created_at) ||
+              Math.abs(Date.parse(m.created_at) - Date.parse(prev.created_at)) >= GAP_MS;
             const lastInBlock =
               !nextM ||
               nextM.sender_id !== m.sender_id ||
@@ -775,6 +854,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                   m={m}
                   mine={mine}
                   showAvatar={!mine && lastInBlock}
+                  firstInBlock={firstInBlock}
                   lastInBlock={lastInBlock}
                   isRead={isRead}
                   myId={myId}

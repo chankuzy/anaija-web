@@ -25,7 +25,6 @@ export function VoiceRecorderBar({
     previewUrl,
     pause,
     resume,
-    stop,
     discard,
     uploadAndGetResult,
   } = recorder;
@@ -60,9 +59,6 @@ export function VoiceRecorderBar({
 
   async function handleSend() {
     if (sending) return;
-    if (status === "recording" || status === "paused") {
-      stop();
-    }
     setSending(true);
     try {
       const res = await uploadAndGetResult();

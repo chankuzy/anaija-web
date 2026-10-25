@@ -211,8 +211,21 @@ export const messagingApi = {
 
   send: async (id: number, input: string | SendMessageOptions): Promise<Message | null> => {
     const payload = typeof input === "string" ? { type: "text", body: input } : input;
-    const raw = await api.post<unknown>(`conversations-send/${id}`, payload);
-    return parseMessage(raw) ?? parseMessage(rec(raw).message) ?? parseMessage(rec(raw).data);
+    try {
+      const raw = await api.post<unknown>(`conversations-send/${id}`, payload);
+      return parseMessage(raw) ?? parseMessage(rec(raw).message) ?? parseMessage(rec(raw).data);
+    } catch (err: unknown) {
+      if (payload.type === "audio") {
+        try {
+          const fallback = { ...payload, type: "file" as const };
+          const raw = await api.post<unknown>(`conversations-send/${id}`, fallback);
+          return parseMessage(raw) ?? parseMessage(rec(raw).message) ?? parseMessage(rec(raw).data);
+        } catch {
+          throw err;
+        }
+      }
+      throw err;
+    }
   },
 
   edit: async (conversationId: number, messageId: number, body: string): Promise<Message | null> => {

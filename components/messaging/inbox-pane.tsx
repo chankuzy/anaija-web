@@ -14,7 +14,6 @@ import {
 } from "@/lib/api/messaging";
 import type { StoryGroup } from "@/lib/api/stories";
 import { useAuth } from "@/lib/auth/auth-context";
-import { timeAgo } from "@/lib/format";
 import { useMessages } from "./messages-context";
 import { RingAvatar } from "./ring-avatar";
 import { StoriesTray } from "./stories-tray";
@@ -42,7 +41,6 @@ function Row({ c, active, ring }: { c: Conversation; active: boolean; ring: bool
           <span className={`min-w-0 flex-1 truncate text-[15px] ${unread ? "font-bold text-white" : "font-semibold text-fg"}`}>
             {convName(c)}
           </span>
-          {c.last_message_at && <span className="shrink-0 text-supporting text-muted">{timeAgo(c.last_message_at)}</span>}
         </span>
         <span className="mt-0.5 flex items-center gap-2">
           <span className={`min-w-0 flex-1 truncate text-secondary ${unread ? "font-medium text-white/90" : "text-muted"}`}>
