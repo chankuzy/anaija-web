@@ -8,7 +8,8 @@ import { useAuth } from "@/lib/auth/auth-context";
 
 // delta = optimistic change from a tap / rollback; serverCount = the real number once the server confirms.
 type OnShared = (delta: number, serverCount?: number) => void;
-type OpenShare = (post: Post, onShared?: OnShared) => void;
+type OnReposted = (p: Partial<Post>) => void;
+type OpenShare = (post: Post, onShared?: OnShared, onReposted?: OnReposted) => void;
 
 const ShareCtx = createContext<OpenShare>(() => {});
 
@@ -17,7 +18,7 @@ const ShareCtx = createContext<OpenShare>(() => {});
 // else gets the link-only one (sharing outward needs no account).
 export function ShareProvider({ children }: { children: React.ReactNode }) {
   const { status } = useAuth();
-  const [active, setActive] = useState<{ post: Post; onShared?: OnShared } | null>(null);
+  const [active, setActive] = useState<{ post: Post; onShared?: OnShared; onReposted?: OnReposted } | null>(null);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -28,7 +29,7 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  const open = useCallback<OpenShare>((post, onShared) => setActive({ post, onShared }), []);
+  const open = useCallback<OpenShare>((post, onShared, onReposted) => setActive({ post, onShared, onReposted }), []);
   const close = useCallback(() => setActive(null), []);
 
   return (
@@ -36,7 +37,7 @@ export function ShareProvider({ children }: { children: React.ReactNode }) {
       {children}
       {active &&
         (status === "authed" ? (
-          <ShareSheet key={active.post.id} post={active.post} onShared={active.onShared} onClose={close} flash={flash} />
+          <ShareSheet key={active.post.id} post={active.post} onShared={active.onShared} onReposted={active.onReposted} onClose={close} flash={flash} />
         ) : (
           <GuestShareSheet key={active.post.id} post={active.post} onClose={close} flash={flash} />
         ))}

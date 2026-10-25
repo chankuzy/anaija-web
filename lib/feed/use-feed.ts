@@ -7,6 +7,7 @@ import type { FeedItem, FeedScope, Post } from "@/lib/api/feed-types";
 import { cacheEpoch, onCacheClear, peek, put, useCacheEpoch } from "@/lib/cache/swr";
 import { kvGet } from "@/lib/cache/kv";
 import { resetFollows, seedFollows } from "./follow-store";
+import { reconcile } from "./interactions";
 
 export interface FeedData {
   sessionId: string | null;
@@ -93,6 +94,7 @@ function dedupe(items: FeedItem[]): FeedItem[] {
   });
 }
 const seed = (items: FeedItem[]) => seedFollows(items.flatMap((i) => (i.type === "post" ? [i.post.author] : [])));
+const confirm = (items: FeedItem[], t0: number) => reconcile(items.flatMap((i) => (i.type === "post" ? [i.post.id] : [])), t0);
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 
 const toData = (res: Res): FeedData => ({
@@ -148,9 +150,11 @@ async function fetchFirst(k: string, authed: boolean, scope: FeedScope, mode: Mo
   const epoch = cacheEpoch();
   if (mode !== "background") setSlot(k, { loading: true });
   try {
+    const t0 = Date.now();
     const res = await feedApi.page({ authed, scope, refresh: mode === "manual" });
     if (epoch !== cacheEpoch()) return;
     seed(res.items);
+    confirm(res.items, t0);
     const next = toData(res);
     const cur = slotOf(k);
     if (mode === "background" && cur.data && !cur.data.error) {
@@ -185,11 +189,13 @@ function loadMoreFor(k: string, authed: boolean, scope: FeedScope, index: number
   const total = d.items.length;
   if (total === 0 || index < total - Math.ceil(total / 3)) return; // last third, same rule as Flutter
   moreInflight.add(k);
+  const t0 = Date.now();
   patchData(k, (x) => ({ ...x, loadingMore: true }));
   feedApi
     .page({ authed, scope, cursor: d.cursor })
     .then((res) => {
       seed(res.items);
+      confirm(res.items, t0);
       patchData(k, (prev) => {
         const seen = new Set(prev.items.map(itemKey));
         return {

@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear } from "@/lib/cache/swr";
 import { useInterval } from "@/lib/messaging/use-interval";
 import { subscribeBroadcast } from "@/lib/realtime/client";
+import { uploadManager } from "@/lib/create/upload-manager";
 
 type Ctx = {
   conversations: Conversation[] | null;
@@ -29,6 +30,9 @@ const MessagesCtx = createContext<Ctx | null>(null);
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const at = (c: Conversation) => Date.parse(c.last_message_at ?? "") || 0;
 const byRecent = (a: Conversation, b: Conversation) => at(b) - at(a);
+// Your own story is never "unwatched" to you: it shows faded and opens from its first story.
+const asOwn = (me: number) => (g: StoryGroup): StoryGroup =>
+  g.author.id === me ? { ...g, has_unseen: false, stories: g.stories.map((s) => (s.seen ? s : { ...s, seen: true })) } : g;
 
 type InboxUpdate = { conversation_id?: number; last_message_body?: string; last_message_at?: string; unread_count?: number };
 
@@ -103,7 +107,7 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
       .then((g) => {
         if (uidRef.current !== u) return;
         lastStories.current = Date.now();
-        setStore((s) => ({ ...base(s, u), groups: g }));
+        setStore((s) => ({ ...base(s, u), groups: g.map(asOwn(u)) }));
       })
       .catch(() => {});
   }, []);
@@ -187,10 +191,26 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
     };
   }, [uid, loadStories]);
 
+  // Publishing a story (or any post) refreshes the tray right away, and once more after the server has settled.
+  useEffect(() => {
+    if (uid === null) return;
+    let t: number | undefined;
+    const off = uploadManager.onPublished(() => {
+      loadStories();
+      window.clearTimeout(t);
+      t = window.setTimeout(loadStories, 1500);
+    });
+    return () => {
+      window.clearTimeout(t);
+      off();
+    };
+  }, [uid, loadStories]);
+
   // Safety-net polling only while the Messages UI is on screen (broadcast has no backlog).
   const poll = uid !== null && inMessages;
   useInterval(reloadInbox, live ? 60_000 : 15_000, poll);
-  useInterval(loadStories, storiesLive ? 120_000 : 30_000, poll);
+  // Stories also refresh on the feed (where the row lives), not only inside Messages.
+  useInterval(loadStories, storiesLive ? 90_000 : 30_000, uid !== null);
 
   const patchConversation = useCallback(
     (id: number, p: Partial<Conversation>) =>

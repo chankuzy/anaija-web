@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
 import { toggleFollow, useIsFollowing } from "@/lib/feed/follow-store";
 import { useShare } from "@/lib/share/share-context";
+import { pickIx, setIx, useIx, withIx } from "@/lib/feed/interactions";
 import { Icon } from "@/components/ui/icon";
 import { ActionRail } from "./action-rail";
 import { CommentsSheet } from "./comments-sheet";
@@ -21,14 +22,14 @@ import type { Warm } from "@/lib/feed/net";
 const NAV_LIFT = "env(safe-area-inset-bottom)";
 
 export function FeedCard({
-  post,
+  post: rawPost,
   index,
   active,
   near,
   warm,
   commentFocus,
   onActivate,
-  patch,
+  patch: patchProp,
   onRemove,
 }: {
   post: Post;
@@ -42,6 +43,14 @@ export function FeedCard({
   onRemove: (id: number) => void;
 }) {
   const router = useRouter();
+  // What you did to this post overrides any stale cached copy, and every change is remembered.
+  const ix = useIx(rawPost.id);
+  const post = withIx(rawPost, ix);
+  const patch = (id: number, p: Partial<Post>) => {
+    patchProp(id, p);
+    const k = pickIx(p);
+    if (k) setIx(id, k);
+  };
   const openShare = useShare();
   const shareCount = useRef(post.shares_count);
   const { status, user } = useAuth();
@@ -53,7 +62,6 @@ export function FeedCard({
   const [commentsOpen, setCommentsOpen] = useState(commentFocus !== undefined);
   const busyLike = useRef(false);
   const busyBookmark = useRef(false);
-  const busyRepost = useRef(false);
   const toastTimer = useRef<number | null>(null);
 
   const open = expanded && active;
@@ -104,7 +112,9 @@ export function FeedCard({
     const prev = { is_liked: post.is_liked, likes_count: post.likes_count };
     patch(post.id, { is_liked: target, likes_count: Math.max(0, post.likes_count + (target ? 1 : -1)) });
     try {
-      const r = await postsApi.toggleLike(post.id);
+      let r = await postsApi.toggleLike(post.id);
+      // The server toggles: if our view was stale it landed on the opposite of what was asked, so flip back once.
+      if (r.liked !== target) r = await postsApi.toggleLike(post.id);
       patch(post.id, {
         is_liked: r.liked,
         ...(typeof r.likes_count === "number" ? { likes_count: r.likes_count } : {}),
@@ -124,7 +134,8 @@ export function FeedCard({
     const next = !post.is_bookmarked;
     patch(post.id, { is_bookmarked: next, bookmarks_count: Math.max(0, post.bookmarks_count + (next ? 1 : -1)) });
     try {
-      const r = await postsApi.toggleBookmark(post.id);
+      let r = await postsApi.toggleBookmark(post.id);
+      if (r.bookmarked !== next) r = await postsApi.toggleBookmark(post.id);
       patch(post.id, {
         is_bookmarked: r.bookmarked,
         ...(typeof r.bookmarks_count === "number" ? { bookmarks_count: r.bookmarks_count } : {}),
@@ -134,27 +145,6 @@ export function FeedCard({
       onAuthFailure(e);
     } finally {
       busyBookmark.current = false;
-    }
-  }
-
-  async function toggleRepost() {
-    if (!requireAuth() || busyRepost.current) return;
-    busyRepost.current = true;
-    const prev = { is_reposted: post.is_reposted, reposts_count: post.reposts_count };
-    const next = !post.is_reposted;
-    patch(post.id, { is_reposted: next, reposts_count: Math.max(0, post.reposts_count + (next ? 1 : -1)) });
-    try {
-      const r = await socialApi.toggleRepost(post.id);
-      patch(post.id, {
-        is_reposted: r.reposted ?? next,
-        ...(typeof r.reposts_count === "number" ? { reposts_count: r.reposts_count } : {}),
-      });
-    } catch (e) {
-      patch(post.id, prev);
-      if (e instanceof ApiError && e.status !== 401) showToast(e.message);
-      onAuthFailure(e);
-    } finally {
-      busyRepost.current = false;
     }
   }
 
@@ -173,7 +163,7 @@ export function FeedCard({
     openShare(post, (delta, serverCount) => {
       shareCount.current = serverCount ?? Math.max(0, shareCount.current + delta);
       patch(post.id, { shares_count: shareCount.current });
-    });
+    }, (p) => patch(post.id, p));
   }
 
   function notInterested() {
@@ -215,7 +205,6 @@ export function FeedCard({
       onLike={() => void applyLike(!post.is_liked)}
       onComment={openComments}
       onBookmark={() => void toggleBookmark()}
-      onRepost={() => void toggleRepost()}
       onShare={() => void share()}
       onOptions={() => setOptionsOpen(true)}
     />

@@ -499,7 +499,7 @@ export function StoryViewer({
   const next = () => {
     if (!group) return finish();
     if (pos.s + 1 < group.stories.length) go({ g: pos.g, s: pos.s + 1 });
-    else if (pos.g + 1 < groups.length) go({ g: pos.g + 1, s: 0 });
+    else if (pos.g + 1 < groups.length) go({ g: pos.g + 1, s: startOf(groups[pos.g + 1]) });
     else finish();
   };
   const prev = () => {

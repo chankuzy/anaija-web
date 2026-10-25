@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
 import type { Post } from "@/lib/api/feed-types";
 import { shareApi, type ShareTarget } from "@/lib/api/share";
+import { socialApi } from "@/lib/api/social";
 import { useAuth } from "@/lib/auth/auth-context";
 import { usePaged, type Page } from "@/lib/paged/use-paged";
 import { copyLink as copyPostLink, nativeShare, openWhatsapp } from "@/lib/share/external";
@@ -18,12 +19,14 @@ export function Quick({
   glyph,
   label,
   busy,
+  active,
   onClick,
 }: {
   icon?: IconName;
   glyph?: React.ReactNode;
   label: string;
   busy?: boolean;
+  active?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -34,7 +37,7 @@ export function Quick({
       className="flex flex-1 flex-col items-center gap-2 text-white transition-transform active:scale-95 disabled:opacity-60"
     >
       <span className="grid size-14 place-items-center rounded-full bg-surface-interactive transition-colors hover:bg-surface-elevated">
-        {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""}`} />)}
+        {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""} ${active ? "text-brand" : ""}`} />)}
       </span>
       <span className="text-supporting font-semibold text-white/85">{label}</span>
     </button>
@@ -89,11 +92,13 @@ function SkeletonRows({ n }: { n: number }) {
 export function ShareSheet({
   post,
   onShared,
+  onReposted,
   onClose,
   flash,
 }: {
   post: Post;
   onShared?: (delta: number, serverCount?: number) => void;
+  onReposted?: (p: Partial<Post>) => void;
   onClose: () => void;
   flash: (text: string) => void;
 }) {
@@ -102,6 +107,8 @@ export function ShareSheet({
   const sentTo = useSentTo(post.id);
   const [query, setQuery] = useState("");
   const [storyBusy, setStoryBusy] = useState(false);
+  const [reposted, setReposted] = useState(post.is_reposted);
+  const [repostBusy, setRepostBusy] = useState(false);
   const root = useRef<HTMLDivElement>(null);
 
   const username = user?.username ?? null;
@@ -182,6 +189,29 @@ export function ShareSheet({
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 480) loadMore();
   };
 
+  const canRepost = post.type === "post" && !!onReposted;
+  const toRepost = async () => {
+    if (repostBusy) return;
+    setRepostBusy(true);
+    const want = !reposted;
+    try {
+      let r = await socialApi.toggleRepost(post.id);
+      // The server toggles: if our view was stale it landed on the opposite, so flip back once.
+      if ((r.reposted ?? want) !== want) r = await socialApi.toggleRepost(post.id);
+      const done = r.reposted ?? want;
+      setReposted(done);
+      onReposted?.({
+        is_reposted: done,
+        reposts_count: typeof r.reposts_count === "number" ? r.reposts_count : Math.max(0, post.reposts_count + (done ? 1 : -1)),
+      });
+      flash(done ? "Reposted" : "Repost removed");
+    } catch (e) {
+      flash(e instanceof ApiError ? e.message : "Couldn't repost");
+    } finally {
+      setRepostBusy(false);
+    }
+  };
+
   const copyLink = async () => {
     flash((await copyPostLink(post)) ? "Link copied" : "Couldn't copy the link");
   };
@@ -252,6 +282,7 @@ export function ShareSheet({
 
         <div className="flex shrink-0 px-4 pt-2">
           {canStory && <Quick icon="plus" label="Add to story" busy={storyBusy} onClick={() => void toStory()} />}
+          {canRepost && <Quick icon="repeat" label={reposted ? "Undo repost" : "Repost"} active={reposted} busy={repostBusy} onClick={() => void toRepost()} />}
           <Quick glyph={<WhatsappGlyph className="size-[22px]" />} label="WhatsApp" onClick={whatsapp} />
           <Quick icon="copy" label="Copy link" onClick={() => void copyLink()} />
           <Quick icon="shareArrow" label="More" onClick={() => void more()} />

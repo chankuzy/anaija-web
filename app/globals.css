@@ -377,3 +377,36 @@ body {
 .msg-highlight {
   animation: msg-pulse 1.4s ease-out;
 }
+
+/* ───── App feel: nothing is selectable except fields and elements that opt in with .selectable ───── */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    -webkit-touch-callout: none;
+  }
+  *,
+  *::before,
+  *::after {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input,
+  textarea,
+  [contenteditable="true"],
+  .selectable,
+  .selectable * {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+  img,
+  video,
+  svg {
+    -webkit-user-drag: none;
+  }
+}
+/* Keeps double-tap reliable on touch screens (no zoom delay) so double-tap like fires. */
+.feed-card {
+  touch-action: manipulation;
+}

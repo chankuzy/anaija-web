@@ -10,6 +10,7 @@ import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear, useCached } from "@/lib/cache/swr";
+import { reconcile } from "@/lib/feed/interactions";
 
 // HTTP status of the last failed load per post (404 gone, 410 expired story, 0 network).
 const failures = new Map<string, number>();
@@ -32,7 +33,9 @@ export function PostPage({ id, initial }: { id: string; initial?: Post | null })
 
   const fetcher = useCallback(async () => {
     try {
+      const t0 = Date.now();
       const p = await postDetailApi.get(n);
+      reconcile([p.id], t0);
       failures.delete(k);
       return p;
     } catch (e) {

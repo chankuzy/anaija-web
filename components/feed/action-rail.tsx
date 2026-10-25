@@ -51,7 +51,7 @@ function RailButton({
   );
 }
 
-// Order follows Flutter: mute, like, comment, repost, bookmark, share, options.
+// Order: mute, like, comment, bookmark, share, options (repost lives in the share sheet).
 // side = desktop variant: round dark buttons that sit outside the card, TikTok-web style.
 export function ActionRail({
   post,
@@ -60,7 +60,6 @@ export function ActionRail({
   onLike,
   onComment,
   onBookmark,
-  onRepost,
   onShare,
   onOptions,
 }: {
@@ -70,13 +69,11 @@ export function ActionRail({
   onLike: () => void;
   onComment: () => void;
   onBookmark: () => void;
-  onRepost: () => void;
   onShare: () => void;
   onOptions: () => void;
 }) {
   const { muted, toggleMute } = usePlayback();
   const big = side ? "size-7" : "size-[34px]";
-  const mid = side ? "size-7" : "size-[32px]";
   return (
     <div className={`flex flex-col items-center ${side ? "gap-3" : "gap-3.5"}`}>
       {hasMute &&
@@ -105,11 +102,6 @@ export function ActionRail({
       <RailButton aria="Comments" side={side} label={formatCount(post.comments_count)} onClick={onComment}>
         <Icon name="message" filled className={big} />
       </RailButton>
-      {post.type === "post" && (
-        <RailButton aria="Repost" side={side} pressed={post.is_reposted} label={formatCount(post.reposts_count)} onClick={onRepost}>
-          <Icon name="repeat" className={`${mid} ${post.is_reposted ? "text-brand" : "text-white"}`} />
-        </RailButton>
-      )}
       <RailButton
         aria="Bookmark"
         side={side}
