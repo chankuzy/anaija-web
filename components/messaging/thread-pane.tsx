@@ -117,6 +117,7 @@ function Media({
   if (isAudioMsg(m)) {
     return (
       <div
+        onClick={m.status === "failed" ? onRetry : undefined}
         className={`max-w-full p-1 transition-opacity ${bubbleCorners(mine, firstInBlock, lastInBlock)} ${
           mine ? "bubble-sent text-brand-fg" : "bg-card-elevated text-fg"
         } ${m.status === "sending" ? "opacity-70" : ""}`}
@@ -158,15 +159,6 @@ function Media({
   );
 }
 
-function statusLine(m: Message, mine: boolean, showSeen: boolean): string | null {
-  if (m.status === "sending") return "Sending…";
-  if (m.status === "failed") return "Not sent · Tap to retry";
-  const parts: string[] = [];
-  if (m.is_edited && !m.is_deleted) parts.push("Edited");
-  if (mine && showSeen) parts.push("Seen");
-  return parts.length ? parts.join(" · ") : null;
-}
-
 function Bubble({
   m,
   mine,
@@ -205,7 +197,6 @@ function Bubble({
   const showText = text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
-  const status = statusLine(m, mine, showSeen);
 
   // Gesture state lives in refs and writes straight to the DOM, so dragging never re-renders the bubble.
   const slideRef = useRef<HTMLDivElement>(null);
@@ -436,7 +427,7 @@ function Bubble({
                   mine ? "bubble-sent" : "bg-card-elevated text-fg"
                 } ${m.is_deleted ? "italic opacity-60" : ""} ${
                   m.status === "sending" ? "opacity-70" : ""
-                } ${m.status === "failed" ? "cursor-pointer" : ""}`}
+                } ${m.status === "failed" ? "cursor-pointer ring-1 ring-danger/70" : ""}`}
               >
                 {text}
               </div>
@@ -465,18 +456,6 @@ function Bubble({
               </span>
             )}
 
-            {status && (
-              <button
-                type="button"
-                disabled={m.status !== "failed"}
-                onClick={onRetry}
-                className={`mt-0.5 px-1 text-[10.5px] font-medium leading-none ${
-                  m.status === "failed" ? "text-danger" : "text-muted"
-                }`}
-              >
-                {status}
-              </button>
-            )}
           </div>
         </div>
       </div>
