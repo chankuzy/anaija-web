@@ -56,6 +56,8 @@ import { CheckCircleIcon as b_check_circle } from "@solar-icons/react/bold/check
 import { CheckCircleIcon as o_check_circle } from "@solar-icons/react/outline/check-circle";
 import { CheckIcon as b_check } from "@solar-icons/react/bold/check";
 import { CheckIcon as o_check } from "@solar-icons/react/outline/check";
+import { CheckReadIcon as b_check_read } from "@solar-icons/react/bold/check-read";
+import { CheckReadIcon as o_check_read } from "@solar-icons/react/outline/check-read";
 import { ClapperboardIcon as b_clapperboard } from "@solar-icons/react/bold/clapperboard";
 import { ClapperboardIcon as o_clapperboard } from "@solar-icons/react/outline/clapperboard";
 import { ClockCircleIcon as b_clock_circle } from "@solar-icons/react/bold/clock-circle";
@@ -126,6 +128,8 @@ import { MapPointSchoolIcon as b_map_point_school } from "@solar-icons/react/bol
 import { MapPointSchoolIcon as o_map_point_school } from "@solar-icons/react/outline/map-point-school";
 import { MenuDotsIcon as b_menu_dots } from "@solar-icons/react/bold/menu-dots";
 import { MenuDotsIcon as o_menu_dots } from "@solar-icons/react/outline/menu-dots";
+import { MicrophoneIcon as b_microphone } from "@solar-icons/react/bold/microphone";
+import { MicrophoneIcon as o_microphone } from "@solar-icons/react/outline/microphone";
 import { MoonIcon as b_moon } from "@solar-icons/react/bold/moon";
 import { MoonIcon as o_moon } from "@solar-icons/react/outline/moon";
 import { MusicLibrary2Icon as b_music_library_2 } from "@solar-icons/react/bold/music-library-2";
@@ -136,6 +140,8 @@ import { NotebookMinimalisticIcon as b_notebook_minimalistic } from "@solar-icon
 import { NotebookMinimalisticIcon as o_notebook_minimalistic } from "@solar-icons/react/outline/notebook-minimalistic";
 import { PaperclipIcon as b_paperclip } from "@solar-icons/react/bold/paperclip";
 import { PaperclipIcon as o_paperclip } from "@solar-icons/react/outline/paperclip";
+import { PauseIcon as b_pause } from "@solar-icons/react/bold/pause";
+import { PauseIcon as o_pause } from "@solar-icons/react/outline/pause";
 import { Pen2Icon as b_pen_2 } from "@solar-icons/react/bold/pen-2";
 import { Pen2Icon as o_pen_2 } from "@solar-icons/react/outline/pen-2";
 import { PenIcon as b_pen } from "@solar-icons/react/bold/pen";
@@ -172,6 +178,8 @@ import { SquareAcademicCapIcon as b_square_academic_cap } from "@solar-icons/rea
 import { SquareAcademicCapIcon as o_square_academic_cap } from "@solar-icons/react/outline/square-academic-cap";
 import { StarsIcon as b_stars } from "@solar-icons/react/bold/stars";
 import { StarsIcon as o_stars } from "@solar-icons/react/outline/stars";
+import { StopIcon as b_stop } from "@solar-icons/react/bold/stop";
+import { StopIcon as o_stop } from "@solar-icons/react/outline/stop";
 import { SuitcaseIcon as b_suitcase } from "@solar-icons/react/bold/suitcase";
 import { SuitcaseIcon as o_suitcase } from "@solar-icons/react/outline/suitcase";
 import { TagIcon as b_tag } from "@solar-icons/react/bold/tag";
@@ -235,6 +243,7 @@ export const SOLAR = {
   "chatUnread": p(b_chat_unread, o_chat_unread),
   "check": p(b_check, o_check),
   "checkCircle": p(b_check_circle, o_check_circle),
+  "checkRead": p(b_check_read, o_check_read),
   "chevronDown": p(b_alt_arrow_down, o_alt_arrow_down),
   "chevronRight": p(b_alt_arrow_right, o_alt_arrow_right),
   "clapperboard": p(b_clapperboard, o_clapperboard),
@@ -275,12 +284,14 @@ export const SOLAR = {
   "mapPointSchool": p(b_map_point_school, o_map_point_school),
   "menuDots": p(b_menu_dots, o_menu_dots),
   "message": p(b_chat_line, o_chat_line),
+  "microphone": p(b_microphone, o_microphone),
   "moon": p(b_moon, o_moon),
   "music": p(b_music_note, o_music_note),
   "musicLibrary2": p(b_music_library_2, o_music_library_2),
   "musicNote": p(b_music_note, o_music_note),
   "notebookMinimalistic": p(b_notebook_minimalistic, o_notebook_minimalistic),
   "paperclip": p(b_paperclip, o_paperclip),
+  "pause": p(b_pause, o_pause),
   "pen": p(b_pen, o_pen),
   "pen2": p(b_pen_2, o_pen_2),
   "phone": p(b_phone, o_phone),
@@ -304,6 +315,7 @@ export const SOLAR = {
   "shop": p(b_shop, o_shop),
   "squareAcademicCap": p(b_square_academic_cap, o_square_academic_cap),
   "stars": p(b_stars, o_stars),
+  "stop": p(b_stop, o_stop),
   "suitcase": p(b_suitcase, o_suitcase),
   "tag": p(b_tag, o_tag),
   "trash": p(b_trash_bin_2, o_trash_bin_minimalistic),

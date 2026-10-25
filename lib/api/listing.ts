@@ -2,6 +2,7 @@ import { api } from "./client";
 import { normPost } from "./feed";
 import type { ListingDetail, Post } from "./feed-types";
 import { mediaUrl } from "./feed";
+import type { LocationInfo } from "@/lib/location/types";
 
 export interface DayHours {
   open: string;
@@ -12,6 +13,7 @@ export interface ListingDetailFull extends ListingDetail {
   contact_preference?: string;
   contact_phone?: string | null;
   pickup_info?: string | null;
+  location_info?: LocationInfo | null;
   quantity?: number;
   views_count?: number;
   inquiries_count?: number;

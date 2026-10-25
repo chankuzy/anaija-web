@@ -90,6 +90,7 @@ export interface ContentDraft {
   allowStorySharing: boolean | null;
 
   location: string | null;
+  locationInfo?: import("@/lib/location/types").LocationInfo | null;
   taggedUsernames: string[];
 
   listingType: ListingType | null;
@@ -132,6 +133,7 @@ export function createDraft(kind: ContentKind, media: DraftMedia[] = []): Conten
     allowComments: true,
     allowStorySharing: null,
     location: null,
+    locationInfo: null,
     taggedUsernames: [],
     listingType: null,
     subtype: null,

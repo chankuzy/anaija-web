@@ -11,6 +11,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { timeAgo } from "@/lib/format";
 import { useStoryRing } from "@/lib/stories/use-story-ring";
 import type { Post } from "@/lib/api/feed-types";
+import { formatCompactLocation } from "@/lib/location/types";
 
 // Port of PostInfoBlock._fullText: hashtags not already in the caption get appended.
 function fullCaption(caption: string | null, tags: string[]): string {
@@ -172,22 +173,38 @@ export function PostInfo({
   return (
     <div className="flex flex-col items-start">
       {d && !expanded && (
-        <Link
-          href={`/l/${post.id}`}
-          className="mb-2 inline-flex items-center gap-2 rounded-2xl bg-black/50 py-2.5 pl-3.5 pr-2.5 transition-transform active:scale-[0.97]"
-        >
-          <span className="text-white">
-            <span className="text-secondary font-bold text-white/75">₦</span>
-            <span className="text-lg font-extrabold tracking-tight">{d.formatted_price}</span>
-          </span>
-          {d.price_type === "negotiable" && d.status !== "sold" && (
-            <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-micro font-bold text-brand">Nego</span>
+        <div className="mb-2 flex flex-wrap items-center gap-1.5">
+          <Link
+            href={`/l/${post.id}`}
+            className="inline-flex items-center gap-2 rounded-2xl bg-black/50 py-2.5 pl-3.5 pr-2.5 transition-transform active:scale-[0.97]"
+          >
+            <span className="text-white">
+              <span className="text-secondary font-bold text-white/75">₦</span>
+              <span className="text-lg font-extrabold tracking-tight">{d.formatted_price}</span>
+            </span>
+            {d.price_type === "negotiable" && d.status !== "sold" && (
+              <span className="rounded-full bg-brand/15 px-1.5 py-0.5 text-micro font-bold text-brand">Nego</span>
+            )}
+            {(d.status === "sold" || d.status === "reserved") && (
+              <span className="text-xs font-bold text-white/70">{d.status === "sold" ? "Sold" : "Reserved"}</span>
+            )}
+            <Icon name="chevronRight" className="size-5 text-brand" />
+          </Link>
+
+          {(d.location_info || d.pickup_info || post.location) && (
+            <span className="inline-flex items-center gap-1 rounded-2xl bg-black/50 py-2 px-3 text-[12px] font-semibold text-white/90 backdrop-blur-sm max-w-[200px]">
+              <Icon
+                name={d.location_info?.campus ? "mapPointSchool" : "pointOnMap"}
+                className="size-3.5 text-brand shrink-0"
+              />
+              <span className="truncate">
+                {d.location_info
+                  ? formatCompactLocation(d.location_info)
+                  : (d.pickup_info || post.location || "")}
+              </span>
+            </span>
           )}
-          {(d.status === "sold" || d.status === "reserved") && (
-            <span className="text-xs font-bold text-white/70">{d.status === "sold" ? "Sold" : "Reserved"}</span>
-          )}
-          <Icon name="chevronRight" className="size-5 text-brand" />
-        </Link>
+        </div>
       )}
 
       <div className="flex w-full items-center gap-2.5">

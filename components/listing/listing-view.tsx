@@ -15,6 +15,7 @@ import { loginHref } from "@/lib/auth/next";
 import { useShare } from "@/lib/share/share-context";
 import type { Post } from "@/lib/api/feed-types";
 import { timeAgo } from "@/lib/format";
+import { formatFullLocation } from "@/lib/location/types";
 import { MoreLikeThis } from "./more-like-this";
 
 interface Data {
@@ -417,7 +418,20 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
             <div className="my-5" />
             <h2 className="mb-1 text-[15px] font-bold text-fg">Details</h2>
             <div>
-              {d.pickup_info && <Row label="Location" value={d.pickup_info} />}
+              {(d.location_info || d.pickup_info) && (
+                <div className="flex items-center justify-between gap-4 py-2.5 text-secondary">
+                  <span className="text-muted flex items-center gap-1.5">
+                    <Icon
+                      name={d.location_info?.campus ? "mapPointSchool" : "pointOnMap"}
+                      className="size-4 text-brand shrink-0"
+                    />
+                    <span>Location</span>
+                  </span>
+                  <span className="text-right font-medium text-fg">
+                    {d.location_info ? formatFullLocation(d.location_info) : d.pickup_info}
+                  </span>
+                </div>
+              )}
               {d.contact_phone && ["whatsapp", "call", "any"].includes(d.contact_preference ?? "") && <Row label="Phone" value={d.contact_phone} />}
               <Row label="Contact" value={(d.contact_preference ?? "chat").replaceAll("_", " ").toUpperCase()} />
               {(d.views_count ?? 0) > 0 && <Row label="Views" value={String(d.views_count)} />}

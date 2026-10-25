@@ -369,3 +369,11 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .anaija-banner, .anaija-banner-out, .anaija-nudge { animation: none; }
 }
+
+@keyframes msg-pulse {
+  0% { background-color: rgba(255, 216, 77, 0.35); }
+  100% { background-color: transparent; }
+}
+.msg-highlight {
+  animation: msg-pulse 1.4s ease-out;
+}

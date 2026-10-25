@@ -55,7 +55,9 @@ export interface Message {
   reply_to: { id: number; body: string | null } | null;
   reactions: Record<string, number[]>;
   created_at: string;
+  updated_at?: string | null;
   is_deleted: boolean;
+  is_edited?: boolean;
   // Only set on rows that exist locally and are not confirmed yet.
   status?: "sending" | "failed";
   local_id?: string;
@@ -147,6 +149,11 @@ export function parseMessage(raw: unknown): Message | null {
         : null,
     reactions: parseReactions(r.reactions),
     created_at: str(r.created_at) ?? "",
+    updated_at: str(r.edited_at) ?? str(r.updated_at),
+    is_edited:
+      typeof r.is_edited === "boolean"
+        ? r.is_edited
+        : !!(str(r.edited_at) || (str(r.updated_at) && str(r.updated_at) !== str(r.created_at))),
     // Same fallback as Message.fromJson.
     is_deleted:
       typeof r.is_deleted === "boolean"
@@ -166,11 +173,20 @@ export function previewOf(c: Conversation): string {
   const raw = c.last_message_body ?? "";
   if (raw === "[image]" || raw.includes("📷 Photo")) return "Photo";
   if (raw === "[video]" || raw.includes("🎥 Video")) return "Video";
-  if (raw === "[audio]" || raw.includes("🎵 Audio")) return "Voice message";
+  if (raw === "[audio]" || raw.includes("🎵 Audio") || raw.includes("Voice message")) return "Voice message";
   if (raw === "Shared a listing" || raw === "[listing_share]") return "Shared a listing";
   if (raw === "[post_share]" || raw === "Shared a post" || raw.includes("📎 Shared a post")) return "Shared a post";
   if (isInquiry(c) || raw.includes("🛍️ Shared a listing")) return raw.replace("🛍️ Shared a listing", "Listing inquiry");
   return raw;
+}
+
+export interface SendMessageOptions {
+  type?: "text" | "audio" | "image" | "video" | "file";
+  body?: string;
+  media_key?: string;
+  media_type?: string;
+  reply_to_id?: number;
+  client_temp_id?: string;
 }
 
 export const messagingApi = {
@@ -193,10 +209,19 @@ export const messagingApi = {
     return { items, nextCursor: str(r.next_cursor) ?? str(r.cursor) };
   },
 
-  send: async (id: number, body: string): Promise<Message | null> => {
-    const raw = await api.post<unknown>(`conversations-send/${id}`, { type: "text", body });
+  send: async (id: number, input: string | SendMessageOptions): Promise<Message | null> => {
+    const payload = typeof input === "string" ? { type: "text", body: input } : input;
+    const raw = await api.post<unknown>(`conversations-send/${id}`, payload);
     return parseMessage(raw) ?? parseMessage(rec(raw).message) ?? parseMessage(rec(raw).data);
   },
+
+  edit: async (conversationId: number, messageId: number, body: string): Promise<Message | null> => {
+    const raw = await api.patch<unknown>(`messages-update/${conversationId}/x/${messageId}`, { body });
+    return parseMessage(raw) ?? parseMessage(rec(raw).message) ?? parseMessage(rec(raw).data);
+  },
+
+  delete: (conversationId: number, messageId: number, scope: "me" | "everyone" = "me") =>
+    api.post<{ message: string }>(`messages-destroy/${conversationId}/x/${messageId}`, { scope }),
 
   markRead: (id: number, upToMessageId: number) =>
     api.post<unknown>(`messages-read/${id}`, { up_to_message_id: upToMessageId }).catch(() => undefined),

@@ -46,6 +46,8 @@ export interface ListingDetail {
   condition: string | null;
   status: string;
   business_name?: string | null;
+  pickup_info?: string | null;
+  location_info?: import("@/lib/location/types").LocationInfo | null;
 }
 
 export interface Post {
@@ -54,6 +56,7 @@ export interface Post {
   subtype: string | null;
   pinned_at: string | null;
   caption: string | null;
+  location?: string | null;
   video_url: string | null;
   thumbnail_url: string | null;
   duration: number | null;

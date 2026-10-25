@@ -55,6 +55,10 @@ const ALIASES = {
   userCross: ["userCrossRounded", "userCross"],
   forbidden: ["forbiddenCircle", "forbidden"],
   shareArrow: ["forwardRight", "forward"],
+  microphone: ["microphone", "microphone2"],
+  pause: ["pause", "pauseCircle"],
+  stop: ["stop", "stopCircle"],
+  checkRead: ["checkRead", "checkCircle"],
 };
 
 const kebab = (s) =>

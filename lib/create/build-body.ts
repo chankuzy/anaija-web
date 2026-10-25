@@ -39,6 +39,7 @@ export function buildPostBody(d: ContentDraft, o: BodyOptions): Record<string, u
       contact_preference: d.contactPreference,
       ...(d.condition ? { condition: d.condition } : {}),
       ...(d.pickupInfo ? { pickup_info: d.pickupInfo } : {}),
+      ...(d.locationInfo ? { location_info: d.locationInfo } : {}),
       ...(d.contactPhone ? { contact_phone: d.contactPhone } : {}),
       ...(d.quantity ? { quantity: int(d.quantity) ?? 1 } : {}),
       ...(d.businessName ? { business_name: d.businessName } : {}),

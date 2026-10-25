@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
 import { ApiError } from "@/lib/api/client";
 import { messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
@@ -129,6 +129,27 @@ export function useThread(conversationId: number, myId: number | undefined) {
               : prev,
           );
         },
+        message_edited: (p) => {
+          const u = p as { message_id?: number; body?: string; updated_at?: string; message?: unknown };
+          if (typeof u.message_id !== "number") return;
+          const full = parseMessage(u.message);
+          setState((prev) => {
+            if (!prev || prev.id !== conversationId) return prev;
+            return {
+              ...prev,
+              items: prev.items.map((x) => {
+                if (x.id !== u.message_id) return x;
+                if (full) return full;
+                return {
+                  ...x,
+                  body: u.body ?? x.body,
+                  updated_at: u.updated_at ?? new Date().toISOString(),
+                  is_edited: true,
+                };
+              }),
+            };
+          });
+        },
       },
       setJoined,
     );
@@ -154,10 +175,24 @@ export function useThread(conversationId: number, myId: number | undefined) {
       .catch(() => setState((p) => (p && p.id === conversationId ? { ...p, loadingOlder: false } : p)));
   }, [s, conversationId]);
 
+  // Stores pending options by localId for retry
+  const pendingPayloads = useRef(new Map<string, { body?: string; type?: string; replyToId?: number; mediaKey?: string; mediaType?: string }>());
+
   const deliver = useCallback(
-    async (localId: string, body: string): Promise<Message | null> => {
+    async (
+      localId: string,
+      payload: { body?: string; type?: string; replyToId?: number; mediaKey?: string; mediaType?: string },
+    ): Promise<Message | null> => {
       try {
-        const real = await messagingApi.send(conversationId, body);
+        const real = await messagingApi.send(conversationId, {
+          type: (payload.type as "text" | "image" | "video" | "audio" | "file") ?? "text",
+          body: payload.body,
+          reply_to_id: payload.replyToId,
+          media_key: payload.mediaKey,
+          media_type: payload.mediaType,
+          client_temp_id: localId,
+        });
+        pendingPayloads.current.delete(localId);
         setState((p) => {
           if (!p || p.id !== conversationId) return p;
           const rest = p.items.filter((m) => m.local_id !== localId);
@@ -180,48 +215,169 @@ export function useThread(conversationId: number, myId: number | undefined) {
   );
 
   const send = useCallback(
-    (body: string) => {
+    (
+      input:
+        | string
+        | {
+            body?: string;
+            type?: "text" | "audio" | "image" | "video" | "file";
+            replyTo?: { id: number; body: string | null } | null;
+            mediaKey?: string;
+            mediaType?: string;
+            mediaUrl?: string;
+          },
+    ) => {
       if (myId === undefined) return Promise.resolve(null);
+      const opts = typeof input === "string" ? { body: input, type: "text" as const } : input;
       const localId = `l${Date.now()}`;
+      const payload = {
+        body: opts.body,
+        type: opts.type ?? "text",
+        replyToId: opts.replyTo?.id,
+        mediaKey: opts.mediaKey,
+        mediaType: opts.mediaType,
+      };
+      pendingPayloads.current.set(localId, payload);
+
       const temp: Message = {
         id: -Date.now(),
         conversation_id: conversationId,
-        type: "text",
-        body,
-        media_url: null,
-        media_type: null,
+        type: opts.type ?? "text",
+        body: opts.body ?? null,
+        media_url: opts.mediaUrl ?? null,
+        media_type: opts.mediaType ?? null,
         sender: null,
         sender_id: myId,
         shared_post: null,
-        reply_to: null,
+        reply_to: opts.replyTo ?? null,
         reactions: {},
         created_at: new Date().toISOString(),
         is_deleted: false,
         status: "sending",
         local_id: localId,
       };
+
       setState((p) =>
         p && p.id === conversationId
           ? { ...p, items: [...p.items, temp] }
           : { id: conversationId, items: [temp], cursor: null, error: null, loadingOlder: false },
       );
-      return deliver(localId, body);
+      return deliver(localId, payload);
     },
     [myId, conversationId, deliver],
   );
 
   const retry = useCallback(
     (localId: string) => {
+      const payload = pendingPayloads.current.get(localId);
       const m = s?.items.find((x) => x.local_id === localId);
-      if (!m || m.body === null) return Promise.resolve(null);
+      if (!m) return Promise.resolve(null);
+      const effPayload = payload ?? {
+        body: m.body ?? undefined,
+        type: m.type,
+        replyToId: m.reply_to?.id,
+        mediaKey: undefined,
+        mediaType: m.media_type ?? undefined,
+      };
       setState((p) =>
         p && p.id === conversationId
           ? { ...p, items: p.items.map((x) => (x.local_id === localId ? { ...x, status: "sending" as const } : x)) }
           : p,
       );
-      return deliver(localId, m.body);
+      return deliver(localId, effPayload);
     },
     [s, conversationId, deliver],
+  );
+
+  const editMessage = useCallback(
+    async (messageId: number, newBody: string): Promise<boolean> => {
+      const prevMsg = s?.items.find((x) => x.id === messageId);
+      if (!prevMsg) return false;
+      const oldBody = prevMsg.body;
+      const oldEdited = prevMsg.is_edited;
+      const oldUpdated = prevMsg.updated_at;
+
+      // Optimistic update
+      setState((p) => {
+        if (!p || p.id !== conversationId) return p;
+        return {
+          ...p,
+          items: p.items.map((x) =>
+            x.id === messageId ? { ...x, body: newBody, is_edited: true, updated_at: new Date().toISOString() } : x,
+          ),
+        };
+      });
+
+      try {
+        const res = await messagingApi.edit(conversationId, messageId, newBody);
+        if (res) {
+          setState((p) => {
+            if (!p || p.id !== conversationId) return p;
+            return {
+              ...p,
+              items: p.items.map((x) => (x.id === messageId ? { ...x, ...res, is_edited: true } : x)),
+            };
+          });
+        }
+        return true;
+      } catch (err) {
+        // Rollback
+        setState((p) => {
+          if (!p || p.id !== conversationId) return p;
+          return {
+            ...p,
+            items: p.items.map((x) =>
+              x.id === messageId ? { ...x, body: oldBody, is_edited: oldEdited, updated_at: oldUpdated } : x,
+            ),
+          };
+        });
+        throw err;
+      }
+    },
+    [conversationId, s?.items],
+  );
+
+  const deleteMessage = useCallback(
+    async (messageId: number, scope: "me" | "everyone"): Promise<boolean> => {
+      const prevMsg = s?.items.find((x) => x.id === messageId);
+      if (!prevMsg) return false;
+
+      // Optimistic update
+      setState((p) => {
+        if (!p || p.id !== conversationId) return p;
+        if (scope === "me") {
+          return { ...p, items: p.items.filter((x) => x.id !== messageId) };
+        }
+        return {
+          ...p,
+          items: p.items.map((x) =>
+            x.id === messageId ? { ...x, is_deleted: true, body: null, media_url: null, shared_post: null } : x,
+          ),
+        };
+      });
+
+      try {
+        await messagingApi.delete(conversationId, messageId, scope);
+        return true;
+      } catch (err) {
+        // Rollback
+        setState((p) => {
+          if (!p || p.id !== conversationId) return p;
+          if (scope === "me") {
+            // Reinsert at original position
+            const idx = s?.items.findIndex((x) => x.id === messageId) ?? -1;
+            const items = idx >= 0 ? [...p.items.slice(0, idx), prevMsg, ...p.items.slice(idx)] : [...p.items, prevMsg];
+            return { ...p, items };
+          }
+          return {
+            ...p,
+            items: p.items.map((x) => (x.id === messageId ? prevMsg : x)),
+          };
+        });
+        throw err;
+      }
+    },
+    [conversationId, s?.items],
   );
 
   const setReactions = useCallback(
@@ -241,6 +397,8 @@ export function useThread(conversationId: number, myId: number | undefined) {
     loadOlder,
     send,
     retry,
+    editMessage,
+    deleteMessage,
     setReactions,
   };
 }

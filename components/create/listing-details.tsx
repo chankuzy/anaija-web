@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CONDITIONS, CONTACT, LISTING_TYPES, SUBTYPES, needsCondition } from "@/lib/create/listing";
 import type { Composer } from "@/lib/create/use-composer";
 import { Switch } from "./ui";
+import { LocationSelector, LocationFieldTrigger } from "@/components/location/location-selector";
 
 const inputCls = "h-12 w-full rounded-input bg-surface-interactive px-4 text-[15px] font-medium text-fg outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-brand/60";
 
@@ -29,6 +30,7 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 }
 
 export function ListingDetails({ c }: { c: Composer }) {
+  const [locationOpen, setLocationOpen] = useState(false);
   const d = c.draft;
   const set = c.update;
   const contact = d.contactPreference ?? "chat";
@@ -95,7 +97,19 @@ export function ListingDetails({ c }: { c: Composer }) {
       )}
 
       <Field label="Pickup / location (optional)">
-        <input className={inputCls} value={d.pickupInfo ?? ""} onChange={(e) => set({ pickupInfo: e.target.value })} placeholder="Where can the buyer get it?" />
+        <LocationFieldTrigger
+          value={d.locationInfo ?? (d.pickupInfo ? { label: d.pickupInfo } : null)}
+          onClick={() => setLocationOpen(true)}
+          onClear={() => set({ locationInfo: null, pickupInfo: null })}
+        />
+        <LocationSelector
+          isOpen={locationOpen}
+          value={d.locationInfo ?? (d.pickupInfo ? { label: d.pickupInfo } : null)}
+          onClose={() => setLocationOpen(false)}
+          onSelect={(loc, label) => {
+            set({ locationInfo: loc, pickupInfo: label || null });
+          }}
+        />
       </Field>
 
       <Field label="Preferred contact">
