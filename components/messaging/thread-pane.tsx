@@ -106,11 +106,13 @@ function Media({
   mine,
   firstInBlock,
   lastInBlock,
+  onRetry,
 }: {
   m: Message;
   mine: boolean;
   firstInBlock: boolean;
   lastInBlock: boolean;
+  onRetry: () => void;
 }) {
   if (m.is_deleted || !m.media_url) return null;
 
@@ -414,7 +416,13 @@ function Bubble({
             )}
 
             {m.shared_post && <SharedPostCard post={m.shared_post} />}
-            <Media m={m} mine={mine} firstInBlock={firstInBlock} lastInBlock={lastInBlock} />
+            <Media
+              m={m}
+              mine={mine}
+              firstInBlock={firstInBlock}
+              lastInBlock={lastInBlock}
+              onRetry={onRetry}
+            />
 
             {showText && (
               <div
