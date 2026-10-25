@@ -40,6 +40,10 @@ import { DeleteDialog } from "./delete-dialog";
 
 const QUICK = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const GAP_MS = 15 * 60 * 1000;
+const SWIPE_MAX = 64;
+const SWIPE_TRIGGER = 42;
+const EDGE_GUARD = 24;
+const EASE = "transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1)";
 
 // The docked details column only fits on wide screens; below that, details open full-screen over the thread.
 const XL = "(min-width: 1280px)";
@@ -54,6 +58,9 @@ function useXl() {
     () => true,
   );
 }
+
+const reducedMotion = () =>
+  typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const dayKey = (iso: string) => {
   const d = new Date(iso);
@@ -77,62 +84,44 @@ function dayLabel(iso: string) {
 
 function bubbleCorners(mine: boolean, first: boolean, last: boolean): string {
   if (mine) {
-    if (first && last) return "rounded-[22px] rounded-br-[8px]";
-    if (first) return "rounded-[22px] rounded-br-[4px]";
-    if (last) return "rounded-[22px] rounded-tr-[4px] rounded-br-[8px]";
-    return "rounded-[22px] rounded-r-[4px]";
-  } else {
-    if (first && last) return "rounded-[22px] rounded-bl-[8px]";
-    if (first) return "rounded-[22px] rounded-bl-[4px]";
-    if (last) return "rounded-[22px] rounded-tl-[4px] rounded-bl-[8px]";
-    return "rounded-[22px] rounded-l-[4px]";
+    if (first && last) return "rounded-[18px] rounded-br-[6px]";
+    if (first) return "rounded-[18px] rounded-br-[4px]";
+    if (last) return "rounded-[18px] rounded-tr-[4px] rounded-br-[6px]";
+    return "rounded-[18px] rounded-r-[4px]";
   }
+  if (first && last) return "rounded-[18px] rounded-bl-[6px]";
+  if (first) return "rounded-[18px] rounded-bl-[4px]";
+  if (last) return "rounded-[18px] rounded-tl-[4px] rounded-bl-[6px]";
+  return "rounded-[18px] rounded-l-[4px]";
 }
+
+const isAudioMsg = (m: Message) =>
+  m.type === "audio" ||
+  (m.media_type?.startsWith("audio/") ?? false) ||
+  (m.media_url?.includes("voice_") ?? false) ||
+  /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
 
 function Media({
   m,
   mine,
   firstInBlock,
   lastInBlock,
-  isRead,
 }: {
   m: Message;
   mine: boolean;
   firstInBlock: boolean;
   lastInBlock: boolean;
-  isRead: boolean;
 }) {
   if (m.is_deleted || !m.media_url) return null;
-  const isAudio =
-    m.type === "audio" ||
-    (m.media_type?.startsWith("audio/") ?? false) ||
-    (m.media_url?.includes("voice_") ?? false) ||
-    /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
 
-  if (isAudio) {
+  if (isAudioMsg(m)) {
     return (
       <div
-        className={`relative max-w-full ${bubbleCorners(
-          mine,
-          firstInBlock,
-          lastInBlock,
-        )} p-1.5 ${mine ? "bubble-sent text-brand-fg" : "bg-card-elevated text-fg"}`}
+        className={`max-w-full p-1 transition-opacity ${bubbleCorners(mine, firstInBlock, lastInBlock)} ${
+          mine ? "bubble-sent text-brand-fg" : "bg-card-elevated text-fg"
+        } ${m.status === "sending" ? "opacity-70" : ""}`}
       >
         <VoicePlayer src={m.media_url} mine={mine} />
-        {mine && (
-          <div className="flex items-center justify-end px-2.5 pb-0.5 -mt-1 text-brand-fg/75">
-            {m.status === "sending" ? (
-              <span className="size-2.5 rounded-full border border-current border-t-transparent animate-spin ml-0.5" />
-            ) : m.status === "failed" ? (
-              <span className="text-danger font-bold ml-0.5">!</span>
-            ) : (
-              <Icon
-                name={isRead ? "checkRead" : "check"}
-                className={`size-3.5 ml-0.5 ${isRead ? "text-brand" : "text-current"}`}
-              />
-            )}
-          </div>
-        )}
       </div>
     );
   }
@@ -144,11 +133,7 @@ function Media({
         alt=""
         loading="lazy"
         decoding="async"
-        className={`mb-1 max-h-80 max-w-full ${bubbleCorners(
-          mine,
-          firstInBlock,
-          lastInBlock,
-        )} object-cover`}
+        className={`max-h-80 max-w-full object-cover ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
       />
     );
   if (m.type === "video")
@@ -157,11 +142,7 @@ function Media({
         src={m.media_url}
         controls
         preload="metadata"
-        className={`mb-1 max-h-80 max-w-full ${bubbleCorners(
-          mine,
-          firstInBlock,
-          lastInBlock,
-        )}`}
+        className={`max-h-80 max-w-full ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
       />
     );
   return (
@@ -169,12 +150,21 @@ function Media({
       href={m.media_url}
       target="_blank"
       rel="noreferrer"
-      className="mb-1 inline-flex items-center gap-2 rounded-2xl bg-card-elevated px-4 py-3 text-body text-fg hover:bg-surface-elevated"
+      className="inline-flex items-center gap-2 rounded-2xl bg-card-elevated px-3 py-2 text-body text-fg hover:bg-surface-elevated"
     >
       <Icon name="paperclip" className="size-5" />
       Attachment
     </a>
   );
+}
+
+function statusLine(m: Message, mine: boolean, showSeen: boolean): string | null {
+  if (m.status === "sending") return "Sending…";
+  if (m.status === "failed") return "Not sent · Tap to retry";
+  const parts: string[] = [];
+  if (m.is_edited && !m.is_deleted) parts.push("Edited");
+  if (mine && showSeen) parts.push("Seen");
+  return parts.length ? parts.join(" · ") : null;
 }
 
 function Bubble({
@@ -183,7 +173,7 @@ function Bubble({
   showAvatar,
   firstInBlock,
   lastInBlock,
-  isRead,
+  showSeen,
   myId,
   pickerOpen,
   onPicker,
@@ -198,7 +188,7 @@ function Bubble({
   showAvatar: boolean;
   firstInBlock: boolean;
   lastInBlock: boolean;
-  isRead: boolean;
+  showSeen: boolean;
   myId: number | undefined;
   pickerOpen: boolean;
   onPicker: () => void;
@@ -209,88 +199,131 @@ function Bubble({
   onNavigateToMessage: (id: number) => void;
 }) {
   const text = m.is_deleted ? "This message was deleted" : (m.body ?? "");
-  const isAudio =
-    m.type === "audio" ||
-    (m.media_type?.startsWith("audio/") ?? false) ||
-    (m.media_url?.includes("voice_") ?? false) ||
-    /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
+  const audio = isAudioMsg(m);
   const hasMedia =
-    !!m.media_url && !m.is_deleted && (["image", "video", "audio", "file"].includes(m.type) || isAudio);
-  const showText = text.trim() !== "" && !(hasMedia && (m.type === "file" || isAudio));
+    !!m.media_url && !m.is_deleted && (["image", "video", "audio", "file"].includes(m.type) || audio);
+  const showText = text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
+  const status = statusLine(m, mine, showSeen);
 
-  // Swipe-to-reply gesture state
-  const [swipeX, setSwipeX] = useState(0);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const longPressTimerRef = useRef<number | null>(null);
-  const swipingRef = useRef(false);
+  // Gesture state lives in refs and writes straight to the DOM, so dragging never re-renders the bubble.
+  const slideRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLDivElement>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const mode = useRef<"idle" | "swipe" | "scroll">("idle");
+  const offset = useRef(0);
+  const armed = useRef(false);
+  const raf = useRef<number | null>(null);
+  const pressTimer = useRef<number | null>(null);
+  const settleTimer = useRef<number | null>(null);
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (m.is_deleted) return;
-      const touch = e.touches[0];
-      touchStartRef.current = { x: touch.clientX, y: touch.clientY };
-      swipingRef.current = false;
-
-      longPressTimerRef.current = window.setTimeout(() => {
-        if (touchStartRef.current && !swipingRef.current) {
-          try {
-            navigator?.vibrate?.(20);
-          } catch {}
-          onOpenMenu(m, { x: touchStartRef.current.x, y: touchStartRef.current.y });
-          touchStartRef.current = null;
-        }
-      }, 450);
-    },
-    [m, onOpenMenu],
-  );
-
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
-      if (!touchStartRef.current || m.is_deleted) return;
-      const touch = e.touches[0];
-      const dx = touch.clientX - touchStartRef.current.x;
-      const dy = Math.abs(touch.clientY - touchStartRef.current.y);
-
-      if (dy > 15 && !swipingRef.current) {
-        if (longPressTimerRef.current) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-        touchStartRef.current = null;
-        setSwipeX(0);
-        return;
-      }
-
-      if (Math.abs(dx) > 10) {
-        if (longPressTimerRef.current) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-        swipingRef.current = true;
-        const offset = Math.max(0, Math.min(55, dx));
-        setSwipeX(offset);
-      }
-    },
-    [m.is_deleted],
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+  const clearPress = () => {
+    if (pressTimer.current !== null) {
+      window.clearTimeout(pressTimer.current);
+      pressTimer.current = null;
     }
-    if (swipeX >= 38) {
+  };
+
+  const paint = () => {
+    raf.current = null;
+    const el = slideRef.current;
+    const hint = hintRef.current;
+    if (el) el.style.transform = offset.current > 0 ? `translate3d(${offset.current}px,0,0)` : "";
+    if (hint) {
+      const p = Math.min(1, offset.current / SWIPE_TRIGGER);
+      hint.style.opacity = String(p);
+      hint.style.transform = `translate3d(0,-50%,0) scale(${0.6 + 0.4 * p})`;
+    }
+  };
+
+  const settle = () => {
+    clearPress();
+    if (raf.current !== null) cancelAnimationFrame(raf.current);
+    raf.current = null;
+    const el = slideRef.current;
+    const hint = hintRef.current;
+    if (el) {
+      el.style.transition = reducedMotion() ? "none" : EASE;
+      el.style.transform = "";
+    }
+    if (hint) hint.style.opacity = "0";
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    settleTimer.current = window.setTimeout(() => {
+      if (slideRef.current) slideRef.current.style.transition = "none";
+    }, 260);
+    offset.current = 0;
+    armed.current = false;
+    mode.current = "idle";
+    start.current = null;
+  };
+
+  useEffect(
+    () => () => {
+      clearPress();
+      if (raf.current !== null) cancelAnimationFrame(raf.current);
+      if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    },
+    [],
+  );
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (m.is_deleted) return;
+    const t = e.touches[0];
+    // Leave the screen edge to the browser's own back gesture.
+    if (t.clientX < EDGE_GUARD) return;
+    if (settleTimer.current !== null) window.clearTimeout(settleTimer.current);
+    if (slideRef.current) slideRef.current.style.transition = "none";
+    start.current = { x: t.clientX, y: t.clientY };
+    mode.current = "idle";
+    armed.current = false;
+    clearPress();
+    const sx = t.clientX;
+    const sy = t.clientY;
+    pressTimer.current = window.setTimeout(() => {
+      if (mode.current !== "idle" || !start.current) return;
       try {
-        navigator?.vibrate?.(15);
+        navigator.vibrate?.(18);
       } catch {}
-      onReply(m);
+      start.current = null;
+      onOpenMenu(m, { x: sx, y: sy });
+    }, 450);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const s = start.current;
+    if (!s) return;
+    const t = e.touches[0];
+    const dx = t.clientX - s.x;
+    const dy = t.clientY - s.y;
+
+    if (mode.current === "idle") {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      clearPress();
+      // Decide once per gesture: mostly-horizontal rightward drags reply, anything else is scrolling.
+      mode.current = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.4 ? "swipe" : "scroll";
     }
-    setSwipeX(0);
-    swipingRef.current = false;
-    touchStartRef.current = null;
-  }, [m, onReply, swipeX]);
+    if (mode.current !== "swipe") return;
+
+    // Rubber-band past the trigger so it feels elastic, not hard-stopped.
+    const raw = Math.max(0, dx);
+    const eased = raw <= SWIPE_TRIGGER ? raw : SWIPE_TRIGGER + (raw - SWIPE_TRIGGER) * 0.35;
+    offset.current = Math.min(SWIPE_MAX, eased);
+    const nowArmed = offset.current >= SWIPE_TRIGGER;
+    if (nowArmed && !armed.current) {
+      try {
+        navigator.vibrate?.(10);
+      } catch {}
+    }
+    armed.current = nowArmed;
+    if (raf.current === null) raf.current = requestAnimationFrame(paint);
+  };
+
+  const onTouchEnd = () => {
+    const fire = mode.current === "swipe" && armed.current;
+    settle();
+    if (fire) onReply(m);
+  };
 
   if (m.type === "system") {
     return <p className="my-2 text-center text-supporting text-muted">{text}</p>;
@@ -299,15 +332,16 @@ function Bubble({
   return (
     <div
       id={m.id > 0 ? `msg-${m.id}` : undefined}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={settle}
       onContextMenu={(e) => {
         if (m.is_deleted) return;
         e.preventDefault();
         onOpenMenu(m, { x: e.clientX, y: e.clientY });
       }}
-      className={`group/msg relative flex items-end gap-1.5 transition-colors duration-300 ${
+      className={`group/msg relative flex touch-pan-y items-end gap-1.5 transition-colors duration-300 ${
         mine ? "justify-end" : "justify-start"
       } ${lastInBlock ? "mb-2" : "mb-[2px]"}`}
     >
@@ -320,9 +354,8 @@ function Bubble({
           <span className="w-7 shrink-0" />
         ))}
 
-      {/* Action buttons on desktop hover (Left side for sent messages) */}
       {mine && canReact && (
-        <div className="mb-1 hidden items-center gap-0.5 opacity-0 transition-opacity group-hover/msg:opacity-100 md:flex">
+        <div className="mb-1 hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover/msg:opacity-100 md:flex">
           <button
             type="button"
             onClick={(e) => {
@@ -345,145 +378,111 @@ function Bubble({
         </div>
       )}
 
-      {/* Relative container for bubble + swipe reply indicator */}
-      <div
-        className="relative min-w-0 max-w-[76%] transition-transform duration-75 ease-out"
-        style={swipeX > 0 ? { transform: `translateX(${swipeX}px)` } : undefined}
-      >
-        {/* Swipe reply indicator behind bubble */}
-        {swipeX > 8 && (
-          <div
-            className="absolute -left-9 top-1/2 -translate-y-1/2 pointer-events-none transition-opacity"
-            style={{ opacity: Math.min(1, swipeX / 35) }}
-          >
-            <div className="grid size-7 place-items-center rounded-full bg-brand/20 text-brand">
-              <Icon name="reply" className="size-4" />
-            </div>
+      <div className="relative min-w-0 max-w-[78%]">
+        <div
+          ref={hintRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-9 top-1/2 opacity-0"
+          style={{ transform: "translate3d(0,-50%,0) scale(0.6)" }}
+        >
+          <div className="grid size-7 place-items-center rounded-full bg-brand/20 text-brand">
+            <Icon name="reply" className="size-4" />
           </div>
-        )}
+        </div>
 
-        <div className={`flex min-w-0 flex-col ${mine ? "items-end" : "items-start"}`}>
-          {pickerOpen && (
-            <div
-              className={`glass absolute bottom-full z-20 mb-1 flex gap-1 rounded-full px-2 py-1.5 ${
-                mine ? "right-0" : "left-0"
-              }`}
-            >
-              {QUICK.map((e) => (
-                <button
-                  key={e}
-                  type="button"
-                  onClick={() => onReact(e)}
-                  className="grid size-9 place-items-center rounded-full text-xl transition-transform hover:scale-125 hover:bg-white/10"
-                >
-                  {e}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Quoted Reply Chip */}
-          {m.reply_to && (
-            <button
-              type="button"
-              onClick={() => m.reply_to && onNavigateToMessage(m.reply_to.id)}
-              className="mb-1 flex max-w-full items-center gap-1.5 truncate rounded-xl bg-white/8 px-3 py-1.5 text-left text-[12.5px] font-medium text-muted transition hover:bg-white/12"
-            >
-              <Icon name="reply" className="size-3.5 shrink-0 text-brand" />
-              <span className="truncate">{m.reply_to.body ?? "Message"}</span>
-            </button>
-          )}
-
-          {m.shared_post && <SharedPostCard post={m.shared_post} />}
-          <Media
-            m={m}
-            mine={mine}
-            firstInBlock={firstInBlock}
-            lastInBlock={lastInBlock}
-            isRead={isRead}
-          />
-
-          {showText && (
-            <div
-              onClick={m.status === "failed" ? onRetry : undefined}
-              className={`relative whitespace-pre-wrap break-words ${bubbleCorners(
-                mine,
-                firstInBlock,
-                lastInBlock,
-              )} px-4 py-2.5 text-[14.5px] font-medium leading-[1.42] ${
-                mine ? "bubble-sent" : "bg-card-elevated text-fg"
-              } ${m.is_deleted ? "italic opacity-60" : ""} ${m.status ? "opacity-80" : ""} ${
-                m.status === "failed" ? "cursor-pointer" : ""
-              }`}
-            >
-              {text}
-
-              {/* Edited label and delivery ticks in bubble (no timestamp) */}
-              {(mine || m.is_edited) && (
-                <div
-                  className={`mt-0.5 flex items-center justify-end gap-1 text-[10.5px] select-none ${
-                    mine ? "text-brand-fg/75" : "text-muted"
-                  }`}
-                >
-                  {m.is_edited && <span className="italic mr-0.5">(edited)</span>}
-                  {mine && (
-                    <>
-                      {m.status === "sending" ? (
-                        <span className="size-2.5 rounded-full border border-current border-t-transparent animate-spin ml-0.5" />
-                      ) : m.status === "failed" ? (
-                        <span className="text-danger font-bold ml-0.5">!</span>
-                      ) : (
-                        <Icon
-                          name={isRead ? "checkRead" : "check"}
-                          className={`size-3.5 ml-0.5 ${isRead ? "text-brand" : "text-current"}`}
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Reactions row */}
-          {reacts.length > 0 && !m.is_deleted && (
-            <span className="mt-1 flex flex-wrap gap-1">
-              {reacts.map(([emoji, ids]) => {
-                const own = myId !== undefined && ids.includes(myId);
-                return (
+        <div ref={slideRef} className="will-change-transform">
+          <div className={`flex min-w-0 flex-col ${mine ? "items-end" : "items-start"}`}>
+            {pickerOpen && (
+              <div
+                className={`glass absolute bottom-full z-20 mb-1 flex gap-1 rounded-full px-2 py-1.5 ${
+                  mine ? "right-0" : "left-0"
+                }`}
+              >
+                {QUICK.map((e) => (
                   <button
-                    key={emoji}
+                    key={e}
                     type="button"
-                    onClick={() => onReact(emoji)}
-                    className={`flex items-center gap-1 rounded-xl px-2 py-[3px] text-[13px] ${
-                      own ? "bg-brand/25" : "bg-card-elevated"
-                    }`}
+                    onClick={() => onReact(e)}
+                    className="grid size-9 place-items-center rounded-full text-xl transition-transform hover:scale-125 hover:bg-white/10"
                   >
-                    {emoji}
-                    {ids.length > 1 && (
-                      <span className="text-[11.5px] font-bold text-fg">{ids.length}</span>
-                    )}
+                    {e}
                   </button>
-                );
-              })}
-            </span>
-          )}
+                ))}
+              </div>
+            )}
 
-          {m.status === "failed" && (
-            <button
-              type="button"
-              onClick={onRetry}
-              className="mt-1 px-1 text-micro font-bold text-danger hover:underline"
-            >
-              Tap to retry
-            </button>
-          )}
+            {m.reply_to && (
+              <button
+                type="button"
+                onClick={() => m.reply_to && onNavigateToMessage(m.reply_to.id)}
+                className="mb-1 flex max-w-full items-center gap-1.5 rounded-xl bg-white/8 px-2.5 py-1 text-left text-[12px] font-medium text-muted transition hover:bg-white/12"
+              >
+                <Icon name="reply" className="size-3.5 shrink-0 text-brand" />
+                <span className="truncate">{m.reply_to.body ?? "Attachment"}</span>
+              </button>
+            )}
+
+            {m.shared_post && <SharedPostCard post={m.shared_post} />}
+            <Media m={m} mine={mine} firstInBlock={firstInBlock} lastInBlock={lastInBlock} />
+
+            {showText && (
+              <div
+                onClick={m.status === "failed" ? onRetry : undefined}
+                className={`whitespace-pre-wrap break-words ${bubbleCorners(
+                  mine,
+                  firstInBlock,
+                  lastInBlock,
+                )} px-3 py-[7px] text-[14.5px] font-medium leading-[1.4] transition-opacity ${
+                  mine ? "bubble-sent" : "bg-card-elevated text-fg"
+                } ${m.is_deleted ? "italic opacity-60" : ""} ${
+                  m.status === "sending" ? "opacity-70" : ""
+                } ${m.status === "failed" ? "cursor-pointer" : ""}`}
+              >
+                {text}
+              </div>
+            )}
+
+            {reacts.length > 0 && !m.is_deleted && (
+              <span className="mt-1 flex flex-wrap gap-1">
+                {reacts.map(([emoji, ids]) => {
+                  const own = myId !== undefined && ids.includes(myId);
+                  return (
+                    <button
+                      key={emoji}
+                      type="button"
+                      onClick={() => onReact(emoji)}
+                      className={`flex items-center gap-1 rounded-xl px-2 py-[2px] text-[13px] transition-colors ${
+                        own ? "bg-brand/25" : "bg-card-elevated"
+                      }`}
+                    >
+                      {emoji}
+                      {ids.length > 1 && (
+                        <span className="text-[11.5px] font-bold text-fg">{ids.length}</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </span>
+            )}
+
+            {status && (
+              <button
+                type="button"
+                disabled={m.status !== "failed"}
+                onClick={onRetry}
+                className={`mt-0.5 px-1 text-[10.5px] font-medium leading-none ${
+                  m.status === "failed" ? "text-danger" : "text-muted"
+                }`}
+              >
+                {status}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action buttons on desktop hover (Right side for received messages) */}
       {!mine && canReact && (
-        <div className="mb-1 hidden items-center gap-0.5 opacity-0 transition-opacity group-hover/msg:opacity-100 md:flex">
+        <div className="mb-1 hidden items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover/msg:opacity-100 md:flex">
           <button
             type="button"
             onClick={onPicker}
@@ -537,7 +536,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const [details, setDetails] = useState(true);
   const [sheet, setSheet] = useState(false);
 
-  // Advanced messaging state: replies, edits, context menus, deletions, voice
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
   const [menuTarget, setMenuTarget] = useState<{
@@ -549,6 +547,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
     scope: "me" | "everyone";
   } | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const voiceRecorder = useVoiceRecorder();
 
@@ -558,9 +557,18 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const stick = useRef(true);
   const anchor = useRef<number | null>(null);
   const lastRead = useRef(0);
+  const primed = useRef(false);
+  const lastCount = useRef(0);
 
   const msgs = t.messages;
   const last = msgs[msgs.length - 1];
+
+  // Reset per-thread scroll state when switching conversations.
+  useEffect(() => {
+    primed.current = false;
+    lastCount.current = 0;
+    stick.current = true;
+  }, [conversationId]);
 
   // Keep the newest message in view unless the reader scrolled up; hold position when older pages prepend.
   useLayoutEffect(() => {
@@ -569,19 +577,33 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
     if (anchor.current !== null) {
       el.scrollTop += el.scrollHeight - anchor.current;
       anchor.current = null;
+      lastCount.current = msgs.length;
       return;
     }
-    if (stick.current) el.scrollTop = el.scrollHeight;
-  }, [msgs.length, last?.status]);
+    const grew = msgs.length > lastCount.current;
+    lastCount.current = msgs.length;
+    if (!stick.current) return;
+    if (!primed.current || reducedMotion()) {
+      el.scrollTop = el.scrollHeight;
+      if (msgs.length > 0) primed.current = true;
+    } else if (grew || last?.status) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [msgs.length, last?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function onScroll() {
     const el = scroller.current;
     if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
   }
 
-  // Someone else's newest message counts as read the moment this thread is open.
   const newestOther = useMemo(
     () => [...msgs].reverse().find((m) => m.sender_id !== myId && m.id > 0) ?? null,
+    [msgs, myId],
+  );
+
+  // "Seen" only appears under my most recent delivered message, and only once the other person has replied after it.
+  const lastMineId = useMemo(
+    () => [...msgs].reverse().find((m) => m.sender_id === myId && m.id > 0 && !m.is_deleted)?.id ?? 0,
     [msgs, myId],
   );
 
@@ -593,28 +615,33 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
       .then(() => patchConversation(conversationId, { unread_count: 0 }));
   }, [newestOther, conversationId, patchConversation]);
 
-  // Navigate to quoted message and trigger pulse highlight
   const navigateToMessage = useCallback((id: number) => {
     const el = document.getElementById(`msg-${id}`);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("msg-highlight");
-      setTimeout(() => {
-        el.classList.remove("msg-highlight");
-      }, 1600);
-    }
+    if (!el) return;
+    el.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth", block: "center" });
+    el.classList.add("msg-highlight");
+    window.setTimeout(() => el.classList.remove("msg-highlight"), 1600);
   }, []);
 
   async function submit() {
     const body = text.trim();
     if (!body) return;
+    setSendError(null);
 
     if (editingMessage) {
       const editId = editingMessage.id;
+      const original = editingMessage;
       setEditingMessage(null);
       setText("");
       if (area.current) area.current.style.height = "auto";
-      await t.editMessage(editId, body);
+      try {
+        await t.editMessage(editId, body);
+      } catch {
+        // Rolled back by the hook; hand the text back so nothing is lost.
+        setEditingMessage(original);
+        setText(body);
+        setSendError("Couldn't save your edit. Try again.");
+      }
       return;
     }
 
@@ -635,19 +662,24 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
 
   async function handleSendVoice(result: VoiceRecordingResult) {
     stick.current = true;
-    upsertLast(conversationId, "🎤 Voice message");
+    setSendError(null);
+    upsertLast(conversationId, "Voice message");
     if (conv && isPending(conv)) patchConversation(conversationId, { request_status: "accepted" });
 
     const currentReply = replyingTo;
     setReplyingTo(null);
 
-    await t.send({
+    // Backends commonly allow-list "audio/webm" but reject "audio/webm;codecs=opus".
+    const cleanType = result.mediaType?.split(";")[0].trim() || "audio/webm";
+
+    const sent = await t.send({
       type: "audio",
       mediaKey: result.mediaKey,
-      mediaType: result.mediaType,
+      mediaType: cleanType,
       mediaUrl: result.blobUrl,
       replyTo: currentReply ? { id: currentReply.id, body: currentReply.body } : undefined,
     });
+    if (!sent) console.error("[voice] send failed", { mediaKey: result.mediaKey, mediaType: cleanType });
   }
 
   async function react(m: Message, emoji: string) {
@@ -677,17 +709,17 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
     setReplyingTo(null);
     setEditingMessage(m);
     setText(m.body ?? "");
-    if (area.current) {
-      area.current.focus();
-      area.current.style.height = "auto";
-      area.current.style.height = `${Math.min(area.current.scrollHeight, 128)}px`;
-    }
+    requestAnimationFrame(() => {
+      const a = area.current;
+      if (!a) return;
+      a.focus();
+      a.style.height = "auto";
+      a.style.height = `${Math.min(a.scrollHeight, 128)}px`;
+    });
   }
 
   function copyText(m: Message) {
-    if (m.body) {
-      navigator.clipboard?.writeText(m.body).catch(() => {});
-    }
+    if (m.body) navigator.clipboard?.writeText(m.body).catch(() => {});
   }
 
   async function handleConfirmDelete() {
@@ -698,6 +730,8 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
       setDeleteTarget(null);
     } catch (err) {
       console.error("Failed to delete message", err);
+      setSendError("Couldn't delete that message. Try again.");
+      setDeleteTarget(null);
     } finally {
       setDeleteBusy(false);
     }
@@ -706,7 +740,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const name = conv ? convName(conv) : "";
   const username = conv?.other_user?.username;
 
-  // Criteria for edit and delete permissions
   const canEdit = useCallback(
     (m: Message) =>
       m.sender_id === myId &&
@@ -729,7 +762,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   return (
     <div className="relative flex h-full min-h-0">
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-        {/* Header */}
         <header className="flex items-center gap-3 px-3 py-2.5">
           <Link
             href="/messages"
@@ -775,8 +807,11 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           </button>
         </header>
 
-        {/* Message Scroller */}
-        <div ref={scroller} onScroll={onScroll} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div
+          ref={scroller}
+          onScroll={onScroll}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3"
+        >
           {t.hasOlder && (
             <div className="mb-3 text-center">
               <button
@@ -805,7 +840,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             <div className="space-y-3 py-6" aria-hidden="true">
               {[60, 40, 70, 45].map((w, i) => (
                 <div key={i} className={`flex ${i % 2 ? "justify-end" : ""}`}>
-                  <span className="sk-block h-10 rounded-[22px]" style={{ width: `${w}%` }} />
+                  <span className="sk-block h-9 rounded-[18px]" style={{ width: `${w}%` }} />
                 </div>
               ))}
             </div>
@@ -838,8 +873,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
               dayKey(nextM.created_at) !== dayKey(m.created_at) ||
               Math.abs(Date.parse(nextM.created_at) - Date.parse(m.created_at)) >= GAP_MS;
 
-            // Delivery / read indicator heuristic: read if other user has seen/messaged after
-            const isRead = !!newestOther && newestOther.id > m.id;
+            const showSeen = mine && m.id === lastMineId && !!newestOther && newestOther.id > m.id;
 
             return (
               <div key={m.local_id ?? m.id}>
@@ -856,7 +890,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                   showAvatar={!mine && lastInBlock}
                   firstInBlock={firstInBlock}
                   lastInBlock={lastInBlock}
-                  isRead={isRead}
+                  showSeen={showSeen}
                   myId={myId}
                   pickerOpen={picker === m.id}
                   onPicker={() => setPicker((p) => (p === m.id ? null : m.id))}
@@ -915,26 +949,28 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
           )}
         </div>
 
-        {/* Composer section */}
         <div
           className="px-3 pb-3 pt-2"
           style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
         >
-          {/* Replying banner */}
+          {sendError && (
+            <p role="alert" className="mb-2 px-2 text-[12px] font-medium text-danger">
+              {sendError}
+            </p>
+          )}
+
           {replyingTo && (
             <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-surface-subtle px-3 py-2 text-supporting text-fg animate-in slide-in-from-bottom-2 duration-150">
-              <div className="flex items-center gap-2 min-w-0">
-                <Icon name="reply" className="size-4 text-brand shrink-0" />
+              <div className="flex min-w-0 items-center gap-2">
+                <Icon name="reply" className="size-4 shrink-0 text-brand" />
                 <div className="min-w-0">
                   <p className="text-[12px] font-bold text-brand">
                     Replying to{" "}
                     {replyingTo.sender?.name ||
                       (replyingTo.sender_id === myId ? "yourself" : "message")}
                   </p>
-                  <p className="truncate text-secondary text-muted text-[13px]">
-                    {replyingTo.type === "audio"
-                      ? "🎤 Voice message"
-                      : (replyingTo.body ?? "Message")}
+                  <p className="truncate text-[13px] text-muted">
+                    {isAudioMsg(replyingTo) ? "Voice message" : (replyingTo.body ?? "Attachment")}
                   </p>
                 </div>
               </div>
@@ -949,16 +985,13 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             </div>
           )}
 
-          {/* Editing banner */}
           {editingMessage && (
             <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-surface-subtle px-3 py-2 text-supporting text-fg animate-in slide-in-from-bottom-2 duration-150">
-              <div className="flex items-center gap-2 min-w-0">
-                <Icon name="pen" className="size-4 text-brand shrink-0" />
+              <div className="flex min-w-0 items-center gap-2">
+                <Icon name="pen" className="size-4 shrink-0 text-brand" />
                 <div className="min-w-0">
                   <p className="text-[12px] font-bold text-brand">Editing message</p>
-                  <p className="truncate text-secondary text-muted text-[13px]">
-                    {editingMessage.body}
-                  </p>
+                  <p className="truncate text-[13px] text-muted">{editingMessage.body}</p>
                 </div>
               </div>
               <button
@@ -975,7 +1008,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             </div>
           )}
 
-          {/* If voice recording is in progress, show the dedicated recorder bar */}
           {voiceRecorder.status !== "idle" ? (
             <VoiceRecorderBar
               recorder={voiceRecorder}
@@ -991,6 +1023,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                 placeholder={editingMessage ? "Edit message…" : "Message"}
                 onChange={(e) => {
                   setText(e.target.value);
+                  if (sendError) setSendError(null);
                   e.target.style.height = "auto";
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                 }}
@@ -1006,7 +1039,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                 className="max-h-32 min-h-[38px] flex-1 resize-none bg-transparent py-2 text-[15px] leading-[1.35] text-fg outline-none placeholder:text-muted"
               />
 
-              {/* Toggle between Send and Microphone */}
               {text.trim().length > 0 || editingMessage ? (
                 <button
                   type="button"
@@ -1032,7 +1064,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
         </div>
       </div>
 
-      {/* Details drawer or dock */}
       {conv && (xl ? details : sheet) && (
         <ConversationDetails
           conv={conv}
@@ -1043,7 +1074,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
         />
       )}
 
-      {/* Context Menu for message actions */}
       {menuTarget && (
         <MessageMenu
           m={menuTarget.m}
@@ -1065,7 +1095,6 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
         />
       )}
 
-      {/* Delete confirmation modal */}
       {deleteTarget && (
         <DeleteDialog
           isOpen={true}
