@@ -44,7 +44,7 @@ const ASIDE_EXPAND =
 const LABEL_BASE = "whitespace-nowrap opacity-0 transition-opacity duration-150";
 const LABEL_SHOW = "group-hover/side:opacity-100 group-has-[:focus-visible]/side:opacity-100";
 const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
-const ACTIVE = "bg-white/8 font-bold text-brand";
+const ACTIVE = "bg-white/8 font-bold text-white";
 const IDLE = "font-medium text-white/60 hover:bg-white/6 hover:text-white";
 
 const MD = "(min-width: 768px)";
@@ -270,7 +270,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               key={n.href}
               href={hrefFor(n)}
               className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-micro ${
-                isActive(n.href) ? "font-bold text-brand" : "font-bold text-white/60"
+                isActive(n.href) ? "font-bold text-white" : "font-bold text-white/60"
               }`}
             >
               <Icon name={n.icon} filled={isActive(n.href)} />
