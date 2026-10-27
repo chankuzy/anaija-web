@@ -283,7 +283,7 @@ export const SOLAR = {
   "magnifier": p(b_magnifier, o_magnifier),
   "mapPointSchool": p(b_map_point_school, o_map_point_school),
   "menuDots": p(b_menu_dots, o_menu_dots),
-  "message": p(b_chat_line, o_chat_line),
+  "message": p(b_plane, o_plane),
   "microphone": p(b_microphone, o_microphone),
   "moon": p(b_moon, o_moon),
   "music": p(b_music_note, o_music_note),

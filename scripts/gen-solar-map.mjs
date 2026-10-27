@@ -32,7 +32,7 @@ const FLUTTER = [
 const ALIASES = {
   home: "homeSmile",
   search: "magnifier",
-  message: "chatLine",
+  message: ["plain", "plane"],
   userPlus: "userPlusRounded",
   dots: "menuDots",
   back: "altArrowLeft",

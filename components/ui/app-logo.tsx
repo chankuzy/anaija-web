@@ -1,11 +1,11 @@
 // Anaija mark (from public/brand/anaija_logo.svg) drawn in currentColor, plus the lowercase wordmark.
 import { useId } from "react";
 
-export function AppLogo({ size = 32, showWordmark = true }: { size?: number; showWordmark?: boolean }) {
+export function AppLogo({ size = 32, showWordmark = true, showMark = true }: { size?: number; showWordmark?: boolean; showMark?: boolean }) {
   const gid = useId();
   return (
     <span className="inline-flex items-center gap-2.5 text-white">
-      <svg viewBox="460 410 1136 1250" height={size} width={(size * 1136) / 1250} fill={`url(#${gid})`} aria-hidden="true" className="shrink-0 drop-shadow-[0_0_14px_rgba(255,216,77,0.35)]">
+      <svg viewBox="460 410 1136 1250" height={size} width={(size * 1136) / 1250} fill={`url(#${gid})`} aria-hidden="true" className={`${showMark ? "" : "hidden"} shrink-0 drop-shadow-[0_0_14px_rgba(255,216,77,0.35)]`}>
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="#FFE27A" />
@@ -18,7 +18,7 @@ export function AppLogo({ size = 32, showWordmark = true }: { size?: number; sho
         <path d="M 888.449 906.234 C 892.677 906.007 896.949 905.689 901.123 906.596 C 915.456 909.713 996.032 960.731 1013.97 971.5 C 1032.82 982.818 1053.4 993.313 1071.21 1006.16 C 1075.48 1009.24 1078.94 1012.9 1081.62 1017.44 C 1085.53 1024.07 1087.19 1031.68 1085.01 1039.17 C 1083.05 1045.9 1078.64 1051.42 1073.53 1056.06 C 1059.76 1068.58 1019.76 1089.17 1001.48 1099.84 C 984.281 1110.29 966.99 1120.6 949.615 1130.77 C 931.235 1141.63 901.891 1163.73 880.551 1154.28 C 875.004 1151.83 866.195 1144.13 865.04 1137.92 C 857.848 1099.26 864.17 1057.56 862.07 1018.25 C 862.594 992.813 860.801 967.053 862.021 941.662 C 862.972 921.857 870.562 912.284 888.449 906.234 z" />
       </svg>
       {showWordmark && (
-        <span className="font-bold" style={{ fontSize: size * 0.56, letterSpacing: "-0.02em" }}>
+        <span className="text-fg" style={{ fontFamily: "var(--font-manrope), var(--font-inter), sans-serif", fontWeight: 800, fontSize: size * 0.56, letterSpacing: "-0.035em", lineHeight: 1 }}>
           anaija
         </span>
       )}

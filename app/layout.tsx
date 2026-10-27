@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
 import { AuthRoot } from "@/components/shell/auth-root";
 import { CacheCurtain } from "@/components/shell/cache-curtain";
 import { AppLogo } from "@/components/ui/app-logo";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+// Wordmark only: one weight keeps the download to a single small file.
+const manrope = Manrope({ subsets: ["latin"], weight: ["800"], variable: "--font-manrope", display: "swap" });
 
 const site = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -43,7 +45,7 @@ function Splash() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body>
         <Suspense fallback={<Splash />}>
           <AuthRoot>{children}</AuthRoot>

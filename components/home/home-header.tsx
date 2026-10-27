@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AppLogo } from "@/components/ui/app-logo";
 import { Icon } from "@/components/ui/icon";
 import { UnreadBadge } from "@/components/ui/unread-badge";
 import { useActivity } from "@/lib/activity/activity-context";
@@ -16,7 +17,10 @@ export function HomeHeader({ authed }: { authed: boolean }) {
   const { count: chats } = useMessagesUnread();
   return (
     <header className="px-4 md:hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-      <div className="flex h-12 items-center justify-end">
+      <div className="flex h-12 items-center justify-between">
+        <Link href="/" aria-label="Anaija home" className="inline-flex items-center">
+          <AppLogo size={42} showMark={false} />
+        </Link>
         {authed ? (
           <div className="-mr-2 flex items-center">
             <Link href="/notifications" aria-label={unseen > 0 ? `${unseen} new notifications` : "Notifications"} className={BTN}>
