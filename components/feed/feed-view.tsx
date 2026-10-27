@@ -18,6 +18,7 @@ import { postHasVideo } from "./post-media";
 
 // Which tab you were on survives leaving the feed and coming back.
 let rememberedScope: FeedScope = "for_you";
+const MAX_SCAN_PAGES = 10;
 
 // Closes out the current post's dwell time once the caught-up page is what's on screen.
 function LeaveWhenVisible({ children }: { children: ReactNode }) {
@@ -39,7 +40,16 @@ function LeaveWhenVisible({ children }: { children: ReactNode }) {
 
 // `pinned`: a shared post/listing shown first, with the For You feed continuing under it. It lives only on screen:
 // it is never written into the feed cache, never changes the remembered position, and is dropped from the list below.
-export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null; pinnedFocus?: number }) {
+// `videoOnly`: the reels surface. Posts without video are skipped (the store still holds them for Home).
+export function FeedView({
+  pinned = null,
+  pinnedFocus,
+  videoOnly = false,
+}: {
+  pinned?: Post | null;
+  pinnedFocus?: number;
+  videoOnly?: boolean;
+}) {
   const { status } = useAuth();
   const authed = status === "authed";
   const [scope, setScopeState] = useState<FeedScope>(() => (pinned ? "for_you" : rememberedScope));
@@ -118,29 +128,54 @@ export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null;
     else feedEvents.hold("focus");
   }, [focused]);
 
-  // Rendered entries: the pinned post, then posts, plus people units minus anyone dismissed.
-  const entries = useMemo<FeedItem[]>(() => {
+  // Rendered entries: the pinned post, then posts (videos only on the reels surface), plus people units minus
+  // anyone dismissed. `orig[i]` is where entry i sits in the store's list, which is what pagination counts in.
+  const { entries, orig } = useMemo(() => {
     const out: FeedItem[] = [];
-    if (pinnedPost) out.push({ type: "post", post: pinnedPost } as FeedItem);
-    for (const it of data?.items ?? []) {
+    const idx: number[] = [];
+    if (pinnedPost) {
+      out.push({ type: "post", post: pinnedPost } as FeedItem);
+      idx.push(0);
+    }
+    const items = data?.items ?? [];
+    for (let n = 0; n < items.length; n++) {
+      const it = items[n];
       if (it.type === "post") {
         if (pinnedPost && it.post.id === pinnedPost.id) continue;
+        if (videoOnly && !postHasVideo(it.post)) continue;
         out.push(it);
+        idx.push(n);
       } else {
         const users = it.users.filter((u) => !dismissed.has(`${it.id}:${u.id}`));
-        if (users.length > 0) out.push({ ...it, users });
+        if (users.length > 0) {
+          out.push({ ...it, users });
+          idx.push(n);
+        }
       }
     }
-    return out;
-  }, [data, dismissed, pinnedPost]);
+    return { entries: out, orig: idx };
+  }, [data, dismissed, pinnedPost, videoOnly]);
 
-  const latest = useRef<{ entries: FeedItem[]; sessionId: string | null; offset: number }>({
+  // Reels surface with no video loaded yet: keep fetching pages until there is one (or the feed ends).
+  const itemCount = data?.items.length ?? 0;
+  const loadingMore = data?.loadingMore ?? false;
+  const scanning =
+    videoOnly && !!data && !data.error && entries.length === 0 && !data.caughtUp && data.cursor !== null;
+  const scanTries = useRef(0);
+  useEffect(() => {
+    if (!scanning || loadingMore || scanTries.current >= MAX_SCAN_PAGES) return;
+    scanTries.current++;
+    maybeLoadMore(Number.MAX_SAFE_INTEGER);
+  }, [scanning, loadingMore, itemCount, maybeLoadMore]);
+
+  const latest = useRef<{ entries: FeedItem[]; orig: number[]; sessionId: string | null; offset: number }>({
     entries: [],
+    orig: [],
     sessionId: null,
     offset: 0,
   });
   useEffect(() => {
-    latest.current = { entries, sessionId: data?.sessionId ?? null, offset: usingPinned ? 1 : 0 };
+    latest.current = { entries, orig, sessionId: data?.sessionId ?? null, offset: usingPinned ? 1 : 0 };
   });
   const seenUnits = useRef(new Set<string>());
 
@@ -155,9 +190,11 @@ export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null;
         restoreGuard.current = null;
       }
       setActiveState({ key: storeKey, gen, index: i });
-      const { entries: es, sessionId, offset } = latest.current;
+      const { entries: es, orig: og, sessionId, offset } = latest.current;
       if (offset === 0) setPosition(i); // a pinned list is offset by one: never store its indexes
-      maybeLoadMore(Math.max(0, i - offset));
+      // Filtered lists have far fewer entries than the store: near the end of what we show, always ask for more.
+      const nearEnd = videoOnly && i >= es.length - 2;
+      maybeLoadMore(nearEnd ? Number.MAX_SAFE_INTEGER : Math.max(0, og[i] ?? i - offset));
       const e = es[i];
       if (!e) return;
       if (e.type === "post") {
@@ -175,7 +212,7 @@ export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null;
         }
       }
     },
-    [storeKey, gen, setPosition, maybeLoadMore],
+    [storeKey, gen, videoOnly, setPosition, maybeLoadMore],
   );
 
   // Back on the feed: jump (before paint) to the post the viewer was on. A pinned post always starts at the top.
@@ -241,7 +278,7 @@ export function FeedView({ pinned = null, pinnedFocus }: { pinned?: Post | null;
     return (
       <div className="relative h-dvh">
         {topBar}
-        <FeedEmpty scope={effScope} />
+        {scanning ? <FeedSkeleton /> : <FeedEmpty scope={effScope} />}
       </div>
     );
   }

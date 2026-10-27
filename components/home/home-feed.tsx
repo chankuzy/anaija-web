@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MoreSkeleton } from "@/components/ui/skeleton";
-import type { FeedItem, FeedScope, PeopleItem, PostItem } from "@/lib/api/feed-types";
+import type { FeedItem, PeopleItem, PostItem } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear } from "@/lib/cache/swr";
 import { contentKind, hasRenderableContent } from "@/lib/feed/content";
@@ -15,33 +15,24 @@ import { HomeStories } from "./home-stories";
 import { PeopleStrip } from "./people-strip";
 import { HomeCaughtUp, HomeEmpty, HomeMessage, HomeSkeleton, QUIET } from "./home-states";
 
-// Both survive leaving Home (module scope), exactly like the immersive feed's remembered scope.
-let rememberedScope: FeedScope = "for_you";
+// Survives leaving Home (module scope), like the immersive feed's remembered position.
 const scrolls = new Map<string, number>();
 onCacheClear(() => scrolls.clear());
 
 const MIN_CURRENT = 0.4; // share of a post's media on screen before it counts as "being looked at"
-const MIN_PLAYING = 0.6; // ... and before a reel may start playing
+const MIN_PLAYING = 0.6; // ... and before a reel may play / images may slide
 
 // Home: the mixed feed. Same data store as Immersive (use-feed), so a post has one identity, one engagement state
 // and one recommendation session. Presentation is chosen per post by lib/feed/content + components/home/renderers.
 export function HomeFeed() {
   const { status } = useAuth();
   const authed = status === "authed";
-  const [scope, setScopeState] = useState<FeedScope>(() => rememberedScope);
-  const effScope: FeedScope = authed ? scope : "for_you";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const { data, hasFresh, gen, storeKey, loading, reload, applyFresh, maybeLoadMore, patchPost, removePost } = useFeed({
     enabled: status !== "loading",
     authed,
-    scope: effScope,
+    scope: "for_you",
   });
-
-  const setScope = useCallback((s: FeedScope) => {
-    rememberedScope = s;
-    setScopeState(s);
-    window.scrollTo({ top: 0 });
-  }, []);
 
   const entries = useMemo<FeedItem[]>(() => {
     const out: FeedItem[] = [];
@@ -180,7 +171,7 @@ export function HomeFeed() {
   // ── render ──────────────────────────────────────────────────────────────────────────────────────
   if (status === "loading") {
     return (
-      <div className="mx-auto w-full max-w-[630px] pt-16">
+      <div className="mx-auto w-full max-w-[630px] pt-6">
         <HomeSkeleton />
       </div>
     );
@@ -188,7 +179,7 @@ export function HomeFeed() {
 
   const wrap = (children: ReactNode) => (
     <div className="mx-auto w-full max-w-[630px]" style={{ paddingBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 32px)" }}>
-      <HomeHeader authed={authed} scope={effScope} onScope={setScope} />
+      <HomeHeader authed={authed} />
       {children}
     </div>
   );
@@ -207,9 +198,9 @@ export function HomeFeed() {
       />,
     );
   }
-  if (entries.length === 0) return wrap(<HomeEmpty scope={effScope} />);
+  if (entries.length === 0) return wrap(<HomeEmpty scope="for_you" />);
 
-  const pillPos = { top: "calc(env(safe-area-inset-top) + 64px)" };
+  const pillPos = { top: "calc(env(safe-area-inset-top) + 12px)" };
   return wrap(
     <>
       <HomeStories />

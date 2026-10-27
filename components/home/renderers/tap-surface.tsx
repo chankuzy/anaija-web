@@ -47,6 +47,7 @@ export function TapSurface({
       aria-label={label}
       onClick={onClick}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return; // a focused link inside keeps its own Enter
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onOpen();

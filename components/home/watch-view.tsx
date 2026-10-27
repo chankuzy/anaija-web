@@ -9,8 +9,8 @@ import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { stagedForImmersive } from "@/lib/feed/handoff";
 
-// Immersive surface. /watch shows the existing full-screen feed untouched. /watch?post=ID starts on that post (staged
-// by Home, or fetched on a direct visit) and lets the For You feed continue underneath, via FeedView's `pinned`.
+// Immersive surface: reels only. /watch?post=ID starts on that post (staged by Home, or fetched on a direct visit)
+// and the video feed continues underneath, via FeedView's `pinned`.
 export function WatchView() {
   const sp = useSearchParams();
   const { status } = useAuth();
@@ -34,5 +34,5 @@ export function WatchView() {
 
   if (status === "loading" || (needFetch && loaded?.id !== id)) return <FeedSkeleton />;
   const pinned = staged ?? (loaded?.id === id ? loaded.post : null);
-  return <FeedView key={valid ? id : "feed"} pinned={pinned} />;
+  return <FeedView key={valid ? id : "feed"} videoOnly pinned={pinned} />;
 }

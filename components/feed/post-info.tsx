@@ -1,5 +1,6 @@
 "use client";
 
+import { CaptionText } from "@/components/home/caption-text";
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,19 +30,8 @@ function fullCaption(caption: string | null, tags: string[]): string {
   return raw ? `${raw} ${extra.join(" ")}` : extra.join(" ");
 }
 
-function renderCaption(text: string) {
-  return text
-    .split(/(#\w+)/gu)
-    .map((part, i) =>
-      part.length > 1 && part.startsWith("#") ? (
-        <span key={i} className="font-bold">
-          {part}
-        </span>
-      ) : (
-        part
-      ),
-    );
-}
+// Links, @mentions and #hashtags (links open in a new tab so the viewer keeps Anaija open).
+const renderCaption = (text: string) => <CaptionText text={text} bold="font-bold" />;
 
 function Caption({
   text,
@@ -65,7 +55,7 @@ function Caption({
   if (expanded) {
     return (
       <div>
-        <div className="no-scrollbar text-shadow max-h-[34dvh] overflow-y-auto whitespace-pre-wrap text-body leading-[1.3] text-white">
+        <div className="no-scrollbar text-shadow selectable max-h-[34dvh] overflow-y-auto whitespace-pre-wrap text-body leading-[1.3] text-white">
           {renderCaption(text)}
         </div>
         <button
