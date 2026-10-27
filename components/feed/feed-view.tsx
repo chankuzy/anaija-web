@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
 import { useDocumentFocus } from "@/lib/feed/focus";
 import { usePrefetchWindow } from "@/lib/feed/net";
+import { isReelEligible } from "@/lib/feed/content";
 import { useFeed } from "@/lib/feed/use-feed";
 import { FeedCard } from "./feed-card";
 import { CaughtUp, FeedEmpty, FeedError, FeedSkeleton } from "./feed-states";
@@ -18,7 +19,6 @@ import { postHasVideo } from "./post-media";
 
 // Which tab you were on survives leaving the feed and coming back.
 let rememberedScope: FeedScope = "for_you";
-const MAX_SCAN_PAGES = 10;
 
 // Closes out the current post's dwell time once the caught-up page is what's on screen.
 function LeaveWhenVisible({ children }: { children: ReactNode }) {
@@ -52,19 +52,23 @@ export function FeedView({
 }) {
   const { status } = useAuth();
   const authed = status === "authed";
-  const [scope, setScopeState] = useState<FeedScope>(() => (pinned ? "for_you" : rememberedScope));
-  const setScope = useCallback((s: FeedScope) => {
-    rememberedScope = s;
-    setScopeState(s);
-  }, []);
-  const effScope: FeedScope = authed ? scope : "for_you";
+  const [scope, setScopeState] = useState<FeedScope>(() => (videoOnly ? "reels" : pinned ? "for_you" : rememberedScope));
+  const setScope = useCallback(
+    (s: FeedScope) => {
+      if (videoOnly) return; // the reels surface has no tabs
+      rememberedScope = s;
+      setScopeState(s);
+    },
+    [videoOnly],
+  );
+  const effScope: FeedScope = videoOnly ? "reels" : authed ? scope : "for_you";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const [storyOpen, setStoryOpen] = useState(false);
 
   const [pinnedLocal, setPinnedLocal] = useState<Partial<Post>>({});
   const [pinnedGone, setPinnedGone] = useState(false);
   const pinnedPost = useMemo<Post | null>(
-    () => (pinned && !pinnedGone && effScope === "for_you" ? { ...pinned, ...pinnedLocal } : null),
+    () => (pinned && !pinnedGone && (effScope === "for_you" || effScope === "reels") ? { ...pinned, ...pinnedLocal } : null),
     [pinned, pinnedLocal, pinnedGone, effScope],
   );
   const usingPinned = pinnedPost !== null;
@@ -142,7 +146,7 @@ export function FeedView({
       const it = items[n];
       if (it.type === "post") {
         if (pinnedPost && it.post.id === pinnedPost.id) continue;
-        if (videoOnly && !postHasVideo(it.post)) continue;
+        if (videoOnly && !isReelEligible(it.post)) continue; // defensive: the backend already sends reels only
         out.push(it);
         idx.push(n);
       } else {
@@ -155,18 +159,6 @@ export function FeedView({
     }
     return { entries: out, orig: idx };
   }, [data, dismissed, pinnedPost, videoOnly]);
-
-  // Reels surface with no video loaded yet: keep fetching pages until there is one (or the feed ends).
-  const itemCount = data?.items.length ?? 0;
-  const loadingMore = data?.loadingMore ?? false;
-  const scanning =
-    videoOnly && !!data && !data.error && entries.length === 0 && !data.caughtUp && data.cursor !== null;
-  const scanTries = useRef(0);
-  useEffect(() => {
-    if (!scanning || loadingMore || scanTries.current >= MAX_SCAN_PAGES) return;
-    scanTries.current++;
-    maybeLoadMore(Number.MAX_SAFE_INTEGER);
-  }, [scanning, loadingMore, itemCount, maybeLoadMore]);
 
   const latest = useRef<{ entries: FeedItem[]; orig: number[]; sessionId: string | null; offset: number }>({
     entries: [],
@@ -256,7 +248,7 @@ export function FeedView({
     );
   }
 
-  const topBar = <FeedTopBar authed={authed} scope={effScope} onScope={setScope} />;
+  const topBar = videoOnly ? null : <FeedTopBar authed={authed} scope={effScope === "reels" ? "for_you" : effScope} onScope={setScope} />;
 
   if (!data && !usingPinned) {
     return (
@@ -278,7 +270,7 @@ export function FeedView({
     return (
       <div className="relative h-dvh">
         {topBar}
-        {scanning ? <FeedSkeleton /> : <FeedEmpty scope={effScope} />}
+        <FeedEmpty scope={effScope === "reels" ? "for_you" : effScope} />
       </div>
     );
   }

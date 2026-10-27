@@ -43,6 +43,12 @@ export function FeedError({ message, onRetry }: { message: string; onRetry: () =
 }
 
 const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: string }> = {
+  reels: {
+    title: "No reels yet",
+    sub: "Videos and audio reels from campus will show up here",
+    cta: "Create reel",
+    href: "/create/new",
+  },
   for_you: {
     title: "No posts here yet",
     sub: "Be the first to share a moment on campus",

@@ -4,7 +4,7 @@ import type { FeedMedia, Post } from "@/lib/api/feed-types";
  * How a post is presented on Home. The backend has one post identity ("post" | "listing"); presentation is derived.
  * Adding a kind here makes TypeScript demand a renderer for it in components/home/renderers/index.ts.
  */
-export type ContentKind = "reel" | "gallery" | "listing" | "text";
+export type ContentKind = "reel" | "audioReel" | "gallery" | "listing" | "text";
 
 const mediaType = (m: FeedMedia) => (m.type ?? "").toLowerCase();
 export const isVideoMedia = (m: FeedMedia) => mediaType(m) === "video";
@@ -17,6 +17,7 @@ export const sortedMedia = (p: Post): FeedMedia[] =>
 const RESOLVERS: ((p: Post) => ContentKind | null)[] = [
   (p) => (p.type === "listing" || p.listing ? "listing" : null),
   (p) => (p.media?.some(isVideoMedia) || p.video_url ? "reel" : null),
+  (p) => (isReelEligible(p) ? "audioReel" : null), // images with playable audio (videos matched above)
   (p) => (p.media?.some(isImageMedia) ? "gallery" : null),
 ];
 
@@ -50,4 +51,12 @@ export function formatDuration(sec: number | null | undefined): string {
   if (!sec || sec <= 0) return "";
   const s = Math.round(sec);
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+// Reels surface eligibility (mirrors feed_is_reel in SQL and isReelPost in the feed engine): a standalone post that is
+// a video, or images carrying playable audio. Listings, silent images, carousels and everything else are not reels.
+export function isReelEligible(p: Post): boolean {
+  if (p.type !== "post") return false;
+  if (p.video_url || p.media?.some(isVideoMedia)) return true;
+  return !!p.audio?.enabled && !!p.audio.url && !!p.media?.some(isImageMedia);
 }

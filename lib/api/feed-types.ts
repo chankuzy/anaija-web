@@ -1,4 +1,4 @@
-export type FeedScope = "for_you" | "following" | "campus";
+export type FeedScope = "for_you" | "following" | "campus" | "reels";
 
 export interface FeedMedia {
   id: number;

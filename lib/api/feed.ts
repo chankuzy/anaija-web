@@ -36,7 +36,7 @@ export const feedApi = {
   }): Promise<FeedResponse> => {
     const res = o.authed
       ? await api.get<FeedResponse>("feed", { scope: o.scope, cursor: o.cursor, refresh: o.refresh ? 1 : undefined }, o.signal)
-      : await api.get<FeedResponse>("feed-public", { cursor: o.cursor, refresh: o.refresh ? 1 : undefined }, o.signal);
+      : await api.get<FeedResponse>("feed-public", { scope: o.scope === "reels" ? "reels" : undefined, cursor: o.cursor, refresh: o.refresh ? 1 : undefined }, o.signal);
     return { ...res, items: (res.items ?? []).map(normItem) };
   },
 };

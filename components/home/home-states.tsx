@@ -44,6 +44,12 @@ export const PRIMARY = `${pill} bg-brand text-brand-fg hover:bg-brand-hover`;
 export const QUIET = `${pill} bg-surface-interactive text-fg hover:bg-surface-elevated`;
 
 const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: string }> = {
+  reels: {
+    title: "No reels yet",
+    sub: "Videos and audio reels from campus will show up here",
+    cta: "Create reel",
+    href: "/create/new",
+  },
   for_you: { title: "No posts here yet", sub: "Be the first to share a moment on campus", cta: "Create post", href: "/create/new" },
   following: { title: "Nothing from people you follow", sub: "Find active creators on campus and follow them to see their posts here", cta: "Discover people", href: "/discover" },
   campus: { title: "No campus posts yet", sub: "Connect with your institution to see updates from classmates", cta: "Create post", href: "/create/new" },

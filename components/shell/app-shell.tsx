@@ -20,14 +20,15 @@ import { PublishShare } from "@/components/create/publish-share";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
-// Matches main_shell.dart: Home, Discover, [Create], Messages, Profile. Guests get sent to sign-in for
-// anything but Home. Notifications has no page: on md+ it is a slide-out panel beside the rail, on mobile a
-// full-screen sheet (opened by the bell, which is any link to /notifications).
+// Mobile tabs: Home, Discover, [Create], Reels, Profile. Messages and Notifications live in the rail on md+ and in the
+// Home header on mobile. Guests get sent to sign-in for anything but Home and Reels. Notifications has no page: on md+
+// it is a slide-out panel beside the rail, on mobile a full-screen sheet (opened by the bell, any link to /notifications).
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
-  { href: "/messages", label: "Messages", icon: "message", auth: true, mobile: "tab" },
+  { href: "/watch", label: "Reels", icon: "clapperboard", mobile: "tab" },
+  { href: "/messages", label: "Messages", icon: "message", auth: true },
   { href: "/notifications", label: "Notifications", icon: "bell", auth: true },
   { href: "/me", label: "Profile", icon: "user", auth: true, mobile: "tab" },
 ];
@@ -96,7 +97,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   // Segment-exact: "/messages" must not match "/me".
   const matches = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/" || pathname === "/watch";
+    if (href === "/") return pathname === "/";
     if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
     return matches(href);
   };
@@ -272,14 +273,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                 isActive(n.href) ? "font-bold text-brand" : "font-bold text-white/60"
               }`}
             >
-              <span className="relative inline-flex">
-                <Icon name={n.icon} filled={isActive(n.href)} />
-                {n.href === "/messages" && msgUnread > 0 && (
-                  <span className="absolute -right-2.5 -top-1.5">
-                    <UnreadBadge count={msgUnread} label="unread chats" />
-                  </span>
-                )}
-              </span>
+              <Icon name={n.icon} filled={isActive(n.href)} />
               {n.label}
             </Link>
           ),
