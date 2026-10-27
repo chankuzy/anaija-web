@@ -9,6 +9,7 @@ import { canNativeShare, copyText } from "@/lib/share/external";
 
 interface Published {
   isListing: boolean;
+  noun: string;
   path: string;
   id: number;
   title: string;
@@ -32,14 +33,15 @@ function describe(t: UploadTask): Published | null {
     const title = (d.businessName ?? "").trim() || caption || "New listing";
     const n = Number(d.price);
     const price = d.price && Number.isFinite(n) ? `₦${n.toLocaleString("en-NG")}` : "";
-    return { isListing: true, id: target.postId, path: `/l/${target.postId}`, title, text: `${price ? `${title} · ${price}` : title} on Anaija` };
+    return { isListing: true, noun: "listing", id: target.postId, path: `/l/${target.postId}`, title, text: `${price ? `${title} · ${price}` : title} on Anaija` };
   }
   return {
     isListing: false,
+    noun: target.kind === "photo" ? "post" : "reel",
     id: target.postId,
     path: `/p/${target.postId}`,
-    title: caption || "New reel on Anaija",
-    text: caption ? `${caption} on Anaija` : "Watch my new reel on Anaija",
+    title: caption || (target.kind === "photo" ? "New post on Anaija" : "New reel on Anaija"),
+    text: caption ? `${caption} on Anaija` : target.kind === "photo" ? "See my new post on Anaija" : "Watch my new reel on Anaija",
   };
 }
 
@@ -107,7 +109,7 @@ export function PublishShare() {
       >
         <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 md:hidden" />
         <p className="text-center text-[18px] font-extrabold tracking-tight text-white">
-          {item.isListing ? "Your listing is live" : "Your reel is live"}
+          {`Your ${item.noun} is live`}
         </p>
         <p className="mt-1 px-6 text-center text-secondary text-white/55">Share it so more people can find it.</p>
 
@@ -135,7 +137,7 @@ export function PublishShare() {
             }}
             className="h-12 flex-1 rounded-full bg-brand text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.98]"
           >
-            {item.isListing ? "View listing" : "View reel"}
+            {`View ${item.noun}`}
           </button>
         </div>
       </div>

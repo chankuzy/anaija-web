@@ -16,6 +16,7 @@ import { grabFrame, posterTimeSec, probeVideo } from "./video";
 /** Listing shares the media steps; its fields are collected in the publish step. */
 export const KIND_TABS: { id: ContentKind; label: string }[] = [
   { id: "reel", label: "Reel" },
+  { id: "photo", label: "Photo" },
   { id: "story", label: "Story" },
   { id: "listing", label: "Listing" },
 ];
@@ -142,7 +143,7 @@ export function useComposer(initialKind: ContentKind) {
     (kind: ContentKind) => {
       const d = draftRef.current;
       if (kind === d.kind) return;
-      const keep = d.media.filter((m) => kind !== "listing" || m.type === "image").slice(0, maxSelection(kind));
+      const keep = d.media.filter((m) => (kind !== "listing" && kind !== "photo") || m.type === "image").slice(0, maxSelection(kind));
       const keepIds = new Set(keep.map((m) => m.id));
       d.media.forEach((m) => {
         if (!keepIds.has(m.id)) dropPreview(m.id);
@@ -173,8 +174,8 @@ export function useComposer(initialKind: ContentKind) {
           err = "Only photos and videos are supported";
           continue;
         }
-        if (kind === "listing" && isVideo) {
-          err = "Listings take photos only";
+        if ((kind === "listing" || kind === "photo") && isVideo) {
+          err = kind === "photo" ? "Image posts take photos only" : "Listings take photos only";
           continue;
         }
         let cur = draftRef.current.media;

@@ -1,10 +1,11 @@
 import type { FeedMedia, Post } from "@/lib/api/feed-types";
+import { structuredOf } from "./structured";
 
 /**
  * How a post is presented on Home. The backend has one post identity ("post" | "listing"); presentation is derived.
  * Adding a kind here makes TypeScript demand a renderer for it in components/home/renderers/index.ts.
  */
-export type ContentKind = "reel" | "audioReel" | "gallery" | "listing" | "text";
+export type ContentKind = "reel" | "audioReel" | "gallery" | "listing" | "text" | "poll" | "document" | "publication" | "announcement";
 
 const mediaType = (m: FeedMedia) => (m.type ?? "").toLowerCase();
 export const isVideoMedia = (m: FeedMedia) => mediaType(m) === "video";
@@ -14,7 +15,12 @@ export const sortedMedia = (p: Post): FeedMedia[] =>
 
 // First match wins. A future type (document, poll, editorial, announcement) adds a resolver ABOVE the media rules,
 // keyed on whatever discriminator the backend ships. Nothing here guesses at fields that do not exist yet.
+const STRUCTURED_KIND = { poll: "poll", document: "document", article: "publication", announcement: "announcement" } as const;
 const RESOLVERS: ((p: Post) => ContentKind | null)[] = [
+  (p) => {
+    const s = structuredOf(p);
+    return s ? STRUCTURED_KIND[s.kind] : null;
+  },
   (p) => (p.type === "listing" || p.listing ? "listing" : null),
   (p) => (p.media?.some(isVideoMedia) || p.video_url ? "reel" : null),
   (p) => (isReelEligible(p) ? "audioReel" : null), // images with playable audio (videos matched above)

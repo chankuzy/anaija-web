@@ -1,12 +1,12 @@
 import { api } from "./client";
 
 export interface MediaInput {
-  type: "image" | "video";
+  type: "image" | "video" | "document";
   storage_key: string;
   thumbnail_key?: string;
-  width: number;
-  height: number;
-  aspect_ratio: number;
+  width?: number;
+  height?: number;
+  aspect_ratio?: number;
   duration_seconds?: number;
   size_bytes: number;
   mime_type: string;

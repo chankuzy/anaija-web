@@ -80,6 +80,8 @@ export interface Post {
   audio: PostAudio;
   listing_type?: string;
   listing?: ListingDetail | null;
+  /** Structured payload (poll / document / article / announcement). See lib/feed/structured.ts. */
+  content?: unknown;
 }
 
 export interface PostItem {

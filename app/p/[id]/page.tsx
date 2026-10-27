@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { structuredOf } from "@/lib/feed/structured";
 import { SharedLanding } from "@/components/post/shared-landing";
 import { getPublicPost } from "@/lib/server/public";
 import { listingMetadata, postMetadata, unavailable } from "@/lib/share/meta";
@@ -16,6 +18,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 async function Inner({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const initial = await getPublicPost(Number(id));
+  if (initial && structuredOf(initial)) redirect(`/read/${id}`);
   return <SharedLanding id={id} initial={initial} />;
 }
 

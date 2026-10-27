@@ -2,11 +2,11 @@
 // Everything here is structured-cloneable (File/Blob/plain data) so a draft or a pending upload
 // can live in IndexedDB as-is.
 
-export type ContentKind = "reel" | "story" | "listing";
+export type ContentKind = "reel" | "photo" | "story" | "listing";
 export type Visibility = "public" | "followers" | "campus";
 export type ListingType = "product" | "business" | "service" | "rental" | "wanted";
 
-export const maxSelection = (k: ContentKind) => (k === "story" ? 1 : k === "reel" ? 10 : 5);
+export const maxSelection = (k: ContentKind) => (k === "story" ? 1 : k === "reel" || k === "photo" ? 10 : 5);
 
 export interface DraftMedia {
   id: string;

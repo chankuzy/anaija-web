@@ -28,7 +28,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
   const kind = draft.kind;
   const max = maxSelection(kind);
   const n = draft.media.length;
-  const accept = kind === "listing" || filter === "photos" ? "image/*" : filter === "videos" ? "video/*" : "image/*,video/*";
+  const accept = kind === "listing" || kind === "photo" || filter === "photos" ? "image/*" : filter === "videos" ? "video/*" : "image/*,video/*";
   const totalVideo = draft.media.reduce((s, m) => s + (m.durationSeconds ?? 0), 0);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
 
       {/* filter row */}
       <div className="flex h-[34px] items-center px-[18px]">
-        {kind !== "listing" &&
+        {kind !== "listing" && kind !== "photo" &&
           FILTERS.map((f) => (
             <button key={f.id} type="button" onClick={() => setFilter(f.id)} className="mr-5 flex flex-col items-center">
               <span className={`text-[13.5px] font-bold transition-colors ${filter === f.id ? "text-fg" : "text-muted"}`}>{f.label}</span>
@@ -114,7 +114,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
             </span>
             <span className="text-[17px] font-bold text-fg">Choose photos or videos</span>
             <span className="max-w-[260px] text-[12.5px] leading-[1.4] text-muted">
-              Drop them here, paste, or browse. {kind === "story" ? "A story takes one item." : kind === "listing" ? "Up to 5 photos." : "Up to 10 photos, or videos up to 3 minutes."}
+              Drop them here, paste, or browse. {kind === "story" ? "A story takes one item." : kind === "listing" ? "Up to 5 photos." : kind === "photo" ? "Up to 10 photos." : "Up to 10 photos, or videos up to 3 minutes."}
             </span>
           </button>
         ) : (
