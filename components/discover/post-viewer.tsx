@@ -6,9 +6,12 @@ import type { Post } from "@/lib/api/feed-types";
 import { FeedCard } from "@/components/feed/feed-card";
 import { ScrollArrows } from "@/components/feed/scroll-arrows";
 import { Icon } from "@/components/ui/icon";
+import { isReelEligible } from "@/lib/feed/content";
 import { usePrefetchWindow } from "@/lib/feed/net";
 
-// Port of ListFeedViewerScreen: the tapped post and the rest of the grid, swipeable, full screen.
+// Immersive viewer for a grid: the tapped post and the rest of the grid's Media-eligible posts, swipeable, full screen.
+// Non-media posts never enter it (they open their standalone page). `items` is the whole grid; the tapped index is
+// mapped into the filtered list here, so callers do not change.
 // Browser Back / Esc / the close button all land on the grid exactly where it was.
 export function PostViewer({
   items,
@@ -23,9 +26,14 @@ export function PostViewer({
   onPatch: (id: number, p: Partial<Post>) => void;
   onRemove: (id: number) => void;
 }) {
+  const [init] = useState(() => {
+    const tapped = items[startIndex];
+    const reels = items.filter((i) => i.kind !== "listing" && isReelEligible(i.post));
+    return { posts: reels.map((i) => i.post), start: Math.max(0, reels.findIndex((i) => i.id === tapped?.id)) };
+  });
   // The viewer owns its copy so optimistic like/bookmark state is correct even if the grid is a cached snapshot.
-  const [posts, setPosts] = useState<Post[]>(() => items.map((i) => i.post));
-  const [active, setActive] = useState(startIndex);
+  const [posts, setPosts] = useState<Post[]>(init.posts);
+  const [active, setActive] = useState(init.start);
   const windowFor = usePrefetchWindow(active);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef(onClose);
@@ -35,8 +43,8 @@ export function PostViewer({
 
   useLayoutEffect(() => {
     const el = scrollerRef.current;
-    if (el) el.scrollTop = startIndex * el.clientHeight;
-  }, [startIndex]);
+    if (el) el.scrollTop = init.start * el.clientHeight;
+  }, [init.start]);
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;

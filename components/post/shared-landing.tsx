@@ -5,19 +5,20 @@ import { useCallback, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FeedSkeleton } from "@/components/feed/feed-states";
 import { FeedView } from "@/components/feed/feed-view";
-import { PostPage } from "@/components/post/post-page";
+import { ContentReader } from "@/components/post/content-reader";
 import { buttonClass } from "@/components/ui/button";
 import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCached } from "@/lib/cache/swr";
 import { isReelEligible } from "@/lib/feed/content";
+import { structuredOf } from "@/lib/feed/structured";
 
-// Target of share links (/p/{id}). The URL stays the same for every kind (link previews are served from here),
-// but each kind lands on its own surface:
-//   reel (video, or images + audio) -> Reels surface, pinned on this post, the reels feed continues under it
-//   listing                         -> /l/{id} (listing details)
-//   everything else                 -> PostPage: this one post, full screen, with Back. Never the vertical feed.
+// Target of share links (/p/{id}), the one canonical URL for every kind (link previews are served from here):
+//   listing                                   -> /l/{id}
+//   poll / document / publication / announce. -> the reader, even when it carries audio (Media is another way in)
+//   plain video, or images + audio            -> immersive Media, pinned on this post
+//   everything else                           -> the reader (text and image posts)
 // Signed in: posts-show (viewer flags) once it arrives; the public copy `initial` paints instantly meanwhile.
 // Guests: `initial` only (null = gone / not public, undefined = couldn't load).
 export function SharedLanding({ id, initial }: { id: string; initial?: Post | null }) {
@@ -38,8 +39,8 @@ export function SharedLanding({ id, initial }: { id: string; initial?: Post | nu
 
   if (post) {
     if (post.type === "listing") return <ToListing id={id} />;
-    if (isReelEligible(post)) return <FeedView videoOnly pinned={post} pinnedFocus={focus} />;
-    return <PostPage id={id} initial={post} />;
+    if (!structuredOf(post) && isReelEligible(post)) return <FeedView videoOnly pinned={post} pinnedFocus={focus} />;
+    return <ContentReader id={id} initial={post} />;
   }
   if (post === null || (authed && error)) return <Msg title="This post isn't available" sub="It may have been deleted or isn't public." />;
   if (!authed) return <Msg title="Couldn't load this post" sub="Check your connection and try again." />;

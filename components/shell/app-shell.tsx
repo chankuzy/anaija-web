@@ -27,7 +27,7 @@ const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
-  { href: "/watch", label: "Reels", icon: "clapperboard", mobile: "tab" },
+  { href: "/watch", label: "Media", icon: "clapperboard", mobile: "tab" },
   { href: "/messages", label: "Messages", icon: "message", auth: true },
   { href: "/notifications", label: "Notifications", icon: "bell", auth: true },
   { href: "/me", label: "Profile", icon: "user", auth: true, mobile: "tab" },

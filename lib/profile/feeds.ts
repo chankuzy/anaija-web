@@ -1,6 +1,7 @@
 import { normPost } from "@/lib/api/feed";
 import type { Post } from "@/lib/api/feed-types";
 import { usersApi } from "@/lib/api/users";
+import { isReelEligible } from "@/lib/feed/content";
 import { seedFollows } from "@/lib/feed/follow-store";
 import type { Page } from "@/lib/paged/use-paged";
 
@@ -59,14 +60,8 @@ export function postsView(raw: Post[], c: PostsCursor | null): Post[] {
     });
 }
 
-const IMAGE_TYPES = new Set(["image", "photo", "picture"]);
-// Port of Listing.isReel: the cover is a video (no images, at least one video).
-export function isReel(p: Post): boolean {
-  const media = p.media ?? [];
-  if (media.length === 0) return false;
-  const hasImage = media.some((m) => IMAGE_TYPES.has((m.type ?? "").toLowerCase()));
-  return !hasImage && media.some((m) => (m.type ?? "").toLowerCase() === "video");
-}
+// Profile "Media" tab = the Media feed's rule: a video, or images carrying playable audio.
+export const isReel = isReelEligible;
 
 export async function loadReposts(username: string, cursor: number | null, signal?: AbortSignal): Promise<Page<Post, number>> {
   const page = cursor ?? 1;

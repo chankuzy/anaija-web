@@ -1,27 +1,28 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-// Detail page for poll, document, publication and announcement (/read/:id). Same actions, comments and options
-// sheet as a Home post; the body is the full version of the content.
+// Standalone post page (/p/:id) for everything that is not a reel or a listing: text and image posts, polls,
+// documents, publications and announcements. Same actions, comments and options sheet as a Home post.
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { CommentsSheet } from "@/components/feed/comments-sheet";
 import { OptionsSheet } from "@/components/feed/options-sheet";
-import { AnnouncementBody as _unused, When } from "@/components/home/renderers/announcement";
-import { DocumentCardView, OpenDocument, docMedia } from "@/components/home/renderers/document";
+import { CaptionText, withHashtags } from "@/components/home/caption-text";
+import { When } from "@/components/home/renderers/announcement";
+import { DocumentPages, PdfAttachment, isPdfUrl } from "@/components/home/renderers/document";
+import { ImageCarousel, slidesOf } from "@/components/home/renderers/image-carousel";
 import { PollCard } from "@/components/home/renderers/poll";
 import { PostActions, PostHeader } from "@/components/home/post-anatomy";
 import { Icon } from "@/components/ui/icon";
-import { ApiError } from "@/lib/api/client";
 import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCached } from "@/lib/cache/swr";
-import { isImageMedia } from "@/lib/feed/content";
+import { frameAspect, isImageMedia } from "@/lib/feed/content";
 import { usePostActions } from "@/lib/feed/use-post-actions";
 import { structuredOf, type ArticleBlock } from "@/lib/feed/structured";
 
-void _unused;
+const noop = () => {};
 
 function Blocks({ blocks }: { blocks: ArticleBlock[] }) {
   return (
@@ -48,19 +49,40 @@ function Blocks({ blocks }: { blocks: ArticleBlock[] }) {
   );
 }
 
-function Detail({ post }: { post: Post }) {
+function Detail({ post, onLike }: { post: Post; onLike: () => void }) {
   const c = structuredOf(post);
-  if (!c) return null;
-  if (c.kind === "poll") return <PollCard post={post} />;
-  if (c.kind === "document") {
-    const m = docMedia(post);
+
+  if (!c) {
+    const slides = slidesOf(post);
+    const caption = withHashtags(post.caption, post.hashtags);
     return (
-      <div className="rounded-image bg-surface-subtle p-5">
-        <DocumentCardView large title={c.title} description={c.description} fileName={c.file.name} sizeBytes={c.file.size} mime={c.file.mime} coverUrl={m?.thumbnail} />
-        <OpenDocument url={m?.url} />
+      <div>
+        {slides.length > 0 && (
+          <ImageCarousel slides={slides} aspect={frameAspect("gallery", post)} index={0} active={false} paused onOpen={noop} onLike={onLike} label="Post images" />
+        )}
+        {caption && (
+          <p className="selectable mt-4 whitespace-pre-wrap text-[17px] leading-[1.6] text-fg">
+            <CaptionText text={caption} />
+          </p>
+        )}
       </div>
     );
   }
+
+  if (c.kind === "poll") return <PollCard post={post} />;
+
+  if (c.kind === "document") {
+    return (
+      <div>
+        <h1 className="text-[26px] font-extrabold leading-[1.2] tracking-tight text-fg">{c.title || "Untitled document"}</h1>
+        {c.description && <p className="selectable mt-2 whitespace-pre-wrap text-[16px] leading-[1.55] text-muted">{c.description}</p>}
+        <div className="mt-4">
+          <DocumentPages post={post} />
+        </div>
+      </div>
+    );
+  }
+
   if (c.kind === "article") {
     const cover = post.media.find(isImageMedia)?.url;
     return (
@@ -73,6 +95,7 @@ function Detail({ post }: { post: Post }) {
       </article>
     );
   }
+
   const images = post.media.filter(isImageMedia);
   const docs = post.media.filter((m) => (m.type ?? "").toLowerCase() === "document");
   return (
@@ -94,20 +117,26 @@ function Detail({ post }: { post: Post }) {
           ))}
         </div>
       )}
-      {docs.map((m) => (
-        <a key={m.id} href={m.url ?? "#"} target="_blank" rel="noopener noreferrer" className="mt-3 flex h-12 items-center gap-3 rounded-2xl bg-surface-interactive px-4 text-body font-semibold text-fg">
-          <Icon name="copy" filled className="size-5 text-muted" />
-          Attached document
-        </a>
-      ))}
+      {docs.map((m) =>
+        m.url && isPdfUrl(m.url) ? (
+          <div key={m.id} className="mt-3">
+            <PdfAttachment url={m.url} title={c.title} coverUrl={m.thumbnail} />
+          </div>
+        ) : (
+          <a key={m.id} href={m.url ?? "#"} target="_blank" rel="noopener noreferrer" className="mt-3 flex h-12 items-center gap-3 rounded-2xl bg-surface-interactive px-4 text-body font-semibold text-fg">
+            <Icon name="copy" filled className="size-5 text-muted" />
+            Attached document
+          </a>
+        ),
+      )}
     </article>
   );
 }
 
-function ReaderBody({ post: raw, patch, onRemove }: { post: Post; patch: (id: number, p: Partial<Post>) => void; onRemove: (id: number) => void }) {
+function ReaderBody({ post: raw, focus, patch, onRemove }: { post: Post; focus?: number; patch: (id: number, p: Partial<Post>) => void; onRemove: (id: number) => void }) {
   const a = usePostActions(raw, { patch, onRemove });
   const post = a.post;
-  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(focus !== undefined);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const openComments = useCallback(() => {
     if (!post.allow_comments) return a.flash("Comments are turned off for this post");
@@ -119,7 +148,7 @@ function ReaderBody({ post: raw, patch, onRemove }: { post: Post; patch: (id: nu
     <>
       <PostHeader post={post} isOwn={a.isOwn} following={a.following} onFollow={a.follow} onMore={() => setOptionsOpen(true)} />
       <div className="mt-4">
-        <Detail post={post} />
+        <Detail post={post} onLike={() => void a.like(true)} />
       </div>
       <PostActions post={post} onLike={() => void a.like(!post.is_liked)} onComment={openComments} onShare={a.share} onBookmark={() => void a.bookmark()} />
       {post.allow_comments && post.comments_count > 0 && (
@@ -133,7 +162,7 @@ function ReaderBody({ post: raw, patch, onRemove }: { post: Post; patch: (id: nu
         </div>
       )}
       {commentsOpen && (
-        <CommentsSheet postId={post.id} initialCount={post.comments_count} onCountChange={(n) => a.patch(post.id, { comments_count: n })} onClose={() => setCommentsOpen(false)} />
+        <CommentsSheet postId={post.id} focusId={focus} initialCount={post.comments_count} onCountChange={(n) => a.patch(post.id, { comments_count: n })} onClose={() => setCommentsOpen(false)} />
       )}
       {optionsOpen && (
         <OptionsSheet
@@ -155,6 +184,9 @@ function ReaderBody({ post: raw, patch, onRemove }: { post: Post; patch: (id: nu
 
 export function ContentReader({ id, initial }: { id: string; initial?: Post | null }) {
   const router = useRouter();
+  const sp = useSearchParams();
+  const cParam = Number(sp.get("comment"));
+  const focus = Number.isInteger(cParam) && cParam > 0 ? cParam : undefined;
   const { status } = useAuth();
   const authed = status === "authed";
   const n = Number(id);
@@ -162,27 +194,36 @@ export function ContentReader({ id, initial }: { id: string; initial?: Post | nu
   const [local, setLocal] = useState<Partial<Post>>({});
   const fetcher = useCallback(() => postDetailApi.get(n), [n]);
   const { data: cached, error, mutate } = useCached<Post>(authed && valid ? `post:${n}` : null, fetcher, { staleMs: 30_000, persist: false });
+
+  // Signed in: posts-show (viewer flags) once it arrives; the public copy paints instantly meanwhile.
+  const post: Post | undefined = cached ?? (initial ? { ...initial, ...local } : undefined);
   const patch = useCallback(
     (_id: number, p: Partial<Post>) => {
-      if (authed) mutate((old) => ({ ...old, ...p }));
+      if (authed && cached) mutate((old) => ({ ...old, ...p }));
       else setLocal((o) => ({ ...o, ...p }));
     },
-    [authed, mutate],
+    [authed, cached, mutate],
   );
   const gone = useCallback(() => router.replace("/"), [router]);
-  const post: Post | undefined = authed ? cached : initial ? { ...initial, ...local } : undefined;
 
-  const notStructured = !!post && !structuredOf(post);
+  const toListing = !!post && (post.type === "listing" || !!post.listing);
   useEffect(() => {
-    if (notStructured) router.replace(`/p/${id}`);
-  }, [notStructured, router, id]);
+    if (toListing) router.replace(`/l/${id}`);
+  }, [toListing, router, id]);
 
   let msg: string | null = null;
-  if (!valid || initial === null) msg = "This post is not available.";
-  else if (authed && error && !cached) msg = String(error).includes("404") ? "This post is not available." : "Could not load this post.";
+  if (!valid) msg = "This post is not available.";
+  else if (!post) {
+    if (authed && error) msg = String(error).includes("404") ? "This post is not available." : "Could not load this post.";
+    else if (!authed && initial === null) msg = "This post is not available.";
+    else if (!authed && initial === undefined) msg = "Could not load this post.";
+  }
 
   return (
-    <div className="mx-auto w-full max-w-[680px] px-4 pb-12 md:px-0" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+    <div
+      className="mx-auto w-full max-w-[680px] px-4 md:px-0"
+      style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 48px)" }}
+    >
       <div className="flex h-12 items-center">
         <button
           type="button"
@@ -193,7 +234,13 @@ export function ContentReader({ id, initial }: { id: string; initial?: Post | nu
           <Icon name="back" className="size-5" />
         </button>
       </div>
-      {msg ? <p className="py-20 text-center text-[17px] font-bold text-fg">{msg}</p> : post && !notStructured ? <ReaderBody post={post} patch={patch} onRemove={gone} /> : <div className="sk-block h-64 rounded-image" />}
+      {msg ? (
+        <p className="py-20 text-center text-[17px] font-bold text-fg">{msg}</p>
+      ) : post && !toListing ? (
+        <ReaderBody key={`${post.id}:${focus ?? ""}`} post={post} focus={focus} patch={patch} onRemove={gone} />
+      ) : (
+        <div className="sk-block h-64 rounded-image" />
+      )}
     </div>
   );
 }

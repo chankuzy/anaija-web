@@ -1,20 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
+import { downloadOriginal } from "@/lib/documents/download";
 import { formatCount } from "@/lib/format";
 import type { Post } from "@/lib/api/feed-types";
+import { structuredOf } from "@/lib/feed/structured";
+
+const DownloadGlyph = (
+  <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
+  </svg>
+);
 
 function Tile({
   icon,
+  glyph,
   label,
   onClick,
   href,
   destructive,
   disabled,
 }: {
-  icon: IconName;
+  icon?: IconName;
+  glyph?: ReactNode;
   label: string;
   onClick?: () => void;
   href?: string;
@@ -26,7 +36,7 @@ function Tile({
   }`;
   const inner = (
     <>
-      <Icon name={icon} className="size-5" />
+      {glyph ?? (icon ? <Icon name={icon} className="size-5" /> : null)}
       {label}
     </>
   );
@@ -41,7 +51,6 @@ function Tile({
   );
 }
 
-// Owner-only strip: how this post is doing.
 function Insights({ post }: { post: Post }) {
   const stats: [string, number][] = [
     ["Views", post.views_count],
@@ -84,6 +93,10 @@ export function OptionsSheet({
   const username = post.author?.username ?? "";
   const isListing = post.type === "listing" || !!post.listing;
 
+  const structured = structuredOf(post);
+  const docUrl = structured?.kind === "document" ? post.media?.find((m) => (m.type ?? "").toLowerCase() === "document")?.url : null;
+  const docName = structured?.kind === "document" ? structured.file.name || "document" : "document";
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -100,6 +113,8 @@ export function OptionsSheet({
       onClose();
     }
   }
+
+  const download = docUrl ? <Tile glyph={DownloadGlyph} label={busy ? "Downloading…" : "Download original"} disabled={busy} onClick={() => void run(() => downloadOriginal(docUrl, docName))} /> : null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true">
@@ -129,11 +144,13 @@ export function OptionsSheet({
         ) : isOwn ? (
           <>
             <Insights post={post} />
+            {download}
             {isListing && <Tile icon="bag" label="View listing" href={`/l/${post.id}`} />}
             <Tile icon="trash" label={isListing ? "Delete listing" : "Delete post"} destructive onClick={() => setConfirming(true)} />
           </>
         ) : (
           <>
+            {download}
             {isListing && <Tile icon="bag" label="View product" href={`/l/${post.id}`} />}
             {username && (
               <Tile

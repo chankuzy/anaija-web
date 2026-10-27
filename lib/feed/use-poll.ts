@@ -38,7 +38,7 @@ function flush() {
   if (queue.size) timer = setTimeout(flush, 40);
   if (!ids.length) return;
   api
-    .get<{ polls: Record<string, PollState> }>("polls-state", { ids: ids.join(",") })
+    .get<{ polls: Record<string, PollState> }>("polls", { ids: ids.join(",") })
     .then((r) => ids.forEach((id) => states.set(id, r.polls?.[String(id)] ?? "none")))
     .catch(() => {}) // stays unknown: a later mount retries
     .finally(() => {
@@ -71,7 +71,7 @@ export function usePoll(id: number, enabled: boolean) {
 
   const vote = useCallback(
     async (optionIds: number[]) => {
-      const r = await api.post<{ poll: PollState }>("polls-vote", { post_id: id, option_ids: optionIds });
+      const r = await api.post<{ poll: PollState }>("polls", { post_id: id, option_ids: optionIds });
       states.set(id, r.poll);
       emit();
     },

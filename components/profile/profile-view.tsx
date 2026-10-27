@@ -34,7 +34,7 @@ const STORY_COMPOSER_HREF = "/create/new?mode=story";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "posts", label: "Posts" },
-  { id: "reels", label: "Reels" },
+  { id: "reels", label: "Media" },
   { id: "reposts", label: "Reposts" },
   { id: "saved", label: "Favorites" },
   { id: "liked", label: "Liked" },
@@ -64,7 +64,7 @@ interface PagedLike {
 
 const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
   posts: { title: "No posts yet", sub: "Everything shared shows up here" },
-  reels: { title: "No reels yet", sub: "Video posts show up here automatically" },
+  reels: { title: "No media yet", sub: "Videos and posts with audio show up here" },
   reposts: { title: "No reposts yet", sub: "Posts reposted from the feed show up here" },
   liked: { title: "No likes yet", sub: "Posts you like will show up here" },
   saved: { title: "No favorites yet", sub: "Tap the bookmark on anything you want to find again" },

@@ -6,11 +6,12 @@ const nextConfig: NextConfig = {
   },
   cacheComponents: true,
   async redirects() {
-    // /l/{id} is the one canonical listing URL. /posts and /marketplace are what posts-share used to return.
+    // /p/{id} is the one canonical post URL and /l/{id} the listing's. Old shapes redirect (query strings are kept).
     return [
       { source: "/listing/:id(\\d+)", destination: "/l/:id", permanent: true },
       { source: "/marketplace/:id(\\d+)", destination: "/l/:id", permanent: true },
       { source: "/posts/:id(\\d+)", destination: "/p/:id", permanent: true },
+      { source: "/read/:id(\\d+)", destination: "/p/:id", permanent: true },
     ];
   },
   async headers() {

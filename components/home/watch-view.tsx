@@ -9,19 +9,21 @@ import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
 import { stagedForImmersive } from "@/lib/feed/handoff";
 
-// Immersive surface: reels only. /watch?post=ID starts on that post (staged by Home, or fetched on a direct visit)
-// and the video feed continues underneath, via FeedView's `pinned`.
-export function WatchView() {
+// Immersive Media surface. /watch?post=ID starts on that post and the media feed continues underneath (FeedView `pinned`).
+// Source of the pinned post, best first: staged by Home/Discover, fetched with viewer flags (signed in),
+// the public copy resolved on the server (`initial`: the only source for guests).
+export function WatchView({ initial = null }: { initial?: Post | null }) {
   const sp = useSearchParams();
   const { status } = useAuth();
   const id = Number(sp.get("post"));
   const valid = Number.isInteger(id) && id > 0;
   const staged = valid ? stagedForImmersive(id) : null;
-  const needFetch = valid && !staged && status === "authed";
+  const seed = valid && initial?.id === id ? initial : null;
+  const fetchAuthed = valid && !staged && status === "authed";
   const [loaded, setLoaded] = useState<{ id: number; post: Post | null } | null>(null);
 
   useEffect(() => {
-    if (!needFetch) return;
+    if (!fetchAuthed) return;
     let off = false;
     postDetailApi
       .get(id)
@@ -30,9 +32,10 @@ export function WatchView() {
     return () => {
       off = true;
     };
-  }, [needFetch, id]);
+  }, [fetchAuthed, id]);
 
-  if (status === "loading" || (needFetch && loaded?.id !== id)) return <FeedSkeleton />;
-  const pinned = staged ?? (loaded?.id === id ? loaded.post : null);
-  return <FeedView key={valid ? id : "feed"} videoOnly pinned={pinned} />;
+  const fetched = loaded?.id === id ? loaded.post : null;
+  const waiting = fetchAuthed && !seed && loaded?.id !== id;
+  if (status === "loading" || waiting) return <FeedSkeleton />;
+  return <FeedView key={valid ? id : "feed"} videoOnly pinned={staged ?? fetched ?? seed} />;
 }

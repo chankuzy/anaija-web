@@ -1,11 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import dynamic from "next/dynamic";
+import { useState } from "react";
+import { PdfPager } from "@/components/document/pdf-pager";
 import { Icon } from "@/components/ui/icon";
+import type { Post } from "@/lib/api/feed-types";
 import { fileLabel, formatBytes, structuredOf } from "@/lib/feed/structured";
 import type { BodyProps } from "./types";
 
-// Presentational: the feed, the reader and the composer preview all draw the same card.
+const DocumentViewer = dynamic(() => import("@/components/document/document-viewer").then((m) => m.DocumentViewer), { ssr: false });
+
+// Presentational: the reader and the composer preview draw this card.
 export function DocumentCardView({
   title,
   description,
@@ -58,30 +64,73 @@ export function DocumentCardView({
   );
 }
 
-export const docMedia = (post: BodyProps["post"]) => post.media.find((m) => (m.type ?? "").toLowerCase() === "document");
+export const docMedia = (post: Post) => post.media.find((m) => (m.type ?? "").toLowerCase() === "document");
+export const isPdfUrl = (url: string | null | undefined) => !!url && /\.pdf($|[?#])/i.test(url);
 
-export function OpenDocument({ url }: { url: string | null | undefined }) {
-  if (!url) return null;
+// Formats with no in-app renderer (Office files need server-side conversion). Honest, not a fake preview.
+function NoPreview({ coverUrl, label, name, size }: { coverUrl?: string | null; label: string; name: string; size?: number }) {
   return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mt-3 flex h-11 items-center justify-center rounded-pill bg-brand text-secondary font-extrabold text-brand-fg transition active:scale-[0.99]"
-    >
-      Open document
-    </a>
+    <div className="flex items-center gap-4 rounded-image bg-surface-subtle p-4">
+      <span className="relative grid h-[96px] w-[76px] shrink-0 place-items-center overflow-hidden rounded-xl bg-card">
+        {coverUrl ? (
+          <img src={coverUrl} alt="" className="size-full object-cover" />
+        ) : (
+          <span className="flex flex-col items-center gap-1 text-muted">
+            <Icon name="copy" filled className="size-6" />
+            <span className="text-micro font-extrabold tracking-wide">{label}</span>
+          </span>
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-secondary font-semibold text-fg">{name}</span>
+        <span className="mt-0.5 block text-supporting font-semibold text-muted">{[label, formatBytes(size)].filter(Boolean).join(" · ")}</span>
+        <span className="mt-2 block text-supporting leading-[1.4] text-muted">In-app preview isn&apos;t available for {label} files yet. You can get the original from the ⋯ menu.</span>
+      </span>
+    </div>
+  );
+}
+
+// Swipeable PDF pages + the immersive zoom viewer. Used by documents and by PDF attachments on announcements.
+export function PdfAttachment({ url, title, coverUrl }: { url: string; title: string; coverUrl?: string | null }) {
+  const [at, setAt] = useState<number | null>(null);
+  return (
+    <>
+      <PdfPager url={url} coverUrl={coverUrl} label="document" onOpen={setAt} />
+      {at !== null && <DocumentViewer url={url} title={title} startPage={at} onClose={() => setAt(null)} />}
+    </>
+  );
+}
+
+export function DocumentPages({ post }: { post: Post }) {
+  const c = structuredOf(post);
+  if (!c || c.kind !== "document") return null;
+  const m = docMedia(post);
+  const label = fileLabel(c.file.mime, c.file.name);
+  const isPdf = label === "PDF" && !!m?.url;
+  return (
+    <div>
+      {isPdf && m?.url ? (
+        <PdfAttachment url={m.url} title={c.title || "Document"} coverUrl={m.thumbnail} />
+      ) : (
+        <NoPreview coverUrl={m?.thumbnail} label={label} name={c.file.name} size={c.file.size} />
+      )}
+      {isPdf && <span className="mt-2 block text-supporting font-semibold text-muted">{[label, formatBytes(c.file.size)].filter(Boolean).join(" · ")}</span>}
+    </div>
   );
 }
 
 export function DocumentBody({ post, onOpen }: BodyProps) {
   const c = structuredOf(post);
   if (!c || c.kind !== "document") return null;
-  const m = docMedia(post);
   return (
-    <div className="rounded-image bg-surface-subtle p-4">
-      <DocumentCardView title={c.title} description={c.description} fileName={c.file.name} sizeBytes={c.file.size} mime={c.file.mime} coverUrl={m?.thumbnail} onOpen={onOpen} />
-      <OpenDocument url={m?.url} />
+    <div>
+      <button type="button" onClick={onOpen} className="block w-full text-left">
+        <span className="block text-[18px] font-bold leading-[1.25] text-fg">{c.title || "Untitled document"}</span>
+        {c.description ? <span className="mt-1 line-clamp-3 block text-secondary leading-[1.4] text-muted">{c.description}</span> : null}
+      </button>
+      <div className="mt-3">
+        <DocumentPages post={post} />
+      </div>
     </div>
   );
 }

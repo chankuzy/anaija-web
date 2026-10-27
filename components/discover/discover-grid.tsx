@@ -1,8 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { DiscoverItem } from "@/lib/api/discover";
 import { aspectOf } from "@/lib/discover/tile";
+import { isReelEligible } from "@/lib/feed/content";
+import { postHref } from "@/lib/feed/href";
 import { DiscoverCard, type VideoBadge } from "./discover-card";
 
 // Instagram Explore is a fixed 3-column wall inside a centred column; so is this.
@@ -10,6 +13,9 @@ const COLS = 3;
 
 // Each tile goes to the currently shortest column (heights known from aspect ratios), so appending a
 // page never moves tiles already placed. Same rule as DiscoverMasonryGrid.
+//
+// Opening: Media-eligible tiles (video, or images with audio) call onOpen(index) for the immersive viewer;
+// every other tile opens its standalone page (/p/{id}, listings /l/{id}).
 //
 // Playback: one random on-screen video plays; hovering a video tile hands playback to it, and
 // leaving hands it back. State is only ever changed from observer/pointer handlers.
@@ -22,6 +28,7 @@ export function DiscoverGrid({
   onOpen: (index: number) => void;
   videoBadge?: VideoBadge;
 }) {
+  const router = useRouter();
   const [hover, setHover] = useState<string | null>(null);
   const [random, setRandom] = useState<string | null>(null);
   const visible = useRef(new Set<string>());
@@ -57,6 +64,11 @@ export function DiscoverGrid({
     return cols;
   }, [items]);
 
+  const open = (item: DiscoverItem, index: number) => {
+    if (item.kind !== "listing" && isReelEligible(item.post)) onOpen(index);
+    else router.push(postHref(item.post));
+  };
+
   return (
     <div className="flex gap-[3px] overflow-hidden">
       {columns.map((col, c) => (
@@ -65,7 +77,7 @@ export function DiscoverGrid({
             <DiscoverCard
               key={item.id}
               item={item}
-              onOpen={() => onOpen(index)}
+              onOpen={() => open(item, index)}
               videoBadge={videoBadge}
               playing={playingId === item.id}
               onVisible={onVisible}

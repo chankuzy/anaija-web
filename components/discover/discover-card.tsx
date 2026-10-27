@@ -4,8 +4,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import type { DiscoverItem } from "@/lib/api/discover";
+import { KIND_META } from "@/lib/create/kinds";
 import { coverOf, imageCount, tileAspect, videoSrcOf } from "@/lib/discover/tile";
+import { isReelEligible } from "@/lib/feed/content";
+import { structuredOf } from "@/lib/feed/structured";
 import { BagGlyph, ClapperboardGlyph, LayersGlyph, PlayGlyph } from "./glyphs";
+import { StructuredTile } from "./structured-tile";
 
 export type VideoBadge = "play" | "clapper";
 
@@ -73,8 +77,9 @@ const HeartGlyph = () => (
   </svg>
 );
 
-// Port of DiscoverPostCard / DiscoverListingCard, restyled after Instagram Explore: square edges, hairline gaps,
-// dim + counts on hover. Video tiles report visibility and hover to the grid, which decides which one plays.
+// Content-aware tile: media posts keep their thumbnail; polls, announcements, publications and documents get a
+// native preview (cover + headline when there is a cover, a typographic tile when there is not).
+// Video tiles report visibility and hover to the grid, which decides which one plays.
 export function DiscoverCard({
   item,
   onOpen,
@@ -93,9 +98,11 @@ export function DiscoverCard({
   const post = item.post;
   const cover = coverOf(post);
   const isListing = item.kind === "listing";
+  const structured = structuredOf(post);
   const hasImage = !!cover.url;
   const aspect = tileAspect(cover.aspect, isListing ? true : hasImage);
   const multi = imageCount(post) > 1;
+  const audioReel = !cover.isVideo && isReelEligible(post);
   const caption = (post.caption ?? "").trim();
   const price = post.listing?.formatted_price;
   const fallback: IconName = isListing ? "bag" : cover.isVideo ? "clapperboard" : "gallery";
@@ -130,7 +137,12 @@ export function DiscoverCard({
       className="group relative block w-full overflow-hidden bg-card text-left outline-none focus-visible:ring-2 focus-visible:ring-brand/80 focus-visible:ring-inset"
       style={{ aspectRatio: String(aspect), backgroundColor: cover.color ?? undefined }}
     >
-      <TileMedia key={cover.url ?? "none"} url={cover.url ?? null} caption={caption} fallback={fallback} />
+      {structured && !hasImage ? (
+        <StructuredTile post={post} hasCover={false} />
+      ) : (
+        <TileMedia key={cover.url ?? "none"} url={cover.url ?? null} caption={caption} fallback={fallback} />
+      )}
+      {structured && hasImage && <StructuredTile post={post} hasCover />}
       {playing && videoSrc && <TilePreview key={videoSrc} src={videoSrc} />}
 
       {isListing && <span className="pointer-events-none absolute inset-x-0 bottom-0 h-14 bg-gradient-to-b from-transparent to-black/55" />}
@@ -152,9 +164,17 @@ export function DiscoverCard({
           <BagGlyph className="size-[22px]" />
         </Badge>
       )}
-      {cover.isVideo ? (
+      {structured ? (
+        <Badge className="right-2 top-2">
+          <Icon name={KIND_META[structured.kind].icon} filled className="size-[22px]" />
+        </Badge>
+      ) : cover.isVideo ? (
         <Badge className="right-2 top-2">
           {videoBadge === "clapper" ? <ClapperboardGlyph className="size-[22px]" /> : <PlayGlyph className="size-[22px]" />}
+        </Badge>
+      ) : audioReel ? (
+        <Badge className="right-2 top-2">
+          <Icon name="musicNote" filled className="size-[22px]" />
         </Badge>
       ) : (
         multi && (
