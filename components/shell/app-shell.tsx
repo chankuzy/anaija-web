@@ -96,13 +96,13 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   // Segment-exact: "/messages" must not match "/me".
   const matches = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
   const isActive = (href: string) => {
-    if (href === "/") return pathname === "/";
+    if (href === "/") return pathname === "/" || pathname === "/watch";
     if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
     return matches(href);
   };
   const hrefFor = (n: NavItem) =>
     n.auth && status === "guest" ? (n.href === "/notifications" ? "/login" : `/login?next=${encodeURIComponent(n.href)}`) : n.href;
-  const fullBleed = pathname === "/" || pathname.startsWith("/p/");
+  const fullBleed = pathname === "/" || pathname === "/watch" || pathname.startsWith("/p/");
   // Inside a conversation the thread owns the whole screen: no bottom tabs, and nothing reserves room for them.
   const inChat = /^\/messages\/\d+/.test(pathname);
   const railPanel = panelOpen && desktop;

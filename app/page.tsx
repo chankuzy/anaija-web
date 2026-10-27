@@ -1,5 +1,5 @@
-import { FeedView } from "@/components/feed/feed-view";
+import { HomeFeed } from "@/components/home/home-feed";
 
 export default function HomePage() {
-  return <FeedView />;
+  return <HomeFeed />;
 }
