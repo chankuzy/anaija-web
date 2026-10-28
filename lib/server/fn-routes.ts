@@ -59,6 +59,20 @@ const FN_ROUTES = new Map<string, string>([
   ["messages-destroy", "conversations/message-destroy"],
   ["messages-react", "conversations/message-react"],
   ["messages-read", "conversations/message-read"],
+
+  // marketplace
+  ["marketplace-index", "marketplace/index"],
+  ["marketplace-show", "marketplace/show"],
+  ["marketplace-inquire", "marketplace/inquire"],
+  ["marketplace-inquiries", "marketplace/inquiries"],
+  ["marketplace-available", "marketplace/available"],
+  ["marketplace-reserve", "marketplace/reserve"],
+  ["marketplace-sold", "marketplace/sold"],
+
+  // hashtags
+  ["hashtags-trending", "hashtags/trending"],
+  ["hashtags-posts", "hashtags/posts"],
+  ["hashtags-listings", "hashtags/listings"],
 ]);
 
 /** ["comments-list", "12"] -> "comments/list/12". Unmapped names pass through untouched. */
