@@ -87,6 +87,13 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
     closePanel();
   }, [pathname, closePanel]);
 
+  // Anything in the app (e.g. the Home topbar plus) can ask for the Create sheet.
+  useEffect(() => {
+    const open = () => setCreateOpen(true);
+    window.addEventListener("anaija:create", open);
+    return () => window.removeEventListener("anaija:create", open);
+  }, []);
+
   useEffect(() => {
     if (status === "authed" && needsProfileSetup(user) && pathname !== "/setup" && pathname !== "/login") {
       router.replace(pathname === "/" ? "/setup" : `/setup?next=${encodeURIComponent(pathname + window.location.search)}`);
@@ -288,10 +295,10 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           href={hrefFor(onCommunities ? { ...CREATE, href: "/communities/new" } : CREATE)}
           aria-label={onCommunities ? "New community" : "Create"}
           onClick={onCommunities ? undefined : openCreate}
-          className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-brand-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_32px_-10px_color-mix(in_srgb,var(--color-brand)_60%,transparent),0_6px_14px_rgba(0,0,0,0.45)] transition-transform duration-150 active:scale-90 md:hidden"
+          className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-white ring-1 ring-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-10px_18px_rgba(0,0,0,0.5),0_20px_38px_-10px_rgba(0,0,0,0.95),0_4px_10px_rgba(0,0,0,0.6)] transition-transform duration-150 active:scale-90 md:hidden"
           style={{
             bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)",
-            background: "linear-gradient(135deg, var(--color-brand), var(--color-warm))",
+            background: "linear-gradient(145deg, #2d2d33 0%, #18181b 55%, #0c0c0e 100%)",
           }}
         >
           <Icon name="plus" weight="strong" className="size-7" />

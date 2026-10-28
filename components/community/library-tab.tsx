@@ -16,6 +16,24 @@ import { timeAgo } from "@/lib/format";
 import { confirmDialog } from "@/lib/ui/dialog";
 import { AREA, Chip, Empty, Label, ReportSheet, Sheet, messageOf, useFetch } from "./kit";
 
+// Some phones kill the installed app while the system file picker is open. Remember that it was open,
+// so the Add sheet can come back with the app.
+const PICKER_KEY = "anaija:lib-picker";
+const markPicker = (cid: number) => {
+  try { localStorage.setItem(PICKER_KEY, JSON.stringify({ c: cid, at: Date.now() })); } catch {}
+};
+const clearPicker = () => {
+  try { localStorage.removeItem(PICKER_KEY); } catch {}
+};
+const pickerWasOpen = (cid: number) => {
+  try {
+    const d = JSON.parse(localStorage.getItem(PICKER_KEY) || "") as { c?: number; at?: number };
+    return d.c === cid && Date.now() - (d.at ?? 0) < 600_000;
+  } catch {
+    return false;
+  }
+};
+
 const TYPE_LABEL: Record<string, string> = {
   past_question: "Past question", lecture_note: "Lecture note", slides: "Slides", textbook: "Textbook",
   assignment: "Assignment", syllabus: "Syllabus", project: "Project", other: "Other",
@@ -95,7 +113,7 @@ function Detail({ c, r, onClose, onChanged }: { c: CommunityDetail; r: Resource;
   );
 }
 
-function Upload({ c, collections, onClose, onDone }: { c: CommunityDetail; collections: { id: number; name: string }[]; onClose: () => void; onDone: () => void }) {
+function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDetail; collections: { id: number; name: string }[]; resumed: boolean; onClose: () => void; onDone: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [requestId] = useState(() => crypto.randomUUID());
   const [file, setFile] = useState<File | null>(null);
@@ -115,6 +133,7 @@ function Upload({ c, collections, onClose, onDone }: { c: CommunityDetail; colle
     if (!docMimeOf(f)) return setErr("Use a PDF, Word, PowerPoint, Excel or text file.");
     if (f.size > MAX_DOC_BYTES) return setErr("This file is larger than 25 MB.");
     setErr(null);
+    clearPicker();
     setFile(f);
     setTitle((t) => t || f.name.replace(/\.[^.]+$/, "").slice(0, 120));
   }
@@ -146,7 +165,10 @@ function Upload({ c, collections, onClose, onDone }: { c: CommunityDetail; colle
   return (
     <Sheet title="Add to library" onClose={onClose} wide>
       <input ref={fileRef} type="file" accept={DOC_ACCEPT} hidden onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ""; }} />
-      <button type="button" disabled={!!busy} onClick={() => fileRef.current?.click()} className="flex h-[96px] w-full flex-col items-center justify-center gap-1.5 rounded-[22px] bg-surface-interactive text-fg hover:bg-surface-elevated">
+      {resumed && !file && (
+        <p className="mb-3 rounded-2xl bg-surface-interactive px-4 py-3 text-secondary leading-[1.4] text-muted">Your phone closed Anaija while you were choosing a file. Pick it again to continue.</p>
+      )}
+      <button type="button" disabled={!!busy} onClick={() => { markPicker(c.id); fileRef.current?.click(); }} className="flex h-[96px] w-full flex-col items-center justify-center gap-1.5 rounded-[22px] bg-surface-interactive text-fg hover:bg-surface-elevated">
         <Icon name="copy" filled className="size-6" />
         <span className="max-w-[90%] truncate text-body font-bold">{file ? file.name : "Choose a file"}</span>
         <span className="text-supporting text-muted">{file ? formatBytes(file.size) : "PDF, Word, PowerPoint, Excel, text · up to 25 MB"}</span>
@@ -190,7 +212,8 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
   const [course, setCourse] = useState<string | null>(null);
   const [collection, setCollection] = useState<number | null>(null);
   const [open, setOpen] = useState<Resource | null>(null);
-  const [upload, setUpload] = useState(false);
+  const [resumed, setResumed] = useState(() => pickerWasOpen(c.id));
+  const [upload, setUpload] = useState(resumed);
   const [newCol, setNewCol] = useState(false);
   const [colName, setColName] = useState("");
   const [extra, setExtra] = useState<{ key: string; items: Resource[]; cursor: string | null; more: boolean } | null>(null);
@@ -311,7 +334,7 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
       </div>
 
       {open && <Detail c={c} r={open} onClose={() => setOpen(null)} onChanged={refresh} />}
-      {upload && <Upload c={c} collections={collections} onClose={() => setUpload(false)} onDone={() => { setUpload(false); refresh(); show("Added to library"); }} />}
+      {upload && <Upload c={c} collections={collections} resumed={resumed} onClose={() => { clearPicker(); setResumed(false); setUpload(false); }} onDone={() => { clearPicker(); setResumed(false); setUpload(false); refresh(); show("Added to library"); }} />}
       {toast}
     </div>
   );

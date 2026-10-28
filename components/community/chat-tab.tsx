@@ -19,7 +19,10 @@ export function ChatTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => void 
   }
   if (!c.chat_conversation_id) return <Empty title="Chat isn't available" body="This community's chat couldn't be found." />;
   return (
-    <div className="h-[72dvh] min-h-[440px] overflow-hidden rounded-[22px] bg-surface-subtle">
+    <div
+      className="overflow-hidden rounded-[22px] bg-surface-subtle"
+      style={{ height: "calc(100dvh - var(--nav-h, 0px) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 84px)", minHeight: 360 }}
+    >
       <ThreadPane conversationId={c.chat_conversation_id} embedded />
     </div>
   );
