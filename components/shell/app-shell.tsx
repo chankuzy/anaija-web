@@ -26,7 +26,7 @@ type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mo
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
-  { href: "/communities", label: "Communities", icon: "usersGroupRounded", auth: true },
+  { href: "/communities", label: "Communities", icon: "usersGroupRounded", auth: true, mobile: "tab" },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
   { href: "/watch", label: "Media", icon: "clapperboard", mobile: "tab" },
   { href: "/messages", label: "Messages", icon: "message", auth: true },
@@ -260,26 +260,36 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-[rgba(9,9,11,0.9)] md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {NAV.filter((n) => n.mobile).map((n) =>
-          n.mobile === "create" ? (
-            <Link key={n.href} href={hrefFor(n)} aria-label="Create" onClick={openCreate} className="flex flex-1 items-center justify-center">
-              <span className="grid h-[32px] w-12 place-items-center text-white/60 transition-transform active:scale-95">
-                <Icon name="plus" className="size-7" />
-              </span>
-            </Link>
-          ) : (
+        {NAV.filter((n) => n.mobile).map((n) => {
+          if (n.mobile === "create") {
+            return (
+              <Link
+                key={n.href}
+                href={hrefFor(n)}
+                aria-label="Create"
+                onClick={openCreate}
+                className="flex flex-1 items-center justify-center text-white/60 transition-transform active:scale-95"
+              >
+                <Icon name="plus" className="size-[30px]" />
+              </Link>
+            );
+          }
+          const active = isActive(n.href);
+          return (
             <Link
               key={n.href}
               href={hrefFor(n)}
-              className={`flex flex-1 flex-col items-center justify-center gap-[3px] text-micro ${
-                isActive(n.href) ? "font-bold text-white" : "font-bold text-white/60"
+              aria-label={n.label}
+              aria-current={active ? "page" : undefined}
+              className={`relative flex flex-1 items-center justify-center transition-transform active:scale-95 ${
+                active ? "text-white" : "text-white/60"
               }`}
             >
-              <Icon name={n.icon} filled={isActive(n.href)} />
-              {n.label}
+              <Icon name={n.icon} filled={active} className="size-[30px]" />
+              {active && <span aria-hidden="true" className="absolute bottom-1.5 size-1 rounded-full bg-white" />}
             </Link>
-          ),
-        )}
+          );
+        })}
       </nav>
 
       {createOpen && <CreateSheet onClose={() => setCreateOpen(false)} />}
