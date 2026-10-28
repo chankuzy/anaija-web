@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button, LinkButton } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import { settingsApi } from "@/lib/api/settings";
@@ -14,21 +14,19 @@ const CATS = [
   ["suggestion", "Suggestion"],
 ] as const;
 
+const noSub = () => () => {};
+
 export function ReportView() {
   const ready = useRequireAuth();
-  const [cat, setCat] = useState<string>("bug");
-  const [text, setText] = useState("");
+  const about = useSyncExternalStore(noSub, () => new URLSearchParams(window.location.search).get("about") ?? "", () => "");
+  const [catPick, setCat] = useState<string | null>(null);
+  const [textPick, setText] = useState<string | null>(null);
+  const cat = catPick ?? (about ? "safety" : "bug");
+  const text = textPick ?? (about ? `About @${about}: ` : "");
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const valid = text.trim().length >= 10;
-  useEffect(() => {
-    const about = new URLSearchParams(window.location.search).get("about");
-    if (about) {
-      setCat("safety");
-      setText(`About @${about}: `);
-    }
-  }, []);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();

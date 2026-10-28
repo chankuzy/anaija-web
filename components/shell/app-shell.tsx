@@ -26,6 +26,7 @@ type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mo
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
   { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
+  { href: "/communities", label: "Communities", icon: "usersGroupRounded", auth: true },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
   { href: "/watch", label: "Media", icon: "clapperboard", mobile: "tab" },
   { href: "/messages", label: "Messages", icon: "message", auth: true },
@@ -88,7 +89,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status === "authed" && needsProfileSetup(user) && pathname !== "/setup" && pathname !== "/login") {
-      router.replace("/setup");
+      router.replace(pathname === "/" ? "/setup" : `/setup?next=${encodeURIComponent(pathname + window.location.search)}`);
     }
   }, [status, user, pathname, router]);
 
@@ -98,6 +99,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const matches = (base: string) => pathname === base || pathname.startsWith(`${base}/`);
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
+    if (href === "/communities") return matches("/communities") || matches("/c") || matches("/s") || matches("/join");
     if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
     return matches(href);
   };

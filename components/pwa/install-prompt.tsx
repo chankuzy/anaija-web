@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 
@@ -14,6 +14,12 @@ const KEY = "anaija-install-dismissed";
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000;
 const HIDDEN_ON = ["/create", "/login"];
 
+const IOS_RE = /iphone|ipad|ipod/i;
+const noSub = () => () => {};
+const isStandalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
 const snoozed = () => {
   try {
     return Date.now() - Number(localStorage.getItem(KEY) ?? 0) < SNOOZE_MS;
@@ -22,23 +28,17 @@ const snoozed = () => {
   }
 };
 
+const iosEligible = () => !isStandalone() && !snoozed() && IOS_RE.test(navigator.userAgent);
+
 export function InstallPrompt() {
   const pathname = usePathname();
   const [evt, setEvt] = useState<InstallEvent | null>(null);
-  const [ios, setIos] = useState(false);
-  const [hidden, setHidden] = useState(true);
+  const ios = useSyncExternalStore(noSub, iosEligible, () => false);
+  const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      ("standalone" in navigator && (navigator as Navigator & { standalone?: boolean }).standalone === true);
-    if (standalone || snoozed()) return;
-
-    if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-      setIos(true);
-      setHidden(false);
-    }
     const onPrompt = (e: Event) => {
+      if (isStandalone() || snoozed()) return;
       e.preventDefault();
       setEvt(e as InstallEvent);
       setHidden(false);

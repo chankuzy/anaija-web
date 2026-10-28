@@ -18,6 +18,9 @@ export interface ActivityDest {
   user_id?: number | null;
   item_id?: number | null;
   username?: string | null;
+  slug?: string | null;
+  code?: string | null;
+  tab?: string | null;
   title?: string | null;
   avatar?: string | null;
 }

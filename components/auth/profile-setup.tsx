@@ -26,7 +26,7 @@ export function ProfileSetup() {
   const latest = useRef("");
 
   useEffect(() => {
-    if (status === "guest") router.replace("/login");
+    if (status === "guest") router.replace(`/login?next=${encodeURIComponent(readNext())}`);
     else if (status === "authed" && !needsProfileSetup(user)) router.replace(readNext());
   }, [status, user, router]);
 

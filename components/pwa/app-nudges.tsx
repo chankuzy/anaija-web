@@ -74,7 +74,12 @@ export function AppNudges() {
   const ps = push.state;
 
   const [evt, setEvt] = useState<InstallEvent | null>(null);
-  const [standalone, setStandalone] = useState(false);
+  const [standalone, setStandalone] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (window.matchMedia("(display-mode: standalone)").matches ||
+        (navigator as Navigator & { standalone?: boolean }).standalone === true),
+  );
   const [armed, setArmed] = useState(false);
   const [card, setCard] = useState<Card | null>(null);
   const [busy, setBusy] = useState(false);
@@ -87,10 +92,6 @@ export function AppNudges() {
 
   useEffect(() => {
     mountedAt.current = Date.now();
-    const sa =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    setStandalone(sa);
     try {
       shown.current = sessionStorage.getItem("anaija:nudge-shown") === "1";
     } catch {}

@@ -120,6 +120,7 @@ function MiniChat({
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
   const lastRead = useRef(0);
+  const outSeq = useRef(0);
 
   const load = useCallback(
     () =>
@@ -153,7 +154,7 @@ function MiniChat({
   }, [msgs.length, outbox.length, loading]);
 
   async function send(body: string, retryKey?: string) {
-    const key = retryKey ?? `o${Date.now()}`;
+    const key = retryKey ?? `o${++outSeq.current}`;
     stick.current = true;
     setOutbox((p) => (retryKey ? p.map((o) => (o.key === key ? { ...o, failed: false } : o)) : [...p, { key, body, failed: false }]));
     try {
@@ -172,11 +173,10 @@ function MiniChat({
     void send(t);
   }
 
-  let prevAt = 0;
-  const rows = msgs.map((m) => {
-    const at = Date.parse(utc(m.created_at)) || 0;
-    const sep = at - prevAt > 3_600_000 ? new Date(at).toLocaleString("en-NG", { weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
-    prevAt = at;
+  const times = msgs.map((m) => Date.parse(utc(m.created_at)) || 0);
+  const rows = msgs.map((m, i) => {
+    const at = times[i];
+    const sep = at - (i > 0 ? times[i - 1] : 0) > 3_600_000 ? new Date(at).toLocaleString("en-NG", { weekday: "short", hour: "numeric", minute: "2-digit" }) : null;
     return { m, sep };
   });
 

@@ -59,6 +59,15 @@ export function VoicePlayer({
   const [speed, setSpeed] = useState<1 | 1.5 | 2>(1);
   const [nonce, setNonce] = useState(0);
 
+  // New source: reset during render instead of inside the effect.
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setLoading(true);
+    setError(false);
+    setPlaying(false);
+  }
+
   // Progress and the time label are written straight to the DOM, so playback never re-renders the bubble.
   const paint = useCallback((t: number) => {
     const d = durRef.current;
@@ -84,9 +93,6 @@ export function VoicePlayer({
     audioRef.current = audio;
     audio.preload = "metadata";
     durRef.current = 0;
-    setLoading(true);
-    setError(false);
-    setPlaying(false);
     paint(0);
 
     const ac = new AbortController();
@@ -234,7 +240,11 @@ export function VoicePlayer({
     return (
       <button
         type="button"
-        onClick={() => setNonce((n) => n + 1)}
+        onClick={() => {
+          setError(false);
+          setLoading(true);
+          setNonce((n) => n + 1);
+        }}
         className={`flex items-center gap-2 px-2.5 py-2 text-[12.5px] font-medium ${
           mine ? "text-brand-fg" : "text-danger"
         } ${className}`}
@@ -274,6 +284,7 @@ export function VoicePlayer({
           tabIndex={0}
           aria-label="Seek voice message"
           aria-valuemin={0}
+          aria-valuenow={0}
           onKeyDown={onKeyDown}
           onPointerDown={(e) => {
             dragging.current = true;

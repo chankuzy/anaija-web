@@ -47,11 +47,10 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
   });
 
   // The warm-up can land after first render: adopt the last-seen inbox the moment it does.
-  useEffect(() => {
-    if (!cacheReady || uid === null) return;
-    const c = peek<Conversation[]>(inboxKey(uid));
-    if (c) setState((p) => (p.userId === uid ? p : { userId: uid, items: sortConv(c.data), error: null }));
-  }, [cacheReady, uid]);
+  const warm = uid !== null && cacheReady ? peek<Conversation[]>(inboxKey(uid)) : undefined;
+  if (warm && uid !== null && state.userId !== uid) {
+    setState({ userId: uid, items: sortConv(warm.data), error: null });
+  }
 
   // Last-seen inbox survives cold starts (cleared with the rest of the cache on sign-out / account change).
   useEffect(() => {
@@ -60,8 +59,6 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (uid === null) return;
-    const cached = peek<Conversation[]>(inboxKey(uid));
-    if (cached) setState((p) => (p.userId === uid ? p : { userId: uid, items: sortConv(cached.data), error: null }));
     const ac = new AbortController();
     messagingApi
       .inbox(ac.signal)

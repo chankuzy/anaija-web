@@ -511,7 +511,7 @@ export function EmptyThread() {
   );
 }
 
-export function ThreadPane({ conversationId }: { conversationId: number }) {
+export function ThreadPane({ conversationId, embedded = false }: { conversationId: number; embedded?: boolean }) {
   const router = useRouter();
   const { user } = useAuth();
   const myId = user?.id;
@@ -522,7 +522,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   const [text, setText] = useState("");
   const [picker, setPicker] = useState<number | null>(null);
   const [responding, setResponding] = useState(false);
-  const [details, setDetails] = useState(true);
+  const [details, setDetails] = useState(!embedded);
   const [sheet, setSheet] = useState(false);
   const [person, setPerson] = useState(false);
   const openPerson = () => (conv && conv.other_user && conv.type !== "group" ? setPerson(true) : setSheet(true));
@@ -753,6 +753,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
   return (
     <div className="relative flex h-full min-h-0">
       <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+        {!embedded && (
         <header className="flex items-center gap-3 px-3 py-2.5">
           <Link
             href="/messages"
@@ -794,6 +795,7 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
             <Icon name="infoCircle" filled={xl && details} className="size-6" />
           </button>
         </header>
+        )}
 
         <div
           ref={scroller}
@@ -871,6 +873,9 @@ export function ThreadPane({ conversationId }: { conversationId: number }) {
                       {dayLabel(m.created_at)}
                     </span>
                   </p>
+                )}
+                {conv?.type === "group" && !mine && firstInBlock && (
+                  <p className="mb-0.5 ml-9 text-supporting font-semibold text-muted">{m.sender?.name ?? m.sender?.username}</p>
                 )}
                 <Bubble
                   m={m}

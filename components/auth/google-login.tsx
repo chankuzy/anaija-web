@@ -131,7 +131,7 @@ export function GoogleLogin() {
               </p>
             )}
 
-            <Link href="/" className="mt-4 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white">
+            <Link href="/" onClick={(e) => { e.preventDefault(); router.push(readNext()); }} className="mt-4 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white">
               Browse as guest
             </Link>
 

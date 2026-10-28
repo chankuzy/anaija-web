@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 import { api } from "@/lib/api/client";
 
 export type PushState = "unsupported" | "needs-install" | "blocked" | "off" | "on";
@@ -102,11 +102,13 @@ export async function syncPush(uid: string): Promise<void> {
   } catch {}
 }
 
-export function usePush() {
-  const [state, setState] = useState<PushState | null>(null);
-  const [busy, setBusy] = useState(false);
+const noSub = () => () => {};
 
-  useEffect(() => setState(readPushState()), []);
+export function usePush() {
+  const [override, setState] = useState<PushState | null>(null);
+  const live = useSyncExternalStore(noSub, readPushState, () => null);
+  const state: PushState | null = override ?? live;
+  const [busy, setBusy] = useState(false);
 
   const toggle = useCallback(async (on: boolean) => {
     setBusy(true);
