@@ -85,10 +85,6 @@ export function CommunitiesView() {
     <div className="mx-auto w-full max-w-[720px] px-4 pb-12 pt-3 md:pt-8">
       <header className="mb-4 flex items-center gap-3 py-2">
         <h1 className="flex-1 text-[28px] font-extrabold tracking-tight text-fg">Communities</h1>
-        <Link href={status === "guest" ? `/login?next=${encodeURIComponent("/communities/new")}` : "/communities/new"} className={buttonClass("primary", "h-10 px-4")}>
-          <Icon name="plus" className="size-5" />
-          New
-        </Link>
       </header>
 
       {status === "authed" && mine.data && mine.data.length > 0 && (

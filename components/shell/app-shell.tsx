@@ -111,6 +111,9 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
+  // Create FAB (mobile): only on tab-root pages whose right edge is free. Home and Media keep it off the action rail.
+  const onCommunities = pathname === "/communities";
+  const showFab = !inChat && (onCommunities || pathname === "/discover" || pathname === "/me");
   // Signed-in users get the kind picker; guests keep the plain link to sign-in.
   const openCreate = (e: React.MouseEvent) => {
     if (status !== "authed") return;
@@ -260,20 +263,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-[rgba(9,9,11,0.9)] md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {NAV.filter((n) => n.mobile).map((n) => {
-          if (n.mobile === "create") {
-            return (
-              <Link
-                key={n.href}
-                href={hrefFor(n)}
-                aria-label="Create"
-                onClick={openCreate}
-                className="flex flex-1 items-center justify-center text-white/60 transition-transform active:scale-95"
-              >
-                <Icon name="plus" className="size-[30px]" />
-              </Link>
-            );
-          }
+        {NAV.filter((n) => n.mobile === "tab").map((n) => {
           const active = isActive(n.href);
           return (
             <Link
@@ -291,6 +281,22 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           );
         })}
       </nav>
+
+      {showFab && !panelOpen && (
+        <Link
+          key={pathname}
+          href={hrefFor(onCommunities ? { ...CREATE, href: "/communities/new" } : CREATE)}
+          aria-label={onCommunities ? "New community" : "Create"}
+          onClick={onCommunities ? undefined : openCreate}
+          className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-brand-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_14px_32px_-10px_color-mix(in_srgb,var(--color-brand)_60%,transparent),0_6px_14px_rgba(0,0,0,0.45)] transition-transform duration-150 active:scale-90 md:hidden"
+          style={{
+            bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)",
+            background: "linear-gradient(135deg, var(--color-brand), var(--color-warm))",
+          }}
+        >
+          <Icon name="plus" weight="strong" className="size-7" />
+        </Link>
+      )}
 
       {createOpen && <CreateSheet onClose={() => setCreateOpen(false)} />}
       <PublishShare />
