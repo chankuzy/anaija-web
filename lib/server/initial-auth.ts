@@ -12,7 +12,7 @@ export async function resolveInitialAuth(): Promise<InitialAuth> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     const up = await Promise.race([
-      callFunction("profile-get", { token }),
+      callFunction("users/me", { token }),
       new Promise<null>((r) => {
         timer = setTimeout(() => r(null), BUDGET_MS);
       }),

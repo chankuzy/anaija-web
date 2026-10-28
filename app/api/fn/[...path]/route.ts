@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { callFunction, clientIp, sameOrigin } from "@/lib/server/upstream";
+import { resolveFn } from "@/lib/server/fn-routes";
 import { clearTokenCookie, readToken } from "@/lib/server/session";
 
 
@@ -35,7 +36,9 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
 
   let up: Response;
   try {
-    up = await callFunction(path.join("/"), {
+    // Validation above runs on the name the client sent; resolveFn only then
+    // swaps a legacy name for its consolidated domain function.
+    up = await callFunction(resolveFn(path), {
       method,
       query: req.nextUrl.searchParams.toString(),
       body: hasBody ? await req.arrayBuffer() : null,

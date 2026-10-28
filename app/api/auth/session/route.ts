@@ -3,14 +3,14 @@ import { callFunction } from "@/lib/server/upstream";
 import { clearTokenCookie, readToken } from "@/lib/server/session";
 
 
-// Equivalent of AuthService.validateToken(): confirm the token with profile-get.
+// Equivalent of AuthService.validateToken(): confirm the token with users/me (formerly profile-get).
 export async function GET() {
   const token = await readToken();
   if (!token) return NextResponse.json({ user: null });
 
   let up: Response;
   try {
-    up = await callFunction("profile-get", { token });
+    up = await callFunction("users/me", { token });
   } catch {
     // Offline/timeout: keep the cookie, let the client retry (Flutter also stays logged in here).
     return NextResponse.json({ message: "Network error." }, { status: 502 });
