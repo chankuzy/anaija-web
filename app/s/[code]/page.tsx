@@ -2,14 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SessionView } from "@/components/community/session-view";
 import { getSessionMeta } from "@/lib/server/community-public";
+import { sessionMetadata } from "@/lib/share/meta";
 
 export async function generateMetadata({ params }: { params: Promise<{ code: string }> }): Promise<Metadata> {
   const { code } = await params;
   const s = await getSessionMeta(code);
   if (!s) return { title: "Session" };
-  const title = `${s.title} · ${s.community}`;
-  const description = `An anonymous session in ${s.community} on Anaija. Tap to join in.`;
-  return { title, description, openGraph: { title, description } };
+  return sessionMetadata(code.toLowerCase(), s);
 }
 
 async function Inner({ params }: { params: Promise<{ code: string }> }) {

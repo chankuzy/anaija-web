@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { JoinView } from "@/components/community/join-view";
+import { joinMetadata } from "@/lib/share/meta";
 
-export const metadata: Metadata = { title: "Join a community", robots: { index: false, follow: false } };
+export function generateMetadata(): Metadata {
+  return joinMetadata();
+}
 
 async function Inner({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;

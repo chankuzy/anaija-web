@@ -21,7 +21,7 @@ export function postImage(p: Post): string | null {
 
 export const ogImage = (p: Post): string | null => (postImage(p) ? abs(`/og/${p.id}`) : null);
 
-function card(o: { title: string; description: string; url: string; image: string | null; type?: "website" | "profile"; wide?: boolean }): Metadata {
+export function card(o: { title: string; description: string; url: string; image: string | null; type?: "website" | "profile"; wide?: boolean }): Metadata {
   const { title, description, url, image } = o;
   return {
     title,
@@ -93,3 +93,33 @@ export function listingMetadata(p: Post): Metadata {
     wide: true,
   });
 }
+
+export function communityMetadata(c: { slug: string; name: string; description: string | null }): Metadata {
+  return card({
+    title: c.name,
+    description: clip(c.description ?? `Join ${c.name} on Anaija.`, 200),
+    url: abs(`/c/${encodeURIComponent(c.slug)}`),
+    image: abs(`/og/c/${encodeURIComponent(c.slug)}`),
+    wide: true,
+  });
+}
+
+export function sessionMetadata(code: string, s: { title: string; community: string }): Metadata {
+  return card({
+    title: `${s.title} · ${s.community}`,
+    description: `An anonymous session in ${s.community} on Anaija. Tap to join in.`,
+    url: abs(`/s/${encodeURIComponent(code)}`),
+    image: abs("/og/s/" + encodeURIComponent(code)),
+    wide: true,
+  });
+}
+
+export const joinMetadata = (): Metadata => ({
+  ...card({
+    title: "You're invited to a community on Anaija",
+    description: "Tap to join. Hustle. Flex. Earn.",
+    url: abs("/"),
+    image: abs("/brand/app_icon.png"),
+  }),
+  robots: { index: false, follow: false },
+});
