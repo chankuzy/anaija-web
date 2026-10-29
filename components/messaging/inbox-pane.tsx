@@ -75,11 +75,11 @@ function Row({ c, active, ring, myId }: { c: Conversation; active: boolean; ring
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={`min-w-0 flex-1 truncate text-[15.5px] ${unread ? "font-extrabold text-white" : "font-semibold text-fg"}`}>{convName(c)}</span>
+          <span className={`min-w-0 flex-1 truncate text-[17px] ${unread ? "font-extrabold text-white" : "font-semibold text-fg"}`}>{convName(c)}</span>
           <span className={`shrink-0 text-[11.5px] ${unread ? "font-bold text-brand" : "text-muted"}`}>{ago(c.last_message_at)}</span>
         </span>
         <span className="mt-0.5 flex items-center gap-2">
-          <span className={`flex min-w-0 flex-1 items-center gap-1.5 text-[13.5px] ${unread ? "font-semibold text-white/90" : "text-muted"}`}>
+          <span className={`flex min-w-0 flex-1 items-center gap-1.5 text-[15px] ${unread ? "font-semibold text-white/90" : "text-muted"}`}>
             {d.kind !== "text" && <PreviewIcon kind={d.kind} />}
             <span className="truncate">{d.text || "No messages yet"}</span>
           </span>
@@ -135,6 +135,7 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <header className="px-4 pb-2 pt-4">
+        {!showReq && <h1 className="mb-3 text-[24px] font-extrabold tracking-tight text-fg">Messages</h1>}
         {showReq && !query ? (
           <div className="flex h-11 items-center gap-2">
             <button type="button" aria-label="Back to chats" onClick={() => setShowReq(false)} className="grid size-10 place-items-center rounded-full hover:bg-white/8">
@@ -199,6 +200,10 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
               {query ? `No chats match "${query}".` : showReq ? "New message requests show up here." : "Connect with friends, buyers and sellers across your campus."}
             </p>
           </div>
+        )}
+
+        {conversations && list.length > 0 && !showReq && !query && (
+          <p className="px-4 pb-1 pt-3 text-[13px] font-extrabold text-fg">Chats</p>
         )}
 
         {list.map((c) => (
