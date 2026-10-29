@@ -55,7 +55,7 @@ export interface Message {
   sender: MsgUser | null;
   sender_id: number;
   shared_post: SharedPost | null;
-  reply_to: { id: number; body: string | null } | null;
+  reply_to: { id: number; body: string | null; type?: string | null; media_url?: string | null } | null;
   reactions: Record<string, number[]>;
   created_at: string;
   updated_at?: string | null;
@@ -149,7 +149,7 @@ export function parseMessage(raw: unknown): Message | null {
     shared_post: parseShared(r.shared_post),
     reply_to:
       typeof reply.id === "number"
-        ? { id: reply.id, body: typeof reply.body === "string" ? reply.body : null }
+        ? { id: reply.id, body: typeof reply.body === "string" ? reply.body : null, type: str(reply.type), media_url: mediaUrl(str(reply.media_url)) }
         : null,
     reactions: parseReactions(r.reactions),
     created_at: str(r.created_at) ?? "",

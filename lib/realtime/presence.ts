@@ -29,7 +29,10 @@ function make(uid: number): Active | null {
     if (!joined || tracking) return;
     tracking = true;
     ch.track({ at: Date.now() })
-      .then((r) => log("track", r))
+      .then((r) => {
+        log("track", r);
+        if (r !== "ok") tracking = false;
+      })
       .catch(() => {
         tracking = false;
       });
@@ -47,6 +50,7 @@ function make(uid: number): Active | null {
   ch.subscribe((s: string, err?: Error) => {
     log("status", s, err ?? "");
     joined = s === "SUBSCRIBED";
+    if (!joined) tracking = false;
     if (joined && document.visibilityState === "visible") track();
   });
   const vis = () => (document.visibilityState === "visible" ? track() : untrack());
@@ -63,6 +67,17 @@ function make(uid: number): Active | null {
     },
   };
 }
+
+export function presenceDebug() {
+  return {
+    started: active !== null,
+    uid: active?.uid ?? null,
+    channelState: active?.ch.state ?? null,
+    iAmTracked: active ? Object.keys(active.ch.presenceState()).includes(String(active.uid)) : false,
+    online: [...online],
+  };
+}
+if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__presence = presenceDebug;
 
 export function startPresence(uid: number): () => void {
   if (active && active.uid === uid) {

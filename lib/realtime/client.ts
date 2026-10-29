@@ -22,6 +22,9 @@ type Entry = { ch: RealtimeChannel; listeners: Set<Listener>; joined: boolean; t
 
 // One channel per topic, shared by every subscriber. Registering "*" as an event name receives everything.
 const hub = new Map<string, Entry>();
+const status = new Map<string, string>();
+const counts = new Map<string, number>();
+const bump = (k: string) => counts.set(k, (counts.get(k) ?? 0) + 1);
 
 export function subscribeBroadcast(topic: string, events: Record<string, Handler>, onJoined?: (joined: boolean) => void): () => void {
   const c = realtime();
@@ -32,13 +35,15 @@ export function subscribeBroadcast(topic: string, events: Record<string, Handler
     const ch = c.channel(topic);
     const created: Entry = { ch, listeners: new Set(), joined: false, teardown: null };
     ch.on("broadcast", { event: "*" }, (m: { event?: string; payload?: unknown }) => {
+      bump(`recv:${m.event ?? "?"}`);
       const data = m.payload ?? m;
       for (const l of created.listeners) {
         if (m.event) l.events[m.event]?.(data, m.event);
         l.events["*"]?.(data, m.event);
       }
     });
-    ch.subscribe((s: string) => {
+    ch.subscribe((s: string, err?: Error) => {
+      status.set(topic, err ? `${s}: ${err.message}` : s);
       created.joined = s === "SUBSCRIBED";
       for (const l of created.listeners) l.onJoined?.(created.joined);
     });
@@ -68,9 +73,24 @@ export function subscribeBroadcast(topic: string, events: Record<string, Handler
   };
 }
 
+// Console: __rt() answers "why are typing / online not working?" in one look.
+export function rtDebug() {
+  return {
+    clientCreated: realtime() !== null,
+    anonKeyInBundle: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    channels: Object.fromEntries(status),
+    events: Object.fromEntries(counts),
+  };
+}
+if (typeof window !== "undefined") (window as unknown as Record<string, unknown>).__rt = rtDebug;
+
 // Fire a broadcast on a topic this client has already joined (used for typing). No-op until joined.
 export function sendBroadcast(topic: string, event: string, payload: unknown) {
   const e = hub.get(topic);
-  if (!e || !e.joined) return;
+  if (!e || !e.joined) {
+    bump(`dropped:${event}`);
+    return;
+  }
+  bump(`sent:${event}`);
   void e.ch.send({ type: "broadcast", event, payload });
 }

@@ -42,6 +42,7 @@ import { SharedPostCard } from "./shared-post-card";
 import { VoicePlayer } from "./voice-player";
 import { VoiceRecorderBar } from "./voice-recorder-bar";
 import { MessageMenu } from "./message-menu";
+import { ReplyChip, ReplyThumb, replyLabel } from "./reply-preview";
 import { DeleteDialog } from "./delete-dialog";
 import { AttachmentStrip } from "@/components/chat/attachment-strip";
 import { MediaPicker } from "@/components/chat/media-picker";
@@ -451,16 +452,7 @@ function Bubble({
               </div>
             )}
 
-            {m.reply_to && (
-              <button
-                type="button"
-                onClick={() => m.reply_to && onNavigateToMessage(m.reply_to.id)}
-                className="mb-1 flex max-w-full items-center gap-1.5 rounded-xl bg-white/8 px-2.5 py-1 text-left text-[12px] font-medium text-muted transition hover:bg-white/12"
-              >
-                <Icon name="reply" className="size-3.5 shrink-0 text-brand" />
-                <span className="truncate">{toPlain(m.reply_to.body) ?? "Attachment"}</span>
-              </button>
-            )}
+            {m.reply_to && <ReplyChip reply={m.reply_to} onClick={() => m.reply_to && onNavigateToMessage(m.reply_to.id)} />}
 
             {m.shared_post && <SharedPostCard post={m.shared_post} />}
             {isSticker && (
@@ -768,7 +760,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
 
     await t.send({
       body,
-      replyTo: currentReply ? { id: currentReply.id, body: labelOf(currentReply) } : undefined,
+      replyTo: currentReply ? replyRef(currentReply) : undefined,
     });
   }
 
@@ -789,7 +781,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
       mediaKey: result.mediaKey,
       mediaType: cleanType,
       mediaUrl: result.blobUrl,
-      replyTo: currentReply ? { id: currentReply.id, body: labelOf(currentReply) } : undefined,
+      replyTo: currentReply ? replyRef(currentReply) : undefined,
     });
     if (!sent) console.error("[voice] send failed", { mediaKey: result.mediaKey, mediaType: cleanType });
   }
@@ -876,6 +868,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
     setTrayOpen((o) => !o);
   };
   const labelOf = (m: Message) => (m.type === "sticker" || isCustomSticker(m) ? "Sticker" : m.body);
+  const replyRef = (m: Message) => ({ id: m.id, body: labelOf(m), type: m.type, media_url: m.media_url });
 
   function sendSticker(packId: string, stickerId: string) {
     setSendError(null);
@@ -887,7 +880,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
     void t.send({
       type: "sticker",
       body: `${packId}/${stickerId}`,
-      replyTo: reply ? { id: reply.id, body: labelOf(reply) } : undefined,
+      replyTo: reply ? replyRef(reply) : undefined,
     });
   }
 
@@ -903,7 +896,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
       .send({
         type: "image",
         body: CUSTOM_STICKER_BODY,
-        replyTo: reply ? { id: reply.id, body: labelOf(reply) } : undefined,
+        replyTo: reply ? replyRef(reply) : undefined,
         mediaUrl: url,
         prepare: () => uploadCustomSticker(blob),
       })
@@ -963,7 +956,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
           .send({
             type: a.kind,
             body: (a.caption ?? "").trim() || undefined,
-            replyTo: i === 0 && reply ? { id: reply.id, body: labelOf(reply) ?? null } : undefined,
+            replyTo: i === 0 && reply ? replyRef(reply) : undefined,
             mediaUrl: url,
             prepare: () => queued(() => uploadAttachment(a)),
           })
@@ -1224,6 +1217,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
             <div className="mb-2 flex items-center justify-between gap-2 rounded-2xl bg-surface-subtle px-3 py-2 text-supporting text-fg animate-in slide-in-from-bottom-2 duration-150">
               <div className="flex min-w-0 items-center gap-2">
                 <Icon name="reply" className="size-4 shrink-0 text-brand" />
+                <ReplyThumb reply={replyRef(replyingTo)} size={36} />
                 <div className="min-w-0">
                   <p className="text-[12px] font-bold text-brand">
                     Replying to{" "}
@@ -1231,7 +1225,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                       (replyingTo.sender_id === myId ? "yourself" : "message")}
                   </p>
                   <p className="truncate text-[13px] text-muted">
-                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" || isCustomSticker(replyingTo) ? "Sticker" : (toPlain(replyingTo.body) ?? "Attachment")}
+                    {replyLabel(replyRef(replyingTo), isAudioMsg(replyingTo))}
                   </p>
                 </div>
               </div>

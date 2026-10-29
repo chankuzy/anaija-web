@@ -328,7 +328,7 @@ export function useThread(conversationId: number, myId: number | undefined) {
         | {
             body?: string;
             type?: "text" | "audio" | "image" | "video" | "file" | "sticker";
-            replyTo?: { id: number; body: string | null } | null;
+            replyTo?: Message["reply_to"];
             mediaKey?: string;
             mediaType?: string;
             mediaUrl?: string;
