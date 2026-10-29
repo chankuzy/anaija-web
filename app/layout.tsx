@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Script from "next/script";
 import type { Metadata, Viewport } from "next";
 import { Inter, Manrope } from "next/font/google";
 import "./globals.css";
@@ -11,6 +12,11 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "sw
 const manrope = Manrope({ subsets: ["latin"], weight: ["800"], variable: "--font-manrope", display: "swap" });
 
 const site = process.env.NEXT_PUBLIC_SITE_URL;
+
+// The browser fires beforeinstallprompt once, often before hydration. Catch it here so it is never missed.
+const INSTALL_CAPTURE =
+  'window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();window.__anaijaBip=e;window.dispatchEvent(new Event("anaija:bip"))});' +
+  'window.addEventListener("appinstalled",function(){window.__anaijaBip=null;try{localStorage.setItem("anaija:installed","1")}catch(_){}});';
 
 export const metadata: Metadata = {
   ...(site ? { metadataBase: new URL(site) } : {}),
@@ -47,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
       <body>
+        <Script id="anaija-install-capture" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE }} />
         <Suspense fallback={<Splash />}>
           <AuthRoot>{children}</AuthRoot>
         </Suspense>

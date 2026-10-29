@@ -138,16 +138,8 @@ export function AppNudges() {
     if (!armed || card || shown.current || status !== "authed" || ps === null || panelOpen || !routeOk) return;
     const t = window.setTimeout(() => {
       if (document.visibilityState !== "visible") return;
-      const c: Card | null =
-        ps === "needs-install"
-          ? due("install")
-            ? "install-ios"
-            : null
-          : ps === "off" && due("push")
-            ? "push"
-            : !standalone && evt && due("install")
-              ? "install"
-              : null;
+      // Installing is handled by <InstallNudge />; this card is for notifications only.
+      const c: Card | null = ps === "off" && due("push") ? "push" : null;
       if (!c) return;
       shown.current = true;
       try {

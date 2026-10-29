@@ -14,6 +14,7 @@ import { NotificationPill } from "@/components/shell/notification-pill";
 import { InAppBanner } from "@/components/shell/in-app-banner";
 import { UploadDock } from "@/components/create/upload-dock";
 import { AppNudges } from "@/components/pwa/app-nudges";
+import { InstallNudge } from "@/components/pwa/install-nudge";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 import { PushSync } from "@/components/pwa/push-sync";
 
@@ -37,6 +38,7 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
                 <Suspense fallback={null}><UploadDock /></Suspense>
                 <PwaRegister />
                 <PushSync />
+                <Suspense fallback={null}><InstallNudge /></Suspense>
                 <Suspense fallback={null}><AppNudges /></Suspense>
                 </ShareProvider>
                 </StoryHostProvider>
