@@ -1170,18 +1170,18 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                     type="button"
                     aria-label="Add photos or videos"
                     onClick={openMedia}
-                    className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-brand active:scale-95"
+                    className="grid size-11 shrink-0 place-items-center rounded-full text-[#38bdf8] transition hover:bg-white/10 active:scale-95"
                   >
-                    <Icon name="gallery" filled className="size-[20px]" />
+                    <Icon name="gallery" filled className="size-[26px]" />
                   </button>
                   <button
                     type="button"
                     aria-label={trayOpen ? "Close stickers" : "Open stickers"}
                     aria-pressed={trayOpen}
                     onClick={toggleTray}
-                    className={`grid size-10 shrink-0 place-items-center rounded-full transition hover:bg-white/10 active:scale-95 ${trayOpen ? "text-brand" : "text-muted hover:text-brand"}`}
+                    className={`grid size-11 shrink-0 place-items-center rounded-full text-[#fbbf24] transition hover:bg-white/10 active:scale-95 ${trayOpen ? "bg-white/10" : ""}`}
                   >
-                    <StickerGlyph filled className="size-[22px]" />
+                    <StickerGlyph filled className="size-[26px]" />
                   </button>
                 </>
               )}
@@ -1217,18 +1217,18 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   aria-label={editingMessage ? "Save edit" : "Send"}
                   disabled={!text.trim() && attachments.length === 0}
                   onClick={() => void submit()}
-                  className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition active:scale-95 disabled:bg-surface-interactive disabled:text-muted/50"
+                  className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition active:scale-95 disabled:bg-surface-interactive disabled:text-muted/50"
                 >
-                  <Icon name={editingMessage ? "check" : "send"} filled className="size-[18px]" />
+                  <Icon name={editingMessage ? "check" : "send"} filled className="size-[22px]" />
                 </button>
               ) : (
                 <button
                   type="button"
                   aria-label="Record voice message"
                   onClick={() => void voiceRecorder.start()}
-                  className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-brand active:scale-95"
+                  className="grid size-11 shrink-0 place-items-center rounded-full text-[#fb7185] transition hover:bg-white/10 active:scale-95"
                 >
-                  <Icon name="microphone" filled className="size-[20px]" />
+                  <Icon name="microphone" filled className="size-[26px]" />
                 </button>
               )}
             </div>
