@@ -67,3 +67,10 @@ export function subscribeBroadcast(topic: string, events: Record<string, Handler
     }, 400);
   };
 }
+
+// Fire a broadcast on a topic this client has already joined (used for typing). No-op until joined.
+export function sendBroadcast(topic: string, event: string, payload: unknown) {
+  const e = hub.get(topic);
+  if (!e || !e.joined) return;
+  void e.ch.send({ type: "broadcast", event, payload });
+}

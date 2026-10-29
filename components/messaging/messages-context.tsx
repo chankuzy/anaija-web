@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear } from "@/lib/cache/swr";
 import { useInterval } from "@/lib/messaging/use-interval";
 import { subscribeBroadcast } from "@/lib/realtime/client";
+import { startPresence } from "@/lib/realtime/presence";
 import { uploadManager } from "@/lib/create/upload-manager";
 
 type Ctx = {
@@ -34,7 +35,7 @@ const byRecent = (a: Conversation, b: Conversation) => at(b) - at(a);
 const asOwn = (me: number) => (g: StoryGroup): StoryGroup =>
   g.author.id === me ? { ...g, has_unseen: false, stories: g.stories.map((s) => (s.seen ? s : { ...s, seen: true })) } : g;
 
-type InboxUpdate = { conversation_id?: number; last_message_body?: string; last_message_at?: string; unread_count?: number };
+type InboxUpdate = { conversation_id?: number; last_message_body?: string; last_message_at?: string; last_message_by?: number; unread_count?: number };
 
 // Memory only (chat previews are never written to disk), keyed by account so a switch can never leak.
 type Store = { uid: number | null; convs: Conversation[] | null; groups: StoryGroup[]; error: string | null };
@@ -152,6 +153,7 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
                             ...c,
                             last_message_body: u.last_message_body ?? c.last_message_body,
                             last_message_at: u.last_message_at ?? c.last_message_at,
+                            last_message_by: u.last_message_by ?? c.last_message_by,
                             unread_count: activeRef.current === id ? 0 : (u.unread_count ?? c.unread_count),
                           }
                         : c,
@@ -169,6 +171,12 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
       setLive(false);
     };
   }, [uid, reloadInbox]);
+
+  // Online presence: visible to everyone who is signed in.
+  useEffect(() => {
+    if (uid === null) return;
+    return startPresence(uid);
+  }, [uid]);
 
   // stories:{myId} -> stories_update (someone I follow posted/changed a story). Re-read the tray.
   useEffect(() => {
@@ -227,7 +235,7 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
               ...s,
               convs: s.convs
                 .map((c) =>
-                  c.id === id ? { ...c, last_message_body: body, last_message_at: new Date().toISOString(), unread_count: 0 } : c,
+                  c.id === id ? { ...c, last_message_body: body, last_message_at: new Date().toISOString(), last_message_by: uidRef.current, unread_count: 0 } : c,
                 )
                 .sort(byRecent),
             }

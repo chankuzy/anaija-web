@@ -1,35 +1,67 @@
-// Anaija's own emoji. In text they are stored as :id: shortcodes (ids are 2-8 lowercase letters, so a reaction
-// stays short). Anything that can't draw them (previews, copy, old clients) falls back to the unicode in `u`.
+// Anaija emoji. Messages store plain unicode. Emoji we have custom art for are drawn as that art, every other
+// emoji renders natively. Old ":id:" shortcodes still render and fall back to their unicode twin in plain text.
+import emojiRegex from "emoji-regex";
 import manifest from "./manifest.json";
 
 export interface EmojiDef {
   id: string;
   label: string;
-  /** Unicode fallback. */
+  /** Unicode twin. */
   u: string;
 }
 
 export const EMOJI = manifest as EmojiDef[];
 const BY_ID = new Map(EMOJI.map((e) => [e.id, e]));
+const bare = (s: string) => s.replace(/\uFE0F/g, "");
+const BY_UNI = new Map<string, EmojiDef>();
+for (const e of EMOJI) if (!BY_UNI.has(bare(e.u))) BY_UNI.set(bare(e.u), e);
 
 export const isEmojiId = (id: string) => BY_ID.has(id);
+export const emojiById = (id: string) => BY_ID.get(id) ?? null;
+export const customFor = (u: string) => BY_UNI.get(bare(u)) ?? null;
 export const emojiUrl = (id: string) => `/emoji/${id}.svg`;
 export const QUICK_REACTIONS = [":like:", ":heart:", ":joy:", ":shock:", ":cry:", ":pray:"];
 
-export type Piece = string | { id: string };
+export type RichPart = { k: "text"; s: string } | { k: "art"; id: string; u: string } | { k: "native"; s: string };
 
-export function splitRich(text: string): Piece[] {
-  const out: Piece[] = [];
+const RE_SRC = `:([a-z]{2,8}):|${emojiRegex().source}`;
+
+export function richParts(text: string): RichPart[] {
+  const out: RichPart[] = [];
+  const push = (s: string) => {
+    if (s) out.push({ k: "text", s });
+  };
   let last = 0;
-  for (const m of text.matchAll(/:([a-z]{2,8}):/g)) {
-    if (!BY_ID.has(m[1])) continue;
+  for (const m of text.matchAll(new RegExp(RE_SRC, "g"))) {
     const at = m.index ?? 0;
-    if (at > last) out.push(text.slice(last, at));
-    out.push({ id: m[1] });
+    let part: RichPart | null = null;
+    if (m[1] !== undefined) {
+      const d = BY_ID.get(m[1]);
+      if (d) part = { k: "art", id: d.id, u: d.u };
+    } else if (!/^[0-9#*]$/.test(m[0])) {
+      const d = customFor(m[0]);
+      part = d ? { k: "art", id: d.id, u: d.u } : { k: "native", s: m[0] };
+    }
+    if (!part) continue;
+    push(text.slice(last, at));
+    out.push(part);
     last = at + m[0].length;
   }
-  if (last < text.length) out.push(text.slice(last));
+  push(text.slice(last));
   return out;
+}
+
+/** How many emoji the text is made of, if it is nothing but emoji (and spaces). 0 otherwise. */
+export function emojiOnly(text: string): number {
+  const parts = richParts(text.trim());
+  if (parts.length === 0) return 0;
+  let n = 0;
+  for (const p of parts) {
+    if (p.k === "text") {
+      if (p.s.trim() !== "") return 0;
+    } else n++;
+  }
+  return n;
 }
 
 /** Plain-text version: shortcodes become their unicode twin. */

@@ -8,8 +8,7 @@ import { useBlobUrl } from "@/lib/chat/use-blob-url";
 import { addCustom, listCustom, removeCustom, type CustomSticker } from "@/lib/stickers/custom";
 import { PACKS } from "@/lib/stickers/packs";
 import { getFavourites, getRecents, pushRecent, toggleFavourite } from "@/lib/stickers/store";
-import { EMOJI } from "@/lib/emoji/packs";
-import { EmojiGlyph } from "./emoji";
+import { EmojiPicker } from "./emoji-picker";
 import { StickerMaker } from "./sticker-maker";
 import { StickerView } from "./sticker-view";
 
@@ -159,7 +158,7 @@ export function StickerTray({
     `flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold transition-colors ${active ? "bg-surface-elevated text-fg" : "text-muted hover:text-fg"}`;
 
   return (
-    <div className="flex h-[264px] flex-col overflow-hidden rounded-[22px] bg-surface-subtle">
+    <div className="flex h-[320px] flex-col overflow-hidden rounded-[22px] bg-surface-subtle">
       <div className="no-scrollbar flex gap-1 overflow-x-auto p-1.5" role="tablist" aria-label="Sticker packs">
         <button type="button" role="tab" aria-selected={tab === "recent"} onClick={() => setTab("recent")} className={pill(tab === "recent")}>
           <Icon name="clockCircle" filled={tab === "recent"} className="size-4" />
@@ -190,19 +189,7 @@ export function StickerTray({
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2">
         {tab === "emoji" && onEmoji ? (
-          <div className="grid grid-cols-6 gap-1 pt-1 sm:grid-cols-8 md:grid-cols-9">
-            {EMOJI.map((e) => (
-              <button
-                key={e.id}
-                type="button"
-                aria-label={e.label}
-                onClick={() => onEmoji(`:${e.id}:`)}
-                className="grid aspect-square place-items-center rounded-xl transition hover:bg-white/8 active:scale-90"
-              >
-                <EmojiGlyph code={`:${e.id}:`} size={34} />
-              </button>
-            ))}
-          </div>
+          <EmojiPicker onPick={onEmoji} />
         ) : tab === "mine" && canMake ? (
           <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
             <button type="button" onClick={create} className="grid aspect-square w-full place-items-center rounded-2xl bg-white/6 text-fg transition hover:bg-white/10 active:scale-95">

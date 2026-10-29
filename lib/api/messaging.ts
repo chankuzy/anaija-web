@@ -20,6 +20,7 @@ export interface Conversation {
   avatar: string | null;
   last_message_body: string | null;
   last_message_at: string | null;
+  last_message_by?: number | null;
   unread_count: number;
   is_muted: boolean;
   other_user: MsgUser | null;
@@ -87,6 +88,7 @@ function parseConversation(raw: unknown): Conversation | null {
     avatar: mediaUrl(str(r.avatar)),
     last_message_body: typeof r.last_message_body === "string" ? r.last_message_body : null,
     last_message_at: str(r.last_message_at),
+    last_message_by: typeof r.last_message_by === "number" ? r.last_message_by : null,
     unread_count: num(r.unread_count),
     is_muted: r.is_muted === true,
     other_user: parseUser(r.other_user),
@@ -181,6 +183,28 @@ export function previewOf(c: Conversation): string {
   if (raw === "[post_share]" || raw === "Shared a post" || raw.includes("📎 Shared a post")) return "Shared a post";
   if (isInquiry(c) || raw.includes("🛍️ Shared a listing")) return raw.replace("🛍️ Shared a listing", "Listing inquiry");
   return toPlain(raw);
+}
+
+export type PreviewKind = "text" | "photo" | "video" | "voice" | "sticker" | "post" | "reel" | "listing" | "file";
+export interface PreviewMeta {
+  kind: PreviewKind;
+  text: string;
+  who: "me" | "them" | "unknown";
+}
+
+// What kind of thing the last message was, and who sent it (needs last_message_by from the backend).
+export function previewMeta(c: Conversation, myId?: number): PreviewMeta {
+  const raw = (c.last_message_body ?? "").trim();
+  const who = c.last_message_by == null || myId === undefined ? "unknown" : c.last_message_by === myId ? "me" : "them";
+  const mk = (kind: PreviewKind): PreviewMeta => ({ kind, text: previewOf(c), who });
+  if (raw === "::sticker::" || raw === "Sticker" || resolveSticker(raw)) return mk("sticker");
+  if (raw === "[image]" || raw === "Photo" || raw.includes("📷 Photo")) return mk("photo");
+  if (raw === "[video]" || raw === "Video" || raw.includes("🎥 Video")) return mk("video");
+  if (raw === "[audio]" || raw.includes("🎵 Audio") || raw.includes("Voice message")) return mk("voice");
+  if (raw === "[reel]" || /^(📎 |🎬 )?shared a reel/i.test(raw)) return mk("reel");
+  if (raw === "[post_share]" || raw === "Shared a post" || raw.includes("📎 Shared a post")) return mk("post");
+  if (raw === "Shared a listing" || raw === "[listing_share]" || raw.includes("🛍️ Shared a listing") || isInquiry(c)) return mk("listing");
+  return { kind: "text", text: previewOf(c), who };
 }
 
 export interface SendMessageOptions {

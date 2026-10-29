@@ -23,6 +23,10 @@ import {
 } from "@/lib/api/messaging";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useThread } from "@/lib/messaging/use-thread";
+import { useTyping } from "@/lib/messaging/use-typing";
+import { useOnline } from "@/lib/realtime/presence";
+import { OnlineDot } from "@/components/ui/online-dot";
+import { TypingBubble } from "./typing-bubble";
 import {
   useVoiceRecorder,
   type VoiceRecordingResult,
@@ -42,7 +46,7 @@ import { MediaPicker } from "@/components/chat/media-picker";
 import { StickerGlyph, StickerView } from "@/components/chat/sticker-view";
 import { StickerTray } from "@/components/chat/sticker-tray";
 import { EmojiGlyph, RichText } from "@/components/chat/emoji";
-import { QUICK_REACTIONS, toPlain } from "@/lib/emoji/packs";
+import { QUICK_REACTIONS, emojiOnly, toPlain } from "@/lib/emoji/packs";
 import type { PickedFile } from "@/lib/chat/types";
 import { uploadAttachment } from "@/lib/chat/upload-attachment";
 import { addFavourite } from "@/lib/stickers/store";
@@ -232,6 +236,11 @@ function Bubble({
   const isSticker = m.type === "sticker" && !m.is_deleted && !!m.body;
   const customSticker = isCustomSticker(m) && !m.is_deleted && !!m.media_url;
   const showText = !isSticker && !customSticker && text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
+  const jumboN = (() => {
+    if (m.is_deleted || m.type !== "text" || m.shared_post) return 0;
+    const n = emojiOnly(text);
+    return n >= 1 && n <= 3 ? n : 0;
+  })();
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
 
@@ -477,7 +486,15 @@ function Bubble({
               />
             )}
 
-            {showText && (
+            {showText && jumboN > 0 && (
+              <div
+                onClick={m.status === "failed" ? onRetry : undefined}
+                className={`px-1 py-0.5 transition-opacity ${m.status === "sending" ? "opacity-70" : ""} ${m.status === "failed" ? "cursor-pointer rounded-2xl ring-1 ring-danger/70" : ""}`}
+              >
+                <RichText text={text} jumbo={jumboN} />
+              </div>
+            )}
+            {showText && jumboN === 0 && (
               <div
                 onClick={m.status === "failed" ? onRetry : undefined}
                 className={`whitespace-pre-wrap break-words ${bubbleCorners(
@@ -570,6 +587,8 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   const conv = conversations?.find((c) => c.id === conversationId) ?? null;
   const t = useThread(conversationId, myId);
   const community = useCommunityOf(conv);
+  const typing = useTyping(conversationId, myId);
+  const online = useOnline(conv && conv.type !== "group" ? conv.other_user?.id : null);
 
   const [text, setText] = useState("");
   const [picker, setPicker] = useState<number | null>(null);
@@ -716,6 +735,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     setText("");
     if (area.current) area.current.style.height = "auto";
     stick.current = true;
+    typing.stop();
     upsertLast(conversationId, body);
     if (conv && isPending(conv)) patchConversation(conversationId, { request_status: "accepted" });
 
@@ -966,20 +986,27 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           </Link>
           {conv ? (
             <>
-              <span className="shrink-0 cursor-pointer" onClick={openHeader}>
+              <span className="relative shrink-0 cursor-pointer" onClick={openHeader}>
                 <RingAvatar
                   url={convAvatar(conv)}
                   name={name}
                   size={36}
                   ring={ringFor(conv.other_user?.id)}
                 />
+                {online && <OnlineDot size={11} className="absolute bottom-[1px] right-[1px]" />}
               </span>
               <div className="min-w-0 cursor-pointer" onClick={openHeader}>
                 <p className="truncate text-[15px] font-bold text-fg">{name}</p>
                 {community ? (
                   <p className="truncate text-supporting text-muted">Community · {community.members_count} {community.members_count === 1 ? "member" : "members"}</p>
                 ) : (
-                  username && <p className="truncate text-supporting text-muted">@{username}</p>
+                  typing.typing ? (
+                    <p className="truncate text-supporting font-semibold text-brand">typing…</p>
+                  ) : online ? (
+                    <p className="truncate text-supporting font-semibold text-[#22c55e]">Online</p>
+                  ) : (
+                    username && <p className="truncate text-supporting text-muted">@{username}</p>
+                  )
                 )}
               </div>
             </>
@@ -1108,6 +1135,8 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
               </div>
             );
           })}
+
+          {typing.typing && <TypingBubble />}
 
           {conv && isPending(conv) && (
             <div className="mx-auto my-3 max-w-sm rounded-[20px] bg-surface p-4">
@@ -1258,6 +1287,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   if (captioning && activeItem) setAttachments((a) => a.map((x) => (x.id === activeItem.id ? { ...x, caption: v } : x)));
                   else setText(v);
                   if (sendError) setSendError(null);
+                  if (v.trim()) typing.ping();
                   e.target.style.height = "auto";
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                 }}
