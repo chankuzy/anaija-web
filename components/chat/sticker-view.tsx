@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { Icon } from "@/components/ui/icon";
 import { resolveSticker, stickerUrl } from "@/lib/stickers/packs";
 
 /** Renders a sticker by its "pack/id" code. Stickers are shared assets, never re-uploaded per message. */
@@ -18,13 +19,6 @@ export function StickerView({ code, size = 144, className = "" }: { code: string
   );
 }
 
-export function StickerGlyph({ className = "size-5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true">
-      <path d="M20 12.5V7a3 3 0 0 0-3-3H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h5.5L20 12.5Z" />
-      <path d="M20 12.5h-3a3 3 0 0 0-3 3V20" />
-      <path d="M8.5 9.5h.01M15.5 9.5h.01" />
-      <path d="M8.5 14c.9.8 2 1.2 3 1" />
-    </svg>
-  );
+export function StickerGlyph({ className = "size-5", filled = false }: { className?: string; filled?: boolean }) {
+  return <Icon name="stickerSmileCircle" filled={filled} className={className} />;
 }

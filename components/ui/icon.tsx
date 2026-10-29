@@ -1,6 +1,8 @@
-import { SOLAR, type IconName } from "@/lib/icons/solar-map";
+import { SOLAR as BASE_SOLAR } from "@/lib/icons/solar-map";
+import { EXTRA_SOLAR } from "@/lib/icons/solar-extra";
 
-export type { IconName };
+const SOLAR = { ...BASE_SOLAR, ...EXTRA_SOLAR };
+export type IconName = keyof typeof SOLAR;
 
 // Official Solar icons (@solar-icons/react), same set and styles as the Flutter app:
 // filled = SolarIconsBold -> "bold", default = SolarIconsOutline -> "outline".

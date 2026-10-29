@@ -9,4 +9,6 @@ export interface PickedFile {
   thumb: Blob | null;
   edited: boolean;
   durationMs?: number;
+  /** Caption typed for this attachment before sending. */
+  caption?: string;
 }

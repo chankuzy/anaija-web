@@ -44,6 +44,7 @@ import { StickerTray } from "@/components/chat/sticker-tray";
 import type { PickedFile } from "@/lib/chat/types";
 import { uploadAttachment } from "@/lib/chat/upload-attachment";
 import { addFavourite } from "@/lib/stickers/store";
+import { CUSTOM_STICKER_BODY, isCustomSticker, uploadCustomSticker } from "@/lib/stickers/custom";
 
 const MAX_ATTACH = 6;
 
@@ -208,7 +209,8 @@ function Bubble({
   const hasMedia =
     !!m.media_url && !m.is_deleted && (["image", "video", "audio", "file"].includes(m.type) || audio);
   const isSticker = m.type === "sticker" && !m.is_deleted && !!m.body;
-  const showText = !isSticker && text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
+  const customSticker = isCustomSticker(m) && !m.is_deleted && !!m.media_url;
+  const showText = !isSticker && !customSticker && text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
 
@@ -378,7 +380,7 @@ function Bubble({
             aria-label="React"
             className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-white/10"
           >
-            🙂
+            <Icon name="smileCircle" className="size-[18px]" />
           </button>
         </div>
       )}
@@ -436,13 +438,22 @@ function Bubble({
                 <StickerView code={m.body ?? ""} size={144} />
               </div>
             )}
-            <Media
-              m={m}
-              mine={mine}
-              firstInBlock={firstInBlock}
-              lastInBlock={lastInBlock}
-              onRetry={onRetry}
-            />
+            {customSticker ? (
+              <div
+                onClick={m.status === "failed" ? onRetry : undefined}
+                className={`transition-opacity ${m.status === "sending" ? "opacity-70" : ""} ${m.status === "failed" ? "cursor-pointer rounded-2xl ring-1 ring-danger/70" : ""}`}
+              >
+                <img src={m.media_url ?? ""} alt="Sticker" draggable={false} loading="lazy" className="size-36 select-none object-contain" />
+              </div>
+            ) : (
+              <Media
+                m={m}
+                mine={mine}
+                firstInBlock={firstInBlock}
+                lastInBlock={lastInBlock}
+                onRetry={onRetry}
+              />
+            )}
 
             {showText && (
               <div
@@ -496,7 +507,7 @@ function Bubble({
             aria-label="React"
             className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-white/10"
           >
-            🙂
+            <Icon name="smileCircle" className="size-[18px]" />
           </button>
           <button
             type="button"
@@ -560,6 +571,9 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   const [attachments, setAttachments] = useState<PickedFile[]>([]);
   const [mediaOpen, setMediaOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
+  const [activeAtt, setActiveAtt] = useState<string | null>(null);
+  const captioning = attachments.length > 0 && !editingMessage;
+  const activeItem = attachments.find((a) => a.id === activeAtt) ?? attachments[0] ?? null;
   const [notice, setNotice] = useState<string | null>(null);
 
   const voiceRecorder = useVoiceRecorder();
@@ -670,7 +684,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
 
     await t.send({
       body,
-      replyTo: currentReply ? { id: currentReply.id, body: currentReply.type === "sticker" ? "Sticker" : currentReply.body } : undefined,
+      replyTo: currentReply ? { id: currentReply.id, body: labelOf(currentReply) } : undefined,
     });
   }
 
@@ -691,7 +705,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
       mediaKey: result.mediaKey,
       mediaType: cleanType,
       mediaUrl: result.blobUrl,
-      replyTo: currentReply ? { id: currentReply.id, body: currentReply.type === "sticker" ? "Sticker" : currentReply.body } : undefined,
+      replyTo: currentReply ? { id: currentReply.id, body: labelOf(currentReply) } : undefined,
     });
     if (!sent) console.error("[voice] send failed", { mediaKey: result.mediaKey, mediaType: cleanType });
   }
@@ -777,7 +791,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     area.current?.blur();
     setTrayOpen((o) => !o);
   };
-  const labelOf = (m: Message) => (m.type === "sticker" ? "Sticker" : m.body);
+  const labelOf = (m: Message) => (m.type === "sticker" || isCustomSticker(m) ? "Sticker" : m.body);
 
   function sendSticker(packId: string, stickerId: string) {
     setSendError(null);
@@ -793,6 +807,27 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     });
   }
 
+  function sendCustomSticker(blob: Blob) {
+    setSendError(null);
+    stick.current = true;
+    upsertLast(conversationId, "Sticker");
+    if (conv && isPending(conv)) patchConversation(conversationId, { request_status: "accepted" });
+    const reply = replyingTo;
+    setReplyingTo(null);
+    const url = URL.createObjectURL(blob);
+    void t
+      .send({
+        type: "image",
+        body: CUSTOM_STICKER_BODY,
+        replyTo: reply ? { id: reply.id, body: labelOf(reply) } : undefined,
+        mediaUrl: url,
+        prepare: () => uploadCustomSticker(blob),
+      })
+      .then((res) => {
+        if (res) URL.revokeObjectURL(url);
+      });
+  }
+
   function saveSticker(code: string) {
     addFavourite(code);
     setNotice("Saved to favourites");
@@ -801,7 +836,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   async function sendAttachments() {
     const items = attachments;
     if (items.length === 0) return;
-    const caption = text.trim();
+    const caption = (items[0].caption ?? "").trim();
     const reply = replyingTo;
     setAttachments([]);
     setText("");
@@ -826,7 +861,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
         return t
           .send({
             type: a.kind,
-            body: i === 0 && caption ? caption : undefined,
+            body: (a.caption ?? "").trim() || undefined,
             replyTo: i === 0 && reply ? { id: reply.id, body: labelOf(reply) ?? null } : undefined,
             mediaUrl: url,
             prepare: () => queued(() => uploadAttachment(a)),
@@ -1074,7 +1109,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                       (replyingTo.sender_id === myId ? "yourself" : "message")}
                   </p>
                   <p className="truncate text-[13px] text-muted">
-                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" ? "Sticker" : (replyingTo.body ?? "Attachment")}
+                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" || isCustomSticker(replyingTo) ? "Sticker" : (replyingTo.body ?? "Attachment")}
                   </p>
                 </div>
               </div>
@@ -1118,7 +1153,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
             </p>
           )}
           {attachments.length > 0 && (
-            <AttachmentStrip items={attachments} onRemove={(id) => setAttachments((a) => a.filter((x) => x.id !== id))} />
+            <AttachmentStrip items={attachments} activeId={activeItem?.id ?? null} onSelect={setActiveAtt} onRemove={(id) => setAttachments((a) => a.filter((x) => x.id !== id))} />
           )}
 
           {voiceRecorder.status !== "idle" ? (
@@ -1137,7 +1172,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                     onClick={openMedia}
                     className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-brand active:scale-95"
                   >
-                    <Icon name="gallery" className="size-[20px]" />
+                    <Icon name="gallery" filled className="size-[20px]" />
                   </button>
                   <button
                     type="button"
@@ -1146,18 +1181,20 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                     onClick={toggleTray}
                     className={`grid size-10 shrink-0 place-items-center rounded-full transition hover:bg-white/10 active:scale-95 ${trayOpen ? "text-brand" : "text-muted hover:text-brand"}`}
                   >
-                    <StickerGlyph className="size-[20px]" />
+                    <StickerGlyph filled className="size-[22px]" />
                   </button>
                 </>
               )}
               <textarea
                 ref={area}
-                value={text}
+                value={captioning && activeItem ? (activeItem.caption ?? "") : text}
                 onFocus={() => setTrayOpen(false)}
                 rows={1}
-                placeholder={editingMessage ? "Edit message…" : attachments.length > 0 ? "Add a caption…" : "Message"}
+                placeholder={editingMessage ? "Edit message…" : attachments.length > 1 ? "Add a caption to this one…" : attachments.length > 0 ? "Add a caption…" : "Message"}
                 onChange={(e) => {
-                  setText(e.target.value);
+                  const v = e.target.value;
+                  if (captioning && activeItem) setAttachments((a) => a.map((x) => (x.id === activeItem.id ? { ...x, caption: v } : x)));
+                  else setText(v);
                   if (sendError) setSendError(null);
                   e.target.style.height = "auto";
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
@@ -1191,14 +1228,14 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   onClick={() => void voiceRecorder.start()}
                   className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-brand active:scale-95"
                 >
-                  <Icon name="microphone" className="size-[20px]" />
+                  <Icon name="microphone" filled className="size-[20px]" />
                 </button>
               )}
             </div>
           )}
           {trayOpen && voiceRecorder.status === "idle" && (
             <div className="mt-2">
-              <StickerTray onPick={sendSticker} />
+              <StickerTray onPick={sendSticker} onPickCustom={sendCustomSticker} />
             </div>
           )}
         </div>
@@ -1221,7 +1258,14 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           max={Math.max(1, MAX_ATTACH - attachments.length)}
           onClose={() => setMediaOpen(false)}
           onDone={(items) => {
-            setAttachments((a) => [...a, ...items].slice(0, MAX_ATTACH));
+            const typed = text.trim();
+            const merged = [...attachments, ...items].slice(0, MAX_ATTACH);
+            if (typed && attachments.length === 0 && merged[0]) {
+              merged[0] = { ...merged[0], caption: typed };
+              setText("");
+              if (area.current) area.current.style.height = "auto";
+            }
+            setAttachments(merged);
             setMediaOpen(false);
           }}
         />

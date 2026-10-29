@@ -7,9 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CropOverlay } from "@/components/create/crop-overlay";
 import { FilterDefs, filterCss } from "@/components/create/filter-defs";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { FULL_CROP, isFullCrop, makePreview } from "@/lib/create/image-pipeline";
+import { FULL_CROP, isFullCrop } from "@/lib/create/image-pipeline";
 import { IMAGE_FILTERS } from "@/lib/create/presets";
-import { blankEdit, exportChatImage, isEditedImage, paintStroke, rotateEdit, rotatePreview, type ChatEdit, type Rotation, type Stroke } from "@/lib/chat/image-edit";
+import { blankEdit, exportChatImage, isEditedImage, makeEditPreview, paintStroke, rotateEdit, rotatePreview, type ChatEdit, type Rotation, type Stroke } from "@/lib/chat/image-edit";
 import { useBlobUrl } from "@/lib/chat/use-blob-url";
 import type { PickedFile } from "@/lib/chat/types";
 
@@ -141,10 +141,10 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
       for (const it of list) {
         if (dead) return;
         try {
-          const p = await makePreview(it.original);
-          if (!dead) setBases((b) => ({ ...b, [it.id]: p.blob }));
+          const p = await makeEditPreview(it.original);
+          if (!dead) setBases((b) => ({ ...b, [it.id]: p }));
         } catch {
-          if (!dead) setBases((b) => ({ ...b, [it.id]: null }));
+          if (!dead) setBases((b) => ({ ...b, [it.id]: it.thumb ?? null }));
         }
       }
     })();

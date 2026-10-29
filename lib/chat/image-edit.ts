@@ -147,3 +147,39 @@ export async function exportChatImage(source: File, e: ChatEdit): Promise<File> 
     bmp.close();
   }
 }
+
+/** Light preview (long edge <= 1600) for the editor. Falls back to an <img> decode when createImageBitmap refuses the file. */
+export async function makeEditPreview(file: Blob, edge = 1600): Promise<Blob> {
+  const draw = async (src: CanvasImageSource, w: number, h: number) => {
+    const s = Math.min(1, edge / Math.max(w, h));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * s));
+    c.height = Math.max(1, Math.round(h * s));
+    const ctx = c.getContext("2d");
+    if (!ctx) throw new Error("Canvas unavailable");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(src, 0, 0, c.width, c.height);
+    return toBlob(c, "image/jpeg", 0.88);
+  };
+  try {
+    const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+    try {
+      return await draw(bmp, bmp.width, bmp.height);
+    } finally {
+      bmp.close();
+    }
+  } catch {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = new Image();
+      img.decoding = "async";
+      img.src = url;
+      await img.decode();
+      return await draw(img, img.naturalWidth, img.naturalHeight);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+}
