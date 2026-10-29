@@ -23,10 +23,12 @@ import {
 } from "@/lib/api/messaging";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useThread } from "@/lib/messaging/use-thread";
-import { useTyping } from "@/lib/messaging/use-typing";
+import { typingLabel, useTyping } from "@/lib/messaging/use-typing";
 import { useOnline } from "@/lib/realtime/presence";
 import { OnlineDot } from "@/components/ui/online-dot";
 import { TypingBubble } from "./typing-bubble";
+import { ChatIntro } from "./chat-intro";
+import { trackScroll, useRenders } from "@/lib/dev/perf";
 import {
   useVoiceRecorder,
   type VoiceRecordingResult,
@@ -229,6 +231,7 @@ function Bubble({
   onAvatarTap: () => void;
   onOpenMedia: (id: number) => void;
 }) {
+  useRenders("Bubble");
   const text = m.is_deleted ? "This message was deleted" : (m.body ?? "");
   const audio = isAudioMsg(m);
   const hasMedia =
@@ -579,15 +582,16 @@ export function EmptyThread() {
   );
 }
 
-export function ThreadPane({ conversationId, embedded = false }: { conversationId: number; embedded?: boolean }) {
+export function ThreadPane({ conversationId, embedded = false, communityDetail = null }: { conversationId: number; embedded?: boolean; communityDetail?: object | null }) {
   const router = useRouter();
   const { user } = useAuth();
   const myId = user?.id;
+  useRenders("ThreadPane");
   const { conversations, patchConversation, upsertLast, reloadInbox, ringFor } = useMessages();
   const conv = conversations?.find((c) => c.id === conversationId) ?? null;
   const t = useThread(conversationId, myId);
   const community = useCommunityOf(conv);
-  const typing = useTyping(conversationId, myId);
+  const typing = useTyping(conversationId, myId, user?.name);
   const online = useOnline(conv && conv.type !== "group" ? conv.other_user?.id : null);
 
   const [text, setText] = useState("");
@@ -681,6 +685,14 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     const el = scroller.current;
     if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
   }
+
+  useEffect(() => trackScroll(scroller.current), []);
+
+  // The typing bubble grows the list; keep it in view when the reader is at the bottom.
+  useEffect(() => {
+    const el = scroller.current;
+    if (el && typing.typing && stick.current) el.scrollTo({ top: el.scrollHeight, behavior: reducedMotion() ? "auto" : "smooth" });
+  }, [typing.typing]);
 
   const newestOther = useMemo(
     () => [...msgs].reverse().find((m) => m.sender_id !== myId && m.id > 0) ?? null,
@@ -952,6 +964,8 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
 
   const name = conv ? convName(conv) : "";
   const username = conv?.other_user?.username;
+  const isRoom = !!community || conv?.type === "group";
+  const introCommunity: object | null = communityDetail ?? community;
 
   const canEdit = useCallback(
     (m: Message) =>
@@ -997,7 +1011,9 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
               </span>
               <div className="min-w-0 cursor-pointer" onClick={openHeader}>
                 <p className="truncate text-[15px] font-bold text-fg">{name}</p>
-                {community ? (
+                {typing.typing ? (
+                  <p className="truncate text-supporting font-semibold text-brand">{typingLabel(typing.names, !community && conv.type !== "group")}</p>
+                ) : community ? (
                   <p className="truncate text-supporting text-muted">Community · {community.members_count} {community.members_count === 1 ? "member" : "members"}</p>
                 ) : (
                   typing.typing ? (
@@ -1035,6 +1051,9 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           onScroll={onScroll}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3"
         >
+          {!t.hasOlder && !t.loading && (conv || introCommunity) && (
+            <ChatIntro conv={conv} community={introCommunity} online={online} ring={ringFor(conv?.other_user?.id)} />
+          )}
           {t.hasOlder && (
             <div className="mb-3 text-center">
               <button
@@ -1136,7 +1155,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
             );
           })}
 
-          {typing.typing && <TypingBubble />}
+          {typing.typing && <TypingBubble label={isRoom ? typingLabel(typing.names, false) : undefined} />}
 
           {conv && isPending(conv) && (
             <div className="mx-auto my-3 max-w-sm rounded-[20px] bg-surface p-4">
@@ -1288,6 +1307,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   else setText(v);
                   if (sendError) setSendError(null);
                   if (v.trim()) typing.ping();
+                  else typing.stop();
                   e.target.style.height = "auto";
                   e.target.style.height = `${Math.min(e.target.scrollHeight, 128)}px`;
                 }}

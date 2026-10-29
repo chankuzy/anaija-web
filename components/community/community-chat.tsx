@@ -10,6 +10,7 @@ import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi } from "@/lib/api/communities";
 import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
+import { typingLabel, useTyping } from "@/lib/messaging/use-typing";
 import { Empty, useFetch } from "./kit";
 
 // Tracks the visual viewport so the composer rides above the software keyboard on every mobile browser.
@@ -44,11 +45,12 @@ function useLockScroll() {
 }
 
 export function CommunityChat({ slug }: { slug: string }) {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const vp = useViewport();
   useLockScroll();
   const det = useFetch(status === "loading" ? null : `c:${slug}:${status}`, () => communitiesApi.show(slug));
   const c = det.data;
+  const room = useTyping(c?.chat_conversation_id ?? 0, c?.chat_conversation_id ? user?.id : undefined, user?.name);
 
   const shell = {
     "--vvh": vp ? `${vp.h}px` : "100dvh",
@@ -98,7 +100,7 @@ export function CommunityChat({ slug }: { slug: string }) {
   } else {
     body = (
       <div className="min-h-0 flex-1">
-        <ThreadPane conversationId={c.chat_conversation_id} embedded />
+        <ThreadPane conversationId={c.chat_conversation_id} embedded communityDetail={c} />
       </div>
     );
   }
@@ -122,7 +124,7 @@ export function CommunityChat({ slug }: { slug: string }) {
             <span className="min-w-0">
               <span className="block truncate text-[15px] font-bold text-fg">{c.name}</span>
               <span className="block truncate text-supporting text-muted">
-                {c.members_count} {c.members_count === 1 ? "member" : "members"}
+                {room.typing ? typingLabel(room.names, false) : `${c.members_count} ${c.members_count === 1 ? "member" : "members"}`}
               </span>
             </span>
           </Link>

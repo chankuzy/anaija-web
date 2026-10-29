@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
 import { ApiError } from "@/lib/api/client";
-import { messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
+import { asUtc, messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
+import { mark, measure, PERF, sample } from "@/lib/dev/perf";
 import { kvDelete } from "@/lib/cache/kv";
 import { onCacheClear, peek, put } from "@/lib/cache/swr";
 import { subscribeBroadcast } from "@/lib/realtime/client";
@@ -54,7 +55,7 @@ function persist(t: TState) {
       const snap: TState = {
         id: t.id,
         items: [...kept, ...t.items.filter(isUnsent)],
-        cursor: kept.length === real.length ? t.cursor : null,
+        cursor: kept.length === real.length ? t.cursor : kept[0] ? btoa(String(kept[0].id)) : null,
         error: null,
         loadingOlder: false,
       };
@@ -118,6 +119,14 @@ export function useThread(conversationId: number, myId: number | undefined) {
     if (state) remember(state);
   }, [state]);
 
+  useEffect(() => {
+    mark(`open:${conversationId}`);
+  }, [conversationId]);
+  const haveCount = s?.items.length ?? 0;
+  useEffect(() => {
+    if (haveCount > 0) measure("open→messages committed", `open:${conversationId}`);
+  }, [haveCount, conversationId]);
+
   const fetchLatest = useCallback(() => {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       setState((p) =>
@@ -160,6 +169,10 @@ export function useThread(conversationId: number, myId: number | undefined) {
         new_message: (p) => {
           const m = parseMessage(p);
           if (!m) return;
+          if (PERF && m.sender_id !== myId) {
+            const ms = Date.now() - Date.parse(asUtc(m.created_at));
+            if (Number.isFinite(ms)) sample("server→recipient (clock-skew sensitive)", ms);
+          }
           setState((prev) => {
             if (!prev || prev.id !== conversationId) return prev;
             if (prev.items.some((x) => x.id === m.id)) return prev;
@@ -249,6 +262,7 @@ export function useThread(conversationId: number, myId: number | undefined) {
       payload: { body?: string; type?: string; replyToId?: number; mediaKey?: string; mediaType?: string },
     ): Promise<Message | null> => {
       try {
+        const t0 = performance.now();
         const real = await messagingApi.send(conversationId, {
           type: (payload.type as "text" | "image" | "video" | "audio" | "file" | "sticker") ?? "text",
           body: payload.body,
@@ -258,6 +272,7 @@ export function useThread(conversationId: number, myId: number | undefined) {
           client_temp_id: localId,
         });
         pendingPayloads.current.delete(localId);
+        sample("send→ack", performance.now() - t0);
         setState((p) => {
           if (!p || p.id !== conversationId) return p;
           const rest = p.items.filter((m) => m.local_id !== localId);
@@ -323,6 +338,10 @@ export function useThread(conversationId: number, myId: number | undefined) {
       if (myId === undefined) return Promise.resolve(null);
       const opts = typeof input === "string" ? { body: input, type: "text" as const } : input;
       const localId = `l${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      if (PERF) {
+        mark(`paint:${localId}`);
+        requestAnimationFrame(() => requestAnimationFrame(() => measure("send→first paint (excl. input latency)", `paint:${localId}`)));
+      }
       const payload = {
         body: opts.body,
         type: opts.type ?? "text",
