@@ -36,7 +36,7 @@ export function CreateCommunity() {
   const [error, setError] = useState<string | null>(null);
   const coverRef = useRef<HTMLInputElement>(null);
   const [coverPick, setCoverPick] = useState<File | null>(null);
-  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
+  const [coverBlob, setCoverBlob] = useState<File | null>(null);
   const preview = useObjectUrl(file);
   const coverPreview = useObjectUrl(coverBlob);
 
@@ -96,7 +96,7 @@ export function CreateCommunity() {
           file={coverPick}
           spec={{ aspect: 8 / 3, circle: false, title: "Community cover", outW: 1200, viewW: 640 }}
           onCancel={() => setCoverPick(null)}
-          onDone={(b) => { setCoverBlob(b); setCoverPick(null); }}
+          onDone={(b) => { setCoverBlob(new File([b], "cover.jpg", { type: "image/jpeg" })); setCoverPick(null); }}
         />
       )}
 
