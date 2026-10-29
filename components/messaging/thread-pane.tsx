@@ -45,6 +45,9 @@ import type { PickedFile } from "@/lib/chat/types";
 import { uploadAttachment } from "@/lib/chat/upload-attachment";
 import { addFavourite } from "@/lib/stickers/store";
 import { CUSTOM_STICKER_BODY, isCustomSticker, uploadCustomSticker } from "@/lib/stickers/custom";
+import { MediaViewer, type ViewerItem } from "@/components/chat/media-viewer";
+import { ForwardSheet } from "./forward-sheet";
+import { useCommunityOf } from "@/lib/messaging/use-community-of";
 
 const MAX_ATTACH = 6;
 
@@ -117,12 +120,14 @@ function Media({
   firstInBlock,
   lastInBlock,
   onRetry,
+  onOpen,
 }: {
   m: Message;
   mine: boolean;
   firstInBlock: boolean;
   lastInBlock: boolean;
   onRetry: () => void;
+  onOpen: () => void;
 }) {
   if (m.is_deleted || !m.media_url) return null;
 
@@ -146,17 +151,29 @@ function Media({
         alt=""
         loading="lazy"
         decoding="async"
-        className={`max-h-80 max-w-full object-cover ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
+        draggable={false}
+        onClick={onOpen}
+        className={`max-h-80 max-w-full cursor-zoom-in object-cover ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
       />
     );
   if (m.type === "video")
     return (
-      <video
-        src={m.media_url}
-        controls
-        preload="metadata"
-        className={`max-h-80 max-w-full ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
-      />
+      <div className="relative">
+        <video
+          src={m.media_url}
+          controls
+          preload="metadata"
+          className={`max-h-80 max-w-full ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
+        />
+        <button
+          type="button"
+          aria-label="Open video"
+          onClick={onOpen}
+          className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/55 text-white"
+        >
+          <Icon name="galleryWide" filled className="size-4" />
+        </button>
+      </div>
     );
   return (
     <a
@@ -187,6 +204,7 @@ function Bubble({
   onOpenMenu,
   onNavigateToMessage,
   onAvatarTap,
+  onOpenMedia,
 }: {
   m: Message;
   mine: boolean;
@@ -203,6 +221,7 @@ function Bubble({
   onOpenMenu: (m: Message, pos?: { x: number; y: number }) => void;
   onNavigateToMessage: (id: number) => void;
   onAvatarTap: () => void;
+  onOpenMedia: (id: number) => void;
 }) {
   const text = m.is_deleted ? "This message was deleted" : (m.body ?? "");
   const audio = isAudioMsg(m);
@@ -452,6 +471,7 @@ function Bubble({
                 firstInBlock={firstInBlock}
                 lastInBlock={lastInBlock}
                 onRetry={onRetry}
+                onOpen={() => onOpenMedia(m.id)}
               />
             )}
 
@@ -547,6 +567,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   const { conversations, patchConversation, upsertLast, reloadInbox, ringFor } = useMessages();
   const conv = conversations?.find((c) => c.id === conversationId) ?? null;
   const t = useThread(conversationId, myId);
+  const community = useCommunityOf(conv);
 
   const [text, setText] = useState("");
   const [picker, setPicker] = useState<number | null>(null);
@@ -555,6 +576,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   const [sheet, setSheet] = useState(false);
   const [person, setPerson] = useState(false);
   const openPerson = () => (conv && conv.other_user && conv.type !== "group" ? setPerson(true) : setSheet(true));
+  const openHeader = () => (community ? router.push(`/c/${community.slug}`) : openPerson());
 
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
@@ -572,6 +594,8 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   const [mediaOpen, setMediaOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
   const [activeAtt, setActiveAtt] = useState<string | null>(null);
+  const [viewerId, setViewerId] = useState<number | null>(null);
+  const [forwardTarget, setForwardTarget] = useState<Message | null>(null);
   const captioning = attachments.length > 0 && !editingMessage;
   const activeItem = attachments.find((a) => a.id === activeAtt) ?? attachments[0] ?? null;
   const [notice, setNotice] = useState<string | null>(null);
@@ -589,6 +613,20 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
 
   const msgs = t.messages;
   const last = msgs[msgs.length - 1];
+  const viewerItems = useMemo<ViewerItem[]>(
+    () =>
+      msgs
+        .filter((m) => (m.type === "image" || m.type === "video") && !!m.media_url && !m.is_deleted && !isCustomSticker(m))
+        .map((m) => ({
+          id: m.id,
+          kind: m.type as "image" | "video",
+          url: m.media_url as string,
+          caption: m.body,
+          by: m.sender_id === myId ? "You" : (m.sender?.name ?? m.sender?.username ?? ""),
+          at: m.created_at,
+        })),
+    [msgs, myId],
+  );
 
   // Reset per-thread scroll state when switching conversations.
   useEffect(() => {
@@ -909,7 +947,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           </Link>
           {conv ? (
             <>
-              <span className="shrink-0 cursor-pointer" onClick={openPerson}>
+              <span className="shrink-0 cursor-pointer" onClick={openHeader}>
                 <RingAvatar
                   url={convAvatar(conv)}
                   name={name}
@@ -917,9 +955,13 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   ring={ringFor(conv.other_user?.id)}
                 />
               </span>
-              <div className="min-w-0 cursor-pointer" onClick={openPerson}>
+              <div className="min-w-0 cursor-pointer" onClick={openHeader}>
                 <p className="truncate text-[15px] font-bold text-fg">{name}</p>
-                {username && <p className="truncate text-supporting text-muted">@{username}</p>}
+                {community ? (
+                  <p className="truncate text-supporting text-muted">Community · {community.members_count} {community.members_count === 1 ? "member" : "members"}</p>
+                ) : (
+                  username && <p className="truncate text-supporting text-muted">@{username}</p>
+                )}
               </div>
             </>
           ) : (
@@ -1041,6 +1083,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                   }}
                   onOpenMenu={(target, pos) => setMenuTarget({ m: target, pos })}
                   onNavigateToMessage={navigateToMessage}
+                  onOpenMedia={setViewerId}
                   onAvatarTap={() => (conv && conv.type !== "group" && conv.other_user ? setPerson(true) : m.sender?.username ? router.push(`/u/${m.sender.username}`) : undefined)}
                 />
               </div>
@@ -1271,6 +1314,12 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
         />
       )}
 
+      {viewerId !== null && viewerItems.length > 0 && (
+        <MediaViewer items={viewerItems} startId={viewerId} onClose={() => setViewerId(null)} />
+      )}
+
+      {forwardTarget && <ForwardSheet message={forwardTarget} onClose={() => setForwardTarget(null)} flash={setNotice} />}
+
       {menuTarget && (
         <MessageMenu
           m={menuTarget.m}
@@ -1285,6 +1334,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           }}
           onEdit={() => startEdit(menuTarget.m)}
           onCopy={() => copyText(menuTarget.m)}
+          onForward={menuTarget.m.type === "sticker" || isCustomSticker(menuTarget.m) ? () => setForwardTarget(menuTarget.m) : undefined}
           onSaveSticker={menuTarget.m.type === "sticker" && menuTarget.m.body ? () => saveSticker(menuTarget.m.body ?? "") : undefined}
           onRetry={() => menuTarget.m.local_id && void t.retry(menuTarget.m.local_id)}
           onDeleteForMe={() => setDeleteTarget({ m: menuTarget.m, scope: "me" })}

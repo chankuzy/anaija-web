@@ -12,6 +12,7 @@ import { settingsApi, type BlockedUser } from "@/lib/api/settings";
 import { usersApi } from "@/lib/api/users";
 import { useCached } from "@/lib/cache/swr";
 import { useMessagesUnread } from "@/lib/messaging/unread-context";
+import { useCommunityOf } from "@/lib/messaging/use-community-of";
 import { useProfile } from "@/lib/profile/use-profile";
 import { useMessages } from "./messages-context";
 import { RingAvatar } from "./ring-avatar";
@@ -138,6 +139,7 @@ export function ConversationDetails({
   const { patchConversation, reloadInbox } = useMessages();
   const unread = useMessagesUnread();
   const { toast, show } = useToast();
+  const community = useCommunityOf(conv);
   const [tab, setTab] = useState<Tab>("media");
   const [limit, setLimit] = useState(PAGE);
   const [muting, setMuting] = useState(false);
@@ -257,7 +259,15 @@ export function ConversationDetails({
         <p className="mt-4 max-w-full truncate text-[19px] font-bold tracking-tight text-fg">{name}</p>
         {username && <p className="mt-0.5 max-w-full truncate text-secondary text-muted">@{username}</p>}
         <p className="mt-1.5 text-supporting text-muted">{seen || kind}</p>
-        {username && (
+        {community && (
+          <Link
+            href={`/c/${community.slug}`}
+            className="mt-4 inline-flex h-10 items-center rounded-full bg-surface-interactive px-5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated"
+          >
+            View community
+          </Link>
+        )}
+        {!community && username && (
           <Link
             href={`/u/${username}`}
             className="mt-4 inline-flex h-10 items-center rounded-full bg-surface-interactive px-5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated"

@@ -1,6 +1,7 @@
 import { api } from "./client";
 import { mediaUrl } from "./feed";
 import { listOf, num, rec, str } from "./parse";
+import { resolveSticker } from "@/lib/stickers/packs";
 
 // Shapes follow message_notification_models.dart (Conversation, Message, SharedPost).
 export interface MsgUser {
@@ -171,6 +172,7 @@ export const isInquiry = (c: Conversation) => c.type === "listing_inquiry";
 // Port of _buildPreviewText's label mapping.
 export function previewOf(c: Conversation): string {
   const raw = c.last_message_body ?? "";
+  if (raw === "::sticker::" || resolveSticker(raw)) return "Sticker";
   if (raw === "[image]" || raw.includes("📷 Photo")) return "Photo";
   if (raw === "[video]" || raw.includes("🎥 Video")) return "Video";
   if (raw === "[audio]" || raw.includes("🎵 Audio") || raw.includes("Voice message")) return "Voice message";
