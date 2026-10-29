@@ -41,6 +41,8 @@ import { AttachmentStrip } from "@/components/chat/attachment-strip";
 import { MediaPicker } from "@/components/chat/media-picker";
 import { StickerGlyph, StickerView } from "@/components/chat/sticker-view";
 import { StickerTray } from "@/components/chat/sticker-tray";
+import { EmojiGlyph, RichText } from "@/components/chat/emoji";
+import { QUICK_REACTIONS, toPlain } from "@/lib/emoji/packs";
 import type { PickedFile } from "@/lib/chat/types";
 import { uploadAttachment } from "@/lib/chat/upload-attachment";
 import { addFavourite } from "@/lib/stickers/store";
@@ -51,7 +53,7 @@ import { useCommunityOf } from "@/lib/messaging/use-community-of";
 
 const MAX_ATTACH = 6;
 
-const QUICK = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+const QUICK = QUICK_REACTIONS;
 const GAP_MS = 15 * 60 * 1000;
 const SWIPE_MAX = 64;
 const SWIPE_TRIGGER = 42;
@@ -431,7 +433,7 @@ function Bubble({
                     onClick={() => onReact(e)}
                     className="grid size-9 place-items-center rounded-full text-xl transition-transform hover:scale-125 hover:bg-white/10"
                   >
-                    {e}
+                    <EmojiGlyph code={e} size={26} />
                   </button>
                 ))}
               </div>
@@ -444,7 +446,7 @@ function Bubble({
                 className="mb-1 flex max-w-full items-center gap-1.5 rounded-xl bg-white/8 px-2.5 py-1 text-left text-[12px] font-medium text-muted transition hover:bg-white/12"
               >
                 <Icon name="reply" className="size-3.5 shrink-0 text-brand" />
-                <span className="truncate">{m.reply_to.body ?? "Attachment"}</span>
+                <span className="truncate">{toPlain(m.reply_to.body) ?? "Attachment"}</span>
               </button>
             )}
 
@@ -488,7 +490,7 @@ function Bubble({
                   m.status === "sending" ? "opacity-70" : ""
                 } ${m.status === "failed" ? "cursor-pointer ring-1 ring-danger/70" : ""}`}
               >
-                {text}
+                <RichText text={text} />
               </div>
             )}
 
@@ -505,7 +507,7 @@ function Bubble({
                         own ? "bg-brand/25" : "bg-card-elevated"
                       }`}
                     >
-                      {emoji}
+                      <EmojiGlyph code={emoji} size={16} />
                       {ids.length > 1 && (
                         <span className="text-[11.5px] font-bold text-fg">{ids.length}</span>
                       )}
@@ -753,7 +755,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     try {
       t.setReactions(m.id, await messagingApi.react(m.conversation_id, m.id, emoji));
     } catch {
-      /* keep the old reactions */
+      setNotice("Couldn't add that reaction");
     }
   }
 
@@ -785,7 +787,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   }
 
   function copyText(m: Message) {
-    if (m.body) navigator.clipboard?.writeText(m.body).catch(() => {});
+    if (m.body) navigator.clipboard?.writeText(toPlain(m.body)).catch(() => {});
   }
 
   async function handleConfirmDelete() {
@@ -869,6 +871,23 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   function saveSticker(code: string) {
     addFavourite(code);
     setNotice("Saved to favourites");
+  }
+
+  function insertEmoji(code: string) {
+    const el = area.current;
+    const cur = captioning && activeItem ? (activeItem.caption ?? "") : text;
+    const a = el?.selectionStart ?? cur.length;
+    const b = el?.selectionEnd ?? cur.length;
+    const next = cur.slice(0, a) + code + cur.slice(b);
+    if (captioning && activeItem) setAttachments((list) => list.map((x) => (x.id === activeItem.id ? { ...x, caption: next } : x)));
+    else setText(next);
+    requestAnimationFrame(() => {
+      if (!el) return;
+      const at = a + code.length;
+      el.setSelectionRange(at, at);
+      el.style.height = "auto";
+      el.style.height = `${Math.min(el.scrollHeight, 128)}px`;
+    });
   }
 
   async function sendAttachments() {
@@ -1152,7 +1171,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                       (replyingTo.sender_id === myId ? "yourself" : "message")}
                   </p>
                   <p className="truncate text-[13px] text-muted">
-                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" || isCustomSticker(replyingTo) ? "Sticker" : (replyingTo.body ?? "Attachment")}
+                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" || isCustomSticker(replyingTo) ? "Sticker" : (toPlain(replyingTo.body) ?? "Attachment")}
                   </p>
                 </div>
               </div>
@@ -1278,7 +1297,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           )}
           {trayOpen && voiceRecorder.status === "idle" && (
             <div className="mt-2">
-              <StickerTray onPick={sendSticker} onPickCustom={sendCustomSticker} />
+              <StickerTray onPick={sendSticker} onPickCustom={sendCustomSticker} onEmoji={insertEmoji} />
             </div>
           )}
         </div>

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
-import { convAvatar, convName, isPending, messagingApi, type Message, type SendMessageOptions } from "@/lib/api/messaging";
+import { mediaUrl } from "@/lib/api/feed";
+import { convAvatar, convName, isPending, messagingApi, type Message } from "@/lib/api/messaging";
 import { shareApi, type ShareTarget } from "@/lib/api/share";
 import { useAuth } from "@/lib/auth/auth-context";
 import { usePaged, type Page } from "@/lib/paged/use-paged";
@@ -12,15 +13,24 @@ import { CUSTOM_STICKER_BODY, uploadCustomSticker } from "@/lib/stickers/custom"
 import { useMessages } from "./messages-context";
 
 type Target = { key: string; name: string; sub: string; avatar: string | null; conversationId: number | null; userId: number | null };
-type Payload = Omit<SendMessageOptions, "client_temp_id">;
 
-export function ForwardSheet({ message, onClose, flash }: { message: Message; onClose: () => void; flash: (t: string) => void }) {
+/** Inverse of mediaUrl(): the storage key behind a media URL, or null when it can't be told. */
+function keyFromUrl(url: string): string | null {
+  const probe = "zzprobekey";
+  const sample = mediaUrl(probe);
+  if (!sample || !sample.endsWith(probe)) return null;
+  const base = sample.slice(0, -probe.length);
+  return base.length > 0 && url.startsWith(base) && url.length > base.length ? url.slice(base.length) : null;
+}
+
+export function ForwardSheet({ message, onClose }: { message: Message; onClose: () => void; flash?: (t: string) => void }) {
   const { user } = useAuth();
   const { conversations, upsertLast } = useMessages();
   const [query, setQuery] = useState("");
   const [done, setDone] = useState<ReadonlySet<string>>(new Set());
   const [busyKey, setBusyKey] = useState<string | null>(null);
-  const pre = useRef<Promise<Payload> | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const copy = useRef<Promise<{ mediaKey: string; mediaType: string }> | null>(null);
   const tempIds = useRef(new Map<string, string>());
   const username = user?.username ?? null;
 
@@ -60,38 +70,59 @@ export function ForwardSheet({ message, onClose, flash }: { message: Message; on
     return q ? out.filter((t) => t.name.toLowerCase().includes(q) || t.sub.toLowerCase().includes(q)) : out;
   }, [conversations, data, query]);
 
-  function payload(): Promise<Payload> {
-    if (!pre.current) {
-      pre.current = (async (): Promise<Payload> => {
-        if (message.type === "sticker") return { type: "sticker", body: message.body ?? "" };
-        // A custom sticker is an uploaded image: fetch it once and upload a fresh copy for the forward.
-        const blob = await (await fetch(message.media_url as string)).blob();
-        const up = await uploadCustomSticker(blob.type.startsWith("image/") ? blob : new Blob([blob], { type: "image/webp" }));
-        return { type: "image", body: CUSTOM_STICKER_BODY, media_key: up.mediaKey, media_type: up.mediaType };
+  function uploadCopy() {
+    if (!copy.current) {
+      copy.current = (async () => {
+        const r = await fetch(message.media_url as string, { mode: "cors" });
+        if (!r.ok) throw new Error(`download ${r.status}`);
+        const b = await r.blob();
+        return uploadCustomSticker(b.type.startsWith("image/") ? b : new Blob([b], { type: "image/webp" }));
       })();
-      pre.current.catch(() => {
-        pre.current = null;
+      copy.current.catch(() => {
+        copy.current = null;
       });
     }
-    return pre.current;
+    return copy.current;
+  }
+
+  async function deliver(cid: number, tmp: string) {
+    if (message.type === "sticker") {
+      await messagingApi.send(cid, { type: "sticker", body: message.body ?? "", client_temp_id: tmp });
+      return;
+    }
+    const type = message.media_type || "image/webp";
+    // 1) reuse the file that is already in storage: instant, no download
+    const key = message.media_url ? keyFromUrl(message.media_url) : null;
+    if (key) {
+      try {
+        await messagingApi.send(cid, { type: "image", body: CUSTOM_STICKER_BODY, media_key: key, media_type: type, client_temp_id: tmp });
+        return;
+      } catch (e) {
+        console.warn("[forward] reusing the stored file failed, uploading a copy", e);
+      }
+    }
+    // 2) download once, upload a fresh copy
+    const up = await uploadCopy();
+    await messagingApi.send(cid, { type: "image", body: CUSTOM_STICKER_BODY, media_key: up.mediaKey, media_type: up.mediaType, client_temp_id: `${tmp}-b` });
   }
 
   async function send(t: Target) {
     if (busyKey || done.has(t.key)) return;
     setBusyKey(t.key);
+    setError(null);
     try {
-      const p = await payload();
       const cid = t.conversationId ?? (await shareApi.openConversation(t.userId as number));
       let tmp = tempIds.current.get(t.key);
       if (!tmp) {
         tmp = `fwd-${message.id}-${t.key}-${crypto.randomUUID()}`;
         tempIds.current.set(t.key, tmp);
       }
-      await messagingApi.send(cid, { ...p, client_temp_id: tmp });
+      await deliver(cid, tmp);
       upsertLast(cid, "Sticker");
       setDone((s) => new Set(s).add(t.key));
     } catch (e) {
-      flash(e instanceof ApiError ? e.message : "Couldn't forward that sticker");
+      console.error("[forward] failed", e);
+      setError(e instanceof ApiError ? e.message : "Couldn't forward that sticker. Please try again.");
     } finally {
       setBusyKey(null);
     }
@@ -116,6 +147,7 @@ export function ForwardSheet({ message, onClose, flash }: { message: Message; on
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" autoComplete="off" className="min-w-0 flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-muted" />
           </label>
         </div>
+        {error && <p role="alert" className="shrink-0 px-5 pb-2 text-[12.5px] font-medium text-danger">{error}</p>}
         <div
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-4"
           onScroll={(e) => {
@@ -141,7 +173,7 @@ export function ForwardSheet({ message, onClose, flash }: { message: Message; on
                     onClick={() => void send(t)}
                     className={`flex h-8 min-w-[76px] items-center justify-center gap-1 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 disabled:opacity-60 ${sent ? "bg-surface-interactive text-muted" : "bg-brand text-brand-fg"}`}
                   >
-                    {sent ? (<><Icon name="check" weight="strong" className="size-3.5" />Sent</>) : busyKey === t.key ? "…" : "Send"}
+                    {sent ? (<><Icon name="check" weight="strong" className="size-3.5" />Sent</>) : busyKey === t.key ? "Sending…" : "Send"}
                   </button>
                 </div>
               );

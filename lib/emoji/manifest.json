@@ -1,0 +1,132 @@
+[
+  {
+    "id": "smile",
+    "label": "Smile",
+    "u": "🙂"
+  },
+  {
+    "id": "grin",
+    "label": "Grin",
+    "u": "😁"
+  },
+  {
+    "id": "joy",
+    "label": "Laughing",
+    "u": "😂"
+  },
+  {
+    "id": "love",
+    "label": "In love",
+    "u": "😍"
+  },
+  {
+    "id": "cool",
+    "label": "Cool",
+    "u": "😎"
+  },
+  {
+    "id": "wink",
+    "label": "Wink",
+    "u": "😉"
+  },
+  {
+    "id": "cry",
+    "label": "Crying",
+    "u": "😢"
+  },
+  {
+    "id": "sob",
+    "label": "Sobbing",
+    "u": "😭"
+  },
+  {
+    "id": "angry",
+    "label": "Angry",
+    "u": "😠"
+  },
+  {
+    "id": "shock",
+    "label": "Shocked",
+    "u": "😮"
+  },
+  {
+    "id": "sleepy",
+    "label": "Sleepy",
+    "u": "😴"
+  },
+  {
+    "id": "think",
+    "label": "Thinking",
+    "u": "🤔"
+  },
+  {
+    "id": "kiss",
+    "label": "Kiss",
+    "u": "😘"
+  },
+  {
+    "id": "sweat",
+    "label": "Nervous",
+    "u": "😅"
+  },
+  {
+    "id": "blush",
+    "label": "Blushing",
+    "u": "😊"
+  },
+  {
+    "id": "party",
+    "label": "Party",
+    "u": "🥳"
+  },
+  {
+    "id": "heart",
+    "label": "Heart",
+    "u": "❤️"
+  },
+  {
+    "id": "naija",
+    "label": "Naija heart",
+    "u": "💚"
+  },
+  {
+    "id": "fire",
+    "label": "Fire",
+    "u": "🔥"
+  },
+  {
+    "id": "hundred",
+    "label": "100",
+    "u": "💯"
+  },
+  {
+    "id": "like",
+    "label": "Thumbs up",
+    "u": "👍"
+  },
+  {
+    "id": "clap",
+    "label": "Clap",
+    "u": "👏"
+  },
+  {
+    "id": "pray",
+    "label": "Pray",
+    "u": "🙏"
+  },
+  {
+    "id": "jollof",
+    "label": "Jollof",
+    "u": "🍛"
+  },
+  {
+    "id": "crown",
+    "label": "Crown",
+    "u": "👑"
+  },
+  {
+    "id": "star",
+    "label": "Star",
+    "u": "⭐"
+  }
+]

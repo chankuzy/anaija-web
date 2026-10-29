@@ -2,6 +2,7 @@ import { api } from "./client";
 import { mediaUrl } from "./feed";
 import { listOf, num, rec, str } from "./parse";
 import { resolveSticker } from "@/lib/stickers/packs";
+import { toPlain } from "@/lib/emoji/packs";
 
 // Shapes follow message_notification_models.dart (Conversation, Message, SharedPost).
 export interface MsgUser {
@@ -179,7 +180,7 @@ export function previewOf(c: Conversation): string {
   if (raw === "Shared a listing" || raw === "[listing_share]") return "Shared a listing";
   if (raw === "[post_share]" || raw === "Shared a post" || raw.includes("📎 Shared a post")) return "Shared a post";
   if (isInquiry(c) || raw.includes("🛍️ Shared a listing")) return raw.replace("🛍️ Shared a listing", "Listing inquiry");
-  return raw;
+  return toPlain(raw);
 }
 
 export interface SendMessageOptions {

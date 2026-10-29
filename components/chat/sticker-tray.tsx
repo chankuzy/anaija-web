@@ -8,6 +8,8 @@ import { useBlobUrl } from "@/lib/chat/use-blob-url";
 import { addCustom, listCustom, removeCustom, type CustomSticker } from "@/lib/stickers/custom";
 import { PACKS } from "@/lib/stickers/packs";
 import { getFavourites, getRecents, pushRecent, toggleFavourite } from "@/lib/stickers/store";
+import { EMOJI } from "@/lib/emoji/packs";
+import { EmojiGlyph } from "./emoji";
 import { StickerMaker } from "./sticker-maker";
 import { StickerView } from "./sticker-view";
 
@@ -81,10 +83,13 @@ function CustomTile({ s, onPick, onRemove }: { s: CustomSticker; onPick: () => v
 export function StickerTray({
   onPick,
   onPickCustom,
+  onEmoji,
 }: {
   onPick: (packId: string, stickerId: string) => void;
   /** When provided, the tray shows a "Mine" tab where people can create their own stickers. */
   onPickCustom?: (blob: Blob) => void;
+  /** When provided, the tray shows an Emoji tab; tapping one hands back its ":id:" code. */
+  onEmoji?: (code: string) => void;
 }) {
   const [recents] = useState(() => getRecents());
   const [favs, setFavs] = useState(() => getFavourites());
@@ -164,6 +169,12 @@ export function StickerTray({
           <Icon name="star" filled={tab === "fav"} className="size-4" />
           Favourites
         </button>
+        {onEmoji && (
+          <button type="button" role="tab" aria-selected={tab === "emoji"} onClick={() => setTab("emoji")} className={pill(tab === "emoji")}>
+            <Icon name="smileCircle" filled={tab === "emoji"} className="size-4" />
+            Emoji
+          </button>
+        )}
         {canMake && (
           <button type="button" role="tab" aria-selected={tab === "mine"} onClick={() => setTab("mine")} className={pill(tab === "mine")}>
             <Icon name="user" filled={tab === "mine"} className="size-4" />
@@ -178,7 +189,21 @@ export function StickerTray({
         ))}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2">
-        {tab === "mine" && canMake ? (
+        {tab === "emoji" && onEmoji ? (
+          <div className="grid grid-cols-6 gap-1 pt-1 sm:grid-cols-8 md:grid-cols-9">
+            {EMOJI.map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                aria-label={e.label}
+                onClick={() => onEmoji(`:${e.id}:`)}
+                className="grid aspect-square place-items-center rounded-xl transition hover:bg-white/8 active:scale-90"
+              >
+                <EmojiGlyph code={`:${e.id}:`} size={34} />
+              </button>
+            ))}
+          </div>
+        ) : tab === "mine" && canMake ? (
           <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
             <button type="button" onClick={create} className="grid aspect-square w-full place-items-center rounded-2xl bg-white/6 text-fg transition hover:bg-white/10 active:scale-95">
               <span className="flex flex-col items-center gap-1">
@@ -203,7 +228,7 @@ export function StickerTray({
         )}
       </div>
       <p role="status" className="h-6 shrink-0 px-4 text-center text-[11.5px] text-muted">
-        {hint ?? (tab === "mine" ? "Turn any photo into a sticker" : "Press and hold to favourite")}
+        {hint ?? (tab === "emoji" ? "Tap to add to your message" : tab === "mine" ? "Turn any photo into a sticker" : "Press and hold to favourite")}
       </p>
       {making && <StickerMaker file={making} onCancel={() => setMaking(null)} onSave={(b) => void save(b)} />}
     </div>
