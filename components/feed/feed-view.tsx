@@ -320,7 +320,7 @@ export function FeedView({
           </LeaveWhenVisible>
         )}
         {(!data || data.loadingMore) && <MoreSkeleton />}
-        <FeedStories onViewerChange={setStoryOpen} />
+        {!videoOnly && <FeedStories onViewerChange={setStoryOpen} />}
       </div>
       {topBar}
       <ScrollArrows scroller={scrollerRef} index={active} count={entries.length} />
