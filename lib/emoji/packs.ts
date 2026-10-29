@@ -25,14 +25,27 @@ export const QUICK_REACTIONS = [":like:", ":heart:", ":joy:", ":shock:", ":cry:"
 export type RichPart = { k: "text"; s: string } | { k: "art"; id: string; u: string } | { k: "native"; s: string };
 
 const RE_SRC = `:([a-z]{2,8}):|${emojiRegex().source}`;
+// Compiled once. matchAll works on a clone, so sharing this instance is safe.
+const RE = new RegExp(RE_SRC, "g");
 
+// Parsed results are cached by text: a thread re-renders on every keystroke, and each bubble asks twice.
+const CACHE = new Map<string, RichPart[]>();
 export function richParts(text: string): RichPart[] {
+  const hit = CACHE.get(text);
+  if (hit) return hit;
+  const parts = parseRich(text);
+  if (CACHE.size >= 500) CACHE.clear();
+  CACHE.set(text, parts);
+  return parts;
+}
+
+function parseRich(text: string): RichPart[] {
   const out: RichPart[] = [];
   const push = (s: string) => {
     if (s) out.push({ k: "text", s });
   };
   let last = 0;
-  for (const m of text.matchAll(new RegExp(RE_SRC, "g"))) {
+  for (const m of text.matchAll(RE)) {
     const at = m.index ?? 0;
     let part: RichPart | null = null;
     if (m[1] !== undefined) {

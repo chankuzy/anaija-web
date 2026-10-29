@@ -42,10 +42,10 @@ function PersonIntro({
   const name = convName(conv);
   const username = other.username || null;
   const { profile } = useProfile(username ?? "", !!username);
-  const followers = count(profile, "followers_count", "follower_count", "followers");
-  const following = count(profile, "following_count", "followings_count", "following");
-  const bio = text(profile, "bio", "about");
-  const youFollow = get(profile, "is_following") === true;
+  const followers = profile?.counts?.followers ?? null;
+  const following = profile?.counts?.following ?? null;
+  const bio = profile?.bio?.trim() || null;
+  const youFollow = profile?.is_following === true;
   return (
     <div className={wrap}>
       <span className="relative">
