@@ -2,6 +2,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { downloadOriginal } from "@/lib/documents/download";
 import { PdfAttachment, isPdfUrl } from "@/components/home/renderers/document";
 import { Group, Toggle, useToast } from "@/components/settings/settings-kit";
 import { buttonClass } from "@/components/ui/button";
@@ -101,10 +103,10 @@ function Detail({ c, r, onClose, onChanged }: { c: CommunityDetail; r: Resource;
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
         {url && (
-          <a href={url} target="_blank" rel="noreferrer noopener" download className={buttonClass("primary", "h-10 px-5")}>
+          <button type="button" onClick={() => void downloadOriginal(url, r.file?.name || r.title)} className={buttonClass("primary", "h-10 px-5")}>
             <Icon name="arrowDown" className="size-4" />
             Download
-          </a>
+          </button>
         )}
         <button type="button" onClick={() => setReport(true)} className={buttonClass("outline", "h-10 px-5")}>Report</button>
         {canRemove && <button type="button" onClick={() => void remove()} className="h-10 rounded-full px-4 text-secondary font-bold text-danger">Remove</button>}
@@ -160,15 +162,16 @@ function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDeta
         if (cover) thumbnail_key = await uploadBlob(cover, "cover.jpg", "image/jpeg").catch(() => undefined);
       }
       setBusy("Adding to library…");
-      const post = await communitiesApi.post(c.id, {
+      await communitiesApi.post(c.id, {
         type: "post", subtype: "document", caption: title.trim(), client_request_id: requestId,
         media: [{ type: "document", storage_key: key, ...(thumbnail_key ? { thumbnail_key } : {}), size_bytes: up.size, mime_type: mime }],
         content: { title: title.trim(), description: description.trim(), file: { name: file.name } },
-      });
-      await communitiesApi.libraryAdd(c.id, {
-        post_id: post.post_id, title: title.trim(), doc_type: docType, course_code: code.trim() || undefined,
-        academic_session: session.trim() || undefined, subject: subject.trim() || undefined,
-        description: description.trim() || undefined, collection_id: collection, in_feed: inFeed,
+        // One request: the server creates the post and its library entry together.
+        library: {
+          title: title.trim(), doc_type: docType, course_code: code.trim() || undefined,
+          academic_session: session.trim() || undefined, subject: subject.trim() || undefined,
+          description: description.trim() || undefined, collection_id: collection, in_feed: inFeed,
+        },
       });
       onDone();
     } catch (e) {
@@ -274,7 +277,15 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
   const [filters, setFilters] = useState(false);
   const [open, setOpen] = useState<Resource | null>(null);
   const [resumed, setResumed] = useState(() => pickerWasOpen(c.id));
-  const [upload, setUpload] = useState(resumed);
+  const router = useRouter();
+  const sp = useSearchParams();
+  const [upload, setUpload] = useState(resumed || (sp.get("add") === "1" && c.can.library));
+  const endAdd = () => {
+    clearPicker();
+    setResumed(false);
+    setUpload(false);
+    if (sp.get("add")) router.replace(`/c/${c.slug}?tab=library`, { scroll: false });
+  };
   const [extra, setExtra] = useState<{ key: string; items: Resource[]; cursor: string | null; more: boolean } | null>(null);
 
   useEffect(() => {
@@ -386,7 +397,7 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
         />
       )}
       {open && <Detail c={c} r={open} onClose={() => setOpen(null)} onChanged={refresh} />}
-      {upload && <Upload c={c} collections={collections} resumed={resumed} onClose={() => { clearPicker(); setResumed(false); setUpload(false); }} onDone={() => { clearPicker(); setResumed(false); setUpload(false); refresh(); show("Added to library"); }} />}
+      {upload && <Upload c={c} collections={collections} resumed={resumed} onClose={endAdd} onDone={() => { endAdd(); refresh(); show("Added to library"); }} />}
       {toast}
     </div>
   );
