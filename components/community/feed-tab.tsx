@@ -17,15 +17,15 @@ import { PublishSheet } from "./publish-sheet";
 
 const noop = () => {};
 
-function PostMenu({ c, p, onClose, onPin, onRemove, onReport }: {
-  c: CommunityDetail; p: CPost; onClose: () => void; onPin: () => void; onRemove: () => void; onReport: () => void;
+function PostMenu({ p, onClose, onPin, onRemove, onReport }: {
+  p: CPost; onClose: () => void; onPin: () => void; onRemove: () => void; onReport: () => void;
 }) {
   return (
-    <Sheet title="Post" onClose={onClose}>
+    <Sheet title="Moderate" onClose={onClose}>
       <div className="-mx-1">
-        {c.can.moderate && <MenuRow icon="pin" label={p.community_pinned ? "Unpin from top" : "Pin to top"} onClick={() => { onClose(); onPin(); }} />}
+        <MenuRow icon="pin" label={p.community_pinned ? "Unpin from top" : "Pin to top"} onClick={() => { onClose(); onPin(); }} />
         <MenuRow icon="forbidden" label="Report" onClick={() => { onClose(); onReport(); }} />
-        {c.can.moderate && <MenuRow icon="close" label="Remove post" danger onClick={() => { onClose(); onRemove(); }} />}
+        <MenuRow icon="close" label="Remove post" danger onClick={() => { onClose(); onRemove(); }} />
       </div>
     </Sheet>
   );
@@ -141,17 +141,19 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
         <div>
           {items.map((p, i) => (
             <article key={p.id} className="border-b border-white/[0.06] pb-2 pt-1 last:border-none">
-              {(p.community_pinned || c.is_member) && (
-                <div className="flex h-7 items-center justify-between px-1">
+              {/* HomePost has its own options menu. This row exists only for what it can't do: pinned label, pin and remove. */}
+              {(p.community_pinned || c.can.moderate) && (
+                <div className="flex h-7 items-center justify-between px-4 md:px-1">
                   {p.community_pinned ? (
                     <span className="flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
                       <Icon name="pin" filled className="size-3.5" />
                       Pinned
                     </span>
                   ) : <span />}
-                  {c.is_member && (
-                    <button type="button" aria-label="Post options" onClick={() => setMenu(p)} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:text-fg">
-                      <Icon name="menuDots" className="size-5" />
+                  {c.can.moderate && (
+                    <button type="button" aria-label="Moderate post" onClick={() => setMenu(p)} className="inline-flex h-7 items-center gap-1.5 rounded-full px-2 text-micro font-semibold uppercase tracking-[0.08em] text-muted transition-colors hover:text-fg">
+                      <Icon name="settings" className="size-3.5" />
+                      Moderate
                     </button>
                   )}
                 </div>
@@ -165,7 +167,7 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
       )}
 
       {share && <PublishSheet c={c} onClose={() => setShare(false)} />}
-      {menu && <PostMenu c={c} p={menu} onClose={() => setMenu(null)} onPin={() => void togglePin(menu)} onRemove={() => void remove(menu)} onReport={() => setReport(menu)} />}
+      {menu && <PostMenu p={menu} onClose={() => setMenu(null)} onPin={() => void togglePin(menu)} onRemove={() => void remove(menu)} onReport={() => setReport(menu)} />}
       {report && (
         <ReportSheet
           title="Report post"

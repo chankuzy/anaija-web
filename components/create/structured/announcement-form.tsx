@@ -14,6 +14,8 @@ export function AnnouncementForm({ onClose }: { onClose: () => void }) {
   const pub = useStructuredPublish();
   const { caps } = useCapabilities();
   const fileRef = useRef<HTMLInputElement>(null);
+  // Inside a community the identity is the community itself; the server sets it, the platform grants don't apply.
+  const [inCommunity] = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("community"));
   const publishers = caps?.publishers ?? [];
   const [chosen, setChosen] = useState<number | null>(null);
   const publisherId = chosen ?? publishers[0]?.id ?? null;
@@ -40,7 +42,8 @@ export function AnnouncementForm({ onClose }: { onClose: () => void }) {
     setFiles(next);
   };
 
-  const problem = !publisherId ? "No publishing identity" : !title.trim() ? "Add a title" : !body.trim() ? "Write the announcement" : null;
+  const problem =
+    !publisherId && !inCommunity ? "No publishing identity" : !title.trim() ? "Add a title" : !body.trim() ? "Write the announcement" : null;
   const submit = () =>
     void pub.run(files, async (ctx) => {
       const media = [];
@@ -53,7 +56,8 @@ export function AnnouncementForm({ onClose }: { onClose: () => void }) {
         visibility,
         allow_comments: allowComments,
         ...(media.length ? { media } : {}),
-        content: { title: title.trim(), body: body.trim(), event_at: iso(eventAt), deadline_at: iso(deadlineAt), publisher_id: publisherId },
+        // In a community the server replaces publisher_id with the community identity.
+        content: { title: title.trim(), body: body.trim(), event_at: iso(eventAt), deadline_at: iso(deadlineAt), publisher_id: publisherId ?? 1 },
       };
     });
 
@@ -61,14 +65,18 @@ export function AnnouncementForm({ onClose }: { onClose: () => void }) {
     <FormFrame title="New announcement" cta="Publish announcement" ready={problem === null} hint={problem} dirty={!!title.trim() || !!body.trim() || files.length > 0} pub={pub} onSubmit={submit} onClose={onClose}>
       <input ref={fileRef} type="file" multiple accept={`image/*,${DOC_ACCEPT}`} hidden onChange={(e) => { addFiles(e.target.files); e.target.value = ""; }} />
 
-      <Label>Publishing as</Label>
-      <div className="flex flex-wrap gap-2">
-        {publishers.map((p) => (
-          <Chip key={p.id} on={publisherId === p.id} disabled={pub.busy || publishers.length === 1} onClick={() => setChosen(p.id)}>
-            {p.name}
-          </Chip>
-        ))}
-      </div>
+      {!inCommunity && (
+        <>
+          <Label>Publishing as</Label>
+          <div className="flex flex-wrap gap-2">
+            {publishers.map((p) => (
+              <Chip key={p.id} on={publisherId === p.id} disabled={pub.busy || publishers.length === 1} onClick={() => setChosen(p.id)}>
+                {p.name}
+              </Chip>
+            ))}
+          </div>
+        </>
+      )}
 
       <Label>Title</Label>
       <input className={INPUT} placeholder="What is this about?" maxLength={140} value={title} disabled={pub.busy} onChange={(e) => setTitle(e.target.value)} />
@@ -95,7 +103,7 @@ export function AnnouncementForm({ onClose }: { onClose: () => void }) {
       )}
       {fileError && <p role="alert" className="mt-2 text-secondary text-danger">{fileError}</p>}
 
-      <VisibilityChips value={visibility} onChange={setVisibility} disabled={pub.busy} />
+      {!inCommunity && <VisibilityChips value={visibility} onChange={setVisibility} disabled={pub.busy} />}
       <ToggleRow label="Allow comments" on={allowComments} onChange={setAllowComments} />
     </FormFrame>
   );

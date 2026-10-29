@@ -11,7 +11,7 @@ const SUB: Partial<Record<CreateKind, string>> = {
   poll: "Ask the community", announcement: "Notify every member", article: "Long-form editorial", reel: "A video for the community",
 };
 
-// One publishing system: the real composer, aimed at this community.
+// One publishing system: the real composer, aimed at this community. /create/new reads ?mode=.
 export function PublishSheet({ c, onClose }: { c: CommunityDetail; onClose: () => void }) {
   const router = useRouter();
   const allowed = (k: CreateKind) => (k === "announcement" ? c.can.announce : k === "article" ? c.can.moderate : c.can.post);
@@ -23,7 +23,7 @@ export function PublishSheet({ c, onClose }: { c: CommunityDetail; onClose: () =
           <button
             key={k}
             type="button"
-            onClick={() => router.push(`/create/new?kind=${k}&community=${encodeURIComponent(c.slug)}`)}
+            onClick={() => router.push(`/create/new?mode=${k}&community=${encodeURIComponent(c.slug)}`)}
             className="flex flex-col items-start gap-3 rounded-2xl border border-white/[0.07] p-4 text-left transition-colors hover:bg-white/[0.04] active:scale-[0.98]"
           >
             <Icon name={KIND_META[k].icon} className="size-6 text-fg" />
