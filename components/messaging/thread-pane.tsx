@@ -37,6 +37,15 @@ import { VoicePlayer } from "./voice-player";
 import { VoiceRecorderBar } from "./voice-recorder-bar";
 import { MessageMenu } from "./message-menu";
 import { DeleteDialog } from "./delete-dialog";
+import { AttachmentStrip } from "@/components/chat/attachment-strip";
+import { MediaPicker } from "@/components/chat/media-picker";
+import { StickerGlyph, StickerView } from "@/components/chat/sticker-view";
+import { StickerTray } from "@/components/chat/sticker-tray";
+import type { PickedFile } from "@/lib/chat/types";
+import { uploadAttachment } from "@/lib/chat/upload-attachment";
+import { addFavourite } from "@/lib/stickers/store";
+
+const MAX_ATTACH = 6;
 
 const QUICK = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 const GAP_MS = 15 * 60 * 1000;
@@ -198,7 +207,8 @@ function Bubble({
   const audio = isAudioMsg(m);
   const hasMedia =
     !!m.media_url && !m.is_deleted && (["image", "video", "audio", "file"].includes(m.type) || audio);
-  const showText = text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
+  const isSticker = m.type === "sticker" && !m.is_deleted && !!m.body;
+  const showText = !isSticker && text.trim() !== "" && !(hasMedia && (m.type === "file" || audio));
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
 
@@ -418,6 +428,14 @@ function Bubble({
             )}
 
             {m.shared_post && <SharedPostCard post={m.shared_post} />}
+            {isSticker && (
+              <div
+                onClick={m.status === "failed" ? onRetry : undefined}
+                className={`transition-opacity ${m.status === "sending" ? "opacity-70" : ""} ${m.status === "failed" ? "cursor-pointer rounded-2xl ring-1 ring-danger/70" : ""}`}
+              >
+                <StickerView code={m.body ?? ""} size={144} />
+              </div>
+            )}
             <Media
               m={m}
               mine={mine}
@@ -539,6 +557,10 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   } | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [attachments, setAttachments] = useState<PickedFile[]>([]);
+  const [mediaOpen, setMediaOpen] = useState(false);
+  const [trayOpen, setTrayOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const voiceRecorder = useVoiceRecorder();
 
@@ -615,6 +637,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
   }, []);
 
   async function submit() {
+    if (attachments.length > 0 && !editingMessage) return sendAttachments();
     const body = text.trim();
     if (!body) return;
     setSendError(null);
@@ -647,7 +670,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
 
     await t.send({
       body,
-      replyTo: currentReply ? { id: currentReply.id, body: currentReply.body } : undefined,
+      replyTo: currentReply ? { id: currentReply.id, body: currentReply.type === "sticker" ? "Sticker" : currentReply.body } : undefined,
     });
   }
 
@@ -668,7 +691,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
       mediaKey: result.mediaKey,
       mediaType: cleanType,
       mediaUrl: result.blobUrl,
-      replyTo: currentReply ? { id: currentReply.id, body: currentReply.body } : undefined,
+      replyTo: currentReply ? { id: currentReply.id, body: currentReply.type === "sticker" ? "Sticker" : currentReply.body } : undefined,
     });
     if (!sent) console.error("[voice] send failed", { mediaKey: result.mediaKey, mediaType: cleanType });
   }
@@ -726,6 +749,93 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
     } finally {
       setDeleteBusy(false);
     }
+  }
+
+  // ── attachments + stickers (shared by direct and community chat) ──
+  useEffect(() => {
+    setAttachments([]);
+    setTrayOpen(false);
+    setMediaOpen(false);
+  }, [conversationId]);
+
+  useEffect(() => {
+    if (!notice) return;
+    const id = window.setTimeout(() => setNotice(null), 2200);
+    return () => window.clearTimeout(id);
+  }, [notice]);
+
+  const openMedia = () => {
+    if (attachments.length >= MAX_ATTACH) {
+      setNotice(`You can attach up to ${MAX_ATTACH} at a time`);
+      return;
+    }
+    area.current?.blur();
+    setTrayOpen(false);
+    setMediaOpen(true);
+  };
+  const toggleTray = () => {
+    area.current?.blur();
+    setTrayOpen((o) => !o);
+  };
+  const labelOf = (m: Message) => (m.type === "sticker" ? "Sticker" : m.body);
+
+  function sendSticker(packId: string, stickerId: string) {
+    setSendError(null);
+    stick.current = true;
+    upsertLast(conversationId, "Sticker");
+    if (conv && isPending(conv)) patchConversation(conversationId, { request_status: "accepted" });
+    const reply = replyingTo;
+    setReplyingTo(null);
+    void t.send({
+      type: "sticker",
+      body: `${packId}/${stickerId}`,
+      replyTo: reply ? { id: reply.id, body: labelOf(reply) } : undefined,
+    });
+  }
+
+  function saveSticker(code: string) {
+    addFavourite(code);
+    setNotice("Saved to favourites");
+  }
+
+  async function sendAttachments() {
+    const items = attachments;
+    if (items.length === 0) return;
+    const caption = text.trim();
+    const reply = replyingTo;
+    setAttachments([]);
+    setText("");
+    if (area.current) area.current.style.height = "auto";
+    setReplyingTo(null);
+    setSendError(null);
+    setTrayOpen(false);
+    stick.current = true;
+    upsertLast(conversationId, caption || (items[0].kind === "video" ? "Video" : "Photo"));
+    if (conv && isPending(conv)) patchConversation(conversationId, { request_status: "accepted" });
+
+    // Bubbles show at once with the local file; uploads then run strictly one at a time.
+    let chain: Promise<unknown> = Promise.resolve();
+    const queued = <T,>(fn: () => Promise<T>): Promise<T> => {
+      const run = chain.then(fn, fn);
+      chain = run.catch(() => undefined);
+      return run;
+    };
+    await Promise.all(
+      items.map((a, i) => {
+        const url = URL.createObjectURL(a.file);
+        return t
+          .send({
+            type: a.kind,
+            body: i === 0 && caption ? caption : undefined,
+            replyTo: i === 0 && reply ? { id: reply.id, body: labelOf(reply) ?? null } : undefined,
+            mediaUrl: url,
+            prepare: () => queued(() => uploadAttachment(a)),
+          })
+          .then((res) => {
+            if (res) URL.revokeObjectURL(url);
+          });
+      }),
+    );
   }
 
   const name = conv ? convName(conv) : "";
@@ -964,7 +1074,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                       (replyingTo.sender_id === myId ? "yourself" : "message")}
                   </p>
                   <p className="truncate text-[13px] text-muted">
-                    {isAudioMsg(replyingTo) ? "Voice message" : (replyingTo.body ?? "Attachment")}
+                    {isAudioMsg(replyingTo) ? "Voice message" : replyingTo.type === "sticker" ? "Sticker" : (replyingTo.body ?? "Attachment")}
                   </p>
                 </div>
               </div>
@@ -1002,6 +1112,15 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
             </div>
           )}
 
+          {notice && (
+            <p role="status" className="mb-2 px-2 text-[12px] font-medium text-muted">
+              {notice}
+            </p>
+          )}
+          {attachments.length > 0 && (
+            <AttachmentStrip items={attachments} onRemove={(id) => setAttachments((a) => a.filter((x) => x.id !== id))} />
+          )}
+
           {voiceRecorder.status !== "idle" ? (
             <VoiceRecorderBar
               recorder={voiceRecorder}
@@ -1009,12 +1128,34 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
               onCancel={() => voiceRecorder.discard()}
             />
           ) : (
-            <div className="flex items-end gap-1 rounded-[26px] bg-surface-subtle p-1.5 pl-4">
+            <div className="flex items-end gap-1 rounded-[26px] bg-surface-subtle p-1.5 pl-1.5">
+              {!editingMessage && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Add photos or videos"
+                    onClick={openMedia}
+                    className="grid size-10 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-brand active:scale-95"
+                  >
+                    <Icon name="gallery" className="size-[20px]" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label={trayOpen ? "Close stickers" : "Open stickers"}
+                    aria-pressed={trayOpen}
+                    onClick={toggleTray}
+                    className={`grid size-10 shrink-0 place-items-center rounded-full transition hover:bg-white/10 active:scale-95 ${trayOpen ? "text-brand" : "text-muted hover:text-brand"}`}
+                  >
+                    <StickerGlyph className="size-[20px]" />
+                  </button>
+                </>
+              )}
               <textarea
                 ref={area}
                 value={text}
+                onFocus={() => setTrayOpen(false)}
                 rows={1}
-                placeholder={editingMessage ? "Edit message…" : "Message"}
+                placeholder={editingMessage ? "Edit message…" : attachments.length > 0 ? "Add a caption…" : "Message"}
                 onChange={(e) => {
                   setText(e.target.value);
                   if (sendError) setSendError(null);
@@ -1033,11 +1174,11 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
                 className="max-h-32 min-h-[38px] flex-1 resize-none bg-transparent py-2 text-[15px] leading-[1.35] text-fg outline-none placeholder:text-muted"
               />
 
-              {text.trim().length > 0 || editingMessage ? (
+              {text.trim().length > 0 || editingMessage || attachments.length > 0 ? (
                 <button
                   type="button"
                   aria-label={editingMessage ? "Save edit" : "Send"}
-                  disabled={!text.trim()}
+                  disabled={!text.trim() && attachments.length === 0}
                   onClick={() => void submit()}
                   className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition active:scale-95 disabled:bg-surface-interactive disabled:text-muted/50"
                 >
@@ -1055,6 +1196,11 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
               )}
             </div>
           )}
+          {trayOpen && voiceRecorder.status === "idle" && (
+            <div className="mt-2">
+              <StickerTray onPick={sendSticker} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -1070,6 +1216,17 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
 
       {conv && person && conv.other_user && <PersonSheet conv={conv} onClose={() => setPerson(false)} />}
 
+      {mediaOpen && (
+        <MediaPicker
+          max={Math.max(1, MAX_ATTACH - attachments.length)}
+          onClose={() => setMediaOpen(false)}
+          onDone={(items) => {
+            setAttachments((a) => [...a, ...items].slice(0, MAX_ATTACH));
+            setMediaOpen(false);
+          }}
+        />
+      )}
+
       {menuTarget && (
         <MessageMenu
           m={menuTarget.m}
@@ -1084,6 +1241,7 @@ export function ThreadPane({ conversationId, embedded = false }: { conversationI
           }}
           onEdit={() => startEdit(menuTarget.m)}
           onCopy={() => copyText(menuTarget.m)}
+          onSaveSticker={menuTarget.m.type === "sticker" && menuTarget.m.body ? () => saveSticker(menuTarget.m.body ?? "") : undefined}
           onRetry={() => menuTarget.m.local_id && void t.retry(menuTarget.m.local_id)}
           onDeleteForMe={() => setDeleteTarget({ m: menuTarget.m, scope: "me" })}
           onDeleteEveryone={() => setDeleteTarget({ m: menuTarget.m, scope: "everyone" })}

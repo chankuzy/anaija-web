@@ -185,7 +185,7 @@ export function useThread(conversationId: number, myId: number | undefined) {
     ): Promise<Message | null> => {
       try {
         const real = await messagingApi.send(conversationId, {
-          type: (payload.type as "text" | "image" | "video" | "audio" | "file") ?? "text",
+          type: (payload.type as "text" | "image" | "video" | "audio" | "file" | "sticker") ?? "text",
           body: payload.body,
           reply_to_id: payload.replyToId,
           media_key: payload.mediaKey,
@@ -214,22 +214,50 @@ export function useThread(conversationId: number, myId: number | undefined) {
     [conversationId, fetchLatest],
   );
 
+  // Media sends: the bubble appears first, then `prepare` uploads and hands back the storage key.
+  // A failed upload leaves a failed bubble; retry re-runs the upload, not just the send.
+  const pendingPrepare = useRef(new Map<string, () => Promise<{ mediaKey: string; mediaType: string }>>());
+  const runPrepared = useCallback(
+    async (
+      localId: string,
+      payload: { body?: string; type?: string; replyToId?: number; mediaKey?: string; mediaType?: string },
+      prepare: () => Promise<{ mediaKey: string; mediaType: string }>,
+    ): Promise<Message | null> => {
+      try {
+        const up = await prepare();
+        payload.mediaKey = up.mediaKey;
+        payload.mediaType = up.mediaType;
+        pendingPrepare.current.delete(localId);
+      } catch {
+        setState((p) =>
+          p && p.id === conversationId
+            ? { ...p, items: p.items.map((m) => (m.local_id === localId ? { ...m, status: "failed" as const } : m)) }
+            : p,
+        );
+        return null;
+      }
+      return deliver(localId, payload);
+    },
+    [conversationId, deliver],
+  );
+
   const send = useCallback(
     (
       input:
         | string
         | {
             body?: string;
-            type?: "text" | "audio" | "image" | "video" | "file";
+            type?: "text" | "audio" | "image" | "video" | "file" | "sticker";
             replyTo?: { id: number; body: string | null } | null;
             mediaKey?: string;
             mediaType?: string;
             mediaUrl?: string;
+            prepare?: () => Promise<{ mediaKey: string; mediaType: string }>;
           },
     ) => {
       if (myId === undefined) return Promise.resolve(null);
       const opts = typeof input === "string" ? { body: input, type: "text" as const } : input;
-      const localId = `l${Date.now()}`;
+      const localId = `l${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
       const payload = {
         body: opts.body,
         type: opts.type ?? "text",
@@ -240,7 +268,7 @@ export function useThread(conversationId: number, myId: number | undefined) {
       pendingPayloads.current.set(localId, payload);
 
       const temp: Message = {
-        id: -Date.now(),
+        id: -(Date.now() * 1000 + Math.floor(Math.random() * 1000)),
         conversation_id: conversationId,
         type: opts.type ?? "text",
         body: opts.body ?? null,
@@ -262,9 +290,13 @@ export function useThread(conversationId: number, myId: number | undefined) {
           ? { ...p, items: [...p.items, temp] }
           : { id: conversationId, items: [temp], cursor: null, error: null, loadingOlder: false },
       );
+      if (opts.prepare) {
+        pendingPrepare.current.set(localId, opts.prepare);
+        return runPrepared(localId, payload, opts.prepare);
+      }
       return deliver(localId, payload);
     },
-    [myId, conversationId, deliver],
+    [myId, conversationId, deliver, runPrepared],
   );
 
   const retry = useCallback(
@@ -284,9 +316,11 @@ export function useThread(conversationId: number, myId: number | undefined) {
           ? { ...p, items: p.items.map((x) => (x.local_id === localId ? { ...x, status: "sending" as const } : x)) }
           : p,
       );
+      const prep = pendingPrepare.current.get(localId);
+      if (prep && !effPayload.mediaKey) return runPrepared(localId, effPayload, prep);
       return deliver(localId, effPayload);
     },
-    [s, conversationId, deliver],
+    [s, conversationId, deliver, runPrepared],
   );
 
   const editMessage = useCallback(

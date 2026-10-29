@@ -15,6 +15,7 @@ export interface MessageMenuProps {
   onDeleteEveryone: () => void;
   onCopy: () => void;
   onRetry?: () => void;
+  onSaveSticker?: () => void;
   onClose: () => void;
   position?: { x: number; y: number } | null;
 }
@@ -29,6 +30,7 @@ export function MessageMenu({
   onDeleteEveryone,
   onCopy,
   onRetry,
+  onSaveSticker,
   onClose,
   position,
 }: MessageMenuProps) {
@@ -115,6 +117,22 @@ export function MessageMenu({
         >
           <Icon name="copy" className="size-4 text-muted" />
           <span>Copy text</span>
+        </button>
+      )}
+
+      {/* Save sticker */}
+      {m.type === "sticker" && onSaveSticker && !m.is_deleted && (
+        <button
+          type="button"
+          role="menuitem"
+          onClick={() => {
+            onSaveSticker();
+            onClose();
+          }}
+          className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-white/10 active:bg-white/15 transition text-left"
+        >
+          <Icon name="plus" className="size-4 text-muted" />
+          <span>Save to favourites</span>
         </button>
       )}
 

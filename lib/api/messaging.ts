@@ -181,7 +181,7 @@ export function previewOf(c: Conversation): string {
 }
 
 export interface SendMessageOptions {
-  type?: "text" | "audio" | "image" | "video" | "file";
+  type?: "text" | "audio" | "image" | "video" | "file" | "sticker";
   body?: string;
   media_key?: string;
   media_type?: string;

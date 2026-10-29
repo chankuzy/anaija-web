@@ -1,0 +1,100 @@
+{
+  "packs": [
+    {
+      "id": "naija-vibes",
+      "name": "Naija Vibes",
+      "creator": "Anaija",
+      "license": "Original artwork by Anaija",
+      "format": "svg",
+      "size": 512,
+      "stickers": [
+        {
+          "id": "wahala",
+          "label": "Wahala"
+        },
+        {
+          "id": "nowahala",
+          "label": "No wahala"
+        },
+        {
+          "id": "omo",
+          "label": "Omo!"
+        },
+        {
+          "id": "sharp",
+          "label": "Sharp!"
+        },
+        {
+          "id": "abeg",
+          "label": "Abeg"
+        },
+        {
+          "id": "chai",
+          "label": "Chai!"
+        },
+        {
+          "id": "nawa",
+          "label": "Nawa"
+        },
+        {
+          "id": "gbam",
+          "label": "Gbam!"
+        },
+        {
+          "id": "oya",
+          "label": "Oya!"
+        },
+        {
+          "id": "echoke",
+          "label": "E choke!"
+        }
+      ]
+    },
+    {
+      "id": "faces",
+      "name": "Faces",
+      "creator": "Anaija",
+      "license": "Original artwork by Anaija",
+      "format": "svg",
+      "size": 512,
+      "stickers": [
+        {
+          "id": "smile",
+          "label": "Smile"
+        },
+        {
+          "id": "laugh",
+          "label": "Laughing"
+        },
+        {
+          "id": "love",
+          "label": "In love"
+        },
+        {
+          "id": "cry",
+          "label": "Crying"
+        },
+        {
+          "id": "shock",
+          "label": "Shocked"
+        },
+        {
+          "id": "cool",
+          "label": "Cool"
+        },
+        {
+          "id": "angry",
+          "label": "Angry"
+        },
+        {
+          "id": "sleepy",
+          "label": "Sleepy"
+        },
+        {
+          "id": "wink",
+          "label": "Wink"
+        }
+      ]
+    }
+  ]
+}
