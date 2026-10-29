@@ -74,14 +74,11 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { status, user, signOut } = useAuth();
   const { unseen } = useActivity();
-  const { count: msgUnread, refresh: refreshMsgs } = useMessagesUnread();
+  const { count: msgUnread } = useMessagesUnread();
   const { open: panelOpen, toggle: togglePanel, hide: closePanel } = useNotificationsPanel();
   const desktop = useIsDesktop();
   const [createOpen, setCreateOpen] = useState(false);
-  // Reading a chat on /messages then navigating away should drop the badge right away.
-  useEffect(() => {
-    refreshMsgs();
-  }, [pathname, refreshMsgs]);
+  // The unread badge is derived from the live inbox (reading a chat clears it at once), so navigation refetches nothing.
   useTabBadge(msgUnread + unseen);
   useEffect(() => {
     closePanel();

@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError } from "@/lib/api/client";
-import { messagingApi, type Conversation } from "@/lib/api/messaging";
+import { isPending, messagingApi, type Conversation } from "@/lib/api/messaging";
 import { storiesApi, type StoryGroup } from "@/lib/api/stories";
 import { useAuth } from "@/lib/auth/auth-context";
 import { onCacheClear, peek, put, useCacheReady } from "@/lib/cache/swr";
@@ -23,10 +23,11 @@ type Ctx = {
   markStoriesSeen: (ids: number[]) => void;
   ringFor: (userId: number | undefined) => boolean;
   live: boolean; // user:{id} channel joined
+  unreadChats: number; // conversations with something unread (muted excluded, each request counts once)
   pulse: { id: number; n: number }; // bumps when the server says conversation `id` changed
 };
 
-const MessagesCtx = createContext<Ctx | null>(null);
+export const MessagesCtx = createContext<Ctx | null>(null);
 
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const at = (c: Conversation) => Date.parse(c.last_message_at ?? "") || 0;
@@ -149,6 +150,16 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener("online", on);
     return () => window.removeEventListener("online", on);
   }, [uid, reloadInbox, loadStories]);
+
+  // Tab comes back: broadcast has no backlog, so reconcile anything missed while hidden or offline.
+  useEffect(() => {
+    if (uid === null) return;
+    const on = () => {
+      if (document.visibilityState === "visible" && Date.now() - lastInbox.current > REFRESH_ON_ENTER_MS) reloadInbox();
+    };
+    document.addEventListener("visibilitychange", on);
+    return () => document.removeEventListener("visibilitychange", on);
+  }, [uid, reloadInbox]);
 
   // Opening Messages: quiet reconcile only if stale.
   useEffect(() => {
@@ -295,10 +306,18 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   );
 
   const conversations = mine.convs;
+  const unreadChats = useMemo(() => {
+    let n = 0;
+    for (const c of conversations ?? []) {
+      if (isPending(c)) n += 1;
+      else if (c.unread_count > 0 && !c.is_muted) n += 1;
+    }
+    return n;
+  }, [conversations]);
   const inboxError = mine.error;
   const value = useMemo<Ctx>(
-    () => ({ conversations, inboxError, reloadInbox, reloadStories: loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse }),
-    [conversations, inboxError, reloadInbox, loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, pulse],
+    () => ({ conversations, inboxError, reloadInbox, reloadStories: loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, unreadChats, pulse }),
+    [conversations, inboxError, reloadInbox, loadStories, patchConversation, upsertLast, groups, markStoriesSeen, ringFor, live, unreadChats, pulse],
   );
   return <MessagesCtx.Provider value={value}>{children}</MessagesCtx.Provider>;
 }

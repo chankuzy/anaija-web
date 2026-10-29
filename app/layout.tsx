@@ -38,6 +38,7 @@ export const viewport: Viewport = {
   themeColor: "#0A0A0A",
   colorScheme: "dark",
   viewportFit: "cover",
+  interactiveWidget: "resizes-content",
 };
 
 // Shown from the first byte until the session is known, so a guest/login screen can never flash.

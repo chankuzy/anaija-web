@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { ThreadPane } from "@/components/messaging/thread-pane";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
@@ -12,37 +11,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
 import { typingLabel, useTyping } from "@/lib/messaging/use-typing";
 import { Empty, useFetch } from "./kit";
-
-// Tracks the visual viewport so the composer rides above the software keyboard on every mobile browser.
-function useViewport() {
-  const [v, setV] = useState<{ h: number; t: number } | null>(null);
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const update = () => setV({ h: vv.height, t: vv.offsetTop });
-    update();
-    vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
-    return () => {
-      vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
-    };
-  }, []);
-  return v;
-}
-
-// The page behind a full-screen mobile chat must not scroll.
-function useLockScroll() {
-  useEffect(() => {
-    if (!window.matchMedia("(max-width: 767px)").matches) return;
-    const el = document.documentElement;
-    const prev = el.style.overflow;
-    el.style.overflow = "hidden";
-    return () => {
-      el.style.overflow = prev;
-    };
-  }, []);
-}
+import { useLockScroll, useViewport } from "@/lib/ui/use-visual-viewport";
 
 export function CommunityChat({ slug }: { slug: string }) {
   const { status, user } = useAuth();

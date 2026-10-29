@@ -681,6 +681,18 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
     }
   }, [msgs.length, last?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Keyboard opening or closing resizes the viewport: stay pinned to the newest message while that happens.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const pin = () => {
+      const el = scroller.current;
+      if (el && stick.current) el.scrollTop = el.scrollHeight;
+    };
+    vv.addEventListener("resize", pin);
+    return () => vv.removeEventListener("resize", pin);
+  }, []);
+
   function onScroll() {
     const el = scroller.current;
     if (el) stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 160;
