@@ -29,7 +29,8 @@ export function PollCard({ post, onOpen }: { post: Post; onOpen?: () => void }) 
   const showResults = !!state?.counts;
   const total = state?.total ?? 0;
   const mine = state?.mine ?? [];
-  const canVote = authed && !!state?.can_vote;
+  // Unknown state (still loading, or the state call failed) must not lock voting: the server validates the vote.
+  const canVote = authed && (state ? state.can_vote : true);
 
   const toggle = (id: number) => {
     if (!authed) return router.push(loginHref());
@@ -80,7 +81,7 @@ export function PollCard({ post, onOpen }: { post: Post; onOpen?: () => void }) 
             <button
               key={o.id}
               type="button"
-              disabled={authed && !canVote}
+              disabled={busy}
               onClick={() => toggle(o.id)}
               className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-left text-body transition-colors disabled:opacity-60 ${
                 on ? "bg-brand/15 text-fg" : "bg-surface-interactive text-fg hover:bg-surface-elevated"

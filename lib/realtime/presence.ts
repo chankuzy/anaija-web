@@ -1,42 +1,88 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { realtime } from "./client";
 
 // Who is online right now: one Realtime presence channel, tracked only while the tab is visible.
+// A singleton with delayed teardown, so React strict-mode remounts reuse the channel instead of racing it.
 let online: ReadonlySet<number> = new Set();
 const subs = new Set<() => void>();
 const emit = () => subs.forEach((f) => f());
+const log = (...a: unknown[]) => {
+  if (process.env.NODE_ENV !== "production") console.info("[presence]", ...a);
+};
 
-export function startPresence(uid: number): () => void {
+type Active = { uid: number; ch: RealtimeChannel; stop: () => void; teardown: number | null };
+let active: Active | null = null;
+
+function make(uid: number): Active | null {
   const c = realtime();
-  if (!c) return () => {};
-  const ch = c.channel("presence:online", { config: { presence: { key: String(uid) } } });
+  if (!c) {
+    log("no realtime client: NEXT_PUBLIC_SUPABASE_ANON_KEY missing?");
+    return null;
+  }
+  const ch = c.channel("presence-online", { config: { presence: { key: String(uid) } } });
+  let joined = false;
   let tracking = false;
-  const track = async () => {
-    if (tracking) return;
+  const track = () => {
+    if (!joined || tracking) return;
     tracking = true;
-    await ch.track({ at: Date.now() });
+    ch.track({ at: Date.now() })
+      .then((r) => log("track", r))
+      .catch(() => {
+        tracking = false;
+      });
   };
-  const untrack = async () => {
+  const untrack = () => {
     if (!tracking) return;
     tracking = false;
-    await ch.untrack();
+    void ch.untrack();
   };
   ch.on("presence", { event: "sync" }, () => {
     online = new Set(Object.keys(ch.presenceState()).map(Number).filter(Number.isFinite));
+    log("online", [...online]);
     emit();
   });
-  ch.subscribe((s: string) => {
-    if (s === "SUBSCRIBED" && document.visibilityState === "visible") void track();
+  ch.subscribe((s: string, err?: Error) => {
+    log("status", s, err ?? "");
+    joined = s === "SUBSCRIBED";
+    if (joined && document.visibilityState === "visible") track();
   });
-  const vis = () => (document.visibilityState === "visible" ? void track() : void untrack());
+  const vis = () => (document.visibilityState === "visible" ? track() : untrack());
   document.addEventListener("visibilitychange", vis);
+  return {
+    uid,
+    ch,
+    teardown: null,
+    stop: () => {
+      document.removeEventListener("visibilitychange", vis);
+      void c.removeChannel(ch);
+      online = new Set();
+      emit();
+    },
+  };
+}
+
+export function startPresence(uid: number): () => void {
+  if (active && active.uid === uid) {
+    if (active.teardown !== null) {
+      window.clearTimeout(active.teardown);
+      active.teardown = null;
+    }
+  } else {
+    active?.stop();
+    active = make(uid);
+  }
   return () => {
-    document.removeEventListener("visibilitychange", vis);
-    void c.removeChannel(ch);
-    online = new Set();
-    emit();
+    const a = active;
+    if (!a || a.uid !== uid) return;
+    a.teardown = window.setTimeout(() => {
+      if (active === a) {
+        a.stop();
+        active = null;
+      }
+    }, 600);
   };
 }
 

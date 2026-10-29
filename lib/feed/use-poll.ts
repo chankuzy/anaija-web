@@ -39,8 +39,16 @@ function flush() {
   if (!ids.length) return;
   api
     .get<{ polls: Record<string, PollState> }>("polls", { ids: ids.join(",") })
-    .then((r) => ids.forEach((id) => states.set(id, r.polls?.[String(id)] ?? "none")))
-    .catch(() => {}) // stays unknown: a later mount retries
+    .then((r) =>
+      ids.forEach((id) => {
+        const st = r.polls?.[String(id)];
+        if (!st && process.env.NODE_ENV !== "production") console.warn("[polls] server returned no state for post", id);
+        states.set(id, st ?? "none");
+      }),
+    )
+    .catch((e) => {
+      if (process.env.NODE_ENV !== "production") console.warn("[polls] state request failed", e);
+    }) // stays unknown: a later mount retries
     .finally(() => {
       ids.forEach((i) => inflight.delete(i));
       emit();

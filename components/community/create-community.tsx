@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
@@ -34,6 +35,7 @@ export function CreateCommunity() {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
   const coverRef = useRef<HTMLInputElement>(null);
   const [coverPick, setCoverPick] = useState<File | null>(null);
   const [coverBlob, setCoverBlob] = useState<File | null>(null);
@@ -64,7 +66,16 @@ export function CreateCommunity() {
         join_policy: join, discoverability: listed, read_policy: read,
         ...(avatar_key ? { avatar_key } : {}),
       });
-      if (cover_key) await communitiesApi.update(c.id, { cover_key }).catch(() => {});
+      if (cover_key) {
+        try {
+          await communitiesApi.update(c.id, { cover_key });
+        } catch (e2) {
+          setError(`Your community was created, but the cover didn't save: ${messageOf(e2)}`);
+          setCreatedSlug(c.slug);
+          setBusy(false);
+          return;
+        }
+      }
       router.replace(`/c/${c.slug}`);
     } catch (err) {
       setError(messageOf(err));
@@ -173,6 +184,7 @@ export function CreateCommunity() {
       />
 
       {error && <p role="alert" className="mt-5 px-1 text-secondary text-danger">{error}</p>}
+      {createdSlug && <Link href={`/c/${createdSlug}`} className="mt-2 inline-block px-1 text-secondary font-bold text-brand">Open your community</Link>}
       <button type="submit" disabled={busy || name.trim().length < 3} className={buttonClass("primary", "mt-7 h-14 w-full")}>
         {busy ? "Creating…" : "Create community"}
       </button>
