@@ -96,7 +96,13 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   const reloadInbox = useCallback(() => {
     const u = uidRef.current;
     if (u === null) return;
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setStore((s) => {
+        const b = base(s, u);
+        return b.convs ? b : { ...b, error: "You're offline. Your chats will show here when you're back online." };
+      });
+      return;
+    }
     messagingApi
       .inbox()
       .then((l) => {
