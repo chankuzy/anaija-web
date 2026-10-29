@@ -10,6 +10,7 @@ import { inputClass } from "@/components/ui/input";
 import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CommunityDetail, type Resource } from "@/lib/api/communities";
 import { uploadBlob } from "@/lib/api/upload";
+import { renderPdfCover } from "@/lib/documents/cover";
 import { DOC_ACCEPT, MAX_DOC_BYTES, docMimeOf } from "@/lib/create/structured";
 import { formatBytes } from "@/lib/feed/structured";
 import { timeAgo } from "@/lib/format";
@@ -145,10 +146,17 @@ function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDeta
     try {
       setBusy("Uploading…");
       const key = await uploadBlob(file, `document.${(file.name.split(".").pop() ?? "bin").toLowerCase()}`, mime);
+      // A PDF gets a cover from its first page. Failure never blocks the upload.
+      let thumbnail_key: string | undefined;
+      if (mime === "application/pdf") {
+        setBusy("Making a cover…");
+        const cover = await renderPdfCover(file);
+        if (cover) thumbnail_key = await uploadBlob(cover, "cover.jpg", "image/jpeg").catch(() => undefined);
+      }
       setBusy("Adding to library…");
       const post = await communitiesApi.post(c.id, {
         type: "post", subtype: "document", caption: title.trim(), client_request_id: requestId,
-        media: [{ type: "document", storage_key: key, size_bytes: file.size, mime_type: mime }],
+        media: [{ type: "document", storage_key: key, ...(thumbnail_key ? { thumbnail_key } : {}), size_bytes: file.size, mime_type: mime }],
         content: { title: title.trim(), description: description.trim(), file: { name: file.name } },
       });
       await communitiesApi.libraryAdd(c.id, {
@@ -204,6 +212,52 @@ function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDeta
   );
 }
 
+type Col = { id: number; name: string; count?: number };
+
+function FilterSheet({ c, collections, codes, docType, course, collection, onType, onCourse, onCollection, onClear, onNewCollection, onClose }: {
+  c: CommunityDetail; collections: Col[]; codes: string[]; docType: string | null; course: string | null; collection: number | null;
+  onType: (v: string | null) => void; onCourse: (v: string | null) => void; onCollection: (v: number | null) => void;
+  onClear: () => void; onNewCollection: (name: string) => Promise<void>; onClose: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState("");
+  return (
+    <Sheet title="Filter library" onClose={onClose}>
+      <Label>Type</Label>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(TYPE_LABEL).map(([id, l]) => <Chip key={id} active={docType === id} onClick={() => onType(docType === id ? null : id)}>{l}</Chip>)}
+      </div>
+      {codes.length > 0 && (
+        <>
+          <Label>Course</Label>
+          <div className="flex flex-wrap gap-2">
+            {codes.map((x) => <Chip key={x} active={course === x} onClick={() => onCourse(course === x ? null : x)}>{x}</Chip>)}
+          </div>
+        </>
+      )}
+      {(collections.length > 0 || c.can.moderate) && (
+        <>
+          <Label>Collection</Label>
+          <div className="flex flex-wrap gap-2">
+            {collections.map((x) => <Chip key={x.id} active={collection === x.id} onClick={() => onCollection(collection === x.id ? null : x.id)}>{x.name}{x.count ? ` · ${x.count}` : ""}</Chip>)}
+            {c.can.moderate && <Chip onClick={() => setAdding((v) => !v)}>+ New</Chip>}
+          </div>
+          {adding && (
+            <div className="mt-2 flex gap-2">
+              <input className={`${inputClass} h-11`} placeholder="Collection name" maxLength={60} value={name} onChange={(e) => setName(e.target.value)} />
+              <button type="button" disabled={!name.trim()} onClick={() => void onNewCollection(name.trim()).then(() => { setName(""); setAdding(false); })} className={buttonClass("primary", "h-11 px-5")}>Save</button>
+            </div>
+          )}
+        </>
+      )}
+      <div className="mt-6 flex gap-2">
+        <button type="button" onClick={onClear} className={buttonClass("outline", "h-12 flex-1")}>Clear</button>
+        <button type="button" onClick={onClose} className={buttonClass("primary", "h-12 flex-1")}>Show results</button>
+      </div>
+    </Sheet>
+  );
+}
+
 export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => void }) {
   const { toast, show } = useToast();
   const [q, setQ] = useState("");
@@ -211,11 +265,10 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
   const [docType, setDocType] = useState<string | null>(null);
   const [course, setCourse] = useState<string | null>(null);
   const [collection, setCollection] = useState<number | null>(null);
+  const [filters, setFilters] = useState(false);
   const [open, setOpen] = useState<Resource | null>(null);
   const [resumed, setResumed] = useState(() => pickerWasOpen(c.id));
   const [upload, setUpload] = useState(resumed);
-  const [newCol, setNewCol] = useState(false);
-  const [colName, setColName] = useState("");
   const [extra, setExtra] = useState<{ key: string; items: Resource[]; cursor: string | null; more: boolean } | null>(null);
 
   useEffect(() => {
@@ -242,13 +295,9 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
     }
   }
   const refresh = () => { lib.reload(); meta.reload(); };
-
-  async function saveCollection() {
-    if (!colName.trim()) return;
+  async function newCollection(name: string) {
     try {
-      await communitiesApi.collectionSave(c.id, { name: colName.trim() });
-      setColName("");
-      setNewCol(false);
+      await communitiesApi.collectionSave(c.id, { name });
       refresh();
     } catch (e) {
       show(messageOf(e));
@@ -267,49 +316,39 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
 
   const collections = meta.data?.collections ?? [];
   const codes = meta.data?.facets?.course_codes ?? [];
-  const filtered = !!(dq || docType || course || collection);
+  const activeLabels = [docType && TYPE_LABEL[docType], course, collection !== null ? collections.find((x) => x.id === collection)?.name : null].filter(Boolean) as string[];
+  const filtered = !!(dq || activeLabels.length);
+  const clear = () => { setDocType(null); setCourse(null); setCollection(null); };
 
   return (
     <div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <div className="relative flex-1">
           <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
-          <input className={`${inputClass} h-11 pl-11`} placeholder="Search title, course code or subject" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className={`${inputClass} h-11 pl-11`} placeholder="Search the library" value={q} onChange={(e) => setQ(e.target.value)} />
         </div>
+        <button type="button" aria-label="Filters" onClick={() => setFilters(true)} className="relative grid size-11 shrink-0 place-items-center rounded-full bg-surface-interactive text-fg">
+          <Icon name="filters" className="size-5" />
+          {activeLabels.length > 0 && <span className="absolute right-2.5 top-2.5 size-2 rounded-full bg-brand" />}
+        </button>
         {c.can.library && (
-          <button type="button" onClick={() => setUpload(true)} className={buttonClass("primary", "h-11 px-4")}>
+          <button type="button" aria-label="Add to library" onClick={() => setUpload(true)} className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-brand-fg">
             <Icon name="plus" className="size-5" />
-            Add
           </button>
         )}
       </div>
 
-      <div className="no-scrollbar mt-3 flex gap-2 overflow-x-auto">
-        <Chip active={!docType} onClick={() => setDocType(null)}>All types</Chip>
-        {Object.entries(TYPE_LABEL).map(([id, l]) => <Chip key={id} active={docType === id} onClick={() => setDocType(docType === id ? null : id)}>{l}</Chip>)}
-      </div>
-      {codes.length > 0 && (
-        <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
-          {codes.map((x) => <Chip key={x} active={course === x} onClick={() => setCourse(course === x ? null : x)}>{x}</Chip>)}
-        </div>
-      )}
-      {(collections.length > 0 || c.can.moderate) && (
-        <div className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
-          {collections.map((x) => <Chip key={x.id} active={collection === x.id} onClick={() => setCollection(collection === x.id ? null : x.id)}>{x.name}{x.count ? ` · ${x.count}` : ""}</Chip>)}
-          {c.can.moderate && <Chip onClick={() => setNewCol((v) => !v)}>+ Collection</Chip>}
-        </div>
-      )}
-      {newCol && (
-        <div className="mt-2 flex gap-2">
-          <input className={`${inputClass} h-11`} placeholder="Collection name" maxLength={60} value={colName} onChange={(e) => setColName(e.target.value)} />
-          <button type="button" onClick={() => void saveCollection()} className={buttonClass("primary", "h-11 px-5")}>Save</button>
-        </div>
+      {activeLabels.length > 0 && (
+        <button type="button" onClick={clear} className="mt-3 flex items-center gap-1.5 px-1 text-supporting font-semibold text-muted">
+          {activeLabels.join(" · ")}
+          <Icon name="close" className="size-3.5" />
+        </button>
       )}
 
       <div className="mt-4">
         {lib.loading ? (
-          <div role="status" aria-busy="true" aria-label="Loading library" className="grid grid-cols-2 gap-3 md:grid-cols-3">
-            {Array.from({ length: 6 }, (_, i) => <Sk key={i} className="aspect-[3/4] rounded-[20px]" />)}
+          <div role="status" aria-busy="true" aria-label="Loading library" className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
+            {Array.from({ length: 6 }, (_, i) => <Sk key={i} className="aspect-[3/4] rounded-[14px]" />)}
           </div>
         ) : lib.error ? (
           <Empty title="Couldn't load the library" body={lib.error}><button type="button" onClick={lib.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button></Empty>
@@ -319,20 +358,27 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
           </Empty>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
               {items.map((r) => (
                 <button key={r.id} type="button" onClick={() => setOpen(r)} className="group text-left">
-                  <span className="block aspect-[3/4] overflow-hidden rounded-[20px] transition-transform group-active:scale-[0.98]"><Cover r={r} /></span>
-                  <span className="mt-2 line-clamp-2 block px-1 text-[14px] font-bold leading-[1.25] text-fg">{r.title}</span>
-                  <span className="mt-0.5 block truncate px-1 text-supporting text-muted">{[r.course_code, r.academic_session].filter(Boolean).join(" · ") || timeAgo(r.created_at)}</span>
+                  <span className="block aspect-[3/4] overflow-hidden rounded-[14px] ring-1 ring-white/[0.07] transition-transform group-active:scale-[0.98]"><Cover r={r} /></span>
+                  <span className="mt-2 line-clamp-2 block text-[14px] font-semibold leading-[1.25] text-fg">{r.title}</span>
+                  <span className="mt-0.5 block truncate text-supporting text-muted">{[r.course_code, r.academic_session].filter(Boolean).join(" · ") || timeAgo(r.created_at)}</span>
                 </button>
               ))}
             </div>
-            {hasMore && <button type="button" onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-5 h-10")}>Show more</button>}
+            {hasMore && <button type="button" onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-6 h-10")}>Show more</button>}
           </>
         )}
       </div>
 
+      {filters && (
+        <FilterSheet
+          c={c} collections={collections} codes={codes} docType={docType} course={course} collection={collection}
+          onType={setDocType} onCourse={setCourse} onCollection={setCollection} onClear={clear}
+          onNewCollection={newCollection} onClose={() => setFilters(false)}
+        />
+      )}
       {open && <Detail c={c} r={open} onClose={() => setOpen(null)} onChanged={refresh} />}
       {upload && <Upload c={c} collections={collections} resumed={resumed} onClose={() => { clearPicker(); setResumed(false); setUpload(false); }} onDone={() => { clearPicker(); setResumed(false); setUpload(false); refresh(); show("Added to library"); }} />}
       {toast}

@@ -90,7 +90,7 @@ export function Sheet({ title, onClose, children, wide = false }: { title: strin
     <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label={title}>
       <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/60" />
       <div
-        className={`sv-rise no-scrollbar relative max-h-[90dvh] w-full ${wide ? "max-w-[600px]" : "max-w-[460px]"} overflow-y-auto rounded-t-[30px] bg-surface-subtle px-4 pt-3 md:rounded-[30px] md:pt-6`}
+        className={`sv-rise no-scrollbar relative max-h-[90dvh] w-full ${wide ? "max-w-[600px]" : "max-w-[460px]"} overflow-y-auto rounded-t-[30px] border-t border-white/[0.08] bg-bg px-4 pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[30px] md:border md:pt-6`}
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
       >
         <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 md:hidden" />

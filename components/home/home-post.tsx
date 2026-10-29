@@ -3,7 +3,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CommentsSheet } from "@/components/feed/comments-sheet";
-import { OptionsSheet } from "@/components/feed/options-sheet";
+import { OptionsSheet, type SheetAction } from "@/components/feed/options-sheet";
 import { Icon } from "@/components/ui/icon";
 import type { Post } from "@/lib/api/feed-types";
 import { contentKind } from "@/lib/feed/content";
@@ -18,6 +18,8 @@ export const HomePost = memo(function HomePost({
   onVisible,
   patch,
   onRemove,
+  extra,
+  flush = false,
 }: {
   post: Post;
   index: number;
@@ -25,6 +27,10 @@ export const HomePost = memo(function HomePost({
   onVisible: (id: number, ratio: number) => void;
   patch: (id: number, p: Partial<Post>) => void;
   onRemove: (id: number) => void;
+  /** Extra rows for the options sheet (e.g. community pin / remove / report). */
+  extra?: SheetAction[];
+  /** Drop the side padding when the host already pads. */
+  flush?: boolean;
 }) {
   const router = useRouter();
   const a = usePostActions(raw, { patch, onRemove });
@@ -81,7 +87,7 @@ export const HomePost = memo(function HomePost({
   }, [post.allow_comments, a]);
 
   return (
-    <article aria-label={`Post by ${post.author?.username ?? "Anaija"}`} className="px-4 pb-8 md:px-0">
+    <article aria-label={`Post by ${post.author?.username ?? "Anaija"}`} className={flush ? "pb-8" : "px-4 pb-8 md:px-0"}>
       <PostHeader post={post} isOwn={a.isOwn} following={a.following} onFollow={a.follow} onMore={() => setOptionsOpen(true)} />
       <div ref={bodyRef} className="relative mt-3">
         <R.Body post={post} index={index} active={active} paused={commentsOpen || optionsOpen} onOpen={open} onLike={doubleLike} />
@@ -135,6 +141,7 @@ export const HomePost = memo(function HomePost({
           post={post}
           isOwn={a.isOwn}
           following={a.following}
+          extra={extra}
           onClose={() => setOptionsOpen(false)}
           onFollow={a.follow}
           onNotInterested={() => {

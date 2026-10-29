@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
 import { ImageCropper } from "@/components/settings/image-cropper";
 import { useToast } from "@/components/settings/settings-kit";
@@ -21,11 +21,12 @@ import { FeedTab } from "./feed-tab";
 import { Empty, ImageViewer, categoryLabel, messageOf, useFetch } from "./kit";
 import { LibraryTab } from "./library-tab";
 import { MembersSheet } from "./members-sheet";
+import { TabPager } from "./tab-pager";
 
 const TABS = [
-  { id: "feed", label: "Feed" },
-  { id: "library", label: "Library" },
-  { id: "about", label: "About" },
+  { id: "feed", label: "Feed", icon: "feed" },
+  { id: "library", label: "Library", icon: "notebookMinimalistic" },
+  { id: "about", label: "About", icon: "usersGroupRounded" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 type Kind = "cover" | "avatar";
@@ -80,7 +81,7 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onM
           <Icon name="back" className="size-6" />
         </Link>
         <button type="button" aria-label="Community menu" onClick={onMenu} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
-          <Icon name="menuDots" className="size-6" />
+          <Icon name="dots" filled className="size-6" />
         </button>
         {saving === "cover" && <div className="absolute inset-0 grid place-items-center bg-black/40">{spinner}</div>}
       </div>
@@ -122,6 +123,9 @@ export function CommunityView({ slug }: { slug: string }) {
   const { toast, show } = useToast();
   const coverRef = useRef<HTMLInputElement>(null);
   const avatarRef = useRef<HTMLInputElement>(null);
+  const anchor = useRef<HTMLDivElement>(null);
+  const ind = useRef<HTMLSpanElement | null>(null);
+  const idxRef = useRef(0);
   const [joining, setJoining] = useState(false);
   const [menu, setMenu] = useState(false);
   const [members, setMembers] = useState(false);
@@ -130,9 +134,19 @@ export function CommunityView({ slug }: { slug: string }) {
   const [saving, setSaving] = useState<Kind | null>(null);
   const [local, setLocal] = useState<Partial<Record<Kind, string>>>({});
   const q = sp.get("tab");
-  const tab: TabId = TABS.some((t) => t.id === q) ? (q as TabId) : "feed";
+  const index = Math.max(0, TABS.findIndex((t) => t.id === q));
+  idxRef.current = index;
   const det = useFetch(status === "loading" ? null : `c:${slug}:${status}`, () => communitiesApi.show(slug));
   const c = det.data;
+
+  // Stable ref: places the underline once on mount; scroll progress drives it after that.
+  const indRef = useCallback((el: HTMLSpanElement | null) => {
+    ind.current = el;
+    if (el) el.style.transform = `translateX(${idxRef.current * 100}%)`;
+  }, []);
+  const onProgress = useCallback((p: number) => {
+    if (ind.current) ind.current.style.transform = `translateX(${p * 100}%)`;
+  }, []);
 
   useEffect(() => {
     if (q === "chat") router.replace(`/c/${slug}/chat`);
@@ -153,7 +167,7 @@ export function CommunityView({ slug }: { slug: string }) {
     try {
       const r = await communitiesApi.join(c.id);
       show(r.status === "joined" || r.status === "already_member" ? `Welcome to ${c.name}` : "Request sent. You'll be notified.");
-      det.reload(); // settles permissions and chat; the UI keeps showing the optimistic state meanwhile
+      det.reload();
       reloadInbox();
     } catch (e) {
       det.patch(() => snap);
@@ -172,7 +186,7 @@ export function CommunityView({ slug }: { slug: string }) {
       const key = await uploadBlob(b, `${kind}.jpg`, "image/jpeg");
       const r = await communitiesApi.update(c.id, kind === "cover" ? { cover_key: key } : { avatar_key: key });
       if (!(kind === "cover" ? r.cover : r.avatar)) throw new Error("The server did not keep the new image.");
-      det.patch(() => r); // server truth straight from the update response, no refetch needed
+      det.patch(() => r);
       show(kind === "cover" ? "Cover updated" : "Picture updated");
     } catch (e) {
       show(e instanceof Error && e.message.startsWith("The server") ? e.message : messageOf(e));
@@ -183,7 +197,13 @@ export function CommunityView({ slug }: { slug: string }) {
     }
   }
 
-  const setTab = (id: TabId) => router.replace(id === "feed" ? `/c/${slug}` : `/c/${slug}?tab=${id}`, { scroll: false });
+  const go = (id: TabId) => router.replace(id === "feed" ? `/c/${slug}` : `/c/${slug}?tab=${id}`, { scroll: false });
+  // After a swipe settles, never leave the reader stranded below a shorter tab.
+  const settle = (i: number) => {
+    go(TABS[i].id);
+    const el = anchor.current;
+    if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
+  };
 
   if (!c) {
     return (
@@ -220,22 +240,39 @@ export function CommunityView({ slug }: { slug: string }) {
         onMembers={() => setMembers(true)}
       />
 
-      <div className="sticky top-0 z-10 -mx-4 mt-5 border-b border-white/[0.07] bg-bg px-4" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="flex gap-7">
-          {TABS.map((t) => (
-            <button key={t.id} type="button" onClick={() => setTab(t.id)} className={`relative h-11 text-secondary font-bold transition-colors ${tab === t.id ? "text-fg" : "text-muted hover:text-fg"}`}>
-              {t.label}
-              {tab === t.id && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-brand" />}
-            </button>
-          ))}
+      <div ref={anchor} className="mt-5" />
+      <div className="sticky top-0 z-10 -mx-4 border-b border-white/[0.07] bg-bg px-4" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+        <div className="relative grid grid-cols-3">
+          {TABS.map((t, i) => {
+            const on = i === index;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                aria-current={on ? "page" : undefined}
+                onClick={() => go(t.id)}
+                className={`flex h-12 items-center justify-center gap-2 text-secondary font-bold transition-colors ${on ? "text-fg" : "text-muted hover:text-fg"}`}
+              >
+                <Icon name={t.icon} filled={on} className="size-[19px]" />
+                {t.label}
+              </button>
+            );
+          })}
+          <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 w-1/3 will-change-transform">
+            <span className="mx-auto block h-0.5 w-10 rounded-full bg-brand" />
+          </span>
         </div>
       </div>
 
-      <div className="mt-4">
-        {tab === "feed" && <FeedTab c={c} />}
-        {tab === "library" && <LibraryTab c={c} onJoin={() => void join()} />}
-        {tab === "about" && <AboutTab c={c} />}
-      </div>
+      <TabPager
+        index={index}
+        count={TABS.length}
+        onChange={settle}
+        onProgress={onProgress}
+        render={(i) =>
+          i === 0 ? <FeedTab c={c} /> : i === 1 ? <LibraryTab c={c} onJoin={() => void join()} /> : <AboutTab c={c} />
+        }
+      />
 
       {c.is_member && c.chat_conversation_id && <ChatFab slug={slug} />}
 

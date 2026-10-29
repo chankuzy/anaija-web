@@ -128,7 +128,7 @@ export function MembersSheet({ c, onClose }: { c: CommunityDetail; onClose: () =
                   </div>
                   {canAct && (
                     <button type="button" aria-label="Manage member" onClick={() => setOpen(open === m.id ? null : m.id)} className="grid size-9 place-items-center rounded-full text-muted hover:bg-white/10">
-                      <Icon name="menuDots" className="size-5" />
+                      <Icon name="dots" filled className="size-5" />
                     </button>
                   )}
                 </div>

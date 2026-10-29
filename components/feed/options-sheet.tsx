@@ -8,6 +8,14 @@ import { formatCount } from "@/lib/format";
 import type { Post } from "@/lib/api/feed-types";
 import { structuredOf } from "@/lib/feed/structured";
 
+/** Extra rows a host surface (a community, say) can add to the post menu. */
+export interface SheetAction {
+  icon: IconName;
+  label: string;
+  onClick: () => void;
+  destructive?: boolean;
+}
+
 const DownloadGlyph = (
   <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
     <path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" />
@@ -31,7 +39,7 @@ function Tile({
   destructive?: boolean;
   disabled?: boolean;
 }) {
-  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-5 py-3.5 text-left text-[15px] font-medium hover:bg-white/8 disabled:opacity-50 ${
+  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium transition-colors hover:bg-white/[0.05] disabled:opacity-50 ${
     destructive ? "text-danger" : "text-fg"
   }`;
   const inner = (
@@ -60,7 +68,7 @@ function Insights({ post }: { post: Post }) {
     ["Shares", post.shares_count],
   ];
   return (
-    <div className="mx-4 mb-2 mt-1 flex justify-evenly rounded-2xl bg-surface-interactive py-3">
+    <div className="mx-2 mb-2 mt-1 flex justify-evenly rounded-2xl bg-surface-interactive py-3">
       {stats.map(([label, n]) => (
         <div key={label} className="flex flex-col items-center">
           <span className="text-sm font-bold text-fg">{formatCount(n)}</span>
@@ -75,6 +83,7 @@ export function OptionsSheet({
   post,
   isOwn,
   following,
+  extra = [],
   onClose,
   onFollow,
   onNotInterested,
@@ -83,6 +92,7 @@ export function OptionsSheet({
   post: Post;
   isOwn: boolean;
   following: boolean;
+  extra?: SheetAction[];
   onClose: () => void;
   onFollow: () => Promise<unknown>;
   onNotInterested: () => void;
@@ -115,14 +125,18 @@ export function OptionsSheet({
   }
 
   const download = docUrl ? <Tile glyph={DownloadGlyph} label={busy ? "Downloading…" : "Download original"} disabled={busy} onClick={() => void run(() => downloadOriginal(docUrl, docName))} /> : null;
+  const extras = extra.map((x) => (
+    <Tile key={x.label} icon={x.icon} label={x.label} destructive={x.destructive} onClick={() => { onClose(); x.onClick(); }} />
+  ));
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/50" />
+      <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/60" />
       <div
-        className="glass relative m-2.5 w-full max-w-sm rounded-floating p-1.5"
-        style={{ marginBottom: "calc(10px + env(safe-area-inset-bottom))" }}
+        className="sv-rise relative max-h-[85dvh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] border-t border-white/[0.08] bg-bg px-2 pt-2.5 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[28px] md:border"
+        style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
       >
+        <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-white/20" />
         {confirming ? (
           <div className="p-4">
             <p className="text-base font-bold text-fg">Delete this {isListing ? "listing" : "post"}?</p>
@@ -146,6 +160,7 @@ export function OptionsSheet({
             <Insights post={post} />
             {download}
             {isListing && <Tile icon="bag" label="View listing" href={`/l/${post.id}`} />}
+            {extras}
             <Tile icon="trash" label={isListing ? "Delete listing" : "Delete post"} destructive onClick={() => setConfirming(true)} />
           </>
         ) : (
@@ -160,6 +175,7 @@ export function OptionsSheet({
                 onClick={() => void run(onFollow)}
               />
             )}
+            {extras}
             <Tile icon="close" label="Not interested" onClick={onNotInterested} />
           </>
         )}
