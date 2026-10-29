@@ -16,6 +16,7 @@ import { UploadDock } from "@/components/create/upload-dock";
 import { AppNudges } from "@/components/pwa/app-nudges";
 import { InstallNudge } from "@/components/pwa/install-nudge";
 import { PwaRegister } from "@/components/pwa/pwa-register";
+import { PageWarmer } from "@/components/pwa/page-warmer";
 import { PushSync } from "@/components/pwa/push-sync";
 
 // Reads the session cookie on the server (runtime data), so it must live under a Suspense boundary.
@@ -37,6 +38,7 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
                 <Suspense fallback={null}><InAppBanner /></Suspense>
                 <Suspense fallback={null}><UploadDock /></Suspense>
                 <PwaRegister />
+                <PageWarmer />
                 <PushSync />
                 <Suspense fallback={null}><InstallNudge /></Suspense>
                 <Suspense fallback={null}><AppNudges /></Suspense>

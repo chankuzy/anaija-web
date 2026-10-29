@@ -40,7 +40,7 @@ async function cacheFirst(name, req) {
 // Network first, but never make someone wait on a bad connection when we already have the page.
 async function page(event, req) {
   const cache = await caches.open(PAGES);
-  const hit = await cache.match(req);
+  const hit = await cache.match(req, { ignoreVary: true, ignoreSearch: true });
   const net = fetch(req).then((res) => {
     if (res.ok && !res.redirected && res.type === "basic") cache.put(req, res.clone());
     return res;
@@ -49,7 +49,7 @@ async function page(event, req) {
     try {
       return await net;
     } catch {
-      return (await cache.match("/")) || (await caches.match(OFFLINE_URL));
+      return caches.match(OFFLINE_URL);
     }
   }
   event.waitUntil(net.catch(() => {}));

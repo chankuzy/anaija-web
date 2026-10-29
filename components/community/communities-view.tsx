@@ -60,7 +60,7 @@ export function CommunitiesView() {
   }, [q]);
 
   const key = status === "loading" ? null : `disc:${status}:${dq}:${cat ?? ""}`;
-  const disc = useFetch(key, () => communitiesApi.discover({ search: dq || undefined, category: cat }));
+  const disc = useFetch(key, () => communitiesApi.discover({ search: dq || undefined, category: cat }), { persist: !dq });
   const mine = useFetch(status === "authed" ? "mine" : null, () => communitiesApi.mine());
 
   const more = extra?.key === key ? extra : null;

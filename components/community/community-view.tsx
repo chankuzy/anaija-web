@@ -209,7 +209,7 @@ export function CommunityView({ slug }: { slug: string }) {
     return (
       <div className="mx-auto w-full max-w-[720px] px-4 pt-3 md:pt-8">
         {det.error ? (
-          <Empty title={det.error.includes("banned") || det.error.includes("can't access") ? "You can't access this community" : "Community not found"} body={det.error}>
+          <Empty title={det.error.includes("banned") || det.error.includes("can't access") ? "You can't access this community" : det.error.includes("internet") ? "You're offline" : "Community not found"} body={det.error}>
             <Link href="/communities" className={buttonClass("primary", "h-10 px-5")}>Browse communities</Link>
           </Empty>
         ) : (

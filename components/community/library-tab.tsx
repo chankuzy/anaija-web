@@ -283,7 +283,7 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
   }, [q]);
 
   const key = c.is_member ? `lib:${c.id}:${dq}:${docType ?? ""}:${course ?? ""}:${collection ?? ""}` : null;
-  const lib = useFetch(key, () => communitiesApi.library(c.id, { q: dq || undefined, doc_type: docType, course_code: course, collection_id: collection }));
+  const lib = useFetch(key, () => communitiesApi.library(c.id, { q: dq || undefined, doc_type: docType, course_code: course, collection_id: collection }), { persist: !dq });
   // Collections and facets arrive only on the unfiltered first page, so keep them from the first load.
   const meta = useFetch(c.is_member ? `libmeta:${c.id}` : null, () => communitiesApi.library(c.id, {}));
   const more = extra?.key === key ? extra : null;

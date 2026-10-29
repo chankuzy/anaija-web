@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/icon";
 import { ApiError } from "@/lib/api/client";
+import { useCached } from "@/lib/cache/swr";
 import type { Desig, Role } from "@/lib/api/communities";
 
 export const messageOf = (e: unknown): string => {
@@ -47,37 +48,14 @@ export async function shareLink(url: string, title: string): Promise<"shared" | 
   }
 }
 
-// Keyed loader. Keeps the last good data while a reload runs, so lists never flash empty.
-export function useFetch<T>(key: string | null, load: () => Promise<T>) {
-  type S = { key: string | null; data?: T; error?: string };
-  const [state, setState] = useState<S>({ key: null });
-  const [tick, setTick] = useState(0);
-  const ref = useRef(load);
-  useEffect(() => {
-    ref.current = load;
-  });
-  useEffect(() => {
-    if (key === null) return;
-    let alive = true;
-    ref
-      .current()
-      .then((data) => {
-        if (alive) setState({ key, data });
-      })
-      .catch((e: unknown) => {
-        if (alive) setState((p) => (p.key === key && p.data !== undefined ? p : { key, error: messageOf(e) }));
-      });
-    return () => {
-      alive = false;
-    };
-  }, [key, tick]);
-  const cur = state.key === key ? state : null;
-  const reload = useCallback(() => setTick((t) => t + 1), []);
-  const patch = useCallback(
-    (fn: (d: T) => T) => setState((p) => (p.key === key && p.data !== undefined ? { ...p, data: fn(p.data) } : p)),
-    [key],
-  );
-  return { data: cur?.data, error: cur?.data === undefined ? (cur?.error ?? null) : null, loading: key !== null && !cur, reload, patch };
+// Keyed loader on the persistent SWR cache: last-seen data paints at once (offline and after a cold start),
+// a quiet fetch reconciles it, and a failed refresh never replaces data we already have.
+export function useFetch<T>(key: string | null, load: () => Promise<T>, opts: { persist?: boolean } = {}) {
+  const r = useCached<T>(key ? `f:${key}` : null, load, { staleMs: 20_000, persist: opts.persist ?? true });
+  const { refresh, mutate } = r;
+  const reload = useCallback(() => void refresh(), [refresh]);
+  const patch = useCallback((fn: (d: T) => T) => mutate(fn), [mutate]);
+  return { data: r.data, error: r.error, loading: r.loading, reload, patch };
 }
 
 export function Sheet({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
