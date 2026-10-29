@@ -48,7 +48,7 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
 
   // The warm-up can land after first render: adopt the last-seen inbox the moment it does.
   const warm = uid !== null && cacheReady ? peek<Conversation[]>(inboxKey(uid)) : undefined;
-  if (warm && uid !== null && state.userId !== uid) {
+  if (warm && uid !== null && warm.data.length > 0 && (state.userId !== uid || (state.error && state.items.length === 0))) {
     setState({ userId: uid, items: sortConv(warm.data), error: null });
   }
 
@@ -106,9 +106,11 @@ export function InboxProvider({ children }: { children: React.ReactNode }) {
     const bump = () => document.visibilityState === "visible" && setNonce((n) => n + 1);
     const id = window.setInterval(bump, 30_000);
     document.addEventListener("visibilitychange", bump);
+    window.addEventListener("online", bump);
     return () => {
       window.clearInterval(id);
       document.removeEventListener("visibilitychange", bump);
+      window.removeEventListener("online", bump);
     };
   }, [uid]);
 

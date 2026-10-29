@@ -65,7 +65,10 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   // Last-seen inbox comes from disk the moment the cache is warm; the network only reconciles it.
   const cacheReady = useCacheReady();
   const warm = uid !== null && cacheReady ? peek<Conversation[]>(`convs:${uid}`) : undefined;
-  if (warm && uid !== null && store.uid !== uid) setStore({ uid, convs: [...warm.data].sort(byRecent), groups: [], error: null });
+  // Adopt the saved inbox whenever there is nothing on screen yet, even after a failed (offline) fetch.
+  if (warm && uid !== null && warm.data.length > 0 && (store.uid !== uid || !store.convs)) {
+    setStore((s) => ({ uid, convs: [...warm.data].sort(byRecent), groups: s.uid === uid ? s.groups : [], error: null }));
+  }
 
   const mine = uid !== null && store.uid === uid ? store : EMPTY;
   const m = /^\/messages\/(\d+)/.exec(pathname);
@@ -93,6 +96,7 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   const reloadInbox = useCallback(() => {
     const u = uidRef.current;
     if (u === null) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
     messagingApi
       .inbox()
       .then((l) => {
@@ -127,6 +131,17 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
     if (uid === null) return;
     reloadInbox();
     loadStories();
+  }, [uid, reloadInbox, loadStories]);
+
+  // Back online: reconcile quietly.
+  useEffect(() => {
+    if (uid === null) return;
+    const on = () => {
+      reloadInbox();
+      loadStories();
+    };
+    window.addEventListener("online", on);
+    return () => window.removeEventListener("online", on);
   }, [uid, reloadInbox, loadStories]);
 
   // Opening Messages: quiet reconcile only if stale.
