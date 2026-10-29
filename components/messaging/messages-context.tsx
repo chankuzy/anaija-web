@@ -6,7 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import { messagingApi, type Conversation } from "@/lib/api/messaging";
 import { storiesApi, type StoryGroup } from "@/lib/api/stories";
 import { useAuth } from "@/lib/auth/auth-context";
-import { onCacheClear } from "@/lib/cache/swr";
+import { onCacheClear, peek, put, useCacheReady } from "@/lib/cache/swr";
 import { useInterval } from "@/lib/messaging/use-interval";
 import { subscribeBroadcast } from "@/lib/realtime/client";
 import { startPresence } from "@/lib/realtime/presence";
@@ -62,6 +62,11 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
   const lastInbox = useRef(0);
   const lastStories = useRef(0);
 
+  // Last-seen inbox comes from disk the moment the cache is warm; the network only reconciles it.
+  const cacheReady = useCacheReady();
+  const warm = uid !== null && cacheReady ? peek<Conversation[]>(`convs:${uid}`) : undefined;
+  if (warm && uid !== null && store.uid !== uid) setStore({ uid, convs: [...warm.data].sort(byRecent), groups: [], error: null });
+
   const mine = uid !== null && store.uid === uid ? store : EMPTY;
   const m = /^\/messages\/(\d+)/.exec(pathname);
   const activeId = m ? Number(m[1]) : null;
@@ -80,6 +85,10 @@ export function MessagesProvider({ children }: { children: React.ReactNode }) {
       }),
     [],
   );
+
+  useEffect(() => {
+    if (store.uid !== null && store.convs) put(`convs:${store.uid}`, store.convs);
+  }, [store.uid, store.convs]);
 
   const reloadInbox = useCallback(() => {
     const u = uidRef.current;

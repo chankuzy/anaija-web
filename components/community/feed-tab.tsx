@@ -34,8 +34,8 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
     },
     [c.slug],
   );
-  // Private community content is never written to disk (persist=false).
-  const list = usePaged<CPost, string>({ id: `community:${c.id}`, enabled: c.can.read, load, staleMs: 0, persist: false });
+  // First page is kept on disk (wiped on sign-out), so the feed opens instantly and works offline.
+  const list = usePaged<CPost, string>({ id: `community:${c.id}`, enabled: c.can.read, load, staleMs: 30_000, persist: true });
   const items = list.data?.items ?? [];
   const hasMore = list.data?.hasMore ?? false;
   const { loadMore, reload } = list;

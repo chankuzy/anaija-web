@@ -66,3 +66,7 @@ export function acquirePdf(url: string): { doc: Promise<PDFDocumentProxy>; relea
     },
   };
 }
+
+/** Phones with <= 3 GB RAM get fewer and smaller canvases (the OS kills the app when pdf.js asks for too much). */
+export const lowMemory = () =>
+  typeof navigator !== "undefined" && ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 4) <= 3;

@@ -1,47 +1,104 @@
-const VERSION = "v3";
-const CACHE = `anaija-static-${VERSION}`;
+const VERSION = "v4";
+const STATIC = `anaija-static-${VERSION}`;
+const PAGES = `anaija-pages-${VERSION}`;
+const IMAGES = `anaija-img-${VERSION}`;
+const KEEP = [STATIC, PAGES, IMAGES];
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = [OFFLINE_URL, "/icons/icon-192.png", "/icons/icon-512.png"];
+const STATIC_PREFIXES = ["/_next/static/", "/icons/", "/emoji/", "/stickers/", "/brand/"];
+const MAX_IMAGES = 400;
+const corsBlocked = new Set();
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()),
-  );
+  event.waitUntil(caches.open(STATIC).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("anaija-") && k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("anaija-") && !KEEP.includes(k)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
+
+// Sign-out: nothing from the previous account may survive offline.
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "anaija:clear-pages") {
+    event.waitUntil(Promise.all([caches.delete(PAGES), caches.delete(IMAGES)]));
+  }
+});
+
+async function cacheFirst(name, req) {
+  const cache = await caches.open(name);
+  const hit = await cache.match(req);
+  if (hit) return hit;
+  const res = await fetch(req);
+  if (res.ok) cache.put(req, res.clone());
+  return res;
+}
+
+// Network first, but never make someone wait on a bad connection when we already have the page.
+async function page(event, req) {
+  const cache = await caches.open(PAGES);
+  const hit = await cache.match(req);
+  const net = fetch(req).then((res) => {
+    if (res.ok && !res.redirected && res.type === "basic") cache.put(req, res.clone());
+    return res;
+  });
+  if (!hit) {
+    try {
+      return await net;
+    } catch {
+      return (await cache.match("/")) || (await caches.match(OFFLINE_URL));
+    }
+  }
+  event.waitUntil(net.catch(() => {}));
+  return Promise.race([net, new Promise((r) => setTimeout(() => r(hit), 2500))]).catch(() => hit);
+}
+
+async function trim(cache) {
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - MAX_IMAGES; i++) await cache.delete(keys[i]);
+}
+
+// Avatars and post/chat images from the CDN. A CORS fetch gives a real (cheap) cacheable response; if the CDN
+// refuses CORS we stop trying for that origin and just pass the request through.
+async function image(req) {
+  const origin = new URL(req.url).origin;
+  const cache = await caches.open(IMAGES);
+  const hit = await cache.match(req.url);
+  if (hit) return hit;
+  let tried = false;
+  if (!corsBlocked.has(origin)) {
+    tried = true;
+    try {
+      const res = await fetch(req.url, { mode: "cors", credentials: "omit" });
+      if (res.ok) {
+        cache.put(req.url, res.clone());
+        if (Math.random() < 0.1) trim(cache);
+        return res;
+      }
+    } catch {}
+  }
+  const res = await fetch(req);
+  if (tried) corsBlocked.add(origin);
+  return res;
+}
 
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith("/api/")) return;
-
-  if (req.mode === "navigate") {
-    event.respondWith(fetch(req).catch(() => caches.match(OFFLINE_URL)));
+  if (url.origin === self.location.origin) {
+    if (url.pathname.startsWith("/api/")) return;
+    if (req.mode === "navigate") {
+      event.respondWith(page(event, req));
+      return;
+    }
+    if (STATIC_PREFIXES.some((p) => url.pathname.startsWith(p))) event.respondWith(cacheFirst(STATIC, req));
     return;
   }
-
-  if (url.pathname.startsWith("/_next/static/") || url.pathname.startsWith("/icons/")) {
-    event.respondWith(
-      caches.match(req).then(
-        (hit) => hit || fetch(req).then((res) => {
-          if (res.ok) {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        }),
-      ),
-    );
-  }
+  if (req.destination === "image" && url.protocol === "https:") event.respondWith(image(req));
 });
 
 const FALLBACK_ICON = "/icons/icon-192.png";

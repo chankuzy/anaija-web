@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
-import { acquirePdf } from "@/lib/documents/pdf";
+import { acquirePdf, lowMemory } from "@/lib/documents/pdf";
 import { PdfPageCanvas } from "./pdf-page";
 
 const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
@@ -121,7 +121,7 @@ export function PdfPager({ url, coverUrl, label, onOpen }: { url: string; coverU
               }}
               className="relative grid size-full shrink-0 cursor-pointer snap-center snap-always place-items-center"
             >
-              {doc && <PdfPageCanvas doc={doc} n={i + 1} active={Math.abs(i - cur) <= 1} width={size.w} height={size.h} />}
+              {doc && <PdfPageCanvas doc={doc} n={i + 1} active={Math.abs(i - cur) <= (lowMemory() ? 0 : 1)} width={size.w} height={size.h} />}
             </div>
           ))}
         </div>

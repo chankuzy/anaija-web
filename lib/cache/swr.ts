@@ -124,6 +124,9 @@ export function onCacheClear(fn: () => void) {
 /** Sign-out / account switch: nothing from the previous account may survive. */
 export async function clearCache() {
   epoch++;
+  try {
+    navigator.serviceWorker?.controller?.postMessage({ type: "anaija:clear-pages" });
+  } catch {}
   const keys = [...mem.keys()];
   mem.clear();
   errors.clear();

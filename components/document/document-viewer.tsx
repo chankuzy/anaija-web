@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { createPortal } from "react-dom";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { Icon } from "@/components/ui/icon";
-import { acquirePdf } from "@/lib/documents/pdf";
+import { acquirePdf, lowMemory } from "@/lib/documents/pdf";
 import { PdfPageCanvas } from "./pdf-page";
 
 const MAX_ZOOM = 5;
@@ -72,7 +72,7 @@ function ZoomPage({ doc, n, current, near, zoomed, width, height, onZoom }: {
     };
     const settle = () => {
       window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setQuality(clamp(Math.ceil(t.current.s), 1, 3)), 220);
+      timer.current = window.setTimeout(() => setQuality(clamp(Math.ceil(t.current.s), 1, lowMemory() ? 2 : 3)), 220);
     };
     const finish = () => {
       apply(true);
@@ -273,7 +273,7 @@ export function DocumentViewer({ url, title, startPage = 0, onClose }: { url: st
     let pushed = false;
     let popped = false;
     const tid = window.setTimeout(() => {
-      history.pushState({ anaijaDoc: true }, "");
+      history.pushState({ ...(history.state ?? {}), anaijaDoc: true }, "");
       pushed = true;
     }, 0);
     const onPop = () => {
@@ -337,7 +337,7 @@ export function DocumentViewer({ url, title, startPage = 0, onClose }: { url: st
         >
           {doc &&
             Array.from({ length: pages }, (_, i) => (
-              <ZoomPage key={i} doc={doc} n={i + 1} current={i === cur} near={Math.abs(i - cur) <= 1} zoomed={zoomed} width={size.w} height={size.h} onZoom={setZoomed} />
+              <ZoomPage key={i} doc={doc} n={i + 1} current={i === cur} near={Math.abs(i - cur) <= (lowMemory() ? 0 : 1)} zoomed={zoomed} width={size.w} height={size.h} onZoom={setZoomed} />
             ))}
         </div>
       )}

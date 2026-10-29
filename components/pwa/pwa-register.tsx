@@ -7,6 +7,8 @@ export function PwaRegister() {
   useEffect(() => {
     if (process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return;
     navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(() => {});
+    // Ask the browser not to evict our IndexedDB (cached chats, inbox, feeds) when storage runs low.
+    void navigator.storage?.persist?.().catch(() => {});
   }, []);
   return null;
 }

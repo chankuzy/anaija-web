@@ -5,6 +5,8 @@ import { useRef, useState } from "react";
 import { DocumentCardView } from "@/components/home/renderers/document";
 import { Icon } from "@/components/ui/icon";
 import { renderPdfCover } from "@/lib/documents/cover";
+import { packPdf } from "@/lib/documents/compress";
+import { formatBytes } from "@/lib/feed/structured";
 import { hashtagsOf, type Visibility } from "@/lib/create/types";
 import { DOC_ACCEPT, MAX_DOC_BYTES, docMimeOf, isImageFile, useStructuredPublish } from "@/lib/create/structured";
 import { useObjectUrl } from "@/lib/create/use-object-url";
@@ -24,6 +26,7 @@ export function DocumentForm({ onClose }: { onClose: () => void }) {
   const [visibility, setVisibility] = useState<Visibility>("public");
   const [allowComments, setAllowComments] = useState(true);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [pack, setPack] = useState<{ busy: boolean; file: File | null; note: string | null }>({ busy: false, file: null, note: null });
   const effective = cover ?? auto;
   const coverUrl = useObjectUrl(effective);
 
@@ -36,16 +39,26 @@ export function DocumentForm({ onClose }: { onClose: () => void }) {
     setAuto(null);
     current.current = f;
     setTitle((t) => t || f.name.replace(/\.[^.]+$/, "").slice(0, 120));
+    setPack({ busy: false, file: null, note: null });
     if (docMimeOf(f) === "application/pdf") {
-      void renderPdfCover(f).then((c) => {
-        if (c && current.current === f) setAuto(c);
-      });
+      setPack({ busy: true, file: null, note: null });
+      void renderPdfCover(f)
+        .then((c) => {
+          if (c && current.current === f) setAuto(c);
+        })
+        .then(() => packPdf(f))
+        .then((r) => {
+          if (current.current !== f) return;
+          const smaller = r.after < r.before;
+          setPack({ busy: false, file: smaller ? r.file : null, note: smaller ? `Optimised: ${formatBytes(r.before)} → ${formatBytes(r.after)}` : null });
+        });
     }
   };
   const removeDoc = () => {
     current.current = null;
     setFile(null);
     setAuto(null);
+    setPack({ busy: false, file: null, note: null });
   };
   const pickCover = (f: File | undefined) => {
     if (!f) return;
@@ -54,17 +67,18 @@ export function DocumentForm({ onClose }: { onClose: () => void }) {
     setCover(f);
   };
 
-  const problem = !file ? "Choose a document" : !title.trim() ? "Add a title" : null;
+  const problem = !file ? "Choose a document" : !title.trim() ? "Add a title" : pack.busy ? "Optimising the file…" : null;
   const submit = () => {
     if (!file) return;
-    void pub.run([file, ...(effective ? [effective] : [])], async (ctx) => ({
+    const upFile = pack.file ?? file;
+    void pub.run([upFile, ...(effective ? [effective] : [])], async (ctx) => ({
       type: "post",
       subtype: "document",
       caption: title.trim(),
       hashtags: hashtagsOf(description),
       visibility,
       allow_comments: allowComments,
-      media: [await ctx.document(file, effective)],
+      media: [await ctx.document(upFile, effective)],
       content: { title: title.trim(), description: description.trim(), file: { name: file.name } },
     }));
   };
@@ -84,6 +98,8 @@ export function DocumentForm({ onClose }: { onClose: () => void }) {
         </button>
       )}
       {fileError && <p role="alert" className="mt-2 text-secondary text-danger">{fileError}</p>}
+      {pack.busy && <p role="status" className="mt-2 text-secondary text-muted">Optimising the file…</p>}
+      {pack.note && <p className="mt-2 text-secondary text-muted">{pack.note}</p>}
 
       <Label>Title</Label>
       <input className={INPUT} placeholder="Give it a clear title" maxLength={120} value={title} disabled={pub.busy} onChange={(e) => setTitle(e.target.value)} />

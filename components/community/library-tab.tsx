@@ -11,6 +11,7 @@ import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CommunityDetail, type Resource } from "@/lib/api/communities";
 import { uploadBlob } from "@/lib/api/upload";
 import { renderPdfCover } from "@/lib/documents/cover";
+import { packPdf } from "@/lib/documents/compress";
 import { DOC_ACCEPT, MAX_DOC_BYTES, docMimeOf } from "@/lib/create/structured";
 import { formatBytes } from "@/lib/feed/structured";
 import { timeAgo } from "@/lib/format";
@@ -144,8 +145,13 @@ function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDeta
     if (!mime) return;
     setErr(null);
     try {
+      let up: File = file;
+      if (mime === "application/pdf") {
+        setBusy("Optimising…");
+        up = (await packPdf(file)).file;
+      }
       setBusy("Uploading…");
-      const key = await uploadBlob(file, `document.${(file.name.split(".").pop() ?? "bin").toLowerCase()}`, mime);
+      const key = await uploadBlob(up, `document.${(file.name.split(".").pop() ?? "bin").toLowerCase()}`, mime);
       // A PDF gets a cover from its first page. Failure never blocks the upload.
       let thumbnail_key: string | undefined;
       if (mime === "application/pdf") {
@@ -156,7 +162,7 @@ function Upload({ c, collections, resumed, onClose, onDone }: { c: CommunityDeta
       setBusy("Adding to library…");
       const post = await communitiesApi.post(c.id, {
         type: "post", subtype: "document", caption: title.trim(), client_request_id: requestId,
-        media: [{ type: "document", storage_key: key, ...(thumbnail_key ? { thumbnail_key } : {}), size_bytes: file.size, mime_type: mime }],
+        media: [{ type: "document", storage_key: key, ...(thumbnail_key ? { thumbnail_key } : {}), size_bytes: up.size, mime_type: mime }],
         content: { title: title.trim(), description: description.trim(), file: { name: file.name } },
       });
       await communitiesApi.libraryAdd(c.id, {

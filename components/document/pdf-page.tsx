@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from "pdfjs-dist";
-import { isRenderCancel } from "@/lib/documents/pdf";
+import { isRenderCancel, lowMemory } from "@/lib/documents/pdf";
 
-const MAX_PIXELS = 12_000_000; // caps canvas memory when zoomed
+const MAX_PIXELS = 6_000_000; // caps canvas memory when zoomed (two buffers are alive while rendering)
 
 interface Props {
   doc: PDFDocumentProxy;
@@ -34,7 +34,8 @@ function Inner({ doc, n, width, height, quality = 1 }: Props) {
         const fit = Math.min(width / base.width, height / base.height);
         let scale = fit * Math.min(window.devicePixelRatio || 1, 2) * quality;
         const px = base.width * base.height * scale * scale;
-        if (px > MAX_PIXELS) scale *= Math.sqrt(MAX_PIXELS / px);
+        const cap = lowMemory() ? 2_500_000 : MAX_PIXELS;
+        if (px > cap) scale *= Math.sqrt(cap / px);
         const vp = page.getViewport({ scale });
         buf.width = Math.floor(vp.width);
         buf.height = Math.floor(vp.height);

@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
 import { ApiError } from "@/lib/api/client";
 import { messagingApi, parseMessage, parseReactions, type Message } from "@/lib/api/messaging";
-import { onCacheClear } from "@/lib/cache/swr";
+import { kvDelete } from "@/lib/cache/kv";
+import { onCacheClear, peek, put } from "@/lib/cache/swr";
 import { subscribeBroadcast } from "@/lib/realtime/client";
 import { useInterval } from "./use-interval";
 
@@ -13,14 +14,69 @@ type TState = { id: number; items: Message[]; cursor: string | null; error: stri
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const isLocal = (m: Message) => m.status !== undefined;
 
-// Recently opened threads, kept in memory only (chat content is never written to disk), so reopening a chat
-// paints instantly and the fetch below reconciles quietly. Wiped on sign-out / account change.
+// Threads live in memory and are mirrored to IndexedDB (last 80 messages plus unsent text), so a chat opens exactly
+// as you left it, offline or after a cold start. The network only reconciles it. Wiped on sign-out / account change.
 const MAX_THREADS = 20;
+const MAX_ON_DISK = 30;
+const KEEP_ON_DISK = 80;
 const threadCache = new Map<number, TState>();
-onCacheClear(() => threadCache.clear());
+const saveTimers = new Map<number, number>();
+const lastSaved = new Map<number, string>();
+const diskKey = (id: number) => `thread:${id}`;
+const isUnsent = (m: Message) => m.status === "failed" && !m.media_url && (m.type === "text" || m.type === "sticker");
+const keepable = (m: Message) => !isLocal(m) || isUnsent(m);
+
+onCacheClear(() => {
+  threadCache.clear();
+  lastSaved.clear();
+  saveTimers.forEach((t) => window.clearTimeout(t));
+  saveTimers.clear();
+});
+
+function seed(id: number): TState | null {
+  const hit = threadCache.get(id);
+  if (hit) return hit;
+  const d = peek<TState>(diskKey(id))?.data;
+  if (!d || d.id !== id) return null;
+  const t: TState = { ...d, error: null, loadingOlder: false };
+  threadCache.set(id, t);
+  return t;
+}
+
+function persist(t: TState) {
+  window.clearTimeout(saveTimers.get(t.id));
+  saveTimers.set(
+    t.id,
+    window.setTimeout(() => {
+      saveTimers.delete(t.id);
+      const real = t.items.filter((m) => !isLocal(m));
+      const kept = real.slice(-KEEP_ON_DISK);
+      const snap: TState = {
+        id: t.id,
+        items: [...kept, ...t.items.filter(isUnsent)],
+        cursor: kept.length === real.length ? t.cursor : null,
+        error: null,
+        loadingOlder: false,
+      };
+      const json = JSON.stringify(snap);
+      if (lastSaved.get(t.id) === json) return;
+      lastSaved.set(t.id, json);
+      put(diskKey(t.id), snap);
+      const next = [...(peek<number[]>("thread:index")?.data ?? []).filter((x) => x !== t.id), t.id];
+      while (next.length > MAX_ON_DISK) {
+        const old = next.shift();
+        if (old !== undefined) {
+          void kvDelete(diskKey(old));
+          lastSaved.delete(old);
+        }
+      }
+      put("thread:index", next);
+    }, 600),
+  );
+}
 
 function remember(t: TState) {
-  const items = t.items.filter((m) => !isLocal(m));
+  const items = t.items.filter(keepable);
   if (items.length === 0) return;
   threadCache.delete(t.id);
   threadCache.set(t.id, { ...t, items, error: null, loadingOlder: false });
@@ -29,6 +85,7 @@ function remember(t: TState) {
     if (oldest === undefined) break;
     threadCache.delete(oldest);
   }
+  persist(t);
 }
 
 // Server window replaces what it covers; older pages already loaded and unconfirmed local sends are kept.
@@ -41,7 +98,7 @@ function mergeLatest(prev: TState | null, id: number, server: Message[], cursor:
   return {
     id,
     items: [...older, ...server, ...locals],
-    cursor: base && older.length ? base.cursor : cursor,
+    cursor: base && older.length && base.cursor ? base.cursor : cursor,
     error: null,
     loadingOlder: false,
   };
@@ -54,19 +111,27 @@ export function useThread(conversationId: number, myId: number | undefined) {
   const { pulse, live } = useMessages();
   const pulseN = pulse.id === conversationId ? pulse.n : 0;
   const [joined, setJoined] = useState(false);
-  const [state, setState] = useState<TState | null>(() => threadCache.get(conversationId) ?? null);
-  const s = state && state.id === conversationId ? state : (threadCache.get(conversationId) ?? null);
+  const [state, setState] = useState<TState | null>(() => seed(conversationId));
+  const s = state && state.id === conversationId ? state : seed(conversationId);
 
   useEffect(() => {
     if (state) remember(state);
   }, [state]);
 
   const fetchLatest = useCallback(() => {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      setState((p) =>
+        p && p.id === conversationId
+          ? p
+          : (seed(conversationId) ?? { id: conversationId, items: [], cursor: null, error: "You're offline. This chat will load when you're back online.", loadingOlder: false }),
+      );
+      return;
+    }
     messagingApi
       .messages(conversationId)
       .then(({ items, nextCursor }) =>
         setState((p) =>
-          mergeLatest(p && p.id === conversationId ? p : (threadCache.get(conversationId) ?? null), conversationId, items, nextCursor),
+          mergeLatest(p && p.id === conversationId ? p : seed(conversationId), conversationId, items, nextCursor),
         ),
       )
       .catch((e: unknown) =>
@@ -322,6 +387,35 @@ export function useThread(conversationId: number, myId: number | undefined) {
     },
     [s, conversationId, deliver, runPrepared],
   );
+
+  // Back online: reconcile now, then send whatever was typed while offline, oldest first.
+  const flush = useRef<() => void>(() => {});
+  useEffect(() => {
+    flush.current = () => {
+      let chain: Promise<unknown> = Promise.resolve();
+      for (const m of s?.items.filter(isUnsent) ?? []) {
+        const id = m.local_id;
+        if (id) chain = chain.then(() => retry(id));
+      }
+    };
+  });
+  const flushed = useRef<number | null>(null);
+  useEffect(() => {
+    if (!enabled) return;
+    const on = () => {
+      fetchLatest();
+      flush.current();
+    };
+    window.addEventListener("online", on);
+    return () => window.removeEventListener("online", on);
+  }, [enabled, fetchLatest]);
+  useEffect(() => {
+    if (!enabled || flushed.current === conversationId || !navigator.onLine) return;
+    if (s?.items.some(isUnsent)) {
+      flushed.current = conversationId;
+      flush.current();
+    }
+  });
 
   const editMessage = useCallback(
     async (messageId: number, newBody: string): Promise<boolean> => {
