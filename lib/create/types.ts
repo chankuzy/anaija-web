@@ -122,6 +122,8 @@ export interface ContentDraft {
 
   draftId: string | null;
   savedAtMs: number | null;
+  /** Slug of the community this is published into (from ?community=). */
+  community?: string | null;
 }
 
 export function createDraft(kind: ContentKind, media: DraftMedia[] = []): ContentDraft {

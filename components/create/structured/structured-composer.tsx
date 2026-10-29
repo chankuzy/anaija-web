@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, type ComponentType } from "react";
+import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
@@ -48,14 +48,16 @@ export function StructuredComposer({ kind }: { kind: StructuredCreateKind }) {
   }, [router]);
 
   const Form = FORMS[kind];
-  const ready = status === "authed" && loaded;
+  // Inside a community, the community's own permissions decide (the server enforces them), not the platform grants.
+  const [inCommunity] = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("community"));
+  const ready = status === "authed" && (loaded || inCommunity);
   return (
     <div className="fixed inset-0 z-[60] flex justify-center bg-bg md:static md:inset-auto md:z-auto md:h-[calc(100dvh-var(--nav-h,0px))] md:w-full md:items-center md:bg-transparent md:px-6">
       <div
         className="relative flex h-full w-full max-w-[520px] flex-col md:h-[min(880px,calc(100dvh-48px))] md:max-w-[760px] md:overflow-hidden md:rounded-[28px] md:bg-bg"
         style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {!ready ? null : caps?.kinds[kind] ? (
+        {!ready ? null : inCommunity || caps?.kinds[kind] ? (
           <Form onClose={leave} />
         ) : (
           <div className="grid flex-1 place-items-center px-8 text-center">

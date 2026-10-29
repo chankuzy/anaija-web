@@ -28,6 +28,7 @@ export function buildPostBody(d: ContentDraft, o: BodyOptions): Record<string, u
   if (d.kind === "listing") {
     return {
       type: "listing",
+      ...(d.community ? { community: d.community } : {}),
       allow_comments: d.allowComments,
       ...(d.allowStorySharing !== null ? { allow_story_sharing: d.allowStorySharing } : {}),
       client_request_id: o.clientRequestId,
@@ -59,6 +60,7 @@ export function buildPostBody(d: ContentDraft, o: BodyOptions): Record<string, u
 
   return {
     type: d.kind === "story" ? "story" : "post",
+    ...(d.community ? { community: d.community } : {}),
     client_request_id: o.clientRequestId,
     caption: d.caption,
     hashtags: hashtagsOf(d.caption),

@@ -109,8 +109,9 @@ export function useStructuredPublish() {
       try {
         const body = await build(ctx);
         setStage("saving");
-        const res = await publishApi.store({ ...body, client_request_id: requestId });
-        router.replace(`/p/${res.post_id}`);
+        const community = new URLSearchParams(window.location.search).get("community");
+        const res = await publishApi.store({ ...body, ...(community ? { community } : {}), client_request_id: requestId });
+        router.replace(community ? `/c/${encodeURIComponent(community)}` : `/p/${res.post_id}`);
       } catch (e) {
         setStage("idle");
         setProgress(0);

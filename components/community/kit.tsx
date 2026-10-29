@@ -212,3 +212,32 @@ export function Empty({ title, body, children }: { title: string; body?: string;
     </div>
   );
 }
+
+export function ImageViewer({ src, onClose }: { src: string; onClose: () => void }) {
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose]);
+  return (
+    <div className="sv-overlay fixed inset-0 z-[70] grid place-items-center bg-black/90 p-4" role="dialog" aria-modal="true" onClick={onClose}>
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 grid size-10 place-items-center rounded-full bg-white/10 text-white" style={{ top: "max(16px, env(safe-area-inset-top))" }}>
+        <Icon name="close" className="size-5" />
+      </button>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt="" className="max-h-full max-w-full rounded-2xl object-contain" onClick={(e) => e.stopPropagation()} />
+    </div>
+  );
+}
+
+export function MenuRow({ icon, label, hint, onClick, danger = false }: { icon: React.ComponentProps<typeof Icon>["name"]; label: string; hint?: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button type="button" onClick={onClick} className={`flex w-full items-center gap-3.5 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-white/[0.05] ${danger ? "text-danger" : "text-fg"}`}>
+      <Icon name={icon} className="size-[22px] shrink-0 opacity-80" />
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold">{label}</span>
+        {hint && <span className="block truncate text-supporting font-normal text-muted">{hint}</span>}
+      </span>
+    </button>
+  );
+}

@@ -21,5 +21,9 @@ export interface StoreResult {
 
 // Contract read from posts-store + postService.createPost. client_request_id makes the call idempotent.
 export const publishApi = {
-  store: (body: Record<string, unknown>) => api.post<StoreResult>("posts-store", body),
+  // `community` (a slug) routes the same body through the community gate instead of the personal feed.
+  store: ({ community, ...body }: Record<string, unknown>) =>
+    typeof community === "string" && community
+      ? api.post<StoreResult>(`communities/post/${encodeURIComponent(community)}`, body)
+      : api.post<StoreResult>("posts-store", body),
 };

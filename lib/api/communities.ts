@@ -24,6 +24,7 @@ export interface Staff extends Person { role: Role; designations: Desig[] }
 export interface CommunityDetail extends Community {
   rules: { text: string }[]; links: { label: string; url: string }[]; permissions: Record<string, Role> | null;
   staff: Staff[]; my_designations: Desig[]; chat_conversation_id: number | null; can: Can;
+  face_pile: Person[];
 }
 export type CPost = Post & { community_pinned?: boolean };
 export interface Member extends Person { is_verified: boolean; campus_verified: boolean; role: Role; joined_at: string; designations: Desig[] }
@@ -81,7 +82,7 @@ export interface LibraryPage {
 const C = (p: string) => `communities/${p}`;
 const person = <T extends { avatar: string | null }>(p: T): T => ({ ...p, avatar: mediaUrl(p.avatar) });
 const com = <T extends { avatar: string | null; cover: string | null }>(c: T): T => ({ ...c, avatar: mediaUrl(c.avatar), cover: mediaUrl(c.cover) });
-const detail = (c: CommunityDetail): CommunityDetail => ({ ...com(c), staff: (c.staff ?? []).map(person) });
+const detail = (c: CommunityDetail): CommunityDetail => ({ ...com(c), staff: (c.staff ?? []).map(person), face_pile: (c.face_pile ?? []).map(person) });
 const ok = { ok: true as boolean };
 
 export const communitiesApi = {
@@ -98,7 +99,7 @@ export const communitiesApi = {
     return { posts, cursor: r.next_cursor, hasMore: r.has_more };
   },
   create: async (body: Record<string, unknown>) => detail((await api.post<{ community: CommunityDetail }>(C("create"), body)).community),
-  update: (id: number, body: Record<string, unknown>) => api.post<{ community: CommunityDetail }>(C(`update/${id}`), body),
+  update: async (id: number, body: Record<string, unknown>) => detail((await api.post<{ community: CommunityDetail }>(C(`update/${id}`), body)).community),
   join: (id: number, message?: string) => api.post<JoinResult>(C(`join/${id}`), { message }),
   leave: (id: number) => api.post<{ is_member: boolean }>(C(`leave/${id}`)),
 

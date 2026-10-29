@@ -71,6 +71,7 @@ export function useComposer(initialKind: ContentKind) {
   // Stable for this composer's lifetime: also the server-side idempotency keys.
   const [taskId] = useState(() => crypto.randomUUID());
   const [twinId] = useState(() => crypto.randomUUID());
+  const [inCommunity] = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("community"));
 
   const apply = useCallback((fn: (d: ContentDraft) => ContentDraft) => {
     const next = fn(draftRef.current);
@@ -301,6 +302,10 @@ export function useComposer(initialKind: ContentKind) {
   const publish = useCallback(async (): Promise<boolean> => {
     const d = draftRef.current;
     if (busy) return false;
+    if (inCommunity && d.kind === "story") {
+      flash("err", "Stories can't be shared to a community. Pick Reel, Photo or Listing.");
+      return false;
+    }
     if (!d.media.length) {
       flash("err", "Add at least one photo or video");
       return false;
@@ -320,10 +325,12 @@ export function useComposer(initialKind: ContentKind) {
       flash("err", "Please sign in again");
       return false;
     }
+    const community = new URLSearchParams(window.location.search).get("community");
+    const send = community ? { ...d, community } : d;
     setBusy(true);
     try {
       await Promise.race([
-        uploadManager.enqueue(d, { taskId, ownerId: user.id, alsoShareRequestId: alsoShare ? twinId : null }),
+        uploadManager.enqueue(send, { taskId, ownerId: user.id, alsoShareRequestId: alsoShare && !community ? twinId : null }),
         new Promise<never>((_, rej) => setTimeout(() => rej(new Error("enqueue timeout")), 10000)),
       ]);
       if (d.draftId) await deleteDraft(d.draftId).catch(() => {});
@@ -334,7 +341,7 @@ export function useComposer(initialKind: ContentKind) {
       flash("err", "Couldn't start the upload. Please try again.");
       return false;
     }
-  }, [alsoShare, busy, flash, taskId, twinId, user]);
+  }, [alsoShare, busy, flash, inCommunity, taskId, twinId, user]);
 
   return {
     draft,
@@ -344,6 +351,7 @@ export function useComposer(initialKind: ContentKind) {
     toast,
     alsoShare,
     setAlsoShare,
+    inCommunity,
     flash,
     update,
     addFiles,

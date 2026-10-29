@@ -15,7 +15,7 @@ function Row({ c, unread = 0 }: { c: Community; unread?: number }) {
   const meta = [categoryLabel(c.category), c.course_code, `${c.members_count} ${c.members_count === 1 ? "member" : "members"}`].filter(Boolean).join(" · ");
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
   return (
-    <Link href={`/c/${c.slug}`} className="flex items-center gap-3.5 rounded-[20px] bg-surface-subtle p-3.5 transition-colors hover:bg-surface-interactive">
+    <Link href={`/c/${c.slug}`} className="flex items-center gap-3.5 py-3.5 transition-opacity active:opacity-60">
       <span className="relative shrink-0">
         <Avatar url={c.avatar} name={c.name} size={52} />
         {unread > 0 && <span className="absolute -right-0.5 -top-0.5 size-3 rounded-full bg-brand" />}
@@ -25,16 +25,16 @@ function Row({ c, unread = 0 }: { c: Community; unread?: number }) {
         <span className="mt-0.5 block truncate text-supporting text-muted">{meta}</span>
         {c.description && <span className="mt-1 line-clamp-1 block text-secondary text-muted">{c.description}</span>}
       </span>
-      <span className="shrink-0 rounded-pill bg-surface-interactive px-3 py-1.5 text-micro font-bold text-fg">{state}</span>
+      <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{state}</span>
     </Link>
   );
 }
 
 function Skeleton() {
   return (
-    <div role="status" aria-busy="true" aria-label="Loading communities" className="space-y-2.5">
+    <div role="status" aria-busy="true" aria-label="Loading communities" className="divide-y divide-white/[0.06]">
       {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center gap-3.5 rounded-[20px] bg-surface-subtle p-3.5">
+        <div key={i} className="flex items-center gap-3.5 py-3.5">
           <Sk className="size-[52px] rounded-full" />
           <div className="flex-1 space-y-2">
             <Sk className="h-3.5 w-40 rounded-full" />
@@ -90,7 +90,7 @@ export function CommunitiesView() {
       {status === "authed" && mine.data && mine.data.length > 0 && (
         <section className="mb-6">
           <p className="px-1 pb-2 text-micro font-semibold uppercase tracking-[0.08em] text-muted">Your communities</p>
-          <div className="space-y-2.5">
+          <div className="divide-y divide-white/[0.06]">
             {mine.data.map((c) => (
               <Row key={c.id} c={c} unread={c.chat_unread} />
             ))}
@@ -121,7 +121,7 @@ export function CommunitiesView() {
             <Link href="/communities/new" className={buttonClass("primary", "h-10 px-5")}>Create a community</Link>
           </Empty>
         ) : (
-          <div className="space-y-2.5">
+          <div className="divide-y divide-white/[0.06]">
             {items.map((c) => (
               <Row key={c.id} c={c} />
             ))}

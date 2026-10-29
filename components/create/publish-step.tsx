@@ -48,7 +48,7 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
   };
 
   const rows = [
-    ...(!isListing
+    ...(!isListing && !c.inCommunity
       ? [
           <SettingsRow
             key="vis"
@@ -80,13 +80,17 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
           />,
         ]
       : []),
-    <SettingsRow
-      key="also"
-      icon="plain"
-      label={isStory ? "Also post to your feed" : "Also add to your story"}
-      trailing={<Switch on={c.alsoShare} label="Also share" onChange={c.setAlsoShare} />}
-      onClick={() => c.setAlsoShare(!c.alsoShare)}
-    />,
+    ...(c.inCommunity
+      ? []
+      : [
+          <SettingsRow
+            key="also"
+            icon="plain"
+            label={isStory ? "Also post to your feed" : "Also add to your story"}
+            trailing={<Switch on={c.alsoShare} label="Also share" onChange={c.setAlsoShare} />}
+            onClick={() => c.setAlsoShare(!c.alsoShare)}
+          />,
+        ]),
     ...(isListing
       ? [
           <div key="listing">

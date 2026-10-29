@@ -8,19 +8,33 @@ import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CPost, type CommunityDetail } from "@/lib/api/communities";
+import { uploadManager } from "@/lib/create/upload-manager";
 import { timeAgo } from "@/lib/format";
 import { usePaged } from "@/lib/paged/use-paged";
 import { confirmDialog } from "@/lib/ui/dialog";
-import { ComposerSheet, type ComposeMode } from "./composer";
-import { Empty, ReportSheet, StatusChip, messageOf, useFetch } from "./kit";
-import { SessionCreate } from "./session-create";
+import { Empty, MenuRow, ReportSheet, Sheet, StatusChip, messageOf, useFetch } from "./kit";
+import { PublishSheet } from "./publish-sheet";
 
 const noop = () => {};
 
+function PostMenu({ c, p, onClose, onPin, onRemove, onReport }: {
+  c: CommunityDetail; p: CPost; onClose: () => void; onPin: () => void; onRemove: () => void; onReport: () => void;
+}) {
+  return (
+    <Sheet title="Post" onClose={onClose}>
+      <div className="-mx-1">
+        {c.can.moderate && <MenuRow icon="pin" label={p.community_pinned ? "Unpin from top" : "Pin to top"} onClick={() => { onClose(); onPin(); }} />}
+        <MenuRow icon="forbidden" label="Report" onClick={() => { onClose(); onReport(); }} />
+        {c.can.moderate && <MenuRow icon="close" label="Remove post" danger onClick={() => { onClose(); onRemove(); }} />}
+      </div>
+    </Sheet>
+  );
+}
+
 export function FeedTab({ c }: { c: CommunityDetail }) {
   const { toast, show } = useToast();
-  const [compose, setCompose] = useState<ComposeMode | null>(null);
-  const [sessionOpen, setSessionOpen] = useState(false);
+  const [share, setShare] = useState(false);
+  const [menu, setMenu] = useState<CPost | null>(null);
   const [report, setReport] = useState<CPost | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
 
@@ -36,7 +50,8 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
   const list = usePaged<CPost, string>({ id: `community:${c.id}`, enabled: c.can.read, load, staleMs: 0, persist: false });
   const items = list.data?.items ?? [];
   const hasMore = list.data?.hasMore ?? false;
-  const { loadMore } = list;
+  const { loadMore, reload } = list;
+  const { reload: reloadSessions } = sessions;
 
   useEffect(() => {
     const el = sentinel.current;
@@ -45,6 +60,14 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
     io.observe(el);
     return () => io.disconnect();
   }, [items.length, hasMore, loadMore]);
+
+  // Posts publish in the background through the shared upload manager; show them the moment they land.
+  useEffect(() => uploadManager.onPublished((t) => { if (t.draft.community === c.slug) reload(); }), [c.slug, reload]);
+  useEffect(() => {
+    const on = () => reloadSessions();
+    window.addEventListener("community:sessions", on);
+    return () => window.removeEventListener("community:sessions", on);
+  }, [reloadSessions]);
 
   async function togglePin(p: CPost) {
     try {
@@ -70,48 +93,31 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
 
   const live = (sessions.data ?? []).filter((s) => s.status !== "ended");
   const ended = (sessions.data ?? []).filter((s) => s.status === "ended");
+  const canShare = c.can.post || c.can.announce;
 
   return (
     <div>
-      {(c.can.post || c.can.announce || c.can.session) && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {(c.can.post || c.can.announce) && (
-            <button type="button" onClick={() => setCompose(c.can.post ? "post" : "announcement")} className={buttonClass("primary", "h-10 px-4")}>
-              <Icon name="pen" className="size-4" />
-              Share
-            </button>
-          )}
-          {c.can.announce && c.can.post && (
-            <button type="button" onClick={() => setCompose("announcement")} className={buttonClass("outline", "h-10 px-4")}>
-              <Icon name="bell" className="size-4" />
-              Announce
-            </button>
-          )}
-          {c.can.session && (
-            <button type="button" onClick={() => setSessionOpen(true)} className={buttonClass("outline", "h-10 px-4")}>
-              <Icon name="eyeClosed" className="size-4" />
-              Start anonymous session
-            </button>
-          )}
-        </div>
+      {canShare && (
+        <button type="button" onClick={() => setShare(true)} className="flex w-full items-center justify-between border-b border-white/[0.06] py-3.5 text-left text-body text-muted transition-colors hover:text-fg">
+          <span>Share something with {c.name}</span>
+          <Icon name="pen" className="size-[18px]" />
+        </button>
       )}
 
       {(live.length > 0 || ended.length > 0) && (
-        <div className="no-scrollbar mb-4 flex gap-2.5 overflow-x-auto">
+        <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 py-4">
           {[...live, ...ended.slice(0, 4)].map((s) => (
-            <Link key={s.id} href={`/s/${s.code}`} className="w-[220px] shrink-0 rounded-[20px] bg-surface-subtle p-4 transition-colors hover:bg-surface-interactive">
+            <Link key={s.id} href={`/s/${s.code}`} className="w-[200px] shrink-0 rounded-2xl border border-white/[0.07] p-3.5 transition-colors hover:bg-white/[0.04]">
               <StatusChip status={s.status} />
-              <span className="mt-2.5 line-clamp-2 block text-[15px] font-bold leading-[1.25] text-fg">{s.title}</span>
-              <span className="mt-1.5 block text-supporting text-muted">
-                {s.posts_count} {s.posts_count === 1 ? "post" : "posts"} · {timeAgo(s.created_at)}
-              </span>
+              <span className="mt-2.5 line-clamp-2 block text-[14px] font-bold leading-[1.25] text-fg">{s.title}</span>
+              <span className="mt-1.5 block text-supporting text-muted">{s.posts_count} {s.posts_count === 1 ? "post" : "posts"} · {timeAgo(s.created_at)}</span>
             </Link>
           ))}
         </div>
       )}
 
       {list.loading && !list.data ? (
-        <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6">
+        <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6 pt-4">
           {[0, 1, 2].map((i) => (
             <div key={i} className="space-y-3">
               <div className="flex items-center gap-3"><Sk className="size-9 rounded-full" /><Sk className="h-3.5 w-32 rounded-full" /></div>
@@ -127,52 +133,39 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
       ) : items.length === 0 ? (
         <Empty
           title="Nothing here yet"
-          body={c.can.post ? "Start the conversation with a post, a poll or a photo." : c.is_member ? "Posts from this community will show up here." : "Join to post in this community."}
+          body={canShare ? "Start with a post, a poll, a photo or a document." : c.is_member ? "Posts from this community will show up here." : "Join to post in this community."}
         >
-          {c.can.post && <button type="button" onClick={() => setCompose("post")} className={buttonClass("primary", "h-10 px-5")}>Write the first post</button>}
+          {canShare && <button type="button" onClick={() => setShare(true)} className={buttonClass("primary", "h-10 px-5")}>Share the first post</button>}
         </Empty>
       ) : (
-        <div className="space-y-2">
+        <div>
           {items.map((p, i) => (
-            <div key={p.id} className={p.community_pinned ? "rounded-[26px] bg-white/[0.035] pt-3" : ""}>
-              {p.community_pinned && (
-                <p className="flex items-center gap-1.5 px-5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
-                  <Icon name="pin" filled className="size-3.5" />
-                  Pinned
-                </p>
-              )}
-              <HomePost post={p} index={i} active={false} onVisible={noop} patch={list.patch} onRemove={list.remove} />
-              {c.is_member && (
-                <div className="-mt-4 mb-4 flex gap-4 px-4 text-supporting font-semibold text-muted">
-                  {c.can.moderate && (
-                    <>
-                      <button type="button" onClick={() => void togglePin(p)} className="hover:text-fg">{p.community_pinned ? "Unpin" : "Pin"}</button>
-                      <button type="button" onClick={() => void remove(p)} className="hover:text-danger">Remove</button>
-                    </>
+            <article key={p.id} className="border-b border-white/[0.06] pb-2 pt-1 last:border-none">
+              {(p.community_pinned || c.is_member) && (
+                <div className="flex h-7 items-center justify-between px-1">
+                  {p.community_pinned ? (
+                    <span className="flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
+                      <Icon name="pin" filled className="size-3.5" />
+                      Pinned
+                    </span>
+                  ) : <span />}
+                  {c.is_member && (
+                    <button type="button" aria-label="Post options" onClick={() => setMenu(p)} className="grid size-8 place-items-center rounded-full text-muted transition-colors hover:text-fg">
+                      <Icon name="menuDots" className="size-5" />
+                    </button>
                   )}
-                  <button type="button" onClick={() => setReport(p)} className="hover:text-fg">Report</button>
                 </div>
               )}
-            </div>
+              <HomePost post={p} index={i} active={false} onVisible={noop} patch={list.patch} onRemove={list.remove} />
+            </article>
           ))}
           <div ref={sentinel} className="h-px" />
           {list.data?.loadingMore && <Sk className="mx-auto h-1.5 w-20 rounded-full" />}
         </div>
       )}
 
-      {compose && (
-        <ComposerSheet
-          c={c}
-          start={compose}
-          onClose={() => setCompose(null)}
-          onDone={() => {
-            setCompose(null);
-            list.reload();
-            show("Published");
-          }}
-        />
-      )}
-      {sessionOpen && <SessionCreate c={c} onClose={() => setSessionOpen(false)} onCreated={() => sessions.reload()} />}
+      {share && <PublishSheet c={c} onClose={() => setShare(false)} />}
+      {menu && <PostMenu c={c} p={menu} onClose={() => setMenu(null)} onPin={() => void togglePin(menu)} onRemove={() => void remove(menu)} onReport={() => setReport(menu)} />}
       {report && (
         <ReportSheet
           title="Report post"
