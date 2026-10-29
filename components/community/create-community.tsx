@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/settings/image-cropper";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { communitiesApi, type Policy } from "@/lib/api/communities";
@@ -33,7 +34,11 @@ export function CreateCommunity() {
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const coverRef = useRef<HTMLInputElement>(null);
+  const [coverPick, setCoverPick] = useState<File | null>(null);
+  const [coverBlob, setCoverBlob] = useState<Blob | null>(null);
   const preview = useObjectUrl(file);
+  const coverPreview = useObjectUrl(coverBlob);
 
   useEffect(() => {
     if (status === "guest") router.replace(loginHref());
@@ -50,6 +55,8 @@ export function CreateCommunity() {
         const p = await prepareImage(file);
         avatar_key = await uploadBlob(p.feed, `avatar.${p.ext}`, p.contentType);
       }
+      let cover_key: string | undefined;
+      if (coverBlob) cover_key = await uploadBlob(coverBlob, "cover.jpg", "image/jpeg");
       const c = await communitiesApi.create({
         name: name.trim(), description: description.trim() || undefined, category,
         ...(ACADEMIC.includes(category) ? { course_code: course.trim(), department: department.trim(), level: level.trim(), academic_session: session.trim() } : {}),
@@ -57,6 +64,7 @@ export function CreateCommunity() {
         join_policy: join, discoverability: listed, read_policy: read,
         ...(avatar_key ? { avatar_key } : {}),
       });
+      if (cover_key) await communitiesApi.update(c.id, { cover_key }).catch(() => {});
       router.replace(`/c/${c.slug}`);
     } catch (err) {
       setError(messageOf(err));
@@ -70,8 +78,30 @@ export function CreateCommunity() {
       <h1 className="py-2 text-[26px] font-extrabold tracking-tight text-fg">New community</h1>
       <p className="px-1 text-secondary text-muted">A permanent space for a class, department, campus or interest. You can change everything below later.</p>
 
+      <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { setCoverPick(e.target.files?.[0] ?? null); e.target.value = ""; }} />
+      <button
+        type="button"
+        onClick={() => coverRef.current?.click()}
+        className="relative mt-5 flex h-[130px] w-full items-center justify-center overflow-hidden rounded-[22px] bg-gradient-to-br from-surface-interactive to-surface-subtle text-secondary font-bold text-fg"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {coverPreview && <img src={coverPreview} alt="" className="absolute inset-0 size-full object-cover" />}
+        <span className="relative rounded-full bg-black/55 px-4 py-2 backdrop-blur-md">{coverBlob ? "Change cover" : "Add cover photo"}</span>
+      </button>
+      {coverBlob && (
+        <button type="button" onClick={() => setCoverBlob(null)} className="mt-2 px-1 text-supporting font-bold text-danger">Remove cover</button>
+      )}
+      {coverPick && (
+        <ImageCropper
+          file={coverPick}
+          spec={{ aspect: 8 / 3, circle: false, title: "Community cover", outW: 1200, viewW: 640 }}
+          onCancel={() => setCoverPick(null)}
+          onDone={(b) => { setCoverBlob(b); setCoverPick(null); }}
+        />
+      )}
+
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { setFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
-      <div className="mt-5 flex items-center gap-4">
+      <div className="mt-4 flex items-center gap-4">
         <Avatar url={preview} name={name || "?"} size={72} />
         <button type="button" onClick={() => fileRef.current?.click()} className="rounded-full bg-surface-interactive px-4 py-2.5 text-secondary font-bold text-fg">
           {file ? "Change picture" : "Add picture"}

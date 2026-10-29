@@ -114,12 +114,22 @@ export function sessionMetadata(code: string, s: { title: string; community: str
   });
 }
 
-export const joinMetadata = (): Metadata => ({
-  ...card({
-    title: "You're invited to a community on Anaija",
-    description: "Tap to join. Hustle. Flex. Earn.",
-    url: abs("/"),
-    image: abs("/brand/app_icon.png"),
-  }),
+export const joinMetadata = (token: string, m: { name: string; slug: string; members: number } | null): Metadata => ({
+  ...card(
+    m
+      ? {
+          title: `Join ${m.name} on Anaija`,
+          description: `${m.members} ${m.members === 1 ? "member" : "members"}. Tap to join. Hustle. Flex. Earn.`,
+          url: abs(`/join/${encodeURIComponent(token)}`),
+          image: abs(`/og/c/${encodeURIComponent(m.slug)}`),
+          wide: true,
+        }
+      : {
+          title: "You're invited to a community on Anaija",
+          description: "Tap to join. Hustle. Flex. Earn.",
+          url: abs("/"),
+          image: abs("/brand/app_icon.png"),
+        },
+  ),
   robots: { index: false, follow: false },
 });

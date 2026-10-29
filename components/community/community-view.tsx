@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/settings/settings-kit";
 import { useMessages } from "@/components/messaging/messages-context";
 import { Avatar } from "@/components/ui/avatar";
+import { ImageCropper } from "@/components/settings/image-cropper";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Sk } from "@/components/ui/skeleton";
@@ -37,6 +38,7 @@ function Header({ c, busy, onJoin, onChanged, onToast }: { c: CommunityDetail; b
   const [saving, setSaving] = useState<"cover" | "avatar" | null>(null);
   const [localCover, setLocalCover] = useState<Local>(null);
   const [localAvatar, setLocalAvatar] = useState<Local>(null);
+  const [cropFile, setCropFile] = useState<File | null>(null);
   const edit = c.can.manage;
   const cover = photo(c.cover, localCover);
   const avatar = photo(c.avatar, localAvatar);
@@ -82,7 +84,7 @@ function Header({ c, busy, onJoin, onChanged, onToast }: { c: CommunityDetail; b
         </Link>
         {edit && (
           <>
-            <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { void change("cover", e.target.files?.[0]); e.target.value = ""; }} />
+            <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { setCropFile(e.target.files?.[0] ?? null); e.target.value = ""; }} />
             <button
               type="button"
               disabled={!!saving}
@@ -93,6 +95,17 @@ function Header({ c, busy, onJoin, onChanged, onToast }: { c: CommunityDetail; b
               {cover ? "Edit cover" : "Add cover"}
             </button>
           </>
+        )}
+        {cropFile && (
+          <ImageCropper
+            file={cropFile}
+            spec={{ aspect: 8 / 3, circle: false, title: "Community cover", outW: 1200, viewW: 640 }}
+            onCancel={() => setCropFile(null)}
+            onDone={(b) => {
+              setCropFile(null);
+              void change("cover", new File([b], "cover.jpg", { type: "image/jpeg" }));
+            }}
+          />
         )}
         {saving === "cover" && <div className="absolute inset-0 grid place-items-center bg-black/40">{spinner}</div>}
       </div>

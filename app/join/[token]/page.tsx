@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { JoinView } from "@/components/community/join-view";
+import { getInviteMeta } from "@/lib/server/community-public";
 import { joinMetadata } from "@/lib/share/meta";
 
-export function generateMetadata(): Metadata {
-  return joinMetadata();
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }): Promise<Metadata> {
+  const { token } = await params;
+  return joinMetadata(token, await getInviteMeta(token));
 }
 
 async function Inner({ params }: { params: Promise<{ token: string }> }) {
