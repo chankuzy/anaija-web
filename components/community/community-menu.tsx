@@ -10,8 +10,9 @@ import { Chip, Label, MenuRow, Sheet, messageOf, shareLink, siteUrl, useFetch } 
 import { ManageSheet } from "./manage-sheet";
 import { MembersSheet } from "./members-sheet";
 import { SessionCreate } from "./session-create";
+import { MomentPicker } from "@/components/moments/create-moment";
 
-type View = "menu" | "members" | "manage" | "session";
+type View = "menu" | "members" | "manage" | "session" | "moment";
 
 // Everything that used to be scattered across buttons lives here.
 export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
@@ -50,12 +51,14 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
   if (view === "members") return <MembersSheet c={c} onClose={onClose} />;
   if (view === "manage") return <ManageSheet c={c} reload={reload} onClose={onClose} />;
   if (view === "session") return <SessionCreate c={c} onClose={onClose} onCreated={() => window.dispatchEvent(new Event("community:sessions"))} />;
+  if (view === "moment") return <MomentPicker c={c} onClose={onClose} />;
 
   return (
     <Sheet title={c.name} onClose={onClose}>
       <div className="-mx-1">
         <MenuRow icon="share" label="Share community link" onClick={() => void share()} />
         {c.is_member && <MenuRow icon="usersGroupRounded" label="Members" hint={`${c.members_count} ${c.members_count === 1 ? "person" : "people"}`} onClick={() => setView("members")} />}
+        {c.is_member && <MenuRow icon="star" label="Start a Moment" hint="Hot Seat, Verdict, Confession Drop and more" onClick={() => setView("moment")} />}
         {c.can.session && <MenuRow icon="eyeClosed" label="Anonymous session" hint="A temporary feed where posts have no names" onClick={() => setView("session")} />}
         {c.can.moderate && <MenuRow icon="settings" label="Manage" hint="Requests, invites, reports, settings" onClick={() => setView("manage")} />}
         {c.can.manage && (

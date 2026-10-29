@@ -431,3 +431,26 @@ body {
 }
 .fab-in { animation: fab-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1.2) backwards; }
 @media (prefers-reduced-motion: reduce) { .fab-in { animation: none; } }
+
+/* ───── Moments (mo-*) ───── */
+@keyframes mo-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes mo-reveal {
+  from { opacity: 0; filter: blur(10px); transform: translateY(18px) scale(0.97); }
+  to { opacity: 1; filter: blur(0); transform: none; }
+}
+@keyframes mo-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.mo-bar { transition: width 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: no-preference) {
+  .mo-in { animation: mo-in 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .mo-reveal { animation: mo-reveal 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  .mo-dot { animation: mo-dot 1.6s ease-in-out infinite; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mo-bar { transition: none; }
+}

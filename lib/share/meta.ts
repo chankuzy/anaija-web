@@ -133,3 +133,34 @@ export const joinMetadata = (token: string, m: { name: string; slug: string; mem
   ),
   robots: { index: false, follow: false },
 });
+
+export function momentMetadata(code: string, m: { type: string; title: string | null; community: string; host: string | null; revealAt: string | null }): Metadata {
+  const where = m.community;
+  const t = m.title ? clip(m.title, 80) : null;
+  let title: string;
+  let description: string;
+  switch (m.type) {
+    case "hot_seat":
+      title = `Hot Seat in ${where}`;
+      description = m.host ? `${m.host} is taking questions in ${where}. Tap to send yours.` : `Someone just started a Hot Seat in ${where}. Tap to send a question.`;
+      break;
+    case "verdict":
+      title = t ?? "Community Verdict";
+      description = `What's your verdict? Vote first, then see how ${where} voted.`;
+      break;
+    case "confession_drop": {
+      const when = m.revealAt ? new Date(m.revealAt).toLocaleString("en-NG", { weekday: "short", hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" }) : null;
+      title = `${t ?? "Confession Drop"} · ${where}`;
+      description = when ? `Confessions reveal ${when}. Submit yours anonymously before then.` : `A Confession Drop is happening in ${where}. Submit anonymously.`;
+      break;
+    }
+    case "dept_war":
+      title = t ? `Department War: ${t}` : "Department Wars";
+      description = "Your department has been challenged. Tap to see the challenge.";
+      break;
+    default:
+      title = t ?? "One Question";
+      description = `Answer in ${where}, publicly or anonymously, and see what everyone said.`;
+  }
+  return card({ title, description, url: abs(`/m/${encodeURIComponent(code)}`), image: abs(`/og/m/${encodeURIComponent(code)}`), wide: true });
+}

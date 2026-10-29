@@ -21,10 +21,12 @@ import { FeedTab } from "./feed-tab";
 import { Empty, ImageViewer, categoryLabel, messageOf, useFetch } from "./kit";
 import { LibraryTab } from "./library-tab";
 import { MembersSheet } from "./members-sheet";
+import { MomentsTab } from "@/components/moments/moments-tab";
 import { TabPager } from "./tab-pager";
 
 const TABS = [
   { id: "feed", label: "Feed", icon: "feed" },
+  { id: "moments", label: "Moments", icon: "star" },
   { id: "library", label: "Library", icon: "notebookMinimalistic" },
   { id: "about", label: "About", icon: "usersGroupRounded" },
 ] as const;
@@ -242,7 +244,7 @@ export function CommunityView({ slug }: { slug: string }) {
 
       <div ref={anchor} className="mt-5" />
       <div className="sticky top-0 z-10 -mx-4 border-b border-white/[0.07] bg-bg px-4" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-        <div className="relative grid grid-cols-3">
+        <div className="relative grid grid-cols-4">
           {TABS.map((t, i) => {
             const on = i === index;
             return (
@@ -251,14 +253,14 @@ export function CommunityView({ slug }: { slug: string }) {
                 type="button"
                 aria-current={on ? "page" : undefined}
                 onClick={() => go(t.id)}
-                className={`flex h-12 items-center justify-center gap-2 text-secondary font-bold transition-colors ${on ? "text-fg" : "text-muted hover:text-fg"}`}
+                className={`flex h-12 items-center justify-center gap-1.5 text-secondary font-bold transition-colors ${on ? "text-fg" : "text-muted hover:text-fg"}`}
               >
-                <Icon name={t.icon} filled={on} className="size-[19px]" />
+                <Icon name={t.icon} filled={on} className="size-[19px] max-[400px]:hidden" />
                 {t.label}
               </button>
             );
           })}
-          <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 w-1/3 will-change-transform">
+          <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 w-1/4 will-change-transform">
             <span className="mx-auto block h-0.5 w-10 rounded-full bg-brand" />
           </span>
         </div>
@@ -269,9 +271,10 @@ export function CommunityView({ slug }: { slug: string }) {
         count={TABS.length}
         onChange={settle}
         onProgress={onProgress}
-        render={(i) =>
-          i === 0 ? <FeedTab c={c} /> : i === 1 ? <LibraryTab c={c} onJoin={() => void join()} /> : <AboutTab c={c} />
-        }
+        render={(i) => {
+          const id = TABS[i].id;
+          return id === "feed" ? <FeedTab c={c} /> : id === "moments" ? <MomentsTab c={c} /> : id === "library" ? <LibraryTab c={c} onJoin={() => void join()} /> : <AboutTab c={c} />;
+        }}
       />
 
       {c.is_member && c.chat_conversation_id && <ChatFab slug={slug} />}

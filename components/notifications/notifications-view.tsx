@@ -45,6 +45,13 @@ const GLYPH: Record<string, { icon: IconName | null; color: string; shape: Shape
   post_new: { icon: "plus", color: "#7C3AED", shape: "square" },
   inquiry: { icon: "bag", color: "#C026D3", shape: "circle" },
   mention: { icon: null, color: "#2563EB", shape: "circle" },
+  moment_live: { icon: "star", color: "#ffb340", shape: "circle" },
+  moment_soon: { icon: "star", color: "#ffb340", shape: "circle" },
+  moment_reveal: { icon: "eyeClosed", color: "#9b8cff", shape: "circle" },
+  moment_ended: { icon: "check", color: "#4c8dff", shape: "circle" },
+  moment_answer: { icon: "message", color: "#ffb340", shape: "circle" },
+  moment_challenge: { icon: "usersGroupRounded", color: "#ff6b5c", shape: "circle" },
+  moment_mod: { icon: "forbidden", color: "#ff5c5c", shape: "circle" },
 };
 const FALLBACK = { icon: "bell" as IconName, color: "#71717A", shape: "circle" as Shape };
 

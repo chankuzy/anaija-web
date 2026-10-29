@@ -41,6 +41,8 @@ function direct(it: ActivityItem, d: ActivityDest, me?: string | null): Target |
       return d.slug ? { type: "url", url: `/c/${encodeURIComponent(d.slug)}${d.tab ? `?tab=${d.tab}` : ""}` } : null;
     case "session":
       return d.code ? { type: "url", url: `/s/${encodeURIComponent(d.code)}` } : null;
+    case "moment":
+      return d.code ? { type: "url", url: `/m/${encodeURIComponent(d.code)}` } : null;
     case "none":
       return { type: "none" };
     default:

@@ -51,3 +51,22 @@ export async function getInviteMeta(token: string) {
   if (!/^[a-z0-9_-]{8,128}$/i.test(token)) return null;
   try { return await fetchInvite(token); } catch { return null; }
 }
+
+// Moment share metadata. Guests get only what they may see: a private community yields a null title and no host,
+// and an anonymous host is never named (the API returns host: null).
+async function fetchMoment(code: string): Promise<{ type: string; title: string | null; community: string; host: string | null; revealAt: string | null } | null> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 60, expire: 3600 });
+  cacheTag(`moment:${code.toLowerCase()}`);
+  const res = await callFunction(`moments/show/${encodeURIComponent(code)}`);
+  if (res.status === 404 || res.status === 403) return null;
+  if (!res.ok) throw new Error(`moments/show ${res.status}`);
+  const j = (await res.json()) as { moment?: { type: string; title: string | null; host: { name: string | null } | null; community: { name: string }; config?: { reveal_at?: string | null } | null } };
+  const m = j.moment;
+  if (!m) return null;
+  return { type: m.type, title: m.title, community: m.community.name, host: m.host?.name ?? null, revealAt: m.config?.reveal_at ?? null };
+}
+export async function getMomentMeta(code: string) {
+  if (!/^[a-z0-9]{6,20}$/i.test(code)) return null;
+  try { return await fetchMoment(code); } catch { return null; }
+}

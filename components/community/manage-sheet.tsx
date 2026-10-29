@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { inputClass } from "@/components/ui/input";
 import { communitiesApi, type CommunityDetail, type Policy, type Role } from "@/lib/api/communities";
+import { MomentSettings } from "@/components/moments/settings-pane";
 import { AREA, Chip, ChoiceList, Label, Sheet, messageOf, shareLink, siteUrl, useFetch } from "./kit";
 
 function Requests({ c, reload }: { c: CommunityDetail; reload: () => void }) {
@@ -202,12 +203,12 @@ function Settings({ c, reload, onClose }: { c: CommunityDetail; reload: () => vo
   );
 }
 
-type Pane = "requests" | "invites" | "reports" | "settings";
+type Pane = "requests" | "invites" | "reports" | "moments" | "settings";
 
 export function ManageSheet({ c, reload, onClose }: { c: CommunityDetail; reload: () => void; onClose: () => void }) {
   const [pane, setPane] = useState<Pane>(c.join_policy === "request" ? "requests" : "reports");
   const panes: [Pane, string][] = [["requests", "Requests"], ["invites", "Invites"], ["reports", "Reports"]];
-  if (c.can.manage) panes.push(["settings", "Settings"]);
+  if (c.can.manage) panes.push(["moments", "Moments"], ["settings", "Settings"]);
   return (
     <Sheet title="Manage" onClose={onClose} wide>
       <div className="no-scrollbar mb-3 flex gap-2 overflow-x-auto">
@@ -218,6 +219,7 @@ export function ManageSheet({ c, reload, onClose }: { c: CommunityDetail; reload
       {pane === "requests" && <Requests c={c} reload={reload} />}
       {pane === "invites" && <Invites c={c} />}
       {pane === "reports" && <Reports c={c} />}
+      {pane === "moments" && c.can.manage && <MomentSettings c={c} />}
       {pane === "settings" && c.can.manage && <Settings c={c} reload={reload} onClose={onClose} />}
     </Sheet>
   );

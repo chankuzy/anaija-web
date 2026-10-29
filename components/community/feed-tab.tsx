@@ -16,6 +16,7 @@ import { usePaged } from "@/lib/paged/use-paged";
 import { confirmDialog } from "@/lib/ui/dialog";
 import { Empty, ReportSheet, StatusChip, messageOf, useFetch } from "./kit";
 import { PublishSheet } from "./publish-sheet";
+import { LiveStrip } from "@/components/moments/moments-tab";
 
 const noop = () => {};
 
@@ -100,6 +101,8 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
           <Icon name="pen" className="size-[18px]" />
         </button>
       )}
+
+      <LiveStrip c={c} />
 
       {(live.length > 0 || ended.length > 0) && (
         <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 py-4">
