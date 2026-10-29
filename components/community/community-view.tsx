@@ -16,14 +16,12 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
 import { prepareImage } from "@/lib/create/image-pipeline";
 import { AboutTab } from "./about-tab";
-import { ChatTab } from "./chat-tab";
 import { FeedTab } from "./feed-tab";
 import { LibraryTab } from "./library-tab";
 import { Empty, categoryLabel, messageOf, useFetch } from "./kit";
 
 const TABS = [
   { id: "feed", label: "Feed" },
-  { id: "chat", label: "Chat" },
   { id: "library", label: "Library" },
   { id: "about", label: "About" },
 ] as const;
@@ -126,6 +124,20 @@ function Header({ c, busy, onJoin, onChanged, onToast }: { c: CommunityDetail; b
   );
 }
 
+// Members only, and only when the community actually has a chat conversation.
+function ChatFab({ slug }: { slug: string }) {
+  return (
+    <Link
+      href={`/c/${slug}/chat`}
+      aria-label="Open community chat"
+      className="fixed right-4 z-30 grid size-14 place-items-center rounded-full bg-brand text-brand-fg shadow-[0_8px_24px_rgba(0,0,0,0.35)] transition-transform duration-150 active:scale-90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/40 md:right-8"
+      style={{ bottom: "calc(var(--nav-h, 0px) + env(safe-area-inset-bottom) + 16px)" }}
+    >
+      <Icon name="message" filled className="size-6" />
+    </Link>
+  );
+}
+
 export function CommunityView({ slug }: { slug: string }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -133,16 +145,15 @@ export function CommunityView({ slug }: { slug: string }) {
   const { reloadInbox } = useMessages();
   const { toast, show } = useToast();
   const [busy, setBusy] = useState(false);
-  const tabsRef = useRef<HTMLDivElement>(null);
   const q = sp.get("tab");
   const tab: TabId = TABS.some((t) => t.id === q) ? (q as TabId) : "feed";
   const det = useFetch(status === "loading" ? null : `c:${slug}:${status}`, () => communitiesApi.show(slug));
   const c = det.data;
-  const ready = !!c;
-  // Chat fills the screen under the tab bar, so pull the bar to the top and the composer is in reach.
+
+  // Chat is no longer a tab; old links (?tab=chat) land in the dedicated chat screen.
   useEffect(() => {
-    if (tab === "chat" && ready) tabsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [tab, ready]);
+    if (q === "chat") router.replace(`/c/${slug}/chat`);
+  }, [q, slug, router]);
 
   async function join() {
     if (!c) return;
@@ -182,10 +193,10 @@ export function CommunityView({ slug }: { slug: string }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-[720px] px-4 pb-12 pt-3 md:pt-8">
+    <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-3 md:pt-8">
       <Header c={c} busy={busy} onJoin={() => void join()} onChanged={det.reload} onToast={show} />
 
-      <div ref={tabsRef} className="sticky top-0 z-10 -mx-4 mt-4 bg-bg px-4 py-2" style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}>
+      <div className="sticky top-0 z-10 -mx-4 mt-4 bg-bg px-4 py-2" style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}>
         <div className="flex gap-1 rounded-full bg-surface-subtle p-1">
           {TABS.map((t) => (
             <button
@@ -202,10 +213,11 @@ export function CommunityView({ slug }: { slug: string }) {
 
       <div className="mt-3">
         {tab === "feed" && <FeedTab c={c} />}
-        {tab === "chat" && <ChatTab c={c} onJoin={() => void join()} />}
         {tab === "library" && <LibraryTab c={c} onJoin={() => void join()} />}
         {tab === "about" && <AboutTab c={c} reload={det.reload} />}
       </div>
+
+      {c.is_member && c.chat_conversation_id && <ChatFab slug={slug} />}
       {toast}
     </div>
   );
