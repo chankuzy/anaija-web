@@ -25,7 +25,7 @@ export function AuthModal({
   onClose: () => void;
   onDone: (user: AuthUser) => void;
 }) {
-  const g = useGoogleSignIn({ theme: "outline", maxWidth: 320, onSuccess: onDone });
+  const g = useGoogleSignIn({ theme: "filled_white", maxWidth: 320, onSuccess: onDone });
   const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -64,12 +64,12 @@ export function AuthModal({
   return (
     <div className="am fixed inset-0 z-[80] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-labelledby="am-title" onKeyDown={onKeyDown}>
       <Script src={GOOGLE_SCRIPT} strategy="afterInteractive" onReady={g.init} />
-      <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="am-overlay absolute inset-0 cursor-default bg-black/40" />
+      <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="am-overlay absolute inset-0 cursor-default bg-black/60" />
 
       <div
         ref={panel}
         tabIndex={-1}
-        className="am-panel relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] bg-bg px-6 pt-3 text-fg shadow-[0_-12px_48px_rgba(0,0,0,0.18)] outline-none md:max-w-[400px] md:rounded-[28px] md:px-8 md:pt-8 md:shadow-[0_24px_80px_rgba(0,0,0,0.25)]"
+        className="am-panel relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] bg-bg px-6 pt-3 text-fg ring-1 ring-white/[0.08] shadow-[0_-12px_48px_rgba(0,0,0,0.5)] outline-none md:max-w-[400px] md:rounded-[28px] md:px-8 md:pt-8 md:shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 28px)" }}
       >
         <span aria-hidden className="mx-auto mb-3 block h-1 w-9 rounded-full bg-surface-elevated md:hidden" />
@@ -89,7 +89,7 @@ export function AuthModal({
         <div role="tablist" aria-label="Account" className="relative mt-5 grid h-11 grid-cols-2 rounded-full bg-surface-interactive p-1 text-[14px] font-semibold">
           <span
             aria-hidden
-            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-bg shadow-[0_1px_3px_rgba(0,0,0,0.12)] transition-transform duration-200 ease-out motion-reduce:transition-none"
+            className="absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-full bg-surface-elevated transition-transform duration-200 ease-out motion-reduce:transition-none"
             style={{ transform: join ? "translateX(100%)" : "none" }}
           />
           {(["signin", "join"] as const).map((m) => (
