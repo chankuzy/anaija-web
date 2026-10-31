@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { callFunction } from "@/lib/server/upstream";
 import { readToken } from "@/lib/server/session";
 import type { InitialAuth } from "@/lib/auth/auth-context";
@@ -6,7 +7,8 @@ import type { InitialAuth } from "@/lib/auth/auth-context";
 // down we answer "unknown" (never "guest"): the client keeps a neutral loading state and retries.
 const BUDGET_MS = 1200;
 
-export async function resolveInitialAuth(): Promise<InitialAuth> {
+// cache(): the layout and the home page both ask in the same request, but users/me is only called once.
+export const resolveInitialAuth = cache(async (): Promise<InitialAuth> => {
   const token = await readToken();
   if (!token) return { status: "guest" };
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -26,4 +28,4 @@ export async function resolveInitialAuth(): Promise<InitialAuth> {
   } finally {
     clearTimeout(timer);
   }
-}
+});
