@@ -1,5 +1,5 @@
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 
 import { useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
@@ -51,7 +51,7 @@ export function NotificationsPanelProvider({ children }: { children: React.React
       e.preventDefault();
       e.stopPropagation();
       if (status === "authed") show();
-      else router.push(loginHref());
+      else openAuth();
     };
     document.addEventListener("click", onClick, true);
     return () => document.removeEventListener("click", onClick, true);

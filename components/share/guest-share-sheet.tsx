@@ -1,17 +1,15 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type { Post } from "@/lib/api/feed-types";
-import { loginHref } from "@/lib/auth/next";
 import { canNativeShare, copyLink, nativeShare, openWhatsapp } from "@/lib/share/external";
 import { Quick } from "./share-sheet";
 import { WhatsappGlyph } from "./whatsapp-glyph";
 
 // What a visitor without an account can do with a public post: send the link out. No people list, no story.
 export function GuestShareSheet({ post, onClose, flash }: { post: Post; onClose: () => void; flash: (text: string) => void }) {
-  const router = useRouter();
   const root = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -91,7 +89,7 @@ export function GuestShareSheet({ post, onClose, flash }: { post: Post; onClose:
           type="button"
           onClick={() => {
             onClose();
-            router.push(loginHref());
+            openAuth({ reason: "Sign in to send it to people on Anaija." });
           }}
           className="mx-auto mt-5 block text-secondary font-semibold text-white/60 hover:text-white"
         >

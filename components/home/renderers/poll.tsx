@@ -1,11 +1,10 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { structuredOf } from "@/lib/feed/structured";
 import { usePoll } from "@/lib/feed/use-poll";
 import type { BodyProps } from "./types";
@@ -15,7 +14,6 @@ const plural = (n: number) => `${n} ${n === 1 ? "vote" : "votes"}`;
 // Used in Home and on the reader page. Voting is final; results appear once you vote, when the poll closes,
 // or for the author (the server decides, the card only draws what it is given).
 export function PollCard({ post, onOpen }: { post: Post; onOpen?: () => void }) {
-  const router = useRouter();
   const { status } = useAuth();
   const authed = status === "authed";
   const c = structuredOf(post);
@@ -33,7 +31,7 @@ export function PollCard({ post, onOpen }: { post: Post; onOpen?: () => void }) 
   const canVote = authed && (state ? state.can_vote : true);
 
   const toggle = (id: number) => {
-    if (!authed) return router.push(loginHref());
+    if (!authed) return openAuth();
     if (!canVote || busy) return;
     setPicked((p) => (poll.multiple ? (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]) : [id]));
   };

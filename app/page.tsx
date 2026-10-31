@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { HomeFeed } from "@/components/home/home-feed";
-import { HomeGate } from "@/components/landing/home-gate";
-import { LandingPage } from "@/components/landing/landing-page";
+import { HomeSwitch } from "@/components/landing/home-switch";
+import { getLandingData } from "@/lib/server/landing";
 import { resolveInitialAuth } from "@/lib/server/initial-auth";
 import { abs, card } from "@/lib/share/meta";
 
@@ -15,13 +14,13 @@ export const metadata: Metadata = {
   title: { absolute: TITLE },
 };
 
-// Signed-in people keep the feed. Signed-out visitors get the landing page. Only the variant that can be needed is
-// rendered on the server; HomeGate swaps (or asks for a refresh) if the client's session turns out to differ.
+// Everyone lands on the feed. Signed-out visitors also get public communities and marketplace listings
+// (token-less reads, reduced to safe DTOs in lib/server/landing); signed-in people need none of it.
 async function Home() {
   const auth = await resolveInitialAuth();
-  const guest = auth.status === "authed" ? null : <LandingPage />;
-  const feed = auth.status === "guest" ? null : <HomeFeed />;
-  return <HomeGate guest={guest}>{feed}</HomeGate>;
+  const data = auth.status === "authed" ? { communities: [], tiles: [] } : await getLandingData();
+  const listings = data.tiles.filter((t) => t.kind === "listing").slice(0, 8);
+  return <HomeSwitch communities={data.communities} listings={listings} />;
 }
 
 export default function HomePage() {

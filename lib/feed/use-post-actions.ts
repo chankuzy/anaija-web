@@ -1,13 +1,12 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import type { Post } from "@/lib/api/feed-types";
 import { postsApi } from "@/lib/api/posts";
 import { socialApi } from "@/lib/api/social";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { useShare } from "@/lib/share/share-context";
 import { toggleFollow, useIsFollowing } from "./follow-store";
 import { pickIx, setIx, useIx, withIx } from "./interactions";
@@ -19,7 +18,6 @@ export function usePostActions(
   raw: Post,
   opts: { patch: (id: number, p: Partial<Post>) => void; onRemove: (id: number) => void },
 ) {
-  const router = useRouter();
   const { status, user } = useAuth();
   const openShare = useShare();
   const ix = useIx(raw.id);
@@ -51,17 +49,17 @@ export function usePostActions(
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 1800);
   }
-  function requireAuth(): boolean {
+  function requireAuth(why = "Sign in to continue."): boolean {
     if (status === "authed") return true;
-    router.push(loginHref());
+    openAuth({ reason: why });
     return false;
   }
   function onAuthFailure(e: unknown) {
-    if (e instanceof ApiError && e.status === 401) router.push(loginHref());
+    if (e instanceof ApiError && e.status === 401) openAuth({ reason: "Your session ended. Sign in again to continue." });
   }
 
   async function like(target: boolean) {
-    if (!requireAuth() || busyLike.current || post.is_liked === target) return;
+    if (!requireAuth("Sign in to like posts.") || busyLike.current || post.is_liked === target) return;
     busyLike.current = true;
     const prev = { is_liked: post.is_liked, likes_count: post.likes_count };
     patch(post.id, { is_liked: target, likes_count: Math.max(0, post.likes_count + (target ? 1 : -1)) });
@@ -78,7 +76,7 @@ export function usePostActions(
   }
 
   async function bookmark() {
-    if (!requireAuth() || busyBookmark.current) return;
+    if (!requireAuth("Sign in to save posts.") || busyBookmark.current) return;
     busyBookmark.current = true;
     const prev = { is_bookmarked: post.is_bookmarked, bookmarks_count: post.bookmarks_count };
     const next = !post.is_bookmarked;
@@ -100,7 +98,7 @@ export function usePostActions(
 
   async function follow(): Promise<boolean | null> {
     const a = post.author;
-    if (!a || !requireAuth()) return null;
+    if (!a || !requireAuth("Sign in to follow people.")) return null;
     const r = await toggleFollow(a.id, following);
     if (r === null) flash("Unable to update follow");
     return r;
@@ -119,7 +117,7 @@ export function usePostActions(
   }
 
   function notInterested() {
-    if (!requireAuth()) return;
+    if (!requireAuth("Sign in to tune your feed.")) return;
     void socialApi.feedback(post.id, "not_interested").catch(() => {});
     opts.onRemove(post.id);
   }

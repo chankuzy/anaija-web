@@ -1,5 +1,5 @@
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
@@ -96,7 +96,7 @@ export function DiscoverView() {
 
   // Discover needs a signed-in user (the backend requires it), same as Flutter's tab rule.
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   const items = view?.items ?? [];

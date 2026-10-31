@@ -10,6 +10,7 @@ import { ShareProvider } from "@/lib/share/share-context";
 import { DialogProvider } from "@/lib/ui/dialog";
 import { StoryHostProvider } from "@/lib/stories/story-host";
 import { ShellGate } from "@/components/shell/shell-gate";
+import { AuthModalProvider } from "@/lib/auth/auth-modal";
 import { NotificationPill } from "@/components/shell/notification-pill";
 import { InAppBanner } from "@/components/shell/in-app-banner";
 import { UploadDock } from "@/components/create/upload-dock";
@@ -33,7 +34,7 @@ export async function AuthRoot({ children }: { children: React.ReactNode }) {
                 <DialogProvider>
                 <StoryHostProvider>
                 <ShareProvider>
-                <ShellGate>{children}</ShellGate>
+                <AuthModalProvider><ShellGate>{children}</ShellGate></AuthModalProvider>
                 <Suspense fallback={null}><NotificationPill /></Suspense>
                 <Suspense fallback={null}><InAppBanner /></Suspense>
                 <Suspense fallback={null}><UploadDock /></Suspense>

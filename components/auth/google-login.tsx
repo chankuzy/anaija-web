@@ -4,40 +4,21 @@
 import Link from "next/link";
 import Script from "next/script";
 import { Playfair_Display } from "next/font/google";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { authApi } from "@/lib/api/auth";
-import { ApiError } from "@/lib/api/client";
 import { useAuth } from "@/lib/auth/auth-context";
 import { needsProfileSetup } from "@/lib/auth/guards";
 import { readNext } from "@/lib/auth/next";
 import { Showcase } from "./showcase";
+import { GOOGLE_SCRIPT, useGoogleSignIn } from "./use-google-signin";
 
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "500", display: "swap" });
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (c: { client_id: string; callback: (r: { credential?: string }) => void }) => void;
-          renderButton: (el: HTMLElement, o: Record<string, unknown>) => void;
-        };
-      };
-    };
-  }
-}
-
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
-
+// Dedicated route: stays as the fallback for direct navigation. Normal in-app sign-in uses the auth modal.
 export function GoogleLogin() {
   const router = useRouter();
-  const { status, user, refresh } = useAuth();
-  const btnRef = useRef<HTMLDivElement>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(
-    CLIENT_ID ? null : "Google sign-in isn't configured (missing NEXT_PUBLIC_GOOGLE_CLIENT_ID).",
-  );
+  const { status, user } = useAuth();
+  const { btnRef, busy, error, init } = useGoogleSignIn();
 
   // Mirrors _navigate(): new / incomplete profiles go to setup, everyone else to the feed.
   useEffect(() => {
@@ -47,42 +28,9 @@ export function GoogleLogin() {
     }
   }, [status, user, router]);
 
-  // Kept in a ref so the Google callback (registered once) never goes stale.
-  const onCredential = useRef<(c: string) => void>(() => {});
-  useEffect(() => {
-    onCredential.current = (credential: string) => {
-      setBusy(true);
-      setError(null);
-      authApi
-        .socialLogin(credential)
-        .then(() => refresh())
-        .catch((e: unknown) => setError(e instanceof ApiError ? e.message : "Something went wrong."))
-        .finally(() => setBusy(false));
-    };
-  });
-
-  function initGoogle() {
-    const g = window.google?.accounts.id;
-    if (!g || !btnRef.current || !CLIENT_ID) return;
-    g.initialize({
-      client_id: CLIENT_ID,
-      callback: (r) => {
-        if (r.credential) onCredential.current(r.credential);
-      },
-    });
-    g.renderButton(btnRef.current, {
-      type: "standard",
-      theme: "filled_white",
-      shape: "pill",
-      size: "large",
-      text: "continue_with",
-      width: 320,
-    });
-  }
-
   return (
     <div className="relative flex min-h-dvh flex-col overflow-hidden bg-bg md:grid md:grid-cols-[1.1fr_1fr]">
-      <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onReady={initGoogle} />
+      <Script src={GOOGLE_SCRIPT} strategy="afterInteractive" onReady={init} />
 
       {/* showcase */}
       <section
@@ -120,7 +68,7 @@ export function GoogleLogin() {
           </p>
 
           <div className="mt-8 flex flex-col items-center">
-            <div className="flex min-h-[44px] justify-center" aria-busy={busy}>
+            <div className="flex min-h-[44px] w-full justify-center" aria-busy={busy}>
               <div ref={btnRef} style={{ colorScheme: "light" }} className={busy ? "pointer-events-none opacity-50" : ""} />
             </div>
 

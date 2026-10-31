@@ -1,4 +1,5 @@
 "use client";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import { ListingSkeleton, UserRowsSkeleton } from "@/components/ui/skeleton";
 
@@ -11,7 +12,6 @@ import { Lightbox } from "@/components/ui/lightbox";
 import { ApiError } from "@/lib/api/client";
 import { listingApi, type DayHours, type Inquiry, type ListingFull, type ListingStatus } from "@/lib/api/listing";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { useShare } from "@/lib/share/share-context";
 import type { Post } from "@/lib/api/feed-types";
 import { timeAgo } from "@/lib/format";
@@ -289,7 +289,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
   async function sendInquiry() {
     if (busy) return;
     if (!authed) {
-      router.push(loginHref());
+      openAuth();
       return;
     }
     if (inquired) {

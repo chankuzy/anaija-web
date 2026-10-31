@@ -1,5 +1,5 @@
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -18,7 +18,7 @@ export function MessagesShell({ children }: { children: React.ReactNode }) {
   const vp = useViewport();
 
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   const open = /^\/messages\/\d+/.test(pathname);

@@ -82,7 +82,7 @@ export const HomePost = memo(function HomePost({
   };
   const openComments = useCallback(() => {
     if (!post.allow_comments) return a.flash("Comments are turned off for this post");
-    if (!a.requireAuth()) return;
+    if (!a.requireAuth("Sign in to join the conversation.")) return;
     setCommentsOpen(true);
   }, [post.allow_comments, a]);
 

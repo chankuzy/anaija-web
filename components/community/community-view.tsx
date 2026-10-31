@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -14,7 +15,6 @@ import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CommunityDetail } from "@/lib/api/communities";
 import { uploadBlob } from "@/lib/api/upload";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { AboutTab } from "./about-tab";
 import { CommunityMenu } from "./community-menu";
 import { FeedTab } from "./feed-tab";
@@ -157,7 +157,7 @@ export function CommunityView({ slug }: { slug: string }) {
   // Optimistic: the UI flips immediately, the server confirms, any failure rolls back.
   async function join() {
     if (!c) return;
-    if (status !== "authed") return router.push(loginHref());
+    if (status !== "authed") return openAuth();
     if (joining) return;
     const snap = c;
     setJoining(true);

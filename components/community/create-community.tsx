@@ -1,5 +1,6 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,6 @@ import { inputClass } from "@/components/ui/input";
 import { communitiesApi, type Policy } from "@/lib/api/communities";
 import { uploadBlob } from "@/lib/api/upload";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { prepareImage } from "@/lib/create/image-pipeline";
 import { useObjectUrl } from "@/lib/create/use-object-url";
 import { AREA, CATEGORIES, Chip, ChoiceList, Label, messageOf } from "./kit";
@@ -43,7 +43,7 @@ export function CreateCommunity() {
   const coverPreview = useObjectUrl(coverBlob);
 
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   async function submit(e: React.FormEvent) {

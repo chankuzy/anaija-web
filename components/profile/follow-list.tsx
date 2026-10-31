@@ -1,5 +1,5 @@
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import { UserRowsSkeleton } from "@/components/ui/skeleton";
 
@@ -56,7 +56,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
   const viewingOwn = user?.username === username;
 
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   const load = useCallback(

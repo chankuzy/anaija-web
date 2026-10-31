@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { CreateSkeleton } from "@/components/ui/skeleton";
 
 import { useEffect, useRef, useState } from "react";
@@ -140,7 +140,7 @@ export function CreateView({
   });
   useEffect(() => () => itemsRef.current.forEach((i) => URL.revokeObjectURL(i.url)), []);
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   const busy = stage !== "idle";

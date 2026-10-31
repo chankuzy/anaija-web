@@ -454,3 +454,41 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .mo-bar { transition: none; }
 }
+
+/* ───── Public (signed-out) experience: bright theme scoped to .pub, and to the auth modal (.am) ───── */
+.pub, .am {
+  color-scheme: light;
+  --color-bg: #ffffff; --color-surface: #f7f7f8; --color-card: #f7f7f8; --color-card-alt: #f7f7f8;
+  --color-card-elevated: #f0f0f2; --color-line: #ececef;
+  --color-fg: #111114; --color-muted: #6d6d77; --color-danger: #d92d3a;
+  /* Accent is ink, not yellow. Yellow is only the wordmark dot (--pub-yellow). */
+  --color-brand: #16161a; --color-brand-hover: #2b2b31; --color-brand-soft: #e9e9ed; --color-brand-fg: #ffffff;
+  --color-brand-glow: rgba(0, 0, 0, 0.12); --color-brand-primary: #16161a; --color-brand-accent: #16161a;
+  --color-brand-text-on-yellow: #ffffff;
+  --color-surface-canvas: #ffffff; --color-surface-subtle: #f6f6f8; --color-surface-interactive: #eeeef1; --color-surface-elevated: #e6e6ea;
+  --color-text-primary: #111114; --color-text-secondary: #55555e; --color-text-muted: #6d6d77;
+  --pub-yellow: #f6c300;
+}
+/* Existing sheets and menus keep their dark look inside the bright page (they hardcode white text). */
+.pub .glass, .pub [role="dialog"], .pub [role="menu"] {
+  color-scheme: dark;
+  --color-bg: #09090b; --color-surface: #19191d; --color-card: #19191d; --color-card-alt: #19191d;
+  --color-card-elevated: #26262b; --color-line: #26262b; --color-fg: #f4f4f6; --color-muted: #85858f; --color-danger: #ff5c5c;
+  --color-brand: #ffd84d; --color-brand-hover: #ffe27a; --color-brand-soft: #ffe9a0; --color-brand-fg: #17130a;
+  --color-brand-glow: rgba(255, 216, 77, 0.3); --color-brand-primary: #ffd84d; --color-brand-accent: #ffca28;
+  --color-brand-text-on-yellow: #17130a;
+  --color-surface-canvas: #09090b; --color-surface-subtle: #19191d; --color-surface-interactive: #26262b; --color-surface-elevated: #34343a;
+  --color-text-primary: #f4f4f6; --color-text-secondary: #a1a1aa; --color-text-muted: #85858f;
+}
+html:has(.pub), body:has(.pub) { background-color: #ffffff; }
+
+@keyframes am-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes am-sheet { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+@keyframes am-pop { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes am-swap { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .am-overlay { animation: am-fade 180ms ease-out both; }
+  .am-panel { animation: am-sheet 260ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+  @media (min-width: 768px) { .am-panel { animation-name: am-pop; } }
+  .am-swap { animation: am-swap 200ms ease-out both; }
+}

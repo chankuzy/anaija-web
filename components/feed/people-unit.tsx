@@ -1,10 +1,9 @@
 "use client";
-import { loginHref } from "@/lib/auth/next";
+import { openAuth } from "@/lib/auth/auth-modal";
 
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { FollowPill } from "@/components/ui/follow-pill";
 import { Icon } from "@/components/ui/icon";
@@ -25,13 +24,12 @@ function Row({
   onFollowed: (id: number) => void;
   onDismiss: (id: number) => void;
 }) {
-  const router = useRouter();
   const { status } = useAuth();
   const following = useIsFollowing(u.id, false);
 
   async function follow() {
     if (status !== "authed") {
-      router.push(loginHref());
+      openAuth();
       return;
     }
     if (following) return;

@@ -1,13 +1,12 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import { postsApi } from "@/lib/api/posts";
 import { socialApi } from "@/lib/api/social";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { toggleFollow, useIsFollowing } from "@/lib/feed/follow-store";
 import { useShare } from "@/lib/share/share-context";
 import { pickIx, setIx, useIx, withIx } from "@/lib/feed/interactions";
@@ -42,7 +41,6 @@ export function FeedCard({
   patch: (id: number, p: Partial<Post>) => void;
   onRemove: (id: number) => void;
 }) {
-  const router = useRouter();
   // What you did to this post overrides any stale cached copy, and every change is remembered.
   const ix = useIx(rawPost.id);
   const post = withIx(rawPost, ix);
@@ -92,12 +90,12 @@ export function FeedCard({
 
   function requireAuth(): boolean {
     if (status === "authed") return true;
-    router.push(loginHref());
+    openAuth();
     return false;
   }
 
   function onAuthFailure(e: unknown) {
-    if (e instanceof ApiError && e.status === 401) router.push(loginHref());
+    if (e instanceof ApiError && e.status === 401) openAuth();
   }
 
   function showToast(msg: string) {

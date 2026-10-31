@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useOpenStory } from "@/lib/stories/story-host";
-import { loginHref } from "@/lib/auth/next";
 import { MoreSkeleton } from "@/components/ui/skeleton";
 
 import Link from "next/link";
@@ -345,7 +345,7 @@ export function ProfileView({ username }: { username: string }) {
   const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
   useEffect(
     () => () => {

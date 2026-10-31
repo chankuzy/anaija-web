@@ -1,9 +1,9 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import { useCallback, useEffect, useState, type ComponentType } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import type { StructuredCreateKind } from "@/lib/create/kinds";
 import { useCapabilities } from "@/lib/create/use-capabilities";
 import { AnnouncementForm } from "./announcement-form";
@@ -25,7 +25,7 @@ export function StructuredComposer({ kind }: { kind: StructuredCreateKind }) {
   const { caps, loaded } = useCapabilities();
 
   useEffect(() => {
-    if (status === "guest") router.replace(loginHref());
+    if (status === "guest") openAuth();
   }, [status, router]);
 
   useEffect(() => {

@@ -1,26 +1,24 @@
 "use client";
 
+import { openAuth } from "@/lib/auth/auth-modal";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { FollowPill } from "@/components/ui/follow-pill";
 import { Icon } from "@/components/ui/icon";
 import type { PeopleItem } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
-import { loginHref } from "@/lib/auth/next";
 import { toggleFollow, useIsFollowing } from "@/lib/feed/follow-store";
 
 type U = PeopleItem["users"][number];
 
 function PersonCard({ u, onOpen, onFollowed, onDismiss }: { u: U; onOpen: (id: number) => void; onFollowed: (id: number) => void; onDismiss: (id: number) => void }) {
-  const router = useRouter();
   const { status } = useAuth();
   const following = useIsFollowing(u.id, false);
   const display = u.name || u.username || "";
 
   async function follow() {
-    if (status !== "authed") return router.push(loginHref());
+    if (status !== "authed") return openAuth();
     if (following) return;
     if ((await toggleFollow(u.id, false)) === true) onFollowed(u.id);
   }

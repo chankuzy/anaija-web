@@ -4,6 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { MoreSkeleton } from "@/components/ui/skeleton";
 import type { FeedItem, PeopleItem, PostItem } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { openAuth } from "@/lib/auth/auth-modal";
 import { onCacheClear } from "@/lib/cache/swr";
 import { contentKind, hasRenderableContent } from "@/lib/feed/content";
 import { feedEvents } from "@/lib/feed/event-tracker";
@@ -24,7 +25,8 @@ const MIN_PLAYING = 0.6; // ... and before a reel may play / images may slide
 
 // Home: the mixed feed. Same data store as Immersive (use-feed), so a post has one identity, one engagement state
 // and one recommendation session. Presentation is chosen per post by lib/feed/content + components/home/renderers.
-export function HomeFeed() {
+export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
+  const pub = variant === "public";
   const { status } = useAuth();
   const authed = status === "authed";
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
@@ -178,8 +180,8 @@ export function HomeFeed() {
   }
 
   const wrap = (children: ReactNode) => (
-    <div className="mx-auto w-full max-w-[630px]" style={{ paddingBottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 32px)" }}>
-      <HomeHeader authed={authed} />
+    <div className="mx-auto w-full max-w-[630px]" style={{ paddingBottom: pub ? "calc(env(safe-area-inset-bottom) + 48px)" : "calc(var(--nav-h) + env(safe-area-inset-bottom) + 32px)" }}>
+      {!pub && <HomeHeader authed={authed} />}
       {children}
     </div>
   );
@@ -188,7 +190,7 @@ export function HomeFeed() {
   if (data.error && entries.length === 0) {
     return wrap(
       <HomeMessage
-        title="Couldn't load your feed"
+        title={pub ? "Couldn't load the feed" : "Couldn't load your feed"}
         sub={data.error}
         action={
           <button type="button" onClick={reload} className={QUIET}>
@@ -198,12 +200,28 @@ export function HomeFeed() {
       />,
     );
   }
-  if (entries.length === 0) return wrap(<HomeEmpty scope="for_you" />);
+  if (entries.length === 0) {
+    return wrap(
+      pub ? (
+        <HomeMessage
+          title="Nothing public yet"
+          sub="Join Anaija and be the first to share something."
+          action={
+            <button type="button" onClick={() => openAuth({ mode: "join" })} className={QUIET}>
+              Join Anaija
+            </button>
+          }
+        />
+      ) : (
+        <HomeEmpty scope="for_you" />
+      ),
+    );
+  }
 
-  const pillPos = { top: "calc(env(safe-area-inset-top) + 12px)" };
+  const pillPos = { top: pub ? "calc(env(safe-area-inset-top) + 68px)" : "calc(env(safe-area-inset-top) + 12px)" };
   return wrap(
     <>
-      <HomeStories />
+      {!pub && <HomeStories />}
       {hasFresh ? (
         <div className="pointer-events-none fixed inset-x-0 z-30 flex justify-center" style={pillPos}>
           <button
