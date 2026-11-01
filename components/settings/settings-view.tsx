@@ -4,6 +4,7 @@ import { confirmDialog } from "@/lib/ui/dialog";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
+import { isPlatformStaff } from "@/lib/api/platform-me";
 import { settingsApi, type ContentSettings } from "@/lib/api/settings";
 import { usePlayback } from "@/components/feed/playback-context";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -22,6 +23,13 @@ export function SettingsView() {
     ready ? "settings:content" : null,
     () => settingsApi.content(),
     { staleMs: 5 * 60_000 },
+  );
+
+  // Staff only: everyone else gets a 404 from the server and never sees the section.
+  const { data: staff } = useCached<boolean>(
+    ready ? "settings:platform-staff" : null,
+    () => isPlatformStaff(),
+    { staleMs: 10 * 60_000 },
   );
 
   useEffect(() => {
@@ -100,6 +108,16 @@ export function SettingsView() {
         />
       </Group>
       <Footnote>When this is on, anyone can add your posts and listings to their own story.</Footnote>
+
+      {staff === true && (
+        <>
+          <div className="h-6" />
+          <SectionLabel>Platform</SectionLabel>
+          <Group>
+            <Tile icon="settings" label="Platform communications" href="/admin/accounts" trailing="Staff only" />
+          </Group>
+        </>
+      )}
 
       <div className="h-6" />
       <SectionLabel>Support</SectionLabel>
