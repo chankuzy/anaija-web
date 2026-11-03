@@ -6,10 +6,14 @@ import { CommentsSheet } from "@/components/feed/comments-sheet";
 import { OptionsSheet, type SheetAction } from "@/components/feed/options-sheet";
 import { Icon } from "@/components/ui/icon";
 import type { Post } from "@/lib/api/feed-types";
-import { contentKind } from "@/lib/feed/content";
+import { contentKind, type ContentKind } from "@/lib/feed/content";
 import { usePostActions } from "@/lib/feed/use-post-actions";
 import { PostActions, PostCaption, PostHeader } from "./post-anatomy";
 import { RENDERERS } from "./renderers";
+
+// Kinds whose body is pure media: edge to edge on phones (the renderers draw their own desktop card). Every other
+// kind (text, poll, document, listing, ...) keeps its side padding so content never touches the screen edge.
+const EDGE: ReadonlySet<ContentKind> = new Set<ContentKind>(["reel", "audioReel", "gallery"]);
 
 export const HomePost = memo(function HomePost({
   post: raw,
@@ -35,7 +39,8 @@ export const HomePost = memo(function HomePost({
   const router = useRouter();
   const a = usePostActions(raw, { patch, onRemove });
   const post = a.post;
-  const R = RENDERERS[contentKind(post)];
+  const kind = contentKind(post);
+  const R = RENDERERS[kind];
   const bodyRef = useRef<HTMLDivElement>(null);
   const burstTimer = useRef<number | null>(null);
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -86,10 +91,18 @@ export const HomePost = memo(function HomePost({
     setCommentsOpen(true);
   }, [post.allow_comments, a]);
 
+  const pad = flush ? "" : "px-3 md:px-0";
+  const bodyPad = flush || EDGE.has(kind) ? "" : "mx-3 md:mx-0";
+
   return (
-    <article aria-label={`Post by ${post.author?.username ?? "Anaija"}`} className={flush ? "pb-8" : "px-4 pb-8 md:px-0"}>
-      <PostHeader post={post} isOwn={a.isOwn} following={a.following} onFollow={a.follow} onMore={() => setOptionsOpen(true)} />
-      <div ref={bodyRef} className="relative mt-3">
+    <article
+      aria-label={`Post by ${post.author?.username ?? "Anaija"}`}
+      className={flush ? "pb-8" : "mb-3 border-b border-line pb-3 md:mb-5 md:pb-4"}
+    >
+      <div className={`${pad} py-2 md:pb-3 md:pt-0`}>
+        <PostHeader post={post} isOwn={a.isOwn} following={a.following} onFollow={a.follow} onMore={() => setOptionsOpen(true)} />
+      </div>
+      <div ref={bodyRef} className={`relative ${flush ? "mt-1" : ""} ${bodyPad}`}>
         <R.Body post={post} index={index} active={active} paused={commentsOpen || optionsOpen} onOpen={open} onLike={doubleLike} />
         {burst && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
@@ -100,23 +113,25 @@ export const HomePost = memo(function HomePost({
         )}
       </div>
       {R.Cta && (
-        <div className="mt-3">
+        <div className={`${pad} mt-3`}>
           <R.Cta post={post} />
         </div>
       )}
-      <PostActions
-        post={post}
-        onLike={() => void a.like(!post.is_liked)}
-        onComment={openComments}
-        onShare={a.share}
-        onBookmark={() => void a.bookmark()}
-      />
-      {!R.ownsCaption && <PostCaption post={post} />}
-      {post.allow_comments && post.comments_count > 0 && (
-        <button type="button" onClick={openComments} className="mt-1 text-secondary text-muted">
-          View all {post.comments_count} comments
-        </button>
-      )}
+      <div className={pad}>
+        <PostActions
+          post={post}
+          onLike={() => void a.like(!post.is_liked)}
+          onComment={openComments}
+          onShare={a.share}
+          onBookmark={() => void a.bookmark()}
+        />
+        {!R.ownsCaption && <PostCaption post={post} />}
+        {post.allow_comments && post.comments_count > 0 && (
+          <button type="button" onClick={openComments} className="mt-1 text-body text-muted">
+            View all {post.comments_count} comments
+          </button>
+        )}
+      </div>
 
       {a.toast && (
         <div

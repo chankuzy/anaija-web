@@ -13,8 +13,10 @@ import { useStoryRing } from "@/lib/stories/use-story-ring";
 import { CaptionText, withHashtags } from "./caption-text";
 
 const BTN =
-  "relative inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-pill px-2.5 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
+  "relative inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-pill px-2 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
 
+// Instagram anatomy: avatar, username with the time beside it, optional location line underneath, Follow, options.
+// Horizontal padding is the host's job (HomePost), so these stay flush.
 export function PostHeader({
   post,
   isOwn,
@@ -34,44 +36,48 @@ export function PostHeader({
   const href = a?.username ? `/u/${a.username}` : null;
   const d = post.listing;
   const where = d?.location_info ? formatCompactLocation(d.location_info) : (post.location ?? d?.pickup_info ?? null);
-  const meta = [where, timeAgo(post.created_at)].filter(Boolean).join(" · ");
+  const when = timeAgo(post.created_at);
   // The backend does not send a verified flag for authors yet, so no badge is drawn.
   const who = (
     <>
       <ProfileHoverCard username={a?.username}>
-        <StoryRingAvatar url={a?.avatar} name={a?.name ?? a?.username} size={40} ring={ring} />
+        <StoryRingAvatar url={a?.avatar} name={a?.name ?? a?.username} size={36} ring={ring} />
       </ProfileHoverCard>
       <span className="min-w-0">
-        <span className="block truncate text-body font-bold text-fg">{a?.username ?? a?.name ?? "Anaija"}</span>
-        {meta && <span className="block truncate text-supporting text-muted">{meta}</span>}
+        <span className="flex min-w-0 items-baseline gap-1.5">
+          <span className="truncate text-body font-bold text-fg">{a?.username ?? a?.name ?? "Anaija"}</span>
+          {when && <span className="shrink-0 text-body text-muted">· {when}</span>}
+        </span>
+        {where && <span className="block truncate text-supporting text-muted">{where}</span>}
       </span>
     </>
   );
   return (
     <div className="flex items-center gap-2">
       {href ? (
-        <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">
+        <Link href={href} className="flex min-w-0 flex-1 items-center gap-2.5">
           {who}
         </Link>
       ) : (
-        <div className="flex min-w-0 flex-1 items-center gap-3">{who}</div>
+        <div className="flex min-w-0 flex-1 items-center gap-2.5">{who}</div>
       )}
       {a && !isOwn && !following && (
         <button
           type="button"
           onClick={() => void onFollow()}
-          className="hit-area relative h-8 rounded-pill px-3 text-secondary font-bold text-brand transition-colors hover:bg-brand/10"
+          className="hit-area relative h-8 rounded-pill px-2 text-secondary font-bold text-brand transition-colors hover:text-brand-hover"
         >
           Follow
         </button>
       )}
-      <button type="button" aria-label="More options" aria-haspopup="dialog" onClick={onMore} className={`${BTN} -mr-2.5`}>
+      <button type="button" aria-label="More options" aria-haspopup="dialog" onClick={onMore} className={`${BTN} -mr-2`}>
         <Icon name="dots" filled className="size-6" />
       </button>
     </div>
   );
 }
 
+// Like, comment, share on the left with their counts beside them; save on the right.
 export function PostActions({
   post,
   onLike,
@@ -85,20 +91,20 @@ export function PostActions({
   onShare: () => void;
   onBookmark: () => void;
 }) {
-  const count = (n: number) => (n > 0 ? <span className="text-secondary font-semibold tabular-nums">{formatCount(n)}</span> : null);
+  const count = (n: number) => (n > 0 ? <span className="text-body font-semibold tabular-nums">{formatCount(n)}</span> : null);
   return (
-    <div className="mt-1.5 flex items-center justify-between">
-      <div className="-ml-2.5 flex items-center">
+    <div className="flex items-center justify-between pt-1">
+      <div className="-ml-2 flex items-center gap-1">
         <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
-          <Icon name="heart" filled={post.is_liked} className={`size-[26px] ${post.is_liked ? "text-like" : ""}`} />
+          <Icon name="heart" filled={post.is_liked} className={`size-6 ${post.is_liked ? "text-like" : ""}`} />
           {count(post.likes_count)}
         </button>
         <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
-          <Icon name="message" className="size-[26px]" />
+          <Icon name="message" className="size-6" />
           {count(post.comments_count)}
         </button>
         <button type="button" aria-label="Share" onClick={onShare} className={BTN}>
-          <Icon name="shareArrow" className="size-[26px]" />
+          <Icon name="shareArrow" className="size-6" />
           {count(post.shares_count)}
         </button>
       </div>
@@ -107,9 +113,9 @@ export function PostActions({
         aria-label={post.is_bookmarked ? "Remove bookmark" : "Bookmark"}
         aria-pressed={post.is_bookmarked}
         onClick={onBookmark}
-        className={`${BTN} -mr-2.5`}
+        className={`${BTN} -mr-2`}
       >
-        <Icon name="bookmark" filled={post.is_bookmarked} className={`size-[26px] ${post.is_bookmarked ? "text-brand" : ""}`} />
+        <Icon name="bookmark" filled={post.is_bookmarked} className={`size-6 ${post.is_bookmarked ? "text-brand" : ""}`} />
       </button>
     </div>
   );
@@ -121,14 +127,14 @@ export function PostCaption({ post }: { post: Post }) {
   if (!text) return null;
   const long = text.length > 120 || text.includes("\n");
   return (
-    <div className="mt-0.5 text-body leading-[1.45] text-fg">
+    <div className="mt-0.5 text-body leading-[1.4] text-fg">
       <p className={`selectable ${open ? "whitespace-pre-wrap" : "line-clamp-2"}`}>
         {post.author?.username && <span className="mr-1.5 font-bold">{post.author.username}</span>}
         <CaptionText text={text} />
       </p>
       {long && (
-        <button type="button" onClick={() => setOpen((o) => !o)} className="mt-0.5 text-secondary font-semibold text-muted">
-          {open ? "Show less" : "more"}
+        <button type="button" onClick={() => setOpen((o) => !o)} className="mt-0.5 text-body text-muted">
+          {open ? "Show less" : "… more"}
         </button>
       )}
     </div>

@@ -10,8 +10,10 @@ import { contentKind, hasRenderableContent } from "@/lib/feed/content";
 import { feedEvents } from "@/lib/feed/event-tracker";
 import { useDocumentFocus } from "@/lib/feed/focus";
 import { useFeed } from "@/lib/feed/use-feed";
+import { useMedia } from "@/lib/ui/use-media";
 import { HomeHeader } from "./home-header";
 import { HomePost } from "./home-post";
+import { HomeRail } from "./home-rail";
 import { HomeStories } from "./home-stories";
 import { PeopleStrip } from "./people-strip";
 import { HomeCaughtUp, HomeEmpty, HomeMessage, HomeSkeleton, QUIET } from "./home-states";
@@ -22,13 +24,16 @@ onCacheClear(() => scrolls.clear());
 
 const MIN_CURRENT = 0.4; // share of a post's media on screen before it counts as "being looked at"
 const MIN_PLAYING = 0.6; // ... and before a reel may play / images may slide
+const RAIL_MAX = 5;
 
 // Home: the mixed feed. Same data store as Immersive (use-feed), so a post has one identity, one engagement state
 // and one recommendation session. Presentation is chosen per post by lib/feed/content + components/home/renderers.
+// Layout is Instagram's: a 470px column, plus a right rail (lg+) that takes over the people-suggestion units.
 export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
   const pub = variant === "public";
   const { status } = useAuth();
   const authed = status === "authed";
+  const wide = useMedia("(min-width: 1024px)");
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(() => new Set());
   const { data, hasFresh, gen, storeKey, loading, reload, applyFresh, maybeLoadMore, patchPost, removePost } = useFeed({
     enabled: status !== "loading",
@@ -48,6 +53,23 @@ export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
     }
     return out;
   }, [data, dismissed]);
+
+  // People for the desktop rail: every suggestion unit in the loaded feed, de-duplicated.
+  const railPeople = useMemo<PeopleItem["users"]>(() => {
+    const seen = new Set<number>();
+    const out: PeopleItem["users"] = [];
+    for (const e of entries) {
+      if (e.type === "post") continue;
+      for (const u of e.users) {
+        if (seen.has(u.id)) continue;
+        seen.add(u.id);
+        out.push(u);
+        if (out.length >= RAIL_MAX) return out;
+      }
+    }
+    return out;
+  }, [entries]);
+  const showRail = !pub && authed && wide;
 
   // ── which post is "current": the one with the most media on screen ──────────────────────────────
   const ratios = useRef(new Map<number, number>());
@@ -173,16 +195,30 @@ export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
   // ── render ──────────────────────────────────────────────────────────────────────────────────────
   if (status === "loading") {
     return (
-      <div className="mx-auto w-full max-w-[630px] pt-6">
+      <div className="mx-auto w-full max-w-[470px] pt-6">
         <HomeSkeleton />
       </div>
     );
   }
 
+  const sessionId = data?.sessionId ?? null;
   const wrap = (children: ReactNode) => (
-    <div className="mx-auto w-full max-w-[630px]" style={{ paddingBottom: pub ? "calc(env(safe-area-inset-bottom) + 48px)" : "calc(var(--nav-h) + env(safe-area-inset-bottom) + 32px)" }}>
-      {!pub && <HomeHeader authed={authed} />}
-      {children}
+    <div
+      className="mx-auto flex w-full justify-center lg:gap-16"
+      style={{ paddingBottom: pub ? "calc(env(safe-area-inset-bottom) + 48px)" : "calc(var(--nav-h) + env(safe-area-inset-bottom) + 32px)" }}
+    >
+      <div className={`w-full min-w-0 ${pub ? "max-w-[630px]" : "max-w-[470px]"}`}>
+        {!pub && <HomeHeader authed={authed} />}
+        {children}
+      </div>
+      {showRail && (
+        <HomeRail
+          people={railPeople}
+          sessionId={sessionId}
+          onOpen={(uid) => feedEvents.suggestion("suggestion_open", uid, sessionId)}
+          onFollowed={(uid) => feedEvents.suggestion("suggestion_follow", uid, sessionId)}
+        />
+      )}
     </div>
   );
 
@@ -255,7 +291,7 @@ export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
               patch={patchPost}
               onRemove={removePost}
             />
-          ) : (
+          ) : showRail ? null : (
             <PeopleStrip
               key={`u${it.id}`}
               item={it}

@@ -14,6 +14,7 @@ const notAllowed = (e: unknown) => (e as DOMException | undefined)?.name === "No
 
 // A reel in Home is a poster until it is the one being watched; then (and only then) a muted <video> exists.
 // Tapping opens the Immersive feed on this same post. Data-saver connections never autoplay.
+// Instagram look: edge to edge on phones, a thin-bordered rounded card from md up.
 export function ReelBody({ post, index, active, paused, onOpen, onLike }: BodyProps) {
   const video = sortedMedia(post).find(isVideoMedia);
   const src = video?.url ?? post.video_url;
@@ -65,7 +66,10 @@ export function ReelBody({ post, index, active, paused, onOpen, onLike }: BodyPr
   }, [mounted]);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-image bg-black" style={{ aspectRatio: frameAspect("reel", post), maxHeight: "82dvh" }}>
+    <div
+      className="relative w-full overflow-hidden bg-black md:rounded-lg md:border md:border-line"
+      style={{ aspectRatio: frameAspect("reel", post), maxHeight: "82dvh" }}
+    >
       <TapSurface onOpen={onOpen} onLike={onLike} label="Open reel" className="absolute inset-0">
         {mounted ? (
           <video

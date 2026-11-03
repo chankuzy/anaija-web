@@ -10,11 +10,14 @@ import type { StoryGroup } from "@/lib/api/stories";
 import { useAuth } from "@/lib/auth/auth-context";
 import { feedEvents } from "@/lib/feed/event-tracker";
 import { holdMedia, releaseMedia } from "@/lib/feed/media-hold";
+import { useMedia } from "@/lib/ui/use-media";
 
 // Same story data and viewer as the immersive feed; here it is a plain row in the page flow.
+// Anaija colours and avatars, Instagram proportions: avatar 56 (ring footprint 66) on phones, 66 (76) on desktop.
 export function HomeStories() {
   const { status, user } = useAuth();
   const { groups, markStoriesSeen } = useMessages();
+  const desktop = useMedia("(min-width: 768px)");
   const [viewer, setViewer] = useState<{ groups: StoryGroup[]; start: number } | null>(null);
   const open = viewer !== null;
 
@@ -34,8 +37,9 @@ export function HomeStories() {
 
   return (
     <>
-      <div className="px-4 pb-4 pt-1 md:px-0">
-        <StoriesTray groups={groups} me={me} onDark size={64} usernames onOpen={(g, i) => setViewer({ groups: g, start: i })} />
+      {/* The tray carries its own 16px side padding; on desktop it is pulled back so the first ring lines up with the posts. */}
+      <div className="pb-2 pt-1 md:-mx-4 md:pb-5 md:pt-8">
+        <StoriesTray groups={groups} me={me} onDark size={desktop ? 66 : 56} usernames onOpen={(g, i) => setViewer({ groups: g, start: i })} />
       </div>
       {viewer &&
         createPortal(

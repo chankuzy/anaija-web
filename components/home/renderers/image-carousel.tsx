@@ -67,6 +67,7 @@ function SlideImg({ s, load, eager, hidden }: { s: Slide; load: boolean; eager: 
 
 // Swipeable images that slide by themselves while this post is the one being looked at. A trailing copy of the
 // first slide makes the loop seamless (it snaps back to the real first slide once the copy settles).
+// Instagram look: no rounding on phones (edge to edge), a thin-bordered rounded card from md up, dots under the image.
 export function ImageCarousel({
   slides,
   aspect,
@@ -147,64 +148,65 @@ export function ImageCarousel({
   const bump = () => {
     holdUntil.current = Date.now() + HOLD_MS;
   };
-  const arrow = "absolute top-1/2 hidden size-9 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white md:grid";
+  const arrow = "absolute top-1/2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-black/55 text-white md:grid";
 
   return (
-    <div
-      role="group"
-      aria-roledescription={multi ? "carousel" : undefined}
-      className="relative overflow-hidden rounded-image bg-surface-subtle"
-      style={{ aspectRatio: aspect }}
-      onPointerEnter={(e) => {
-        if (e.pointerType === "mouse") hovering.current = true;
-      }}
-      onPointerLeave={(e) => {
-        if (e.pointerType === "mouse") hovering.current = false;
-      }}
-      onPointerDown={bump}
-      onWheel={bump}
-      onFocus={bump}
-      onKeyDown={bump}
-    >
-      <TapSurface onOpen={onOpen} onLike={onLike} label={label} className="absolute inset-0">
-        <div ref={ref} onScroll={onScroll} className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain">
-          {list.map((s, i) => (
-            <SlideImg
-              key={i === n && multi ? `${s.id}-loop` : s.id}
-              s={s}
-              load={i === 0 || Math.abs(i - idx) <= 1}
-              eager={index < 2 && i === 0}
-              hidden={multi && i === n}
+    <div>
+      <div
+        role="group"
+        aria-roledescription={multi ? "carousel" : undefined}
+        className="relative overflow-hidden bg-surface-subtle md:rounded-lg md:border md:border-line"
+        style={{ aspectRatio: aspect }}
+        onPointerEnter={(e) => {
+          if (e.pointerType === "mouse") hovering.current = true;
+        }}
+        onPointerLeave={(e) => {
+          if (e.pointerType === "mouse") hovering.current = false;
+        }}
+        onPointerDown={bump}
+        onWheel={bump}
+        onFocus={bump}
+        onKeyDown={bump}
+      >
+        <TapSurface onOpen={onOpen} onLike={onLike} label={label} className="absolute inset-0">
+          <div ref={ref} onScroll={onScroll} className="no-scrollbar flex h-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain">
+            {list.map((s, i) => (
+              <SlideImg
+                key={i === n && multi ? `${s.id}-loop` : s.id}
+                s={s}
+                load={i === 0 || Math.abs(i - idx) <= 1}
+                eager={index < 2 && i === 0}
+                hidden={multi && i === n}
+              />
+            ))}
+          </div>
+        </TapSurface>
+
+        {multi && (
+          <>
+            {idx > 0 && idx < n && (
+              <button type="button" aria-label="Previous image" onClick={() => go(-1)} className={`${arrow} left-2`}>
+                <Icon name="chevronRight" className="size-5 rotate-180" />
+              </button>
+            )}
+            <button type="button" aria-label="Next image" onClick={() => go(1)} className={`${arrow} right-2`}>
+              <Icon name="chevronRight" className="size-5" />
+            </button>
+          </>
+        )}
+        {children}
+      </div>
+
+      {multi && (
+        <div aria-hidden className="pointer-events-none flex justify-center gap-1 pt-2.5">
+          {slides.map((s, i) => (
+            <span
+              key={s.id}
+              className={`size-1.5 rounded-full transition-colors duration-200 motion-reduce:transition-none ${i === shown ? "bg-brand" : "bg-white/30"}`}
             />
           ))}
         </div>
-      </TapSurface>
-
-      {multi && (
-        <>
-          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-            <div className="flex gap-1 rounded-pill bg-black/35 px-2 py-1.5">
-              {slides.map((s, i) => (
-                <span
-                  key={s.id}
-                  className={`h-[5px] rounded-full transition-[width,background-color] duration-200 motion-reduce:transition-none ${
-                    i === shown ? "w-4 bg-white" : "w-[5px] bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-          </div>
-          {idx > 0 && idx < n && (
-            <button type="button" aria-label="Previous image" onClick={() => go(-1)} className={`${arrow} left-2`}>
-              <Icon name="chevronRight" className="size-5 rotate-180" />
-            </button>
-          )}
-          <button type="button" aria-label="Next image" onClick={() => go(1)} className={`${arrow} right-2`}>
-            <Icon name="chevronRight" className="size-5" />
-          </button>
-        </>
       )}
-      {children}
     </div>
   );
 }

@@ -8,21 +8,21 @@ export function HomeSkeleton() {
   return (
     <div role="status" aria-busy="true" aria-label="Loading feed">
       {[0, 1].map((i) => (
-        <div key={i} className="px-4 pb-8 md:px-0">
-          <div className="flex items-center gap-3 py-1">
-            <Sk className="size-10 rounded-full" />
+        <div key={i} className="pb-6">
+          <div className="flex items-center gap-2.5 px-3 py-2 md:px-0 md:pb-3 md:pt-0">
+            <Sk className="size-9 rounded-full" />
             <div className="space-y-2">
               <Sk className="h-3.5 w-28 rounded-full" />
               <Sk className="h-3 w-20 rounded-full" />
             </div>
           </div>
-          <Sk className="mt-3 aspect-[4/5] w-full rounded-image" />
-          <div className="mt-3 flex gap-3">
+          <Sk className="aspect-[4/5] w-full md:rounded-lg" />
+          <div className="mt-3 flex gap-3 px-3 md:px-0">
             <Sk className="h-6 w-14 rounded-full" />
             <Sk className="h-6 w-14 rounded-full" />
           </div>
-          <Sk className="mt-3 h-3.5 w-full rounded-full" />
-          <Sk className="mt-2 h-3.5 w-[60%] rounded-full" />
+          <Sk className="mx-3 mt-3 h-3.5 w-[calc(100%-1.5rem)] rounded-full md:mx-0 md:w-full" />
+          <Sk className="mx-3 mt-2 h-3.5 w-[60%] rounded-full md:mx-0" />
         </div>
       ))}
     </div>

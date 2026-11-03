@@ -10,13 +10,13 @@ import { useMessagesUnread } from "@/lib/messaging/unread-context";
 const BTN =
   "relative grid size-11 place-items-center text-fg transition-transform active:scale-95 motion-reduce:active:scale-100";
 
-// Mobile only: the rail already carries notifications, messages and sign-in on larger screens. Scrolls away with the page.
-// Both badges are real backend state (activity "unseen" and conversations with something unread).
+// Mobile only: the rail already carries notifications, messages and sign-in on larger screens. Stays pinned like
+// Instagram's top bar. Both badges are real backend state (activity "unseen" and conversations with something unread).
 export function HomeHeader({ authed }: { authed: boolean }) {
   const { unseen } = useActivity();
   const { count: chats } = useMessagesUnread();
   return (
-    <header className="px-4 md:hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+    <header className="sticky top-0 z-20 bg-bg px-3 md:hidden" style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="flex h-12 items-center justify-between">
         <Link href="/" aria-label="Anaija home" className="inline-flex items-center">
           <AppLogo size={42} showMark={false} />
