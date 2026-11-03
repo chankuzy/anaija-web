@@ -12,7 +12,8 @@ const BTN =
 
 // Mobile only: the rail already carries notifications, messages and sign-in on larger screens. Stays pinned like
 // Instagram's top bar, with the same calligraphic wordmark the signed-out feed uses.
-// Both badges are real backend state (activity "unseen" and conversations with something unread).
+// Right side: create (opens the app shell's create sheet), notifications, messages. Both badges are real backend state
+// (activity "unseen" and conversations with something unread).
 export function HomeHeader({ authed }: { authed: boolean }) {
   const { unseen } = useActivity();
   const { count: chats } = useMessagesUnread();
@@ -24,6 +25,9 @@ export function HomeHeader({ authed }: { authed: boolean }) {
         </Link>
         {authed ? (
           <div className="-mr-2 flex items-center">
+            <button type="button" aria-label="Create" onClick={() => window.dispatchEvent(new Event("anaija:create"))} className={BTN}>
+              <Icon name="plus" weight="strong" className="size-[28px]" />
+            </button>
             <Link href="/notifications" aria-label={unseen > 0 ? `${unseen} new notifications` : "Notifications"} className={BTN}>
               <Icon name="bell" filled={unseen > 0} className="size-[26px]" />
               {unseen > 0 && (

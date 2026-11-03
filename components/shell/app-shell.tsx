@@ -20,8 +20,9 @@ import { PublishShare } from "@/components/create/publish-share";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
-// Mobile bar (Instagram-flat): Home, Discover, Communities, [Create], Media, Profile. Messages and Notifications live in
-// the rail on md+ and in the Home header on mobile. Guests get sent to sign-in for anything but Home and Media.
+// Mobile bar (Instagram-flat, five tabs): Home, Discover, Communities, Media, Profile. Create lives in the Home top bar
+// (plus, beside the bell and messages) and as a floating button on Discover and Profile. Messages and Notifications live
+// in the rail on md+ and in the Home header on mobile. Guests get sent to sign-in for anything but Home and Media.
 // Notifications has no page: on md+ it is a slide-out panel beside the rail, on mobile a full-screen sheet
 // (opened by the bell, any link to /notifications).
 const NAV: NavItem[] = [
@@ -37,7 +38,7 @@ const NAV: NavItem[] = [
 
 const SIDE = NAV.filter((n) => n.mobile !== "create");
 const CREATE = NAV.find((n) => n.mobile === "create")!;
-const MOBILE = NAV.filter((n) => n.mobile);
+const TABS = NAV.filter((n) => n.mobile === "tab");
 
 const ASIDE_BASE =
   "group/side sticky top-0 z-[2] flex h-dvh w-[76px] flex-col justify-between overflow-hidden px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out";
@@ -117,9 +118,10 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
-  // Floating "New community" button (mobile): Communities only. Create itself lives in the bottom bar now.
+  // Create FAB (mobile): only on tab-root pages whose right edge is free. Home has the plus in its top bar and Media
+  // keeps the action rail clear.
   const onCommunities = pathname === "/communities";
-  const showFab = !inChat && onCommunities;
+  const showFab = !inChat && (onCommunities || pathname === "/discover" || pathname === "/me");
   // Signed-in users get the kind picker; guests keep the plain link to sign-in.
   const openCreate = (e: React.MouseEvent) => {
     if (status !== "authed") return;
@@ -264,15 +266,14 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Mobile bottom bar: flat and solid like Instagram. Filled icon = current tab, Create opens the sheet,
-          the Profile tab is your avatar (ringed white while you are on it). */}
+      {/* Mobile bottom bar: flat and solid like Instagram, five tabs. Filled icon = current tab, the Profile tab is
+          your avatar (ringed white while you are on it). */}
       <nav
         className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-bg md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {MOBILE.map((n) => {
-          const create = n.mobile === "create";
-          const active = !create && isActive(n.href);
+        {TABS.map((n) => {
+          const active = isActive(n.href);
           const profile = n.href === "/me" && status === "authed";
           return (
             <Link
@@ -280,9 +281,8 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               href={hrefFor(n)}
               aria-label={n.label}
               aria-current={active ? "page" : undefined}
-              onClick={create ? openCreate : undefined}
               className={`relative flex flex-1 items-center justify-center transition-transform active:scale-90 motion-reduce:active:scale-100 ${
-                active || create ? "text-white" : "text-white/60"
+                active ? "text-white" : "text-white/60"
               }`}
             >
               {profile ? (
@@ -290,7 +290,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                   <Avatar url={avatar} name={user?.name ?? user?.username} size={26} />
                 </span>
               ) : (
-                <Icon name={n.icon} filled={active} weight={create ? "strong" : "medium"} className="size-[28px]" />
+                <Icon name={n.icon} filled={active} className="size-[28px]" />
               )}
             </Link>
           );
@@ -300,8 +300,9 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
       {showFab && !panelOpen && (
         <Link
           key={pathname}
-          href="/communities/new"
-          aria-label="New community"
+          href={hrefFor(onCommunities ? { ...CREATE, href: "/communities/new" } : CREATE)}
+          aria-label={onCommunities ? "New community" : "Create"}
+          onClick={onCommunities ? undefined : openCreate}
           className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-white ring-1 ring-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-10px_18px_rgba(0,0,0,0.5),0_20px_38px_-10px_rgba(0,0,0,0.95),0_4px_10px_rgba(0,0,0,0.6)] transition-transform duration-150 active:scale-90 md:hidden"
           style={{
             bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)",
