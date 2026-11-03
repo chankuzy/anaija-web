@@ -95,10 +95,7 @@ export const HomePost = memo(function HomePost({
   const bodyPad = flush || EDGE.has(kind) ? "" : "mx-3 md:mx-0";
 
   return (
-    <article
-      aria-label={`Post by ${post.author?.username ?? "Anaija"}`}
-      className={flush ? "pb-8" : "mb-3 border-b border-line pb-3 md:mb-5 md:pb-4"}
-    >
+    <article aria-label={`Post by ${post.author?.username ?? "Anaija"}`} className={flush ? "pb-8" : "mb-7 md:mb-10"}>
       <div className={`${pad} py-2 md:pb-3 md:pt-0`}>
         <PostHeader post={post} isOwn={a.isOwn} following={a.following} onFollow={a.follow} onMore={() => setOptionsOpen(true)} />
       </div>
