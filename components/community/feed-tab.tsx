@@ -151,7 +151,7 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
         <div>
           {items.map((p, i) => (
             <div key={p.id} className="border-b border-white/[0.06] pt-4 last:border-none">
-            <div className="mx-auto w-full max-w-[7cm] [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
+            <div className="w-full max-w-[11cm] [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
               {p.community_pinned && (
                 <p className="mb-2 flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
                   <Icon name="pin" filled className="size-3.5" />
