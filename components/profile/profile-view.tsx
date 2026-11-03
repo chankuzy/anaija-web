@@ -498,7 +498,7 @@ export function ProfileView({ username }: { username: string }) {
     body = (
       <>
         {tab === "updates" ? (
-          <div className="mx-auto w-full max-w-[560px] px-4 md:px-0">
+          <div className="w-full max-w-[11cm] px-4 md:px-0 [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
             {curItems.map((p, i) => (
               <div key={p.id} className="border-b border-white/[0.06] pt-4 last:border-none">
                 <HomePost post={p} index={i} active={false} onVisible={noopVisible} patch={src.patch} onRemove={src.remove} flush />
