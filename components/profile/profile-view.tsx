@@ -12,6 +12,8 @@ import { DiscoverGrid, DiscoverSkeleton } from "@/components/discover/discover-g
 import { PostViewer } from "@/components/discover/post-viewer";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Lightbox } from "@/components/ui/lightbox";
+import { HomePost } from "@/components/home/home-post";
+import { contentKind } from "@/lib/feed/content";
 import type { DiscoverItem } from "@/lib/api/discover";
 import type { Post } from "@/lib/api/feed-types";
 import { ApiError } from "@/lib/api/client";
@@ -26,7 +28,7 @@ import { useStoryRing, type StoryRingState } from "@/lib/stories/use-story-ring"
 import { ProfileMenu } from "./profile-menu";
 import { StoryRingAvatar } from "./story-ring-avatar";
 
-type ListTab = "posts" | "reels" | "reposts" | "liked" | "saved";
+type ListTab = "posts" | "updates" | "reels" | "reposts" | "liked" | "saved";
 type TabId = ListTab | "info";
 
 // The plus on your own avatar (mobile) opens the composer with Story focused.
@@ -35,6 +37,7 @@ const STORY_COMPOSER_HREF = "/create/new?mode=story";
 const TABS: { id: TabId; label: string }[] = [
   { id: "posts", label: "Posts" },
   { id: "reels", label: "Media" },
+  { id: "updates", label: "Updates" },
   { id: "reposts", label: "Reposts" },
   { id: "saved", label: "Favorites" },
   { id: "liked", label: "Liked" },
@@ -45,6 +48,7 @@ const TABS: { id: TabId; label: string }[] = [
 const TAB_ICON: Record<TabId, IconName> = {
   posts: "galleryWide",
   reels: "clapperboard",
+  updates: "notebookMinimalistic",
   reposts: "repeat",
   saved: "bookmark",
   liked: "heart",
@@ -52,6 +56,12 @@ const TAB_ICON: Record<TabId, IconName> = {
 };
 
 const EMPTY_POSTS: Post[] = [];
+const noopVisible = () => {};
+// Visual posts are tiles; everything else (polls, docs, publications, announcements, text) reads as a feed.
+const isTile = (p: Post) => {
+  const k = contentKind(p);
+  return k === "reel" || k === "audioReel" || k === "gallery" || k === "listing";
+};
 
 interface PagedLike {
   data: { hasMore: boolean; loadingMore: boolean; moreError: boolean; error: string | null } | null;
@@ -65,6 +75,7 @@ interface PagedLike {
 const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
   posts: { title: "No posts yet", sub: "Everything shared shows up here" },
   reels: { title: "No media yet", sub: "Videos and posts with audio show up here" },
+  updates: { title: "No updates yet", sub: "Polls, documents, publications and announcements show up here" },
   reposts: { title: "No reposts yet", sub: "Posts reposted from the feed show up here" },
   liked: { title: "No likes yet", sub: "Posts you like will show up here" },
   saved: { title: "No favorites yet", sub: "Tap the bookmark on anything you want to find again" },
@@ -358,7 +369,7 @@ export function ProfileView({ username }: { username: string }) {
   const loadRepostsCb = useCallback((c: number | null, s?: AbortSignal) => loadReposts(username, c, s), [username]);
   const posts = usePaged<Post, PostsCursor>({
     id: `posts:${username}`,
-    enabled: authed && (visited.has("posts") || visited.has("reels")),
+    enabled: authed && (visited.has("posts") || visited.has("reels") || visited.has("updates")),
     load: loadPostsCb,
   });
   const reposts = usePaged<Post, number>({ id: `reposts:${username}`, enabled: authed && visited.has("reposts"), load: loadRepostsCb });
@@ -367,9 +378,12 @@ export function ProfileView({ username }: { username: string }) {
 
   const postsList = useMemo(() => postsView(posts.data?.items ?? EMPTY_POSTS, posts.data?.cursor ?? null), [posts.data]);
   const reels = useMemo(() => postsList.filter(isReel), [postsList]);
+  const tiles = useMemo(() => postsList.filter(isTile), [postsList]);
+  const updates = useMemo(() => postsList.filter((p) => !isTile(p)), [postsList]);
 
   const lists: Record<ListTab, { items: Post[]; src: PagedLike }> = {
-    posts: { items: postsList, src: posts },
+    posts: { items: tiles, src: posts },
+    updates: { items: updates, src: posts },
     reels: { items: reels, src: posts },
     reposts: { items: reposts.data?.items ?? EMPTY_POSTS, src: reposts },
     liked: { items: liked.data?.items ?? EMPTY_POSTS, src: liked },
@@ -483,7 +497,17 @@ export function ProfileView({ username }: { username: string }) {
   } else {
     body = (
       <>
-        <DiscoverGrid items={grid} videoBadge="clapper" onOpen={(i) => setViewer({ items: grid, index: i })} />
+        {tab === "updates" ? (
+          <div className="mx-auto w-full max-w-[560px] px-4 md:px-0">
+            {curItems.map((p, i) => (
+              <div key={p.id} className="border-b border-white/[0.06] pt-4 last:border-none">
+                <HomePost post={p} index={i} active={false} onVisible={noopVisible} patch={src.patch} onRemove={src.remove} flush />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <DiscoverGrid items={grid} videoBadge="clapper" onOpen={(i) => setViewer({ items: grid, index: i })} />
+        )}
         <div ref={sentinel} className="h-px" />
         {loadingMore && <MoreSkeleton />}
         {moreError && (

@@ -18,14 +18,24 @@ import { Empty, ReportSheet, StatusChip, messageOf, useFetch } from "./kit";
 import { PublishSheet } from "./publish-sheet";
 import { LiveStrip } from "@/components/moments/moments-tab";
 
-const noop = () => {};
-
 export function FeedTab({ c }: { c: CommunityDetail }) {
   const { toast, show } = useToast();
   const { user } = useAuth();
   const [share, setShare] = useState(false);
   const [report, setReport] = useState<CPost | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
+
+  // The post most in view is the "active" one: its slideshow slides and its reel plays.
+  const ratios = useRef(new Map<number, number>());
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const onVisible = useCallback((id: number, r: number) => {
+    if (r > 0) ratios.current.set(id, r);
+    else ratios.current.delete(id);
+    let best: number | null = null;
+    let top = 0.39;
+    for (const [k, v] of ratios.current) if (v > top) { top = v; best = k; }
+    setActiveId((prev) => (prev === best ? prev : best));
+  }, []);
 
   const sessions = useFetch(c.can.read ? `sessions:${c.id}` : null, () => communitiesApi.sessions(c.slug));
   const load = useCallback(
@@ -141,13 +151,15 @@ export function FeedTab({ c }: { c: CommunityDetail }) {
         <div>
           {items.map((p, i) => (
             <div key={p.id} className="border-b border-white/[0.06] pt-4 last:border-none">
+            <div className="mx-auto w-full max-w-[7cm] [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
               {p.community_pinned && (
                 <p className="mb-2 flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
                   <Icon name="pin" filled className="size-3.5" />
                   Pinned
                 </p>
               )}
-              <HomePost post={p} index={i} active={false} onVisible={noop} patch={list.patch} onRemove={list.remove} extra={extraFor(p)} flush />
+              <HomePost post={p} index={i} active={p.id === activeId} onVisible={onVisible} patch={list.patch} onRemove={list.remove} extra={extraFor(p)} flush />
+            </div>
             </div>
           ))}
           <div ref={sentinel} className="h-px" />
