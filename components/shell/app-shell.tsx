@@ -113,15 +113,16 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const hrefFor = (n: NavItem) =>
     n.auth && status === "guest" ? (n.href === "/notifications" ? "/login" : `/login?next=${encodeURIComponent(n.href)}`) : n.href;
   const fullBleed = pathname === "/" || pathname === "/watch" || pathname.startsWith("/p/");
-  // Inside a conversation the thread owns the whole screen: no bottom tabs, and nothing reserves room for them.
-  const inChat = /^\/messages\/\d+/.test(pathname);
+  // Full-screen tasks own the whole screen: no bottom tabs, no FAB, and nothing reserves room for them. That also keeps
+  // the fixed tab bar from riding up above the on-screen keyboard. Conversations and community search are such tasks.
+  const bare = /^\/messages\/\d+/.test(pathname) || pathname === "/communities/search";
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
   // Create FAB (mobile): only on tab-root pages whose right edge is free. Home has the plus in its top bar and Media
   // keeps the action rail clear.
   const onCommunities = pathname === "/communities";
-  const showFab = !inChat && (onCommunities || pathname === "/discover" || pathname === "/me");
+  const showFab = !bare && (onCommunities || pathname === "/discover" || pathname === "/me");
   // Signed-in users get the kind picker; guests keep the plain link to sign-in.
   const openCreate = (e: React.MouseEvent) => {
     if (status !== "authed") return;
@@ -132,7 +133,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   return (
     <div
       className={`flex min-h-dvh w-full ${fullBleed ? "" : "mx-auto max-w-[1440px]"}`}
-      style={inChat ? ({ "--nav-h": "0px" } as React.CSSProperties) : undefined}
+      style={bare ? ({ "--nav-h": "0px" } as React.CSSProperties) : undefined}
     >
       {/* Rail (md+): reserves 76px. The aside grows over the page on hover and shrinks back on leave; while the
           notifications panel is open it stays icon-only and the panel slides out beside it. */}
@@ -269,7 +270,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
       {/* Mobile bottom bar: flat and solid like Instagram, five tabs. Filled icon = current tab, the Profile tab is
           your avatar (ringed white while you are on it). */}
       <nav
-        className={`fixed inset-x-0 bottom-0 z-40 ${inChat ? "hidden" : "flex"} bg-bg md:hidden`}
+        className={`fixed inset-x-0 bottom-0 z-40 ${bare ? "hidden" : "flex"} bg-bg md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {TABS.map((n) => {
