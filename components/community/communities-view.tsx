@@ -1,17 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
-import { inputClass } from "@/components/ui/input";
 import { Sk } from "@/components/ui/skeleton";
 import { UnreadBadge } from "@/components/ui/unread-badge";
 import { useActivity } from "@/lib/activity/activity-context";
 import { communitiesApi, type Community, type MineRow } from "@/lib/api/communities";
 import { homeApi, type Pulse } from "@/lib/api/community-home";
-import { mediaUrl } from "@/lib/api/feed";
 import { useAuth } from "@/lib/auth/auth-context";
 import { loginHref } from "@/lib/auth/next";
 import { useRecent } from "@/lib/community/recent";
@@ -22,6 +20,37 @@ import { CATEGORIES, Chip, Cm, Empty, SectionHead, Sheet, StatusChip, categoryLa
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const metaOf = (c: Community) => [categoryLabel(c.category), c.course_code, plural(c.members_count, "member", "members")].filter(Boolean).join(" · ");
+const ICON_BTN =
+  "relative grid size-11 shrink-0 place-items-center rounded-full text-fg transition-[background-color,transform] hover:bg-surface-interactive active:scale-95 motion-reduce:active:scale-100";
+
+// Recommendation signals that exist today. A community is only recommended when at least one holds, and the reason shown
+// is exactly that signal. Thresholds are deliberately plain; a real ranking needs the backend (see handoff notes).
+const POPULAR = 25;
+const BUSY = 10;
+type Rec = { c: Community; reason: string };
+
+function recommend(inst: number | null, pools: (Community[] | undefined)[]): Rec[] {
+  const seen = new Set<number>();
+  const rows: (Rec & { campus: boolean })[] = [];
+  for (const pool of pools) {
+    for (const c of pool ?? []) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      if (c.is_member || c.request_status === "pending" || c.join_policy === "invite") continue;
+      const campus = !!inst && c.institution_id === inst;
+      const reason = campus
+        ? "At your campus"
+        : c.members_count >= POPULAR
+          ? `Popular · ${plural(c.members_count, "member", "members")}`
+          : c.posts_count >= BUSY
+            ? `Active · ${plural(c.posts_count, "post", "posts")}`
+            : null;
+      if (reason) rows.push({ c, reason, campus });
+    }
+  }
+  rows.sort((a, b) => Number(b.campus) - Number(a.campus) || b.c.members_count - a.c.members_count);
+  return rows.slice(0, 8).map(({ c, reason }) => ({ c, reason }));
+}
 
 function CommunityRow({ c, reason }: { c: Community; reason?: string | null }) {
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
@@ -65,6 +94,20 @@ function MineTile({ c }: { c: MineRow }) {
       </span>
       <span className="mt-2.5 line-clamp-2 block min-h-[32px] text-[13.5px] font-bold leading-[1.2] text-fg">{c.name}</span>
       <span className="mt-1 block truncate text-micro text-muted">{c.course_code ?? categoryLabel(c.category)} · {c.members_count}</span>
+    </Link>
+  );
+}
+
+// ── Recommended: only communities with a real reason ──────────────────────────────────────────────
+function RecTile({ r }: { r: Rec }) {
+  const { c } = r;
+  return (
+    <Link href={`/c/${c.slug}`} className="flex w-[168px] shrink-0 flex-col rounded-2xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive">
+      <Avatar url={c.avatar} name={c.name} size={48} />
+      <span className="mt-3 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] text-fg">{c.name}</span>
+      <span className="mt-1 block truncate text-micro text-muted">{c.course_code ?? categoryLabel(c.category)}</span>
+      <span className="mt-2 line-clamp-2 block min-h-[28px] text-supporting font-semibold leading-[1.3] text-brand-ink">{r.reason}</span>
+      <span className="mt-2 block text-micro font-semibold uppercase tracking-[0.08em] text-muted">{c.join_policy === "open" ? "Open" : "Approval"}</span>
     </Link>
   );
 }
@@ -154,18 +197,11 @@ export function CommunitiesView() {
   const authed = status === "authed";
   const { unseen } = useActivity();
   const panel = useNotificationsPanel();
-  const [q, setQ] = useState("");
-  const [dq, setDq] = useState("");
   const [cat, setCat] = useState<string | null>(null);
   const [scope, setScope] = useState<"campus" | "all" | null>(null);
   const [all, setAll] = useState(false);
   const [extra, setExtra] = useState<{ key: string; items: Community[]; more: boolean; page: number } | null>(null);
   const [moreBusy, setMoreBusy] = useState(false);
-
-  useEffect(() => {
-    const t = window.setTimeout(() => setDq(q.trim()), 300);
-    return () => window.clearTimeout(t);
-  }, [q]);
 
   const inst = user?.institution_id ?? null;
   const sc = scope ?? (inst ? "campus" : "all");
@@ -179,12 +215,18 @@ export function CommunitiesView() {
   const mineSlugs = new Set(mineList.map((c) => c.slug));
   const viewed = recent.filter((r) => !mineSlugs.has(r.slug)).slice(0, 6);
 
+  // Recommended: same-campus communities plus the general listing, ranked by the signals in recommend().
+  const recCampus = useFetch(authed && inst ? `rec:campus:${inst}` : null, () => homeApi.discoverAt({ institution_id: inst as number }));
+  const recAll = useFetch(authed ? "rec:all" : null, () => communitiesApi.discover({}));
+  const recs = authed ? recommend(inst, [recCampus.data?.items, recAll.data?.items]) : [];
+  const recLoading = authed && recs.length === 0 && (recAll.loading || recCampus.loading);
+  const recIds = new Set(recs.map((r) => r.c.id));
+
   const dkey = status === "loading" ? null : `disc2:${status}:${campus ? "campus" : "all"}:${cat ?? ""}`;
   const disc = useFetch(dkey, () => (campus && inst ? homeApi.discoverAt({ institution_id: inst, category: cat }) : communitiesApi.discover({ category: cat })));
-  const found = useFetch(dq ? `find:${status}:${dq}` : null, () => communitiesApi.discover({ search: dq }), { persist: false });
 
   const more = extra?.key === dkey ? extra : null;
-  const items = [...(disc.data?.items ?? []), ...(more?.items ?? [])].filter((c) => !c.is_member);
+  const items = [...(disc.data?.items ?? []), ...(more?.items ?? [])].filter((c) => !c.is_member && !recIds.has(c.id));
   const hasMore = more ? more.more : (disc.data?.hasMore ?? false);
   const page = more?.page ?? 1;
 
@@ -206,15 +248,18 @@ export function CommunitiesView() {
   const { reload: reloadMine } = mine;
   const { reload: reloadPulse } = pulse;
   const { reload: reloadDisc } = disc;
+  const { reload: reloadRecCampus } = recCampus;
+  const { reload: reloadRecAll } = recAll;
   const { pull, refreshing } = usePullRefresh({
-    enabled: !dq,
+    enabled: true,
     onRefresh: () => {
       reloadMine();
       reloadPulse();
       reloadDisc();
+      reloadRecCampus();
+      reloadRecAll();
     },
   });
-  const avatar = user ? mediaUrl(user.avatar) : null;
 
   return (
     <Cm>
@@ -228,127 +273,118 @@ export function CommunitiesView() {
           )}
         </div>
 
-        <header className="flex items-center gap-2">
+        <header className="flex items-center gap-0.5">
           <div className="min-w-0 flex-1">
             <h1 className="text-[26px] font-extrabold leading-none tracking-tight text-fg">Communities</h1>
             <p className="mt-1.5 truncate text-secondary text-muted">Your campus. Your people. Your conversations.</p>
           </div>
+          <Link href="/communities/search" aria-label="Search communities" className={ICON_BTN}>
+            <Icon name="search" className="size-[24px]" />
+          </Link>
           {authed ? (
-            <>
-              <button type="button" aria-label="Notifications" onClick={panel.toggle} className="relative grid size-10 place-items-center rounded-full bg-surface-subtle ring-1 ring-line md:hidden">
-                <Icon name="bell" className="size-5" />
-                {unseen > 0 && <span className="absolute -right-1 -top-1"><UnreadBadge count={unseen} label="new notifications" /></span>}
-              </button>
-              <Link href="/me" aria-label="Your profile" className="rounded-full ring-1 ring-line md:hidden"><Avatar url={avatar} name={user?.name ?? user?.username} size={40} /></Link>
-              <Link href="/communities/new" className={buttonClass("outline", "hidden h-10 px-4 md:inline-flex")}>
-                <Icon name="plus" className="size-4" />New community
-              </Link>
-            </>
+            <button type="button" aria-label={unseen > 0 ? `${unseen} new notifications` : "Notifications"} onClick={panel.toggle} className={`${ICON_BTN} -mr-2`}>
+              <Icon name="bell" filled={unseen > 0} className="size-[24px]" />
+              {unseen > 0 && <span className="absolute right-0.5 top-0.5"><UnreadBadge count={unseen} label="new notifications" /></span>}
+            </button>
           ) : status === "guest" ? (
-            <Link href={loginHref()} className={buttonClass("primary", "h-10 px-5")}>Sign in</Link>
+            <Link href={loginHref()} className={buttonClass("primary", "ml-1 h-10 px-5")}>Sign in</Link>
           ) : null}
         </header>
 
-        <div className="relative mt-4">
-          <Icon name="search" className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted" />
-          <input className={`${inputClass} pl-11 pr-11`} placeholder="Search communities, courses, departments" value={q} onChange={(e) => setQ(e.target.value)} />
-          {q && (
-            <button type="button" aria-label="Clear search" onClick={() => setQ("")} className="absolute right-3 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-muted hover:bg-surface-interactive">
-              <Icon name="close" className="size-4" />
-            </button>
-          )}
-        </div>
-
-        {dq ? (
-          <div className="mt-5">
-            {found.loading ? <RowsSkeleton /> : found.error ? (
-              <Empty title="Couldn't search" body={found.error}><button type="button" onClick={found.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button></Empty>
-            ) : !found.data?.items.length ? (
-              <Empty title="No matches" body="Try a course code, a department or a different word." />
+        <div className="mt-6 flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-x-10 lg:gap-y-8">
+          <section className="min-w-0 lg:col-start-1 lg:row-start-1">
+            <SectionHead title="My communities">
+              {hasMine && <button type="button" onClick={() => setAll(true)} className="text-secondary font-bold text-muted hover:text-fg">See all</button>}
+            </SectionHead>
+            {!authed && status !== "loading" ? (
+              <div className="rounded-2xl border border-line bg-surface-subtle p-4">
+                <p className="text-[15px] font-bold text-fg">Find where you belong</p>
+                <p className="mt-1 text-secondary leading-[1.4] text-muted">Sign in to join classes, departments and interests, and keep them one tap away.</p>
+                <Link href={loginHref()} className={buttonClass("primary", "mt-3 h-10 px-5")}>Sign in</Link>
+              </div>
+            ) : mine.loading ? (
+              <div role="status" aria-busy="true" aria-label="Loading your communities" className="no-scrollbar -mx-4 flex gap-2.5 overflow-hidden px-4 lg:mx-0 lg:px-0">
+                {[0, 1, 2, 3].map((i) => <Sk key={i} className="h-[118px] w-[136px] shrink-0 rounded-2xl" />)}
+              </div>
+            ) : !hasMine ? (
+              <p className="rounded-2xl border border-line bg-surface-subtle px-4 py-5 text-secondary leading-[1.4] text-muted">You haven&apos;t joined any community yet. Start with the ones below.</p>
             ) : (
-              <div className="grid gap-x-8 md:grid-cols-2">{found.data.items.map((c) => <CommunityRow key={c.id} c={c} />)}</div>
-            )}
-          </div>
-        ) : (
-          <div className="mt-6 flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-x-10 lg:gap-y-8">
-            <section className="min-w-0 lg:col-start-1 lg:row-start-1">
-              <SectionHead title="My communities">
-                {hasMine && <button type="button" onClick={() => setAll(true)} className="text-secondary font-bold text-muted hover:text-fg">See all</button>}
-              </SectionHead>
-              {!authed && status !== "loading" ? (
-                <div className="rounded-2xl border border-line bg-surface-subtle p-4">
-                  <p className="text-[15px] font-bold text-fg">Find where you belong</p>
-                  <p className="mt-1 text-secondary leading-[1.4] text-muted">Sign in to join classes, departments and interests, and keep them one tap away.</p>
-                  <Link href={loginHref()} className={buttonClass("primary", "mt-3 h-10 px-5")}>Sign in</Link>
-                </div>
-              ) : mine.loading ? (
-                <div role="status" aria-busy="true" aria-label="Loading your communities" className="no-scrollbar -mx-4 flex gap-2.5 overflow-hidden px-4 lg:mx-0 lg:px-0">
-                  {[0, 1, 2, 3].map((i) => <Sk key={i} className="h-[118px] w-[136px] shrink-0 rounded-2xl" />)}
-                </div>
-              ) : !hasMine ? (
-                <p className="rounded-2xl border border-line bg-surface-subtle px-4 py-5 text-secondary leading-[1.4] text-muted">You haven&apos;t joined any community yet. Start with the ones below.</p>
-              ) : (
-                <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-                  {mineList.map((c) => <MineTile key={c.id} c={c} />)}
-                </div>
-              )}
-              {authed && viewed.length > 0 && (
-                <div className="no-scrollbar -mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-                  <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">Recently viewed</span>
-                  {viewed.map((r) => (
-                    <Link key={r.slug} href={`/c/${r.slug}`} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-surface-interactive pl-1.5 pr-3.5 text-secondary font-bold text-fg">
-                      <Avatar url={r.avatar} name={r.name} size={24} />
-                      <span className="max-w-[140px] truncate">{r.name}</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            {authed && (mine.loading || hasMine) && (
-              <div className="flex min-w-0 flex-col gap-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
-                <PulseCard p={pulse.data} loading={mine.loading || pulse.loading} />
-                <Highlights p={pulse.data} />
+              <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+                {mineList.map((c) => <MineTile key={c.id} c={c} />)}
               </div>
             )}
+            {authed && viewed.length > 0 && (
+              <div className="no-scrollbar -mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+                <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">Recently viewed</span>
+                {viewed.map((r) => (
+                  <Link key={r.slug} href={`/c/${r.slug}`} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-surface-interactive pl-1.5 pr-3.5 text-secondary font-bold text-fg">
+                    <Avatar url={r.avatar} name={r.name} size={24} />
+                    <span className="max-w-[140px] truncate">{r.name}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
 
+          {authed && (mine.loading || hasMine) && (
+            <div className="flex min-w-0 flex-col gap-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-start">
+              <PulseCard p={pulse.data} loading={mine.loading || pulse.loading} />
+              <Highlights p={pulse.data} />
+            </div>
+          )}
+
+          {authed && (recLoading || recs.length > 0) && (
             <section className="min-w-0 lg:col-start-1 lg:row-start-2">
-              <SectionHead title="Discover" />
-              {inst && (
-                <div className="mb-2 flex gap-2">
-                  <Chip active={campus} onClick={() => { setScope("campus"); setExtra(null); }}>My campus</Chip>
-                  <Chip active={!campus} onClick={() => { setScope("all"); setExtra(null); }}>Everywhere</Chip>
-                </div>
-              )}
-              <div className="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-                <Chip active={cat === null} onClick={() => setCat(null)}>All</Chip>
-                {CATEGORIES.map(([id, label]) => <Chip key={id} active={cat === id} onClick={() => setCat(cat === id ? null : id)}>{label}</Chip>)}
+              <SectionHead title="Recommended for you" />
+              <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+                {recLoading
+                  ? [0, 1, 2].map((i) => <Sk key={i} className="h-[196px] w-[168px] shrink-0 rounded-2xl" />)
+                  : recs.map((r) => <RecTile key={r.c.id} r={r} />)}
               </div>
-              {disc.loading ? <RowsSkeleton n={5} /> : disc.error && !disc.data ? (
-                <Empty title="Couldn't load communities" body={disc.error}><button type="button" onClick={disc.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button></Empty>
-              ) : items.length === 0 ? (
-                <Empty
-                  title={cat ? "No matches" : campus ? "Nothing new at your campus" : "Nothing new to discover"}
-                  body={campus ? "You've joined everything listed here. Look beyond your campus or start one." : "Be the first to start one for your class, department or interest."}
-                >
-                  {campus && <button type="button" onClick={() => setScope("all")} className={buttonClass("outline", "h-10 px-5")}>Everywhere</button>}
-                  <Link href="/communities/new" className={buttonClass("primary", "h-10 px-5")}>Create a community</Link>
-                </Empty>
-              ) : (
-                <>
-                  <div className="grid gap-x-8 md:grid-cols-2">
-                    {items.map((c) => <CommunityRow key={c.id} c={c} reason={!campus && inst && c.institution_id === inst ? "At your campus" : null} />)}
-                  </div>
-                  {hasMore && (
-                    <button type="button" disabled={moreBusy} onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-4 h-10")}>
-                      {moreBusy ? "Loading…" : "Show more"}
-                    </button>
-                  )}
-                </>
-              )}
             </section>
-          </div>
-        )}
+          )}
+
+          <section className="min-w-0 lg:col-start-1 lg:row-start-3">
+            <SectionHead title="Discover" />
+            {inst && (
+              <div className="mb-2 flex gap-2">
+                <Chip active={campus} onClick={() => { setScope("campus"); setExtra(null); }}>My campus</Chip>
+                <Chip active={!campus} onClick={() => { setScope("all"); setExtra(null); }}>Everywhere</Chip>
+              </div>
+            )}
+            <div className="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+              <Chip active={cat === null} onClick={() => setCat(null)}>All</Chip>
+              {CATEGORIES.map(([id, label]) => <Chip key={id} active={cat === id} onClick={() => setCat(cat === id ? null : id)}>{label}</Chip>)}
+            </div>
+            {disc.loading ? <RowsSkeleton n={5} /> : disc.error && !disc.data ? (
+              <Empty title="Couldn't load communities" body={disc.error}><button type="button" onClick={disc.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button></Empty>
+            ) : items.length === 0 ? (
+              <Empty
+                title={cat ? "No matches" : campus ? "Nothing new at your campus" : "Nothing new to discover"}
+                body={campus ? "You've joined everything listed here. Look beyond your campus or start one." : "Be the first to start one for your class, department or interest."}
+              >
+                {campus && <button type="button" onClick={() => setScope("all")} className={buttonClass("outline", "h-10 px-5")}>Everywhere</button>}
+                <Link href="/communities/new" className={buttonClass("primary", "h-10 px-5")}>Create a community</Link>
+              </Empty>
+            ) : (
+              <>
+                <div className="grid gap-x-8 md:grid-cols-2">
+                  {items.map((c) => <CommunityRow key={c.id} c={c} reason={!campus && inst && c.institution_id === inst ? "At your campus" : null} />)}
+                </div>
+                {hasMore && (
+                  <button type="button" disabled={moreBusy} onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-4 h-10")}>
+                    {moreBusy ? "Loading…" : "Show more"}
+                  </button>
+                )}
+              </>
+            )}
+            {authed && (
+              <Link href="/communities/new" className="mt-6 flex items-center justify-center gap-2 text-secondary font-bold text-muted hover:text-fg">
+                <Icon name="plus" className="size-4" />Start a community
+              </Link>
+            )}
+          </section>
+        </div>
       </div>
 
       {all && (

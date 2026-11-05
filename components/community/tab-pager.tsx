@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 
 // Native scroll-snap pager. Swiping is the browser's own gesture. Only the active pane sets the height;
 // neighbours are clipped to it while dragging, so differing content lengths never cause a jump.
+// Gutter is 12px (px-3), the same as Home's posts; a pane that wants edge-to-edge content uses -mx-3.
 export function TabPager({ index, count, onChange, onProgress, render }: {
   index: number;
   count: number;
@@ -68,7 +69,7 @@ export function TabPager({ index, count, onChange, onProgress, render }: {
     <div
       ref={wrap}
       onScroll={onScroll}
-      className="no-scrollbar -mx-4 flex snap-x snap-mandatory items-start overflow-x-auto overflow-y-hidden overscroll-x-contain"
+      className="no-scrollbar -mx-3 flex snap-x snap-mandatory items-start overflow-x-auto overflow-y-hidden overscroll-x-contain"
       style={{ height: h ?? undefined }}
     >
       {Array.from({ length: count }, (_, i) => (
@@ -78,7 +79,7 @@ export function TabPager({ index, count, onChange, onProgress, render }: {
           style={i === index ? undefined : { maxHeight: h ?? undefined, overflow: "hidden" }}
           aria-hidden={i !== index}
         >
-          <div ref={(el) => { inners.current[i] = el; }} className="min-h-[60dvh] px-4 pt-4">
+          <div ref={(el) => { inners.current[i] = el; }} className="min-h-[60dvh] px-3 pt-4">
             {seen.includes(i) ? render(i) : null}
           </div>
         </div>

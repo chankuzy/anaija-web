@@ -22,6 +22,8 @@ import { PublishSheet, canPublish, publishHref } from "./publish-sheet";
 const QUICK: CreateKind[] = ["poll", "document", "announcement"];
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+// Same column as Home: the pager's 12px gutter is cancelled (-mx-3) so media runs edge to edge on phones, and each
+// piece of chrome re-adds the 12px that HomePost itself uses (px-3 md:px-0). Posts are rendered exactly as Home renders them.
 export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessions: () => void }) {
   const router = useRouter();
   const { toast, show } = useToast();
@@ -60,7 +62,7 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
   useEffect(() => {
     const el = sentinel.current;
     if (!el || !hasMore) return;
-    const io = new IntersectionObserver((es) => es[0]?.isIntersecting && loadMore(), { rootMargin: "800px 0px" });
+    const io = new IntersectionObserver((es) => es[0]?.isIntersecting && loadMore(), { rootMargin: "900px 0px" });
     io.observe(el);
     return () => io.disconnect();
   }, [items.length, hasMore, loadMore]);
@@ -109,9 +111,9 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
   const quick = QUICK.filter((k) => canPublish(c, k));
 
   return (
-    <div>
+    <div className="-mx-3 md:mx-0">
       {canShare && (
-        <div className="rounded-2xl border border-line bg-surface-subtle p-3">
+        <div className="mx-3 rounded-2xl border border-line bg-surface-subtle p-3 md:mx-0">
           <button type="button" onClick={() => setShare(true)} className="flex w-full items-center gap-3 text-left">
             <Avatar url={user ? mediaUrl(user.avatar) : null} name={user?.name ?? user?.username} size={36} />
             <span className="min-w-0 flex-1 truncate text-body text-muted">Share something with {c.name}</span>
@@ -131,19 +133,19 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
       )}
 
       {live.length > 0 && (
-        <button type="button" onClick={onOpenSessions} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-line bg-surface-subtle px-4 py-3 text-left text-fg">
+        <button type="button" onClick={onOpenSessions} className="mx-3 mt-3 flex w-[calc(100%-24px)] items-center gap-3 rounded-2xl border border-line bg-surface-subtle px-4 py-3 text-left text-fg md:mx-0 md:w-full">
           <span className="grid size-8 place-items-center rounded-full bg-brand text-brand-fg"><Icon name="eyeClosed" filled className="size-[18px]" /></span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[14px] font-bold">{live[0].title}</span>
             <span className="block text-supporting text-muted">{plural(live.length, "live anonymous session", "live anonymous sessions")}</span>
           </span>
-          <span className="text-secondary font-extrabold text-brand">Open</span>
+          <span className="text-secondary font-extrabold text-brand-ink">Open</span>
         </button>
       )}
 
       <div className="mt-4">
         {list.loading && !list.data ? (
-          <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6 pt-2">
+          <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6 px-3 pt-2 md:px-0">
             {[0, 1, 2].map((i) => (
               <div key={i} className="space-y-3">
                 <div className="flex items-center gap-3"><Sk className="size-9 rounded-full" /><Sk className="h-3.5 w-32 rounded-full" /></div>
@@ -164,24 +166,21 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
             {canShare && <button type="button" onClick={() => setShare(true)} className={buttonClass("primary", "h-10 px-5")}>Share the first post</button>}
           </Empty>
         ) : (
-          // Interim dark island: posts, sheets and renderers are still dark-designed.
-          <div className="cm-dark rounded-[22px] px-3">
+          <>
             {items.map((p, i) => (
-              <div key={p.id} className="border-b border-line pt-4 last:border-none">
-                <div className="w-full max-w-[11cm] [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
-                  {p.community_pinned && (
-                    <p className="mb-2 flex items-center gap-1.5 text-micro font-bold uppercase tracking-[0.08em] text-brand">
-                      <Icon name="pin" filled className="size-3.5" />
-                      Pinned
-                    </p>
-                  )}
-                  <HomePost post={p} index={i} active={p.id === activeId} onVisible={onVisible} patch={list.patch} onRemove={list.remove} extra={extraFor(p)} flush />
-                </div>
+              <div key={p.id}>
+                {p.community_pinned && (
+                  <p className="mb-2 flex items-center gap-1.5 px-3 text-micro font-bold uppercase tracking-[0.08em] text-brand-ink md:px-0">
+                    <Icon name="pin" filled className="size-3.5" />
+                    Pinned
+                  </p>
+                )}
+                <HomePost post={p} index={i} active={p.id === activeId} onVisible={onVisible} patch={list.patch} onRemove={list.remove} extra={extraFor(p)} />
               </div>
             ))}
             <div ref={sentinel} className="h-px" />
             {list.data?.loadingMore && <Sk className="mx-auto h-1.5 w-20 rounded-full" />}
-          </div>
+          </>
         )}
       </div>
 

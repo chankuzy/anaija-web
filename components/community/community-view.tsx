@@ -43,7 +43,7 @@ function Faces({ c }: { c: CommunityDetail }) {
   const rest = Math.max(0, c.members_count - names.length);
   const label = rest > 0 ? `${names.join(", ")} and ${rest} more` : names.join(" and ");
   return (
-    <div className="mt-3 flex items-center gap-3 px-3">
+    <div className="mt-3 flex items-center gap-3 px-1">
       <span className="flex">
         {faces.map((f, i) => (
           <span key={f.id} className={`rounded-full ring-2 ring-bg ${i > 0 ? "-ml-2.5" : ""}`}>
@@ -56,6 +56,8 @@ function Faces({ c }: { c: CommunityDetail }) {
   );
 }
 
+// Identity header. Cover keeps the crop's own 8:3 ratio on phones (so nothing is cut), a fixed compact height from md up,
+// and the same radius token Home gives post media. The 84px avatar sits half over the cover on a bg-coloured ring.
 function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onAbout }: {
   c: CommunityDetail; cover: string | null; avatar: string | null; saving: Kind | null; joining: boolean;
   onJoin: () => void; onMenu: () => void; onView: (url: string) => void; onAbout: () => void;
@@ -69,7 +71,7 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
     if (c.request_status === "pending") join = <span className="px-2 text-secondary font-semibold text-muted">Requested</span>;
     else if (c.join_policy === "invite") join = <span className="px-2 text-secondary font-semibold text-muted">Invite only</span>;
     else join = (
-      <button type="button" disabled={joining} onClick={onJoin} className={buttonClass("primary", "h-9 px-5 text-secondary")}>
+      <button type="button" disabled={joining} onClick={onJoin} className={buttonClass("primary", "h-10 px-6 text-secondary")}>
         {c.join_policy === "request" ? "Request to join" : "Join"}
       </button>
     );
@@ -77,35 +79,36 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
 
   return (
     <div>
-      <div className="relative h-[84px] overflow-hidden rounded-[22px] bg-surface-interactive md:h-[104px]">
+      <div className="relative aspect-[8/3] overflow-hidden rounded-image bg-surface-interactive md:aspect-auto md:h-[168px]">
         {cover && <img src={cover} alt="" className="size-full object-cover" />}
         {cover && <button type="button" aria-label="View cover" onClick={() => onView(cover)} className="absolute inset-0 cursor-zoom-in" />}
-        <Link href="/communities" aria-label="Communities" className="absolute left-2.5 top-2.5 grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
+        <Link href="/communities" aria-label="Communities" className="absolute left-3 top-3 grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
           <Icon name="back" className="size-5" />
         </Link>
-        <button type="button" aria-label="Community menu" onClick={onMenu} className="absolute right-2.5 top-2.5 grid size-9 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
+        <button type="button" aria-label="Community menu" onClick={onMenu} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
           <Icon name="dots" filled className="size-5" />
         </button>
         {saving === "cover" && <div className="absolute inset-0 grid place-items-center bg-black/40">{spinner}</div>}
       </div>
 
-      <div className="flex gap-3 px-3">
-        <span className="relative -mt-8 shrink-0 self-start rounded-full bg-bg p-1">
+      <div className="flex items-center gap-3 px-1">
+        <span className="relative -mt-11 shrink-0 rounded-full bg-bg p-1">
           <button type="button" aria-label="View picture" disabled={!avatar} onClick={() => avatar && onView(avatar)} className="block rounded-full">
-            <Avatar url={avatar} name={c.name} size={64} />
+            <Avatar url={avatar} name={c.name} size={84} />
           </button>
           {saving === "avatar" && <span className="absolute inset-1 grid place-items-center rounded-full bg-black/45">{spinner}</span>}
         </span>
-        <div className="min-w-0 flex-1 pt-2.5">
-          <h1 className="text-[20px] font-extrabold leading-[1.15] tracking-tight text-fg">{c.name}</h1>
-          <p className="mt-0.5 truncate text-secondary text-muted">{meta}</p>
-        </div>
-        {join && <span className="pt-2.5">{join}</span>}
+        <span className="flex-1" />
+        {join}
       </div>
 
-      {c.description && <p className="mt-2 line-clamp-2 px-3 text-secondary leading-[1.45] text-fg/80">{c.description}</p>}
+      <div className="px-1 pt-1">
+        <h1 className="text-[22px] font-extrabold leading-[1.15] tracking-tight text-fg">{c.name}</h1>
+        <p className="mt-1 truncate text-secondary text-muted">{meta}</p>
+        {c.description && <p className="mt-2 line-clamp-2 text-secondary leading-[1.45] text-fg/80">{c.description}</p>}
+      </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 px-3">
+      <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
         {c.is_member && c.my_role && c.my_role !== "member" && (
           <span className="inline-flex h-9 items-center rounded-full bg-brand/15 px-3.5 text-secondary font-extrabold text-brand-ink">{ROLE_LABEL[c.my_role]}</span>
         )}
@@ -225,14 +228,14 @@ export function CommunityView({ slug }: { slug: string }) {
   if (!c) {
     return (
       <Cm>
-        <div className="mx-auto w-full max-w-[720px] px-4 pt-3 md:pt-8">
+        <div className="mx-auto w-full max-w-[720px] px-3 pt-3 md:pt-8">
           {det.error ? (
             <Empty title={det.error.includes("banned") || det.error.includes("can't access") ? "You can't access this community" : det.error.includes("internet") ? "You're offline" : "Community not found"} body={det.error}>
               <Link href="/communities" className={buttonClass("primary", "h-10 px-5")}>Browse communities</Link>
             </Empty>
           ) : (
             <div role="status" aria-busy="true" aria-label="Loading community" className="space-y-4">
-              <Sk className="h-[84px] w-full rounded-[22px]" />
+              <Sk className="aspect-[8/3] w-full rounded-image" />
               <Sk className="h-6 w-56 rounded-full" />
               <Sk className="h-4 w-72 rounded-full" />
             </div>
@@ -242,9 +245,11 @@ export function CommunityView({ slug }: { slug: string }) {
     );
   }
 
+  // Below lg the page is one column capped like Home's (it only ever fills a phone); from lg the feed column takes
+  // all the space the About sidebar leaves.
   return (
     <Cm>
-      <div className="mx-auto w-full max-w-[720px] px-4 pb-28 pt-3 md:pt-8 lg:max-w-[1040px]">
+      <div className="mx-auto w-full max-w-[720px] px-3 pb-28 pt-3 md:pt-8 lg:max-w-[1040px]">
         <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setCrop({ kind: "cover", file: f }); e.target.value = ""; }} />
         <input ref={avatarRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setCrop({ kind: "avatar", file: f }); e.target.value = ""; }} />
 
@@ -263,7 +268,7 @@ export function CommunityView({ slug }: { slug: string }) {
             />
 
             <div ref={anchor} className="mt-5" />
-            <div className="sticky top-0 z-10 -mx-4 border-b border-line bg-bg/95 px-4 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+            <div className="sticky top-0 z-10 -mx-3 border-b border-line bg-bg/95 px-3 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
               <div className="relative grid grid-cols-4">
                 {TABS.map((t, i) => {
                   const on = i === index;

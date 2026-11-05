@@ -49,7 +49,7 @@ export function MembersTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
       {c.staff.length > 0 && !term && (
         <section className="mb-6">
           <SectionHead title="Leadership" />
-          <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4">
+          <div className="no-scrollbar -mx-3 flex gap-2.5 overflow-x-auto px-3">
             {c.staff.map((s) => (
               <Link key={s.id} href={s.username ? `/u/${encodeURIComponent(s.username)}` : "#"} className="flex w-[148px] shrink-0 flex-col items-start rounded-2xl border border-line bg-surface-subtle p-3 transition-colors active:bg-surface-interactive">
                 <Avatar url={s.avatar} name={s.name} size={44} />

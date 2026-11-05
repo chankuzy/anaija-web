@@ -29,8 +29,8 @@ export const homeApi = {
       discussions: (r.discussions ?? []).map(t), resources: (r.resources ?? []).map(t),
     };
   },
-  // Same endpoint as communitiesApi.discover; it already accepts institution_id server-side.
-  discoverAt: async (p: { institution_id: number; category?: string | null; page?: number }) => {
+  // Same endpoint as communitiesApi.discover; it already accepts institution_id server-side. `search` rides the same query.
+  discoverAt: async (p: { institution_id: number; category?: string | null; search?: string; page?: number }) => {
     const r = await api.get<{ data: Community[]; has_more: boolean }>("communities/discover", p);
     return { items: r.data.map(com), hasMore: r.has_more };
   },
