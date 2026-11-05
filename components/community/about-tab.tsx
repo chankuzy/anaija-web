@@ -7,12 +7,11 @@ import { DesigBadge, Label, ROLE_LABEL, categoryLabel } from "./kit";
 
 const JOIN_TEXT = { open: "Anyone can join instantly.", request: "Joining needs approval from a moderator.", invite: "Joining needs an invitation link." };
 
-// Information only. Actions (share, members, manage, notifications, leave) live in the header menu.
+// Information only (a sheet on mobile, the sidebar on desktop). Actions live in the header and its menu.
 export function AboutTab({ c }: { c: CommunityDetail }) {
   const details = [categoryLabel(c.category), c.course_code, c.department, c.level && `${c.level} level`, c.academic_session, c.faculty].filter(Boolean) as string[];
-
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <section className="px-1">
         {c.description ? <p className="whitespace-pre-wrap text-body leading-[1.6] text-fg/90">{c.description}</p> : <p className="text-secondary text-muted">No description yet.</p>}
         <p className="mt-3 text-supporting text-muted">{details.join(" · ")}</p>
@@ -26,7 +25,7 @@ export function AboutTab({ c }: { c: CommunityDetail }) {
       {c.rules.length > 0 && (
         <section>
           <Label>Rules</Label>
-          <ol className="divide-y divide-white/[0.06]">
+          <ol className="divide-y divide-line">
             {c.rules.map((r, i) => (
               <li key={i} className="flex gap-4 px-1 py-3 text-body leading-[1.45] text-fg/90">
                 <span className="w-4 shrink-0 text-muted">{i + 1}</span>
@@ -40,7 +39,7 @@ export function AboutTab({ c }: { c: CommunityDetail }) {
       {c.staff.length > 0 && (
         <section>
           <Label>Leadership</Label>
-          <div className="divide-y divide-white/[0.06]">
+          <div className="divide-y divide-line">
             {c.staff.map((s) => (
               <div key={s.id} className="flex items-center gap-3 px-1 py-3">
                 <Avatar url={s.avatar} name={s.name} size={40} />
@@ -59,7 +58,7 @@ export function AboutTab({ c }: { c: CommunityDetail }) {
       {c.links.length > 0 && (
         <section>
           <Label>Links</Label>
-          <div className="divide-y divide-white/[0.06]">
+          <div className="divide-y divide-line">
             {c.links.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noreferrer noopener" className="flex items-center gap-3 px-1 py-3.5 text-[15px] font-semibold text-fg transition-opacity active:opacity-60">
                 <Icon name="link" className="size-5 text-muted" />

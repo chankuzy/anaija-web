@@ -58,6 +58,20 @@ export function useFetch<T>(key: string | null, load: () => Promise<T>, opts: { 
   return { data: r.data, error: r.error, loading: r.loading, reload, patch };
 }
 
+// The Communities light canvas. Tokens are re-declared in globals.css under .cm; everything inside adapts.
+export function Cm({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <div className={`cm min-h-[calc(100dvh-var(--nav-h,0px))] bg-bg text-fg ${className}`.trim()}>{children}</div>;
+}
+
+export function SectionHead({ title, children }: { title: string; children?: ReactNode }) {
+  return (
+    <div className="mb-3 flex items-center px-0.5">
+      <h2 className="flex-1 text-[15px] font-extrabold tracking-tight text-fg">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
 export function Sheet({ title, onClose, children, wide = false }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
     const k = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -66,12 +80,12 @@ export function Sheet({ title, onClose, children, wide = false }: { title: strin
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/60" />
+      <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/45" />
       <div
-        className={`sv-rise no-scrollbar relative max-h-[90dvh] w-full ${wide ? "max-w-[600px]" : "max-w-[460px]"} overflow-y-auto rounded-t-[30px] border-t border-white/[0.08] bg-bg px-4 pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[30px] md:border md:pt-6`}
+        className={`sv-rise no-scrollbar relative max-h-[90dvh] w-full ${wide ? "max-w-[600px]" : "max-w-[460px]"} overflow-y-auto rounded-t-[28px] border-t border-line bg-surface px-4 pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.2)] md:rounded-[28px] md:border md:pt-6`}
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
       >
-        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 md:hidden" />
+        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-surface-elevated md:hidden" />
         <div className="mb-3 flex items-center">
           <p className="min-w-0 flex-1 truncate px-1 text-[20px] font-extrabold tracking-tight text-fg">{title}</p>
           <button type="button" aria-label="Close" onClick={onClose} className="grid size-9 place-items-center rounded-full bg-surface-interactive text-fg">
@@ -129,7 +143,7 @@ export function ChoiceList<T extends string>({ value, onChange, options }: { val
 // A visible responsibility. It does not by itself grant admin power.
 export function DesigBadge({ d }: { d: Desig }) {
   return (
-    <span className="inline-flex items-center gap-1 rounded-pill bg-brand/15 px-2.5 py-1 text-micro font-bold text-brand">
+    <span className="inline-flex items-center gap-1 rounded-pill bg-brand/15 px-2.5 py-1 text-micro font-bold text-brand-ink">
       <Icon name="verifiedCheck" filled className="size-3.5" />
       {DESIG_LABEL[d.kind] ?? d.kind}
       {d.scope_label ? ` · ${d.scope_label}` : ""}
@@ -210,7 +224,7 @@ export function ImageViewer({ src, onClose }: { src: string; onClose: () => void
 
 export function MenuRow({ icon, label, hint, onClick, danger = false }: { icon: React.ComponentProps<typeof Icon>["name"]; label: string; hint?: string; onClick: () => void; danger?: boolean }) {
   return (
-    <button type="button" onClick={onClick} className={`flex w-full items-center gap-3.5 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-white/[0.05] ${danger ? "text-danger" : "text-fg"}`}>
+    <button type="button" onClick={onClick} className={`flex w-full items-center gap-3.5 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-surface-interactive ${danger ? "text-danger" : "text-fg"}`}>
       <Icon name={icon} className="size-[22px] shrink-0 opacity-80" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">{label}</span>

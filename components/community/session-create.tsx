@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Group, Toggle } from "@/components/settings/settings-kit";
+import { Group, Toggle } from "./cm-kit";
 import { buttonClass } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { communitiesApi, type CommunityDetail, type SessionInfo } from "@/lib/api/communities";

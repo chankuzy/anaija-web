@@ -11,27 +11,25 @@ const SUB: Partial<Record<CreateKind, string>> = {
   document: "Goes into the library", poll: "Ask the community", announcement: "Notify every member", article: "Long-form editorial", reel: "A video for the community",
 };
 
+// Mirrors the server gate (communities/post): permissions decide what is offered, the server still enforces them.
+export const canPublish = (c: CommunityDetail, k: CreateKind) =>
+  k === "announcement" ? c.can.announce : k === "article" ? c.can.moderate : k === "document" ? c.can.library : c.can.post;
+export const allowedKinds = (c: CommunityDetail) => ORDER.filter((k) => canPublish(c, k));
+export const publishHref = (c: CommunityDetail, k: CreateKind) =>
+  k === "document" ? `/c/${encodeURIComponent(c.slug)}?tab=library&add=1` : `/create/new?mode=${k}&community=${encodeURIComponent(c.slug)}`;
+
 // One publishing system: the real composer, aimed at this community. /create/new reads ?mode=.
 export function PublishSheet({ c, onClose }: { c: CommunityDetail; onClose: () => void }) {
   const router = useRouter();
-  const allowed = (k: CreateKind) =>
-    k === "announcement" ? c.can.announce : k === "article" ? c.can.moderate : k === "document" ? c.can.library : c.can.post;
-  const kinds = ORDER.filter(allowed);
   return (
     <Sheet title="Share with the community" onClose={onClose}>
       <div className="grid grid-cols-2 gap-2">
-        {kinds.map((k) => (
+        {allowedKinds(c).map((k) => (
           <button
             key={k}
             type="button"
-            onClick={() =>
-              router.push(
-                k === "document"
-                  ? `/c/${encodeURIComponent(c.slug)}?tab=library&add=1`
-                  : `/create/new?mode=${k}&community=${encodeURIComponent(c.slug)}`,
-              )
-            }
-            className="flex flex-col items-start gap-3 rounded-2xl border border-white/[0.07] p-4 text-left transition-colors hover:bg-white/[0.04] active:scale-[0.98]"
+            onClick={() => router.push(publishHref(c, k))}
+            className="flex flex-col items-start gap-3 rounded-2xl border border-line p-4 text-left transition-colors hover:bg-surface-interactive active:scale-[0.98]"
           >
             <Icon name={KIND_META[k].icon} className="size-6 text-fg" />
             <span>

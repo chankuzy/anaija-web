@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Group, Toggle, useToast } from "@/components/settings/settings-kit";
+import { Group, Toggle, useToast } from "./cm-kit";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";

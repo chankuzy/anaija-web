@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { downloadOriginal } from "@/lib/documents/download";
 import { PdfAttachment, isPdfUrl } from "@/components/home/renderers/document";
-import { Group, Toggle, useToast } from "@/components/settings/settings-kit";
+import { Group, Toggle, useToast } from "./cm-kit";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
@@ -378,7 +378,7 @@ export function LibraryTab({ c, onJoin }: { c: CommunityDetail; onJoin: () => vo
             <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3">
               {items.map((r) => (
                 <button key={r.id} type="button" onClick={() => setOpen(r)} className="group text-left">
-                  <span className="block aspect-[3/4] overflow-hidden rounded-[14px] ring-1 ring-white/[0.07] transition-transform group-active:scale-[0.98]"><Cover r={r} /></span>
+                  <span className="block aspect-[3/4] overflow-hidden rounded-[14px] ring-1 ring-line transition-transform group-active:scale-[0.98]"><Cover r={r} /></span>
                   <span className="mt-2 line-clamp-2 block text-[14px] font-semibold leading-[1.25] text-fg">{r.title}</span>
                   <span className="mt-0.5 block truncate text-supporting text-muted">{[r.course_code, r.academic_session].filter(Boolean).join(" · ") || timeAgo(r.created_at)}</span>
                 </button>

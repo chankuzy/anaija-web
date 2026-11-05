@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useMessages } from "@/components/messaging/messages-context";
-import { Group, Toggle } from "@/components/settings/settings-kit";
+import { Group, Toggle } from "./cm-kit";
 import { communitiesApi, type CommunityDetail } from "@/lib/api/communities";
 import { confirmDialog } from "@/lib/ui/dialog";
 import { Chip, Label, MenuRow, Sheet, messageOf, shareLink, siteUrl, useFetch } from "./kit";

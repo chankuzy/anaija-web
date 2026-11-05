@@ -8,7 +8,7 @@ import { confirmDialog } from "@/lib/ui/dialog";
 import { Chip, DESIG_LABEL, DesigBadge, ROLE_LABEL, ROLE_RANK, Sheet, messageOf, useFetch } from "./kit";
 import { inputClass } from "@/components/ui/input";
 
-function Actions({ c, m, onChanged }: { c: CommunityDetail; m: Member; onChanged: () => void }) {
+export function Actions({ c, m, onChanged }: { c: CommunityDetail; m: Member; onChanged: () => void }) {
   const [kind, setKind] = useState<DesigKind>("course_rep");
   const [scope, setScope] = useState("");
   const [announce, setAnnounce] = useState(false);

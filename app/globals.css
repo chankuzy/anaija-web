@@ -466,3 +466,7 @@ body {
   @media (min-width: 768px) { .am-panel { animation-name: am-pop; } }
   .am-swap { animation: am-swap 200ms ease-out both; }
 }
+
+/* Communities: stays on the app's dark tokens. brand-ink = the yellow used for text/accents. */
+@theme { --color-brand-ink: #ffd84d; }
+.cm { color-scheme: dark; }
