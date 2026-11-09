@@ -96,6 +96,19 @@ function Detail({ post, onLike }: { post: Post; onLike: () => void }) {
     );
   }
 
+  if (c.kind === "question") {
+    return (
+      <article className="rounded-image bg-surface-subtle p-5">
+        <p className="flex items-center gap-2 text-micro font-semibold uppercase tracking-[0.08em] text-muted">
+          <Icon name="questionCircle" filled className="size-4 text-brand-ink" />
+          Question
+        </p>
+        <h1 className="mt-2 text-[26px] font-extrabold leading-[1.2] tracking-tight text-fg">{c.title}</h1>
+        {c.body && <p className="selectable mt-4 whitespace-pre-wrap text-[16px] leading-[1.65] text-fg/90">{c.body}</p>}
+      </article>
+    );
+  }
+
   const images = post.media.filter(isImageMedia);
   const docs = post.media.filter((m) => (m.type ?? "").toLowerCase() === "document");
   return (

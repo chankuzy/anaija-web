@@ -59,6 +59,15 @@ export function StructuredTile({ post, hasCover }: { post: Post; hasCover: boole
     );
   }
 
+  if (c.kind === "question") {
+    return (
+      <span className={PLATE}>
+        <span className={KICKER}>Question</span>
+        <span className="line-clamp-5 block text-[13px] font-bold leading-[1.3] text-fg md:text-[15px]">{c.title}</span>
+      </span>
+    );
+  }
+
   return (
     <span className={PLATE}>
       <span className="flex items-center gap-1.5 text-muted">
