@@ -55,7 +55,8 @@ export function CreateSheet({ onClose }: { onClose: () => void }) {
     onClose();
     router.push(`/create/new?mode=${kind}`);
   };
-  const on = (k: StructuredCreateKind) => caps?.kinds[k] === true;
+  // Questions are desk-only: they have no platform capability and are never offered from the global sheet.
+  const on = (k: Exclude<StructuredCreateKind, "question">) => caps?.kinds[k] === true;
   const write = (["document", "poll", "article"] as const).filter(on);
 
   return (
