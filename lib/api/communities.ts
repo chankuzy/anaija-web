@@ -7,12 +7,17 @@ export type DesigKind = "class_rep" | "course_rep" | "dept_exec" | "contributor"
 export type Policy = "open" | "request" | "invite";
 export interface Desig { id?: number; kind: DesigKind; scope_label: string | null }
 
+export type CommunityKind = "community" | "course_desk";
 export interface Community {
   id: number; name: string; slug: string; description: string | null; avatar: string | null; cover: string | null;
   category: string; institution_id: number | null; faculty: string | null; department: string | null; level: string | null;
   course_code: string | null; academic_session: string | null; members_count: number; posts_count: number;
   discoverability: "listed" | "unlisted"; join_policy: Policy; read_policy: "public_preview" | "members_only";
   status: string; is_member: boolean; my_role: Role | null; request_status: "pending" | null;
+  /** Absent on payloads cached before Course Desks shipped: treat as "community". */
+  kind?: CommunityKind;
+  /** Course Desks only. */
+  course_title?: string | null; verified?: boolean; institution_only?: boolean;
 }
 export interface MineRow extends Community { chat_conversation_id: number | null; chat_unread: number }
 export interface Can {
@@ -41,7 +46,7 @@ export interface Report {
   id: number; target_kind: string; target_id: number; reason: string; details: string | null; status: string; created_at: string;
   preview: { text: string | null; author_id: number | null } | null;
 }
-export interface JoinResult { status: string; is_member?: boolean; request_status?: string | null; members_count?: number }
+export interface JoinResult { status?: string; state?: string; is_member?: boolean; request_status?: string | null; members_count?: number }
 
 export interface SessionCard {
   id: number; code: string; path: string; title: string; status: "scheduled" | "live" | "ended";
@@ -77,6 +82,40 @@ export interface Collection { id: number; name: string; description: string | nu
 export interface LibraryPage {
   items: Resource[]; cursor: string | null; hasMore: boolean; collections?: Collection[];
   facets?: { course_codes: string[]; sessions: string[]; doc_types: string[] };
+}
+
+// ── Course Desks ───────────────────────────────────────────────────────────
+export type DeskAccess = "open" | "restricted" | "institutional";
+export type Semester = "first" | "second" | "summer";
+export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
+export interface DeskInfo {
+  course_title: string; semester: Semester | null; lecturer_name: string | null; institution_only: boolean; access: DeskAccess;
+  verification_status: VerificationStatus; verified: boolean; verified_at: string | null;
+  /** Only the owner receives the admin's note. */
+  verification_note?: string | null;
+}
+export interface DeskLeader extends Person { role: Role; lecturer: boolean; assistant: boolean }
+export interface DeskNotice {
+  id: number; title: string; priority: "important" | "normal"; pinned: boolean; created_at: string;
+  event_at: string | null; deadline_at: string | null;
+}
+export interface DeskMaterial {
+  id: number; post_id: number; title: string; doc_type: string; course_code: string | null; created_at: string;
+  uploader: { name: string | null; username: string | null } | null;
+}
+export interface DeskOverview {
+  identity: {
+    id: number; name: string; slug: string; description: string | null; avatar: string | null; cover: string | null;
+    course_code: string | null; academic_session: string | null; faculty: string | null; department: string | null; level: string | null;
+    institution: { name: string; short_name: string | null } | null; members_count: number;
+  };
+  desk: DeskInfo; can: Can; is_member: boolean; my_role: Role | null; request_status: "pending" | null;
+  leaders: DeskLeader[]; announcements: DeskNotice[]; upcoming: DeskNotice[]; materials: DeskMaterial[];
+}
+export interface RelatedSpace extends Community { reason: string }
+export interface DeskStats {
+  members: number; invite_views: number; joins: number; joins_via_invite: number; new_accounts: number;
+  first_actions: number; activation_rate: number | null; material_opens_7d: number;
 }
 
 const C = (p: string) => `communities/${p}`;
@@ -163,6 +202,30 @@ export const communitiesApi = {
   sessionReports: async (code: string) => (await api.get<{ data: SessionReport[] }>(C(`session-reports/${encodeURIComponent(code)}`))).data,
   sessionReportHandle: (code: string, body: { report_id: number; action: "dismiss" | "remove"; block?: boolean }) =>
     api.post<{ status: string }>(C(`session-report-handle/${encodeURIComponent(code)}`), body),
+
+  // ── Course Desks ─────────────────────────────────────────────────────────
+  deskCreate: async (body: Record<string, unknown>) => {
+    const r = await api.post<{ community: CommunityDetail; desk: DeskInfo | null; similar: number }>(C("desk-create"), body);
+    return { ...r, community: detail(r.community) };
+  },
+  deskUpdate: async (id: number, body: Record<string, unknown>) => {
+    const r = await api.post<{ community: CommunityDetail; desk: DeskInfo }>(C(`desk-update/${id}`), body);
+    return { ...r, community: detail(r.community) };
+  },
+  deskOverview: async (ref: string): Promise<DeskOverview> => {
+    const r = await api.get<DeskOverview>(C(`desk/${encodeURIComponent(ref)}`));
+    return { ...r, identity: { ...r.identity, avatar: mediaUrl(r.identity.avatar), cover: mediaUrl(r.identity.cover) }, leaders: (r.leaders ?? []).map(person) };
+  },
+  deskVerify: (id: number, body: { lecturer_name: string; note: string }) =>
+    api.post<{ verification_status: VerificationStatus }>(C(`desk-verify/${id}`), body),
+  deskAssistant: (id: number, body: { user_id: number; assistant: boolean; can_announce?: boolean }) =>
+    api.post<{ ok: boolean; assistant: boolean }>(C(`desk-assistant/${id}`), body),
+  deskTrack: (id: number, resourceId: number) => api.post<typeof ok>(C(`desk-track/${id}`), { kind: "material_open", resource_id: resourceId }),
+  deskStats: (id: number) => api.get<DeskStats>(C(`desk-stats/${id}`)),
+  related: async (id: number) => {
+    const r = await api.get<{ communities: RelatedSpace[]; desks: RelatedSpace[] }>(C(`related/${id}`));
+    return { communities: (r.communities ?? []).map(com), desks: (r.desks ?? []).map(com) };
+  },
 };
 
 function normRes(r: Resource): Resource {

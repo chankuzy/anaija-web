@@ -9,7 +9,7 @@ import { useMessages } from "@/components/messaging/messages-context";
 import { ImageCropper } from "@/components/settings/image-cropper";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CommunityDetail } from "@/lib/api/communities";
 import { uploadBlob } from "@/lib/api/upload";
@@ -18,6 +18,7 @@ import { noteVisit } from "@/lib/community/recent";
 import { AboutTab } from "./about-tab";
 import { useToast } from "./cm-kit";
 import { CommunityMenu } from "./community-menu";
+import { DeskOverview } from "./desk-overview";
 import { FeedTab } from "./feed-tab";
 import { Cm, DesigBadge, Empty, ImageViewer, ROLE_LABEL, Sheet, categoryLabel, messageOf, useFetch } from "./kit";
 import { LibraryTab } from "./library-tab";
@@ -25,14 +26,30 @@ import { MembersTab } from "./members-tab";
 import { SessionsTab } from "./sessions-tab";
 import { TabPager } from "./tab-pager";
 
-const TABS = [
+interface TabDef { id: string; label: string; icon: IconName }
+const TABS: readonly TabDef[] = [
   { id: "feed", label: "Feed", icon: "feed" },
   { id: "library", label: "Library", icon: "notebookMinimalistic" },
   { id: "sessions", label: "Sessions", icon: "eyeClosed" },
   { id: "members", label: "Members", icon: "usersGroupRounded" },
-] as const;
-type TabId = (typeof TABS)[number]["id"];
+];
+// Course Desks: no Sessions. "Posts" splits into Announcements and Discussions once the feed can filter by subtype.
+const DESK_TABS: readonly TabDef[] = [
+  { id: "overview", label: "Overview", icon: "notebookMinimalistic" },
+  { id: "materials", label: "Materials", icon: "copy" },
+  { id: "posts", label: "Posts", icon: "feed" },
+];
+const DESK_LEGACY: Record<string, string> = { library: "materials", feed: "posts" };
+const DESK_KINDS = ["lecturer", "course_assistant"];
 type Kind = "cover" | "avatar";
+
+const JOIN_FAIL: Record<string, string> = {
+  ineligible: "This Course Desk is only open to students of its campus.",
+  banned: "You can't join this space.",
+  invite_only: "This space is invite only.",
+  not_requestable: "This space isn't accepting requests.",
+  not_found: "This space isn't available.",
+};
 
 const first = (n: string | null) => (n ?? "").trim().split(/\s+/)[0] || "Someone";
 
@@ -58,11 +75,16 @@ function Faces({ c }: { c: CommunityDetail }) {
 
 // Identity header. Cover keeps the crop's own 8:3 ratio on phones (so nothing is cut), a fixed compact height from md up,
 // and the same radius token Home gives post media. The 84px avatar sits half over the cover on a bg-coloured ring.
-function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onAbout }: {
+function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onAbout, onMembers }: {
   c: CommunityDetail; cover: string | null; avatar: string | null; saving: Kind | null; joining: boolean;
-  onJoin: () => void; onMenu: () => void; onView: (url: string) => void; onAbout: () => void;
+  onJoin: () => void; onMenu: () => void; onView: (url: string) => void; onAbout: () => void; onMembers: () => void;
 }) {
-  const meta = [categoryLabel(c.category), c.course_code, `${c.members_count} ${c.members_count === 1 ? "member" : "members"}`].filter(Boolean).join(" · ");
+  const desk = c.kind === "course_desk";
+  const members = `${c.members_count} ${c.members_count === 1 ? "member" : "members"}`;
+  const meta = desk
+    ? [c.course_code, c.academic_session, members].filter(Boolean).join(" · ")
+    : [categoryLabel(c.category), c.course_code, members].filter(Boolean).join(" · ");
+  const title = desk ? (c.course_title ?? c.name) : c.name;
   const spinner = <span className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />;
   const pill = "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated";
 
@@ -94,7 +116,7 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
       <div className="flex items-center gap-3 px-1">
         <span className="relative -mt-11 shrink-0 rounded-full bg-bg p-1">
           <button type="button" aria-label="View picture" disabled={!avatar} onClick={() => avatar && onView(avatar)} className="block rounded-full">
-            <Avatar url={avatar} name={c.name} size={84} />
+            <Avatar url={avatar} name={title} size={84} />
           </button>
           {saving === "avatar" && <span className="absolute inset-1 grid place-items-center rounded-full bg-black/45">{spinner}</span>}
         </span>
@@ -103,18 +125,35 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
       </div>
 
       <div className="px-1 pt-1">
-        <h1 className="text-[22px] font-extrabold leading-[1.15] tracking-tight text-fg">{c.name}</h1>
+        <h1 className="text-[22px] font-extrabold leading-[1.15] tracking-tight text-fg">{title}</h1>
         <p className="mt-1 truncate text-secondary text-muted">{meta}</p>
         {c.description && <p className="mt-2 line-clamp-2 text-secondary leading-[1.45] text-fg/80">{c.description}</p>}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
+        {desk && (
+          <>
+            <span className="inline-flex h-9 items-center rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg">Course Desk</span>
+            {c.verified ? (
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand/15 px-3.5 text-secondary font-extrabold text-brand-ink">
+                <Icon name="verifiedCheck" filled className="size-4" />Verified
+              </span>
+            ) : (
+              <span className="inline-flex h-9 items-center rounded-full bg-surface-interactive px-3.5 text-secondary font-semibold text-muted">Student-led</span>
+            )}
+          </>
+        )}
         {c.is_member && c.my_role && c.my_role !== "member" && (
           <span className="inline-flex h-9 items-center rounded-full bg-brand/15 px-3.5 text-secondary font-extrabold text-brand-ink">{ROLE_LABEL[c.my_role]}</span>
         )}
-        {c.is_member && c.my_designations.map((d, i) => <DesigBadge key={i} d={d} />)}
+        {c.is_member && c.my_designations
+          .filter((d) => !desk || !DESK_KINDS.includes(d.kind as string))
+          .map((d, i) => <DesigBadge key={i} d={d} />)}
         {c.is_member && c.chat_conversation_id && (
           <Link href={`/c/${c.slug}/chat`} className={pill}><Icon name="message" className="size-4" />Chat</Link>
+        )}
+        {desk && c.is_member && (
+          <button type="button" onClick={onMembers} className={pill}><Icon name="usersGroupRounded" className="size-4" />Members</button>
         )}
         <button type="button" onClick={onAbout} className={pill}><Icon name="usersGroupRounded" className="size-4" />About</button>
       </div>
@@ -137,17 +176,20 @@ export function CommunityView({ slug }: { slug: string }) {
   const [joining, setJoining] = useState(false);
   const [menu, setMenu] = useState(false);
   const [about, setAbout] = useState(false);
+  const [membersSheet, setMembersSheet] = useState(false);
   const [viewer, setViewer] = useState<string | null>(null);
   const [crop, setCrop] = useState<{ kind: Kind; file: File } | null>(null);
   const [saving, setSaving] = useState<Kind | null>(null);
   const [local, setLocal] = useState<Partial<Record<Kind, string>>>({});
-  const q = sp.get("tab");
-  // Legacy links: ?tab=moments lives in Sessions now, ?tab=about opens the About sheet.
-  const tabId = q === "moments" ? "sessions" : q;
-  const index = Math.max(0, TABS.findIndex((t) => t.id === tabId));
-  idxRef.current = index;
   const det = useFetch(status === "loading" ? null : `c:${slug}:${status}`, () => communitiesApi.show(slug));
   const c = det.data;
+  const isDesk = c?.kind === "course_desk";
+  const tabs = isDesk ? DESK_TABS : TABS;
+  const q = sp.get("tab");
+  // Legacy links: ?tab=moments lives in Sessions now, ?tab=about opens the About sheet. On desks ?tab=library/feed map to Materials/Posts.
+  const tabId = isDesk ? (DESK_LEGACY[q ?? ""] ?? q) : q === "moments" ? "sessions" : q;
+  const index = Math.max(0, tabs.findIndex((t) => t.id === tabId));
+  idxRef.current = index;
 
   const indRef = useCallback((el: HTMLSpanElement | null) => {
     ind.current = el;
@@ -186,9 +228,18 @@ export function CommunityView({ slug }: { slug: string }) {
     );
     try {
       const r = await communitiesApi.join(c.id);
-      show(r.status === "joined" || r.status === "already_member" ? `Welcome to ${c.name}` : "Request sent. You'll be notified.");
-      det.reload();
-      reloadInbox();
+      const st = r.status || r.state || "";
+      if (st === "joined" || st === "already_member") {
+        show(`Welcome to ${c.course_title ?? c.name}`);
+        det.reload();
+        reloadInbox();
+      } else if (st === "requested" || st === "already_requested") {
+        show("Request sent. You'll be notified.");
+        det.reload();
+      } else {
+        det.patch(() => snap);
+        show(JOIN_FAIL[st] ?? "Couldn't join right now.");
+      }
     } catch (e) {
       det.patch(() => snap);
       show(messageOf(e));
@@ -217,10 +268,10 @@ export function CommunityView({ slug }: { slug: string }) {
     }
   }
 
-  const go = (id: TabId) => router.replace(id === "feed" ? `/c/${slug}` : `/c/${slug}?tab=${id}`, { scroll: false });
+  const goId = (id: string) => router.replace(id === tabs[0].id ? `/c/${slug}` : `/c/${slug}?tab=${id}`, { scroll: false });
   // After a swipe settles, never leave the reader stranded below a shorter tab.
   const settle = (i: number) => {
-    go(TABS[i].id);
+    goId(tabs[i].id);
     const el = anchor.current;
     if (el && el.getBoundingClientRect().top < 0) el.scrollIntoView({ block: "start" });
   };
@@ -265,19 +316,20 @@ export function CommunityView({ slug }: { slug: string }) {
               onMenu={() => setMenu(true)}
               onView={setViewer}
               onAbout={() => setAbout(true)}
+              onMembers={() => setMembersSheet(true)}
             />
 
             <div ref={anchor} className="mt-5" />
             <div className="sticky top-0 z-10 -mx-3 border-b border-line bg-bg/95 px-3 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
-              <div className="relative grid grid-cols-4">
-                {TABS.map((t, i) => {
+              <div className="relative grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+                {tabs.map((t, i) => {
                   const on = i === index;
                   return (
                     <button
                       key={t.id}
                       type="button"
                       aria-current={on ? "page" : undefined}
-                      onClick={() => go(t.id)}
+                      onClick={() => goId(t.id)}
                       className={`flex h-12 items-center justify-center gap-1.5 text-secondary font-bold transition-colors ${on ? "text-fg" : "text-muted hover:text-fg"}`}
                     >
                       <Icon name={t.icon} filled={on} className="size-[19px] max-[400px]:hidden" />
@@ -285,20 +337,26 @@ export function CommunityView({ slug }: { slug: string }) {
                     </button>
                   );
                 })}
-                <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 w-1/4 will-change-transform">
+                <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 will-change-transform" style={{ width: `${100 / tabs.length}%` }}>
                   <span className="mx-auto block h-0.5 w-10 rounded-full bg-brand" />
                 </span>
               </div>
             </div>
 
             <TabPager
+              key={isDesk ? "desk" : "community"}
               index={index}
-              count={TABS.length}
+              count={tabs.length}
               onChange={settle}
               onProgress={onProgress}
               render={(i) => {
-                const id = TABS[i].id;
-                return id === "feed" ? <FeedTab c={c} onOpenSessions={() => go("sessions")} />
+                const id = tabs[i].id;
+                if (isDesk) {
+                  return id === "overview" ? <DeskOverview c={c} onTab={goId} />
+                    : id === "materials" ? <LibraryTab c={c} onJoin={() => void join()} />
+                    : <FeedTab c={c} onOpenSessions={() => goId("overview")} />;
+                }
+                return id === "feed" ? <FeedTab c={c} onOpenSessions={() => goId("sessions")} />
                   : id === "library" ? <LibraryTab c={c} onJoin={() => void join()} />
                   : id === "sessions" ? <SessionsTab c={c} seg0={q === "moments" ? "moments" : "sessions"} onJoin={() => void join()} />
                   : <MembersTab c={c} onJoin={() => void join()} />;
@@ -323,6 +381,7 @@ export function CommunityView({ slug }: { slug: string }) {
           />
         )}
         {about && <Sheet title="About" onClose={() => setAbout(false)} wide><AboutTab c={c} /></Sheet>}
+        {membersSheet && <Sheet title="Members" onClose={() => setMembersSheet(false)} wide><MembersTab c={c} onJoin={() => void join()} /></Sheet>}
         {viewer && <ImageViewer src={viewer} onClose={() => setViewer(null)} />}
         {crop && (
           <ImageCropper
