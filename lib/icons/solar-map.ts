@@ -60,6 +60,8 @@ import { CheckReadIcon as b_check_read } from "@solar-icons/react/bold/check-rea
 import { CheckReadIcon as o_check_read } from "@solar-icons/react/outline/check-read";
 import { ClapperboardIcon as b_clapperboard } from "@solar-icons/react/bold/clapperboard";
 import { ClapperboardIcon as o_clapperboard } from "@solar-icons/react/outline/clapperboard";
+import { ClapperboardPlayIcon as b_clapperboard_play } from "@solar-icons/react/bold/clapperboard-play";
+import { ClapperboardPlayIcon as o_clapperboard_play } from "@solar-icons/react/outline/clapperboard-play";
 import { ClockCircleIcon as b_clock_circle } from "@solar-icons/react/bold/clock-circle";
 import { ClockCircleIcon as o_clock_circle } from "@solar-icons/react/outline/clock-circle";
 import { CloseCircleIcon as b_close_circle } from "@solar-icons/react/bold/close-circle";
@@ -247,6 +249,7 @@ export const SOLAR = {
   "chevronDown": p(b_alt_arrow_down, o_alt_arrow_down),
   "chevronRight": p(b_alt_arrow_right, o_alt_arrow_right),
   "clapperboard": p(b_clapperboard, o_clapperboard),
+  "clapperboardPlay": p(b_clapperboard_play, o_clapperboard_play),
   "clockCircle": p(b_clock_circle, o_clock_circle),
   "close": p(b_close, o_close),
   "closeCircle": p(b_close_circle, o_close_circle),

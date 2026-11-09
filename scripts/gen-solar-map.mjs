@@ -13,8 +13,9 @@ const VERBOSE = process.argv.includes("--verbose");
 
 // Same names as Flutter's SolarIcons* members (camelCase), 1:1.
 // "home" and "userPlus" are intentionally NOT here: they are web aliases (see ALIASES) for the icons Flutter uses.
+// "clapperboardPlay" is a web addition (main nav Media tab).
 const FLUTTER = [
-  "altArrowDown", "clapperboard", "infoCircle", "altArrowLeft", "altArrowRight", "arrowDown", "arrowRight", "arrowUp",
+  "altArrowDown", "clapperboard", "clapperboardPlay", "infoCircle", "altArrowLeft", "altArrowRight", "arrowDown", "arrowRight", "arrowUp",
   "bag", "bag2", "bell", "bellOff", "book", "bookmark", "box", "boxMinimalistic", "bug", "buildings", "bus",
   "calendar", "camera", "cart", "caseMinimalistic", "chatLine", "chatRound", "chatRoundDots", "chatUnread",
   "checkCircle", "clockCircle", "closeCircle", "compass", "copy", "cropMinimalistic",
