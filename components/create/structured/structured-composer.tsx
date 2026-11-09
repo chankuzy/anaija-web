@@ -10,12 +10,14 @@ import { AnnouncementForm } from "./announcement-form";
 import { DocumentForm } from "./document-form";
 import { PollForm } from "./poll-form";
 import { PublicationForm } from "./publication-form";
+import { QuestionForm } from "./question-form";
 
 const FORMS: Record<StructuredCreateKind, ComponentType<{ onClose: () => void }>> = {
   document: DocumentForm,
   poll: PollForm,
   article: PublicationForm,
   announcement: AnnouncementForm,
+  question: QuestionForm,
 };
 
 // Same frame as the media composer: full-screen overlay below md, a contained studio panel from md up.
@@ -49,6 +51,7 @@ export function StructuredComposer({ kind }: { kind: StructuredCreateKind }) {
 
   const Form = FORMS[kind];
   // Inside a community, the community's own permissions decide (the server enforces them), not the platform grants.
+  // Questions exist only inside a Course Desk, so they have no platform capability to check.
   const [inCommunity] = useState(() => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("community"));
   const ready = status === "authed" && (loaded || inCommunity);
   return (
@@ -57,13 +60,15 @@ export function StructuredComposer({ kind }: { kind: StructuredCreateKind }) {
         className="relative flex h-full w-full max-w-[520px] flex-col md:h-[min(880px,calc(100dvh-48px))] md:max-w-[760px] md:overflow-hidden md:rounded-[28px] md:bg-bg"
         style={{ paddingTop: "env(safe-area-inset-top)", paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        {!ready ? null : inCommunity || caps?.kinds[kind] ? (
+        {!ready ? null : inCommunity || (kind !== "question" && caps?.kinds[kind]) ? (
           <Form onClose={leave} />
         ) : (
           <div className="grid flex-1 place-items-center px-8 text-center">
             <div>
               <p className="text-[17px] font-bold text-fg">Not available</p>
-              <p className="mt-1.5 text-secondary text-muted">This content type is not available for your account yet.</p>
+              <p className="mt-1.5 text-secondary text-muted">
+                {kind === "question" ? "Questions can only be asked inside a Course Desk." : "This content type is not available for your account yet."}
+              </p>
               <button type="button" onClick={leave} className="mt-5 h-11 rounded-full bg-surface-interactive px-6 text-secondary font-bold text-fg">
                 Go back
               </button>

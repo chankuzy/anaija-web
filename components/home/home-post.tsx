@@ -73,7 +73,16 @@ export const HomePost = memo(function HomePost({
     [],
   );
 
+  const openComments = useCallback(() => {
+    if (!post.allow_comments) return a.flash("Comments are turned off for this post");
+    if (!a.requireAuth("Sign in to join the conversation.")) return;
+    setCommentsOpen(true);
+  }, [post.allow_comments, a]);
+
+  // A Course Desk question is read and answered in the comments sheet (replies are comments); everything else
+  // opens its own page or hands off to Immersive.
   const open = () => {
+    if (kind === "question") return openComments();
     R.prepare?.(post);
     router.push(R.href(post));
   };
@@ -85,11 +94,6 @@ export const HomePost = memo(function HomePost({
     }
     void a.like(true);
   };
-  const openComments = useCallback(() => {
-    if (!post.allow_comments) return a.flash("Comments are turned off for this post");
-    if (!a.requireAuth("Sign in to join the conversation.")) return;
-    setCommentsOpen(true);
-  }, [post.allow_comments, a]);
 
   const pad = flush ? "" : "px-3 md:px-0";
   const bodyPad = flush || EDGE.has(kind) ? "" : "mx-3 md:mx-0";

@@ -6,14 +6,20 @@ import type { CommunityDetail } from "@/lib/api/communities";
 import { KIND_META, type CreateKind } from "@/lib/create/kinds";
 import { Sheet } from "./kit";
 
-const ORDER: CreateKind[] = ["photo", "reel", "document", "poll", "article", "announcement", "listing"];
+const ORDER: CreateKind[] = ["question", "photo", "reel", "document", "poll", "article", "announcement", "listing"];
 const SUB: Partial<Record<CreateKind, string>> = {
   document: "Goes into the library", poll: "Ask the community", announcement: "Notify every member", article: "Long-form editorial", reel: "A video for the community",
+  question: "Ask the course and get answers",
 };
 
 // Mirrors the server gate (communities/post): permissions decide what is offered, the server still enforces them.
+// Questions exist only in Course Desks.
 export const canPublish = (c: CommunityDetail, k: CreateKind) =>
-  k === "announcement" ? c.can.announce : k === "article" ? c.can.moderate : k === "document" ? c.can.library : c.can.post;
+  k === "question" ? c.kind === "course_desk" && c.can.post
+  : k === "announcement" ? c.can.announce
+  : k === "article" ? c.can.moderate
+  : k === "document" ? c.can.library
+  : c.can.post;
 export const allowedKinds = (c: CommunityDetail) => ORDER.filter((k) => canPublish(c, k));
 export const publishHref = (c: CommunityDetail, k: CreateKind) =>
   k === "document" ? `/c/${encodeURIComponent(c.slug)}?tab=library&add=1` : `/create/new?mode=${k}&community=${encodeURIComponent(c.slug)}`;

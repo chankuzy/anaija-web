@@ -1,6 +1,6 @@
 import type { IconName } from "@/components/ui/icon";
 
-export type StructuredCreateKind = "document" | "poll" | "article" | "announcement";
+export type StructuredCreateKind = "document" | "poll" | "article" | "announcement" | "question";
 export type CreateKind = "reel" | "photo" | "story" | "listing" | StructuredCreateKind;
 export type Tone = "brand" | "neutral" | "info" | "accent" | "warm";
 
@@ -21,8 +21,9 @@ export const KIND_META: Record<CreateKind, KindMeta> = {
   poll: { title: "Poll", sub: "Ask campus a question", icon: "filters", tone: "accent" },
   article: { title: "Publication", sub: "Long-form writing with a cover", icon: "notebookMinimalistic", tone: "neutral" },
   announcement: { title: "Announcement", sub: "An official notice", icon: "bell", tone: "brand" },
+  question: { title: "Question", sub: "Ask your course a question", icon: "questionCircle", tone: "info" },
 };
 
-export const STRUCTURED_KINDS: readonly StructuredCreateKind[] = ["document", "poll", "article", "announcement"];
+export const STRUCTURED_KINDS: readonly StructuredCreateKind[] = ["document", "poll", "article", "announcement", "question"];
 export const isStructuredKind = (k: string | undefined): k is StructuredCreateKind =>
   !!k && (STRUCTURED_KINDS as readonly string[]).includes(k);

@@ -5,7 +5,9 @@ import { structuredOf } from "./structured";
  * How a post is presented on Home. The backend has one post identity ("post" | "listing"); presentation is derived.
  * Adding a kind here makes TypeScript demand a renderer for it in components/home/renderers/index.ts.
  */
-export type ContentKind = "reel" | "audioReel" | "gallery" | "listing" | "text" | "poll" | "document" | "publication" | "announcement";
+export type ContentKind =
+  | "reel" | "audioReel" | "gallery" | "listing" | "text"
+  | "poll" | "document" | "publication" | "announcement" | "question";
 
 const mediaType = (m: FeedMedia) => (m.type ?? "").toLowerCase();
 export const isVideoMedia = (m: FeedMedia) => mediaType(m) === "video";
@@ -15,7 +17,9 @@ export const sortedMedia = (p: Post): FeedMedia[] =>
 
 // First match wins. A future type (document, poll, editorial, announcement) adds a resolver ABOVE the media rules,
 // keyed on whatever discriminator the backend ships. Nothing here guesses at fields that do not exist yet.
-const STRUCTURED_KIND = { poll: "poll", document: "document", article: "publication", announcement: "announcement" } as const;
+const STRUCTURED_KIND = {
+  poll: "poll", document: "document", article: "publication", announcement: "announcement", question: "question",
+} as const;
 const RESOLVERS: ((p: Post) => ContentKind | null)[] = [
   (p) => {
     const s = structuredOf(p);

@@ -1,7 +1,7 @@
 "use client";
 
-// Publishing for the structured kinds (document, poll, publication, announcement). Uses the same upload endpoint
-// (uploadBlob), image pipeline and posts-store contract as the media composer; only the body differs.
+// Publishing for the structured kinds (document, poll, publication, announcement, question). Uses the same upload
+// endpoint (uploadBlob), image pipeline and posts-store contract as the media composer; only the body differs.
 // Uploaded files are remembered per File, so a retry after a failed save never uploads twice.
 import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -47,9 +47,12 @@ export function useStructuredPublish() {
   const images = useRef(new WeakMap<File, MediaInput>());
   const docKeys = useRef(new WeakMap<File, string>());
 
-  /** `files` = everything build() may upload; only used to scale the progress bar. */
+  /**
+   * `files` = everything build() may upload; only used to scale the progress bar.
+   * `land` = optional suffix appended to the community URL after publishing (e.g. "?tab=discussions").
+   */
   const run = useCallback(
-    async (files: File[], build: (ctx: PublishCtx) => Promise<Record<string, unknown>>) => {
+    async (files: File[], build: (ctx: PublishCtx) => Promise<Record<string, unknown>>, land = "") => {
       if (stage !== "idle") return;
       setError(null);
       setProgress(0);
@@ -111,7 +114,7 @@ export function useStructuredPublish() {
         setStage("saving");
         const community = new URLSearchParams(window.location.search).get("community");
         const res = await publishApi.store({ ...body, ...(community ? { community } : {}), client_request_id: requestId });
-        router.replace(community ? `/c/${encodeURIComponent(community)}` : `/p/${res.post_id}`);
+        router.replace(community ? `/c/${encodeURIComponent(community)}${land}` : `/p/${res.post_id}`);
       } catch (e) {
         setStage("idle");
         setProgress(0);

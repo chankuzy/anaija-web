@@ -30,7 +30,13 @@ export interface AnnouncementContent {
   deadline_at: string | null;
   publisher: { id: number; name: string; type: string } | null;
 }
-export type StructuredContent = PollContent | DocumentContent | ArticleContent | AnnouncementContent;
+/** Course Desk question. Replies are ordinary comments. */
+export interface QuestionContent {
+  kind: "question";
+  title: string;
+  body: string;
+}
+export type StructuredContent = PollContent | DocumentContent | ArticleContent | AnnouncementContent | QuestionContent;
 
 /** Only returns a payload whose shape is usable; anything else renders as a plain post. */
 export function structuredOf(p: Post): StructuredContent | null {
@@ -46,6 +52,8 @@ export function structuredOf(p: Post): StructuredContent | null {
       return typeof o.headline === "string" && Array.isArray(o.blocks) ? (o as unknown as ArticleContent) : null;
     case "announcement":
       return typeof o.title === "string" ? (o as unknown as AnnouncementContent) : null;
+    case "question":
+      return typeof o.title === "string" ? (o as unknown as QuestionContent) : null;
     default:
       return null;
   }
