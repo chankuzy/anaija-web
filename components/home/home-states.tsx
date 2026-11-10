@@ -43,14 +43,20 @@ const pill = "inline-flex h-11 items-center justify-center rounded-pill px-6 tex
 export const PRIMARY = `${pill} bg-brand text-brand-fg hover:bg-brand-hover`;
 export const QUIET = `${pill} bg-surface-interactive text-fg hover:bg-surface-elevated`;
 
-const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: string }> = {
+const EMPTY: Record<FeedScope, { title: string; sub: string; cta: string; href: string; primary?: boolean }> = {
   reels: {
     title: "No reels yet",
     sub: "Videos and audio reels from campus will show up here",
     cta: "Create reel",
     href: "/create/new",
   },
-  for_you: { title: "No posts here yet", sub: "Be the first to share a moment on campus", cta: "Create post", href: "/create/new" },
+  for_you: {
+    title: "Your campus is taking shape",
+    sub: "Join a community to find your people and see what's happening.",
+    cta: "Find communities",
+    href: "/communities",
+    primary: true,
+  },
   following: { title: "Nothing from people you follow", sub: "Find active creators on campus and follow them to see their posts here", cta: "Discover people", href: "/discover" },
   campus: { title: "No campus posts yet", sub: "Connect with your institution to see updates from classmates", cta: "Create post", href: "/create/new" },
 };
@@ -62,7 +68,7 @@ export function HomeEmpty({ scope }: { scope: FeedScope }) {
       title={e.title}
       sub={e.sub}
       action={
-        <Link href={e.href} className={QUIET}>
+        <Link href={e.href} className={e.primary ? PRIMARY : QUIET}>
           {e.cta}
         </Link>
       }

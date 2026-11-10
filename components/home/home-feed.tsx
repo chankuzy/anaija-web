@@ -11,6 +11,7 @@ import { feedEvents } from "@/lib/feed/event-tracker";
 import { useDocumentFocus } from "@/lib/feed/focus";
 import { useFeed } from "@/lib/feed/use-feed";
 import { useMedia } from "@/lib/ui/use-media";
+import { ProfilePrompt } from "@/components/onboarding/profile-prompt";
 import { HomeHeader } from "./home-header";
 import { HomePost } from "./home-post";
 import { HomeRail } from "./home-rail";
@@ -249,7 +250,10 @@ export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
           }
         />
       ) : (
-        <HomeEmpty scope="for_you" />
+        <>
+          <ProfilePrompt />
+          <HomeEmpty scope="for_you" />
+        </>
       ),
     );
   }
@@ -257,6 +261,7 @@ export function HomeFeed({ variant = "app" }: { variant?: "app" | "public" }) {
   const pillPos = { top: pub ? "calc(env(safe-area-inset-top) + 68px)" : "calc(env(safe-area-inset-top) + 12px)" };
   return wrap(
     <>
+      {!pub && <ProfilePrompt />}
       {!pub && <HomeStories />}
       {hasFresh ? (
         <div className="pointer-events-none fixed inset-x-0 z-30 flex justify-center" style={pillPos}>
