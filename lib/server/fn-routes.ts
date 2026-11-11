@@ -9,6 +9,8 @@ const FN_ROUTES = new Map<string, string>([
   ["comments-like", "comments/like"],
   ["comments-destroy", "comments/destroy"],
   ["comments-locate", "comments/locate"],
+  ["comments-edit", "comments/edit"],
+  ["comments-resolve", "comments/resolve"],
 
   // posts
   ["posts-store", "posts/store"],

@@ -24,6 +24,7 @@ export const HomePost = memo(function HomePost({
   onRemove,
   extra,
   flush = false,
+  canCoordinate = false,
 }: {
   post: Post;
   index: number;
@@ -35,6 +36,8 @@ export const HomePost = memo(function HomePost({
   extra?: SheetAction[];
   /** Drop the side padding when the host already pads. */
   flush?: boolean;
+  /** Course Desk questions: the viewer holds the 'coordinate' power (besides the author) and may mark answered. */
+  canCoordinate?: boolean;
 }) {
   const router = useRouter();
   const a = usePostActions(raw, { patch, onRemove });
@@ -95,6 +98,27 @@ export const HomePost = memo(function HomePost({
     void a.like(true);
   };
 
+  // The resolved flag lives in the post's own content (mirrored by the server), so patching it updates the card too.
+  const setResolved = (resolved: boolean) => {
+    const base = (post.content && typeof post.content === "object" ? post.content : {}) as Record<string, unknown>;
+    const next = { ...base };
+    if (resolved) {
+      next.resolved_at = new Date().toISOString();
+    } else {
+      delete next.resolved_at;
+      delete next.resolved_by;
+    }
+    a.patch(post.id, { content: next });
+  };
+  const questionCtx =
+    kind === "question"
+      ? {
+          resolved: !!(post.content as { resolved_at?: string } | null | undefined)?.resolved_at,
+          canResolve: a.isOwn || canCoordinate,
+          onResolved: setResolved,
+        }
+      : undefined;
+
   const pad = flush ? "" : "px-3 md:px-0";
   const bodyPad = flush || EDGE.has(kind) ? "" : "mx-3 md:mx-0";
 
@@ -129,7 +153,7 @@ export const HomePost = memo(function HomePost({
         {!R.ownsCaption && <PostCaption post={post} />}
         {post.allow_comments && post.comments_count > 0 && (
           <button type="button" onClick={openComments} className="mt-1 text-body text-muted">
-            View all {post.comments_count} comments
+            {kind === "question" ? `View all ${post.comments_count} answers` : `View all ${post.comments_count} comments`}
           </button>
         )}
       </div>
@@ -150,6 +174,7 @@ export const HomePost = memo(function HomePost({
           initialCount={post.comments_count}
           onCountChange={(n) => a.patch(post.id, { comments_count: n })}
           onClose={() => setCommentsOpen(false)}
+          question={questionCtx}
         />
       )}
       {optionsOpen && (

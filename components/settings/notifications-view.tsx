@@ -125,6 +125,15 @@ export function NotificationsView() {
         <Footnote>Likes includes reposts and milestones. Comments includes replies and @mentions.</Footnote>
 
         <div className="h-6" />
+        <SectionLabel>Course Desks</SectionLabel>
+        <Group>
+          <Toggle icon="notebookMinimalistic" label="Announcements and materials" value={p.course_updates} disabled={!on} onChange={(v) => void save({ ...p, course_updates: v })} />
+          <Toggle icon="message" label="Questions and answers" value={p.course_discussions} disabled={!on} onChange={(v) => void save({ ...p, course_discussions: v })} />
+          <Toggle icon="clockCircle" label="Class and deadline reminders" value={p.course_reminders} disabled={!on} onChange={(v) => void save({ ...p, course_reminders: v })} />
+        </Group>
+        <Footnote>Announcements and materials includes schedule changes. Turning one off only holds back the push: the items still appear in Activity.</Footnote>
+
+        <div className="h-6" />
         <SectionLabel>Privacy</SectionLabel>
         <Group>
           <Toggle icon="eyeClosed" label="Hide message previews" value={p.hide_message_preview} onChange={(v) => void save({ ...p, hide_message_preview: v })} />

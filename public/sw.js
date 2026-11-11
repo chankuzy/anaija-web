@@ -152,18 +152,25 @@ self.addEventListener("push", (event) => { event.waitUntil(showPush(event)); });
 
 const num = (v) => (/^\d{1,12}$/.test(String(v || "")) ? String(v) : null);
 const uname = (v) => (/^[A-Za-z0-9_.]{2,30}$/.test(String(v || "")) ? String(v) : null);
+const slugOf = (v) => (/^[a-z0-9][a-z0-9-]{0,60}$/.test(String(v || "")) ? String(v) : null);
+const COMMUNITY_TABS = ["overview", "materials", "posts", "about"];
 
 function routeFor(d) {
   const post = num(d.post_id);
+  const comment = num(d.comment_id);
   const conv = num(d.conversation_id);
   const user = uname(d.username || d.actor_username);
   const viewer = uname(d.viewer_username);
+  const slug = slugOf(d.slug);
+  const tab = d.tab && COMMUNITY_TABS.indexOf(d.tab) >= 0 ? d.tab : null;
   switch (d.dest) {
-    case "post": case "comment": if (post) return `/p/${post}`; break;
+    case "post": if (post) return `/p/${post}`; break;
+    case "comment": if (post) return `/p/${post}${comment ? `?comment=${comment}` : ""}`; break;
     case "listing": if (post) return `/l/${post}`; break;
     case "profile": if (user) return `/u/${user}`; break;
     case "followers": if (viewer) return `/u/${viewer}/followers`; break;
     case "conversation": if (conv) return `/messages/${conv}`; break;
+    case "community": if (slug) return `/c/${slug}${tab ? `?tab=${tab}` : ""}`; break;
     case "chats": return "/messages";
   }
   return "/?panel=notifications"; // story, milestones, anything without a page: open the notifications panel

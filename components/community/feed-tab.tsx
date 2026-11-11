@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { SheetAction } from "@/components/feed/options-sheet";
 import { HomePost } from "@/components/home/home-post";
 import { Avatar } from "@/components/ui/avatar";
@@ -16,21 +16,53 @@ import { uploadManager } from "@/lib/create/upload-manager";
 import { usePaged } from "@/lib/paged/use-paged";
 import { confirmDialog } from "@/lib/ui/dialog";
 import { useToast } from "./cm-kit";
-import { Empty, ReportSheet, messageOf, useFetch } from "./kit";
+import { Chip, Empty, ReportSheet, messageOf, useFetch } from "./kit";
 import { PublishSheet, canPublish, publishHref } from "./publish-sheet";
 
 const QUICK: CreateKind[] = ["poll", "document", "announcement"];
+const QUICK_DESK: CreateKind[] = ["question", "announcement", "poll", "document"];
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// Same column as Home: the pager's 12px gutter is cancelled (-mx-3) so media runs edge to edge on phones, and each
-// piece of chrome re-adds the 12px that HomePost itself uses (px-3 md:px-0). Posts are rendered exactly as Home renders them.
-export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessions: () => void }) {
+// Course Desks only. The URL carries the friendly names; the feed endpoint filters by post subtype.
+type Filter = "all" | "announcements" | "discussions";
+const FILTERS: [Filter, string][] = [["all", "All"], ["announcements", "Announcements"], ["discussions", "Discussions"]];
+const SUBTYPE: Record<Filter, string | null> = { all: null, announcements: "announcement", discussions: "question" };
+
+function emptyCopy(c: CommunityDetail, filter: Filter, canShare: boolean, go: (k: CreateKind) => void, share: () => void) {
+  if (filter === "discussions") {
+    const ok = canPublish(c, "question");
+    return {
+      title: "No questions yet",
+      body: ok ? "Ask the first question for this course." : "Questions from this course will show here.",
+      cta: ok ? { label: "Ask a question", run: () => go("question") } : null,
+    };
+  }
+  if (filter === "announcements") {
+    const ok = canPublish(c, "announcement");
+    return {
+      title: "No announcements yet",
+      body: ok ? "Post the first announcement for this course." : "Announcements from the course team will show here.",
+      cta: ok ? { label: "Post an announcement", run: () => go("announcement") } : null,
+    };
+  }
+  const desk = c.kind === "course_desk";
+  return {
+    title: "Nothing here yet",
+    body: canShare
+      ? desk ? "Ask a question or post an announcement to get things going." : "Start with a post, a poll, a photo or a document."
+      : c.is_member ? "Posts from this community will show up here." : "Join to post in this community.",
+    cta: canShare ? { label: "Share the first post", run: share } : null,
+  };
+}
+
+// The list itself. FeedTab remounts it per filter (key), so every filter starts from clean state.
+function FeedList({ c, filter, canShare, onShare }: { c: CommunityDetail; filter: Filter; canShare: boolean; onShare: () => void }) {
   const router = useRouter();
   const { toast, show } = useToast();
-  const { user } = useAuth();
-  const [share, setShare] = useState(false);
+  const { user, status } = useAuth();
   const [report, setReport] = useState<CPost | null>(null);
   const sentinel = useRef<HTMLDivElement>(null);
+  const isDesk = c.kind === "course_desk";
 
   // The post most in view is the "active" one: its slideshow slides and its reel plays.
   const ratios = useRef(new Map<number, number>());
@@ -44,20 +76,31 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
     setActiveId((prev) => (prev === best ? prev : best));
   }, []);
 
-  const sessions = useFetch(c.can.read ? `sessions:${c.id}` : null, () => communitiesApi.sessions(c.slug));
+  // Same key and loader as the desk Overview, so both tabs share one cached request.
+  const ov = useFetch(
+    isDesk && c.is_member && status !== "loading" ? `desk:${c.id}:${status}:1` : null,
+    () => communitiesApi.deskOverview(c.slug),
+  );
+  const canCoordinate = ov.data?.perms.coordinate === true;
+
   const load = useCallback(
     async (cursor: string | null) => {
-      const r = await communitiesApi.feed(c.slug, cursor);
+      const r = await communitiesApi.feed(c.slug, cursor, SUBTYPE[filter]);
       return { items: r.posts, cursor: r.cursor, hasMore: r.hasMore };
     },
-    [c.slug],
+    [c.slug, filter],
   );
-  // First page is kept on disk (wiped on sign-out), so the feed opens instantly and works offline.
-  const list = usePaged<CPost, string>({ id: `community:${c.id}`, enabled: c.can.read, load, staleMs: 30_000, persist: true });
+  // First page is kept on disk (wiped on sign-out). Desks revalidate on every open so a post you just made shows up.
+  const list = usePaged<CPost, string>({
+    id: filter === "all" ? `community:${c.id}` : `community:${c.id}:${filter}`,
+    enabled: c.can.read,
+    load,
+    staleMs: isDesk ? 0 : 30_000,
+    persist: true,
+  });
   const items = list.data?.items ?? [];
   const hasMore = list.data?.hasMore ?? false;
   const { loadMore, reload } = list;
-  const { reload: reloadSessions } = sessions;
 
   useEffect(() => {
     const el = sentinel.current;
@@ -69,11 +112,6 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
 
   // Posts publish in the background through the shared upload manager; show them the moment they land.
   useEffect(() => uploadManager.onPublished((t) => { if (t.draft.community === c.slug) reload(); }), [c.slug, reload]);
-  useEffect(() => {
-    const on = () => reloadSessions();
-    window.addEventListener("community:sessions", on);
-    return () => window.removeEventListener("community:sessions", on);
-  }, [reloadSessions]);
 
   async function togglePin(p: CPost) {
     try {
@@ -102,13 +140,97 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
     return out;
   };
 
+  const empty = emptyCopy(c, filter, canShare, (k) => router.push(publishHref(c, k)), onShare);
+
+  return (
+    <div className="mt-4">
+      {list.loading && !list.data ? (
+        <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6 px-3 pt-2 md:px-0">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="space-y-3">
+              <div className="flex items-center gap-3"><Sk className="size-9 rounded-full" /><Sk className="h-3.5 w-32 rounded-full" /></div>
+              <Sk className="h-4 w-[85%] rounded-full" />
+              <Sk className="h-40 w-full rounded-[22px]" />
+            </div>
+          ))}
+        </div>
+      ) : list.data?.error && items.length === 0 ? (
+        <Empty title="Couldn't load posts" body={list.data.error}>
+          <button type="button" onClick={list.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button>
+        </Empty>
+      ) : items.length === 0 ? (
+        <Empty title={empty.title} body={empty.body}>
+          {empty.cta && <button type="button" onClick={empty.cta.run} className={buttonClass("primary", "h-10 px-5")}>{empty.cta.label}</button>}
+        </Empty>
+      ) : (
+        <>
+          {items.map((p, i) => (
+            <div key={p.id}>
+              {p.community_pinned && (
+                <p className="mb-2 flex items-center gap-1.5 px-3 text-micro font-bold uppercase tracking-[0.08em] text-brand-ink md:px-0">
+                  <Icon name="pin" filled className="size-3.5" />
+                  Pinned
+                </p>
+              )}
+              <HomePost
+                post={p}
+                index={i}
+                active={p.id === activeId}
+                onVisible={onVisible}
+                patch={list.patch}
+                onRemove={list.remove}
+                extra={extraFor(p)}
+                canCoordinate={canCoordinate}
+              />
+            </div>
+          ))}
+          <div ref={sentinel} className="h-px" />
+          {list.data?.loadingMore && <Sk className="mx-auto h-1.5 w-20 rounded-full" />}
+        </>
+      )}
+
+      {report && (
+        <ReportSheet
+          title="Report post"
+          onClose={() => setReport(null)}
+          onSubmit={(reason) => communitiesApi.report(c.id, { kind: "post", target_id: report.id, reason }).then(() => show("Report sent"))}
+        />
+      )}
+      {toast}
+    </div>
+  );
+}
+
+// Same column as Home: the pager's 12px gutter is cancelled (-mx-3) so media runs edge to edge on phones, and each
+// piece of chrome re-adds the 12px that HomePost itself uses (px-3 md:px-0). Posts are rendered exactly as Home renders them.
+export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessions: () => void }) {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const { user } = useAuth();
+  const [share, setShare] = useState(false);
+  const isDesk = c.kind === "course_desk";
+  const raw = sp.get("filter");
+  const filter: Filter = isDesk && (raw === "announcements" || raw === "discussions") ? raw : "all";
+
+  // Course Desks have no Sessions tab, so they never fetch sessions.
+  const sessions = useFetch(c.can.read && !isDesk ? `sessions:${c.id}` : null, () => communitiesApi.sessions(c.slug));
+  const { reload: reloadSessions } = sessions;
+  useEffect(() => {
+    const on = () => reloadSessions();
+    window.addEventListener("community:sessions", on);
+    return () => window.removeEventListener("community:sessions", on);
+  }, [reloadSessions]);
+
+  const setFilter = (f: Filter) =>
+    router.replace(f === "all" ? `/c/${c.slug}?tab=posts` : `/c/${c.slug}?tab=posts&filter=${f}`, { scroll: false });
+
   if (!c.can.read) {
     return <Empty title="This community is members-only" body="Join to see its posts, chat and library." />;
   }
 
   const live = (sessions.data ?? []).filter((s) => s.status === "live");
   const canShare = c.can.post || c.can.announce;
-  const quick = QUICK.filter((k) => canPublish(c, k));
+  const quick = (isDesk ? QUICK_DESK : QUICK).filter((k) => canPublish(c, k));
 
   return (
     <div className="-mx-3 md:mx-0">
@@ -143,56 +265,17 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
         </button>
       )}
 
-      <div className="mt-4">
-        {list.loading && !list.data ? (
-          <div role="status" aria-busy="true" aria-label="Loading posts" className="space-y-6 px-3 pt-2 md:px-0">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="space-y-3">
-                <div className="flex items-center gap-3"><Sk className="size-9 rounded-full" /><Sk className="h-3.5 w-32 rounded-full" /></div>
-                <Sk className="h-4 w-[85%] rounded-full" />
-                <Sk className="h-40 w-full rounded-[22px]" />
-              </div>
-            ))}
-          </div>
-        ) : list.data?.error && items.length === 0 ? (
-          <Empty title="Couldn't load posts" body={list.data.error}>
-            <button type="button" onClick={list.reload} className={buttonClass("primary", "h-10 px-5")}>Try again</button>
-          </Empty>
-        ) : items.length === 0 ? (
-          <Empty
-            title="Nothing here yet"
-            body={canShare ? "Start with a post, a poll, a photo or a document." : c.is_member ? "Posts from this community will show up here." : "Join to post in this community."}
-          >
-            {canShare && <button type="button" onClick={() => setShare(true)} className={buttonClass("primary", "h-10 px-5")}>Share the first post</button>}
-          </Empty>
-        ) : (
-          <>
-            {items.map((p, i) => (
-              <div key={p.id}>
-                {p.community_pinned && (
-                  <p className="mb-2 flex items-center gap-1.5 px-3 text-micro font-bold uppercase tracking-[0.08em] text-brand-ink md:px-0">
-                    <Icon name="pin" filled className="size-3.5" />
-                    Pinned
-                  </p>
-                )}
-                <HomePost post={p} index={i} active={p.id === activeId} onVisible={onVisible} patch={list.patch} onRemove={list.remove} extra={extraFor(p)} />
-              </div>
-            ))}
-            <div ref={sentinel} className="h-px" />
-            {list.data?.loadingMore && <Sk className="mx-auto h-1.5 w-20 rounded-full" />}
-          </>
-        )}
-      </div>
+      {isDesk && (
+        <div role="tablist" aria-label="Filter posts" className="no-scrollbar mx-3 mt-4 flex gap-2 overflow-x-auto md:mx-0">
+          {FILTERS.map(([id, label]) => (
+            <Chip key={id} active={filter === id} onClick={() => setFilter(id)}>{label}</Chip>
+          ))}
+        </div>
+      )}
+
+      <FeedList key={filter} c={c} filter={filter} canShare={canShare} onShare={() => setShare(true)} />
 
       {share && <PublishSheet c={c} onClose={() => setShare(false)} />}
-      {report && (
-        <ReportSheet
-          title="Report post"
-          onClose={() => setReport(null)}
-          onSubmit={(reason) => communitiesApi.report(c.id, { kind: "post", target_id: report.id, reason }).then(() => show("Report sent"))}
-        />
-      )}
-      {toast}
     </div>
   );
 }

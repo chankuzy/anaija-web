@@ -37,6 +37,12 @@ export interface NotifPrefs {
   follows: boolean;
   messages: boolean;
   hide_message_preview: boolean;
+  /** Course Desks: announcements, materials, schedule changes. */
+  course_updates: boolean;
+  /** Course Desks: questions, answers, replies. */
+  course_discussions: boolean;
+  /** Course Desks: class and deadline reminders. */
+  course_reminders: boolean;
   quiet_hours_enabled: boolean;
   quiet_hours_start: number | null;
   quiet_hours_end: number | null;
@@ -75,6 +81,9 @@ export const settingsApi = {
       follows: r.follows ?? true,
       messages: r.messages ?? true,
       hide_message_preview: r.hide_message_preview ?? false,
+      course_updates: r.course_updates ?? true,
+      course_discussions: r.course_discussions ?? true,
+      course_reminders: r.course_reminders ?? true,
       quiet_hours_enabled: r.quiet_hours_enabled ?? false,
       quiet_hours_start: r.quiet_hours_start ?? null,
       quiet_hours_end: r.quiet_hours_end ?? null,

@@ -32,6 +32,15 @@ const GLYPH: Record<string, { icon: IconName; color: string }> = {
   post: SHARE,
   listing: SHARE,
   story: SHARE,
+  course_announcement: { icon: "bell", color: "#F59E0B" },
+  course_question: { icon: "message", color: "#2563EB" },
+  course_answer: { icon: "message", color: "#2563EB" },
+  course_reply: { icon: "message", color: "#2563EB" },
+  course_material: { icon: "notebookMinimalistic", color: "#14B8A6" },
+  course_material_update: { icon: "notebookMinimalistic", color: "#14B8A6" },
+  course_event: { icon: "clockCircle", color: "#7C3AED" },
+  course_event_change: { icon: "clockCircle", color: "#F59E0B" },
+  course_deadline: { icon: "clockCircle", color: "#E11D48" },
 };
 const FALLBACK = { icon: "bell" as IconName, color: "#71717A" };
 

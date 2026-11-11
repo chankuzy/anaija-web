@@ -30,11 +30,13 @@ export interface AnnouncementContent {
   deadline_at: string | null;
   publisher: { id: number; name: string; type: string } | null;
 }
-/** Course Desk question. Replies are ordinary comments. */
+/** Course Desk question. Replies are ordinary comments. resolved_* are mirrored in by desk_question_resolve. */
 export interface QuestionContent {
   kind: "question";
   title: string;
   body: string;
+  resolved_at?: string;
+  resolved_by?: number;
 }
 export type StructuredContent = PollContent | DocumentContent | ArticleContent | AnnouncementContent | QuestionContent;
 

@@ -76,7 +76,14 @@ export interface SessionReport {
 export interface Resource {
   id: number; post_id: number; title: string; description: string | null; doc_type: string; course_code: string | null;
   academic_session: string | null; subject: string | null; collection_id: number | null; created_at: string; in_feed: boolean;
+  /** Absent on payloads cached before versions shipped: treat as 1. */
+  version?: number; updated_at?: string | null; replaced_at?: string | null;
   uploader: Person | null; file: { url: string | null; thumbnail: string | null; size: number | null; mime: string | null; name: string | null } | null;
+}
+export interface ResourceVersion {
+  version: number; post_id: number; is_current: boolean; note: string | null; restored_from: number | null; created_at: string;
+  available: boolean; uploader: Person | null;
+  file: { url: string | null; thumbnail: string | null; size: number | null; mime: string | null; name: string | null } | null;
 }
 export interface Collection { id: number; name: string; description: string | null; count?: number }
 export interface LibraryPage {
@@ -103,26 +110,67 @@ export interface DeskMaterial {
   id: number; post_id: number; title: string; doc_type: string; course_code: string | null; created_at: string;
   uploader: { name: string | null; username: string | null } | null;
 }
+
+export type EventKind = "lecture" | "extra_class" | "test" | "revision" | "deadline" | "other";
+/** Minutes before the event. The server accepts only these four. */
+export const REMINDER_OPTIONS = [60, 180, 1440, 4320] as const;
+export interface DeskEvent {
+  id: number; kind: EventKind; title: string; description: string | null;
+  starts_at: string; ends_at: string | null; venue: string | null; meeting_url: string | null;
+  status: "scheduled" | "cancelled"; cancel_reason: string | null; cancelled_at: string | null;
+  change_kind: "rescheduled" | "updated" | null; previous_starts_at: string | null; changed_at: string | null;
+  remind_minutes: number[]; version: number; can_edit: boolean;
+}
+/** The overview's upcoming rows keep `event_at` (= starts_at) for older readers. */
+export type DeskUpcoming = DeskEvent & { event_at: string };
+export interface EventInput {
+  kind: EventKind; title: string; description?: string | null; starts_at: string; ends_at?: string | null;
+  venue?: string | null; meeting_url?: string | null; remind_minutes?: number[];
+}
+export interface DeskPerms { schedule: boolean; materials: boolean; coordinate: boolean; announce: boolean; insights: boolean; grant: boolean }
+export type DeskPerm = "announce" | "schedule" | "materials" | "coordinate";
+export interface DeskTeamRow {
+  id: number; kind: string; scope_label: string | null; permissions: DeskPerm[]; user: Person;
+}
+
 export interface DeskOverview {
   identity: {
     id: number; name: string; slug: string; description: string | null; avatar: string | null; cover: string | null;
     course_code: string | null; academic_session: string | null; faculty: string | null; department: string | null; level: string | null;
     institution: { name: string; short_name: string | null } | null; members_count: number;
   };
-  desk: DeskInfo; can: Can; is_member: boolean; my_role: Role | null; request_status: "pending" | null;
-  leaders: DeskLeader[]; announcements: DeskNotice[]; upcoming: DeskNotice[]; materials: DeskMaterial[];
+  desk: DeskInfo; can: Can; perms: DeskPerms; is_member: boolean; my_role: Role | null; request_status: "pending" | null;
+  leaders: DeskLeader[]; announcements: DeskNotice[]; upcoming: DeskUpcoming[]; materials: DeskMaterial[];
 }
 export interface RelatedSpace extends Community { reason: string }
 export interface DeskStats {
   members: number; invite_views: number; joins: number; joins_via_invite: number; new_accounts: number;
   first_actions: number; activation_rate: number | null; material_opens_7d: number;
 }
+/** Counted from real rows by desk_insights(). "opens" are tracked views, "users" are distinct students. */
+export interface DeskInsights {
+  period_days: number; students: number; staff: number; active_students: number; tracking_started: string | null;
+  material: {
+    opens: number; unique_users: number;
+    series: { day: string; opens: number; users: number }[];
+    top: { resource_id: number; title: string; opens: number; users: number }[];
+  };
+  announcements: { post_id: number; title: string | null; created_at: string; unique_opens: number; total_opens: number }[];
+  discussions: {
+    questions_total: number; questions_period: number; resolved: number; unanswered: number;
+    responses_total: number; responses_period: number; responders_period: number;
+  };
+  polls: { items: { post_id: number; question: string | null; voters: number; participation: number | null }[]; avg_participation: number | null };
+}
+export interface CommunityPrefs { chat_notify: "all" | "mentions" | "none"; announce_notify: boolean; discussion_notify: boolean }
 
 const C = (p: string) => `communities/${p}`;
 const person = <T extends { avatar: string | null }>(p: T): T => ({ ...p, avatar: mediaUrl(p.avatar) });
 const com = <T extends { avatar: string | null; cover: string | null }>(c: T): T => ({ ...c, avatar: mediaUrl(c.avatar), cover: mediaUrl(c.cover) });
 const detail = (c: CommunityDetail): CommunityDetail => ({ ...com(c), staff: (c.staff ?? []).map(person), face_pile: (c.face_pile ?? []).map(person) });
 const ok = { ok: true as boolean };
+const eventFile = <T extends { url: string | null; thumbnail: string | null }>(f: T | null): T | null =>
+  f ? { ...f, url: mediaUrl(f.url), thumbnail: mediaUrl(f.thumbnail) } : null;
 
 export const communitiesApi = {
   discover: async (p: { search?: string; category?: string | null; page?: number }) => {
@@ -131,9 +179,10 @@ export const communitiesApi = {
   },
   mine: async () => (await api.get<{ data: MineRow[] }>(C("mine"))).data.map(com),
   show: async (ref: string) => detail((await api.get<{ community: CommunityDetail }>(C(`show/${encodeURIComponent(ref)}`))).community),
-  feed: async (ref: string, cursor: string | null) => {
+  /** `subtype` filters the feed: "announcement" | "question" | ... (the server ignores unknown values). */
+  feed: async (ref: string, cursor: string | null, subtype?: string | null) => {
     const r = await api.get<{ posts: (Post & { community_pinned?: boolean })[]; next_cursor: string | null; has_more: boolean }>(
-      C(`feed/${encodeURIComponent(ref)}`), { cursor });
+      C(`feed/${encodeURIComponent(ref)}`), { cursor, ...(subtype ? { subtype } : {}) });
     const posts: CPost[] = r.posts.map((p) => ({ ...normPost(p), community_pinned: p.community_pinned === true }));
     return { posts, cursor: r.next_cursor, hasMore: r.has_more };
   },
@@ -164,8 +213,9 @@ export const communitiesApi = {
   grantDesignation: (id: number, body: { user_id: number; kind: DesigKind; scope_label?: string; can_announce?: boolean }) =>
     api.post<{ designation: Desig }>(C(`designation/${id}`), body),
   revokeDesignation: (id: number, designationId: number) => api.post<typeof ok>(C(`designation-revoke/${id}`), { designation_id: designationId }),
-  prefs: (id: number) => api.get<{ chat_notify: "all" | "mentions" | "none"; announce_notify: boolean }>(C(`prefs/${id}`)),
-  setPrefs: (id: number, body: { chat_notify?: string; announce_notify?: boolean }) => api.post<typeof ok>(C(`prefs/${id}`), body),
+  prefs: (id: number) => api.get<Partial<CommunityPrefs> & Pick<CommunityPrefs, "chat_notify" | "announce_notify">>(C(`prefs/${id}`))
+    .then((r): CommunityPrefs => ({ ...r, discussion_notify: r.discussion_notify ?? false })),
+  setPrefs: (id: number, body: { chat_notify?: string; announce_notify?: boolean; discussion_notify?: boolean }) => api.post<typeof ok>(C(`prefs/${id}`), body),
 
   post: (id: number, body: Record<string, unknown>) => api.post<{ post_id: number }>(C(`post/${id}`), body),
   pin: (id: number, postId: number, pinned: boolean) => api.post<{ pinned: boolean }>(C(`pin/${id}`), { post_id: postId, pinned }),
@@ -182,6 +232,20 @@ export const communitiesApi = {
   },
   libraryAdd: (id: number, body: Record<string, unknown>) => api.post<{ resource: Resource }>(C(`library-add/${id}`), body),
   libraryRemove: (id: number, resourceId: number) => api.post<typeof ok>(C(`library-remove/${id}`), { resource_id: resourceId }),
+  /** The new file must already be published as a document post by the same user (communities/post with library.replace). */
+  libraryReplace: async (id: number, body: { resource_id: number; post_id: number; note?: string; notify?: boolean }) => {
+    const r = await api.post<{ resource: Resource | null; version: number; notified: boolean }>(C(`library-replace/${id}`), body);
+    return { ...r, resource: r.resource ? normRes(r.resource) : null };
+  },
+  libraryVersions: async (id: number, resourceId: number) => {
+    const r = await api.get<{ current_version: number; can_restore: boolean; data: ResourceVersion[] }>(C(`library-versions/${id}/${resourceId}`));
+    return {
+      ...r,
+      data: r.data.map((v) => ({ ...v, uploader: v.uploader ? person(v.uploader) : null, file: eventFile(v.file) })),
+    };
+  },
+  libraryRestore: (id: number, resourceId: number, version: number) =>
+    api.post<{ resource: Resource | null; version: number }>(C(`library-restore/${id}`), { resource_id: resourceId, version }),
   collectionSave: (id: number, body: { name: string; description?: string; collection_id?: number }) =>
     api.post<{ collection: Collection }>(C(`collection-save/${id}`), body),
   collectionRemove: (id: number, collectionId: number) => api.post<typeof ok>(C(`collection-remove/${id}`), { collection_id: collectionId }),
@@ -218,10 +282,31 @@ export const communitiesApi = {
   },
   deskVerify: (id: number, body: { lecturer_name: string; note: string }) =>
     api.post<{ verification_status: VerificationStatus }>(C(`desk-verify/${id}`), body),
-  deskAssistant: (id: number, body: { user_id: number; assistant: boolean; can_announce?: boolean }) =>
-    api.post<{ ok: boolean; assistant: boolean }>(C(`desk-assistant/${id}`), body),
+  deskAssistant: (id: number, body: { user_id: number; assistant: boolean; can_announce?: boolean; permissions?: DeskPerm[] }) =>
+    api.post<{ ok: boolean; assistant: boolean; permissions?: DeskPerm[] }>(C(`desk-assistant/${id}`), body),
+  /** Owner, admin or lecturer: set what a designation holder may do. */
+  deskPermissions: (id: number, designationId: number, permissions: DeskPerm[]) =>
+    api.post<{ ok: boolean; permissions: DeskPerm[] }>(C(`desk-permissions/${id}`), { designation_id: designationId, permissions }),
+  deskTeam: async (id: number) =>
+    (await api.get<{ data: DeskTeamRow[] }>(C(`desk-team/${id}`))).data.map((r) => ({ ...r, user: person(r.user) })),
   deskTrack: (id: number, resourceId: number) => api.post<typeof ok>(C(`desk-track/${id}`), { kind: "material_open", resource_id: resourceId }),
+  deskTrackOpen: (id: number) => api.post<typeof ok>(C(`desk-track/${id}`), { kind: "desk_open" }),
+  deskTrackAnnouncement: (id: number, postId: number) =>
+    api.post<typeof ok>(C(`desk-track/${id}`), { kind: "announcement_open", post_id: postId }),
   deskStats: (id: number) => api.get<DeskStats>(C(`desk-stats/${id}`)),
+  deskInsights: (id: number, days = 7) => api.get<DeskInsights>(C(`desk-insights/${id}`), { days }),
+
+  // Schedule. Times are ISO strings (UTC on the wire); the UI shows Africa/Lagos.
+  deskEvents: (id: number) => api.get<{ data: DeskEvent[]; has_more: boolean; can_edit: boolean }>(C(`desk-events/${id}`)),
+  deskPastEvents: (id: number, before?: string | null) =>
+    api.get<{ data: DeskEvent[]; has_more: boolean; can_edit: boolean }>(C(`desk-events/${id}`), { range: "past", ...(before ? { before } : {}) }),
+  deskEventCreate: async (id: number, body: EventInput) => (await api.post<{ event: DeskEvent }>(C(`desk-event-create/${id}`), body)).event,
+  /** `expected_version` makes a concurrent edit a 409 instead of a silent overwrite. */
+  deskEventUpdate: (id: number, eventId: number, body: Partial<EventInput> & { expected_version?: number }) =>
+    api.post<{ event: DeskEvent; changed: boolean }>(C(`desk-event-update/${id}`), { event_id: eventId, ...body }),
+  deskEventCancel: async (id: number, eventId: number, reason?: string) =>
+    (await api.post<{ event: DeskEvent }>(C(`desk-event-cancel/${id}`), { event_id: eventId, reason })).event,
+
   related: async (id: number) => {
     const r = await api.get<{ communities: RelatedSpace[]; desks: RelatedSpace[] }>(C(`related/${id}`));
     return { communities: (r.communities ?? []).map(com), desks: (r.desks ?? []).map(com) };
