@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
@@ -8,6 +9,8 @@ import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CommunityDetail, type DeskAccess, type Semester } from "@/lib/api/communities";
 import { useAuth } from "@/lib/auth/auth-context";
 import { timeAgo } from "@/lib/format";
+import { InsightsSheet } from "./desk-insights";
+import { KIND_LABEL, ScheduleSheet, whenLagos } from "./desk-schedule";
 import { Empty, Label, useFetch } from "./kit";
 
 const ACCESS_TEXT: Record<DeskAccess, string> = {
@@ -20,14 +23,23 @@ const TYPE_LABEL: Record<string, string> = {
   past_question: "Past question", lecture_note: "Lecture note", slides: "Slides", textbook: "Textbook",
   assignment: "Assignment", syllabus: "Syllabus", project: "Project", other: "Other",
 };
-const day = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
-// The desk landing: identity, access, leaders, what's new, recent materials. One request (GET communities/desk/:ref).
+// The desk landing: identity, access, leaders, what's new, the schedule, recent materials. One request (GET communities/desk/:ref).
 export function DeskOverview({ c, onTab }: { c: CommunityDetail; onTab: (id: string) => void }) {
   const { status } = useAuth();
   const ov = useFetch(status === "loading" ? null : `desk:${c.id}:${status}:${c.is_member ? 1 : 0}`, () => communitiesApi.deskOverview(c.slug));
   const rel = useFetch(c.is_member ? `related:${c.id}` : null, () => communitiesApi.related(c.id));
+  const [schedule, setSchedule] = useState(false);
+  const [insights, setInsights] = useState(false);
   const d = ov.data;
+
+  // A member opening the desk is counted once per visit (the server keeps one row per person per day and counts repeats).
+  const tracked = useRef<number | null>(null);
+  useEffect(() => {
+    if (!c.is_member || status !== "authed" || tracked.current === c.id) return;
+    tracked.current = c.id;
+    void communitiesApi.deskTrackOpen(c.id).catch(() => {});
+  }, [c.id, c.is_member, status]);
 
   if (!d) {
     return ov.error ? (
@@ -98,6 +110,18 @@ export function DeskOverview({ c, onTab }: { c: CommunityDetail; onTab: (id: str
         </section>
       )}
 
+      {d.perms.insights && (
+        <section>
+          <button type="button" onClick={() => setInsights(true)} className="flex w-full items-center gap-3 rounded-2xl bg-surface-interactive px-4 py-3.5 text-left transition-colors hover:bg-surface-elevated">
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-bold text-fg">Course insights</span>
+              <span className="block text-supporting text-muted">Who is opening materials, announcements, questions and polls</span>
+            </span>
+            <Icon name="back" className="size-4 rotate-180 text-muted" />
+          </button>
+        </section>
+      )}
+
       {d.announcements.length > 0 && (
         <section>
           <Label>Latest announcements</Label>
@@ -117,17 +141,28 @@ export function DeskOverview({ c, onTab }: { c: CommunityDetail; onTab: (id: str
         </section>
       )}
 
-      {d.upcoming.length > 0 && (
+      {d.is_member && (d.upcoming.length > 0 || d.perms.schedule) && (
         <section>
-          <Label>Coming up</Label>
-          <div className="divide-y divide-line">
-            {d.upcoming.map((u) => (
-              <div key={u.id} className="px-1 py-3">
-                <p className="truncate text-[15px] font-semibold text-fg">{u.title}</p>
-                {u.event_at && <p className="text-supporting text-muted">{day(u.event_at)}</p>}
-              </div>
-            ))}
+          <div className="flex items-end">
+            <Label>Coming up</Label>
+            <span className="flex-1" />
+            <button type="button" onClick={() => setSchedule(true)} className="pb-2 pr-1 text-secondary font-bold text-brand-ink">
+              {d.perms.schedule && d.upcoming.length === 0 ? "Add event" : "Full schedule"}
+            </button>
           </div>
+          {d.upcoming.length === 0 ? (
+            <p className="px-1 text-secondary text-muted">Nothing scheduled yet.</p>
+          ) : (
+            <div className="divide-y divide-line">
+              {d.upcoming.map((u) => (
+                <div key={u.id} className="px-1 py-3">
+                  <p className="text-micro font-bold uppercase tracking-wide text-muted">{KIND_LABEL[u.kind]}</p>
+                  <p className="truncate text-[15px] font-semibold text-fg">{u.title}</p>
+                  <p className="text-supporting text-muted">{whenLagos(u.starts_at)}{u.venue ? ` · ${u.venue}` : ""}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -172,6 +207,9 @@ export function DeskOverview({ c, onTab }: { c: CommunityDetail; onTab: (id: str
           </div>
         </section>
       )}
+
+      {schedule && <ScheduleSheet c={c} canEdit={d.perms.schedule} onClose={() => setSchedule(false)} onChanged={ov.reload} />}
+      {insights && <InsightsSheet c={c} onClose={() => setInsights(false)} />}
     </div>
   );
 }

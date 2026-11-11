@@ -266,7 +266,7 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
       )}
 
       {isDesk && (
-        <div role="tablist" aria-label="Filter posts" className="no-scrollbar mx-3 mt-4 flex gap-2 overflow-x-auto md:mx-0">
+        <div role="group" aria-label="Filter posts" className="no-scrollbar mx-3 mt-4 flex gap-2 overflow-x-auto md:mx-0">
           {FILTERS.map(([id, label]) => (
             <Chip key={id} active={filter === id} onClick={() => setFilter(id)}>{label}</Chip>
           ))}

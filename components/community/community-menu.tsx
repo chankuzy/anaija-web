@@ -21,6 +21,7 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
   const router = useRouter();
   const { reloadInbox } = useMessages();
   const [view, setView] = useState<View>("menu");
+  const isDesk = c.kind === "course_desk";
   const prefs = useFetch(c.is_member ? `prefs:${c.id}` : null, () => communitiesApi.prefs(c.id));
 
   async function share() {
@@ -28,7 +29,7 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
     if (r === "copied") onToast("Link copied");
     onClose();
   }
-  async function setPref(body: { chat_notify?: string; announce_notify?: boolean }) {
+  async function setPref(body: { chat_notify?: string; announce_notify?: boolean; discussion_notify?: boolean }) {
     try {
       await communitiesApi.setPrefs(c.id, body);
       prefs.reload();
@@ -59,7 +60,8 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
         <MenuRow icon="share" label="Share community link" onClick={() => void share()} />
         {c.is_member && <MenuRow icon="usersGroupRounded" label="Members" hint={`${c.members_count} ${c.members_count === 1 ? "person" : "people"}`} onClick={() => setView("members")} />}
         {c.is_member && <MenuRow icon="star" label="Start a Moment" hint="Hot Seat, Verdict, Confession Drop and more" onClick={() => setView("moment")} />}
-        {c.can.session && <MenuRow icon="eyeClosed" label="Anonymous session" hint="A temporary feed where posts have no names" onClick={() => setView("session")} />}
+        {/* Course Desks have no Sessions tab, so there is nowhere to see a session started here. */}
+        {c.can.session && !isDesk && <MenuRow icon="eyeClosed" label="Anonymous session" hint="A temporary feed where posts have no names" onClick={() => setView("session")} />}
         {c.can.moderate && <MenuRow icon="settings" label="Manage" hint="Requests, invites, reports, settings" onClick={() => setView("manage")} />}
         {c.can.manage && (
           <>
@@ -81,9 +83,22 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
           </div>
           <div className="mt-3">
             <Group>
-              <Toggle icon="bell" label="Announcements and live sessions" value={prefs.data.announce_notify} onChange={(v) => void setPref({ announce_notify: v })} />
+              <Toggle
+                icon="bell"
+                label={isDesk ? "Announcements, materials and new events" : "Announcements and live sessions"}
+                value={prefs.data.announce_notify}
+                onChange={(v) => void setPref({ announce_notify: v })}
+              />
+              {isDesk && (
+                <Toggle icon="message" label="New questions in this desk" value={prefs.data.discussion_notify} onChange={(v) => void setPref({ discussion_notify: v })} />
+              )}
             </Group>
           </div>
+          {isDesk && (
+            <p className="px-1 pt-2 text-supporting leading-[1.4] text-muted">
+              Course staff are always told about new questions. Answers to your own questions always reach you, and schedule changes and reminders always do too.
+            </p>
+          )}
         </>
       )}
 
