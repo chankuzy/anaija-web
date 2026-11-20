@@ -37,26 +37,30 @@ interface Raw {
   listings?: Post[];
   next_cursor?: string | null;
   has_more?: boolean;
+  no_campus?: boolean;
 }
 interface Page {
   key: string;
   items: Post[];
   cursor: string | null;
   hasMore: boolean;
+  noCampus: boolean;
   loadingMore: boolean;
   error: string | null;
 }
 
-async function fetchPage(type: string, sort: SortId, campus: boolean, cursor: string | null, signal: AbortSignal) {
+// The server scopes every page to the viewer's own campus; nothing campus-related is sent from here.
+async function fetchPage(type: string, sort: SortId, cursor: string | null, signal: AbortSignal) {
   const res = await api.get<Raw>(
     "marketplace-index",
-    { listing_type: type || undefined, sort, campus: campus ? 1 : undefined, cursor: cursor ?? undefined },
+    { listing_type: type || undefined, sort, cursor: cursor ?? undefined },
     signal,
   );
   return {
     items: (res.listings ?? []).map((p) => normPost(p)),
     cursor: res.next_cursor ?? null,
     hasMore: res.has_more === true,
+    noCampus: res.no_campus === true,
   };
 }
 
@@ -149,7 +153,6 @@ function Message({ title, body, action }: { title: string; body: string; action?
 // Remembered across leaving and coming back to the screen.
 let rememberedType = "";
 let rememberedSort: SortId = "relevance";
-let rememberedCampus = false;
 
 export function MarketView() {
   const router = useRouter();
@@ -157,11 +160,10 @@ export function MarketView() {
   const authed = status === "authed";
   const [type, setTypeState] = useState(() => rememberedType);
   const [sort, setSortState] = useState<SortId>(() => rememberedSort);
-  const [campus, setCampusState] = useState(() => rememberedCampus);
   const [reloadTick, setReloadTick] = useState(0);
   const [page, setPage] = useState<Page | null>(null);
   const moreBusy = useRef(false);
-  const key = `${type}|${sort}|${campus ? 1 : 0}|${reloadTick}`;
+  const key = `${type}|${sort}|${reloadTick}`;
   const cur = page && page.key === key ? page : null;
 
   // The marketplace needs a signed-in user (the backend requires it), same as Discover.
@@ -173,14 +175,14 @@ export function MarketView() {
     if (!authed) return;
     const ac = new AbortController();
     moreBusy.current = false;
-    fetchPage(type, sort, campus, null, ac.signal)
+    fetchPage(type, sort, null, ac.signal)
       .then((r) => !ac.signal.aborted && setPage({ key, ...r, loadingMore: false, error: null }))
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
-        setPage({ key, items: [], cursor: null, hasMore: false, loadingMore: false, error: e instanceof ApiError ? e.message : "Something went wrong." });
+        setPage({ key, items: [], cursor: null, hasMore: false, noCampus: false, loadingMore: false, error: e instanceof ApiError ? e.message : "Something went wrong." });
       });
     return () => ac.abort();
-  }, [authed, type, sort, campus, key]);
+  }, [authed, type, sort, key]);
 
   // Next page well before the fold.
   const sentinel = useRef<HTMLDivElement>(null);
@@ -197,7 +199,7 @@ export function MarketView() {
         moreBusy.current = true;
         setPage({ ...c, loadingMore: true });
         const ac = new AbortController();
-        fetchPage(type, sort, campus, c.cursor, ac.signal)
+        fetchPage(type, sort, c.cursor, ac.signal)
           .then((r) => {
             // Trending ranks on live engagement, so a row can drift between pages; never show one twice.
             const seen = new Set(c.items.map((p) => p.id));
@@ -212,7 +214,7 @@ export function MarketView() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMore, count, cur, type, sort, campus]);
+  }, [hasMore, count, cur, type, sort]);
 
   function setType(t: string) {
     rememberedType = t;
@@ -222,38 +224,30 @@ export function MarketView() {
     rememberedSort = s;
     setSortState(s);
   }
-  function toggleCampus() {
-    rememberedCampus = !campus;
-    setCampusState(!campus);
-  }
   function sell() {
     if (!authed) return openAuth();
     router.push("/create/new?mode=listing");
   }
 
-  const filtered = type !== "" || campus;
   let body: React.ReactNode;
   if (!authed || !cur) {
     body = <GridSkeleton />;
+  } else if (cur.noCampus) {
+    body = (
+      <Message
+        title="Set your campus to shop"
+        body="The marketplace shows listings from people on your campus."
+        action={{ label: "Set my campus", onClick: () => router.push("/settings/campus") }}
+      />
+    );
   } else if (cur.error && cur.items.length === 0) {
     body = <Message title="Couldn't load the marketplace" body={cur.error} action={{ label: "Try again", onClick: () => setReloadTick((n) => n + 1) }} />;
   } else if (cur.items.length === 0) {
     body = (
       <Message
-        title="No listings here yet"
-        body={campus ? "Nothing on your campus yet. Try All listings." : type ? "Try another category." : "Be the first to sell something."}
-        action={
-          filtered
-            ? {
-                label: "Show all",
-                onClick: () => {
-                  setType("");
-                  rememberedCampus = false;
-                  setCampusState(false);
-                },
-              }
-            : { label: "Sell something", onClick: sell }
-        }
+        title="No listings on your campus yet"
+        body={type ? "Nothing in this category yet. Try All." : "Be the first to sell something."}
+        action={type ? { label: "Show all", onClick: () => setType("") } : { label: "Sell something", onClick: sell }}
       />
     );
   } else {
@@ -293,17 +287,6 @@ export function MarketView() {
           </button>
         </div>
         <div className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-3 md:mx-0 md:px-0">
-          <button
-            type="button"
-            onClick={toggleCampus}
-            aria-pressed={campus}
-            className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-secondary font-bold transition-colors ${
-              campus ? "bg-brand text-brand-fg" : "bg-surface-interactive text-fg hover:bg-surface-elevated"
-            }`}
-          >
-            <Icon name="mapPointSchool" filled={campus} className="size-4" />
-            My campus
-          </button>
           {TYPES.map((t) => (
             <button
               key={t.id || "all"}
