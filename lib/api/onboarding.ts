@@ -12,10 +12,37 @@ export interface OnboardingEvent {
 }
 
 export interface OnboardingOptions {
+  /** true: the institution has a curated structure and the lists are closed. false: names seen on communities, free text allowed. */
+  curated: boolean;
   faculties: string[];
   departments: { name: string; faculty: string | null }[];
 }
 export type Suggestion = Community & { reason: string };
+
+/** A person or official account to follow. `label` is the strongest thing proven about them ("Your department", "Official", "On Anaija"). */
+export interface Person {
+  id: number;
+  name: string | null;
+  username: string | null;
+  avatar: string | null;
+  is_verified: boolean;
+  label: string;
+}
+
+export interface Picks {
+  scope: Record<string, boolean>;
+  /** Listed Anaija-owned communities (HQ, Commons, ...). */
+  platform: Suggestion[];
+  /** Active official accounts. */
+  accounts: Person[];
+  /** Campus-matched communities and verified Course Desks. */
+  communities: Suggestion[];
+  desks: Suggestion[];
+  /** Public communities that top up a thin campus list. */
+  popular: Suggestion[];
+  /** People to follow, closest first. */
+  people: Person[];
+}
 
 /** invite-preview already returns these; communitiesApi.invitePreview just doesn't type them. */
 export type InvitePeek = InvitePreview & {
@@ -30,14 +57,25 @@ export type InvitePeek = InvitePreview & {
 };
 
 const space = (c: Suggestion): Suggestion => ({ ...c, avatar: mediaUrl(c.avatar), cover: mediaUrl(c.cover) });
+const person = (p: Person): Person => ({ ...p, avatar: mediaUrl(p.avatar) });
 
 export const onboardingApi = {
-  options: (institutionId: number) =>
-    api.get<OnboardingOptions>("communities/onboarding-options", { institution_id: institutionId }),
+  options: async (institutionId: number): Promise<OnboardingOptions> => {
+    const r = await api.get<Partial<OnboardingOptions>>("communities/onboarding-options", { institution_id: institutionId });
+    return { curated: r.curated === true, faculties: r.faculties ?? [], departments: r.departments ?? [] };
+  },
 
-  picks: async () => {
-    const r = await api.get<{ scope: Record<string, boolean>; communities: Suggestion[]; desks: Suggestion[] }>("communities/onboarding-picks");
-    return { scope: r.scope, communities: (r.communities ?? []).map(space), desks: (r.desks ?? []).map(space) };
+  picks: async (): Promise<Picks> => {
+    const r = await api.get<Partial<Picks>>("communities/onboarding-picks");
+    return {
+      scope: r.scope ?? {},
+      platform: (r.platform ?? []).map(space),
+      accounts: (r.accounts ?? []).map(person),
+      communities: (r.communities ?? []).map(space),
+      desks: (r.desks ?? []).map(space),
+      popular: (r.popular ?? []).map(space),
+      people: (r.people ?? []).map(person),
+    };
   },
 
   // profile-update is a patch; institution_id is always sent so the call is never empty.

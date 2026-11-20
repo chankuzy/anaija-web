@@ -19,8 +19,9 @@ const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 const JOIN_RE = /^\/join\/([A-Za-z0-9]+)/;
 type Avail = "idle" | "checking" | "ok" | "taken" | "invalid" | "unknown";
 
-// First-session flow: profile -> photo -> campus -> discovery. Every step after the first is skippable, and an invite
-// link (?next=/join/<token>) is carried through and returned to, so a lecturer's link never dumps anyone on the feed.
+// First-session flow: profile -> photo -> campus -> discovery. Every step after the first is skippable and every step
+// after the first has a Back. An invite link (?next=/join/<token>) is carried through and returned to, so a
+// lecturer's link never dumps anyone on the feed.
 export function ProfileSetup() {
   const router = useRouter();
   const { status, user, refresh } = useAuth();
@@ -125,7 +126,7 @@ export function ProfileSetup() {
 
   if (stage === "photo") {
     return (
-      <Frame stage="photo" title="Give your profile a face." sub="Let people recognize you around Anaija. You can always change this later.">
+      <Frame stage="photo" title="Give your profile a face." sub="Let people recognize you around Anaija. You can always change this later." onBack={() => setStage("profile")}>
         <PhotoStep
           onContinue={(a) => {
             ev({ kind: a === "done" ? "step_done" : "step_skip", step: "photo" });
@@ -143,6 +144,7 @@ export function ProfileSetup() {
         stage="campus"
         title="Where do you study?"
         sub={desk?.institution_only ? `This Course Desk is for students of ${desk.institution?.short_name ?? desk.institution?.name}.` : "This is how we find the classes and people that matter to you."}
+        onBack={() => setStage("photo")}
       >
         <CampusStep
           invite={invite}
@@ -162,10 +164,10 @@ export function ProfileSetup() {
 
   if (stage === "discover") {
     return (
-      <Frame stage="discover" title="Find your place." sub="Spaces that match your campus, department and level.">
+      <Frame stage="discover" title="Find your place." sub="Anaija's own spaces, communities worth joining, and people to follow." onBack={() => setStage("campus")}>
         <DiscoverStep
           onShown={onShown}
-          onFirstJoin={(kind) => ev({ kind: "first_action", step: "discovery", action: `join_${kind}` })}
+          onFirstAction={(action) => ev({ kind: "first_action", step: "discovery", action })}
           onFinish={(dest) => {
             ev({ kind: "step_done", step: "discovery" });
             finish(dest);

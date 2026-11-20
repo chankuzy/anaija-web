@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Chip, messageOf } from "@/components/community/kit";
+import { useEffect, useMemo, useState } from "react";
+import { messageOf } from "@/components/community/kit";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
+import { Picker } from "@/components/ui/picker";
 import { Sk } from "@/components/ui/skeleton";
 import { onboardingApi, type InvitePeek, type OnboardingOptions } from "@/lib/api/onboarding";
 import { settingsApi, type Institution } from "@/lib/api/settings";
@@ -12,12 +13,59 @@ import { useAuth } from "@/lib/auth/auth-context";
 import { GHOST } from "./frame";
 
 const LEVELS = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"];
-const ROLES: [string, string][] = [["student", "Student"], ["staff", "Staff"], ["alumni", "Alumni"]];
+const ROLES = [
+  { value: "student", label: "Student" },
+  { value: "staff", label: "Staff" },
+  { value: "alumni", label: "Alumni" },
+];
 type Inst = Pick<Institution, "id" | "name" | "short_name">;
 const LABEL = "px-1 pb-2 pt-6 text-micro font-semibold uppercase tracking-[0.08em] text-muted";
 
-// Institution comes from the real institutions table. Faculty and department are free text, suggested from what
-// already exists at that institution, so nothing is invented and an unlisted department is never a dead end.
+const monogram = (i: Inst) => (i.short_name ?? i.name.split(/\s+/).map((w) => w[0]).join("")).slice(0, 4).toUpperCase();
+
+function Mono({ text }: { text: string }) {
+  return <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-interactive text-[11px] font-extrabold tracking-wide text-fg">{text}</span>;
+}
+
+// The selected role is the white accent here; yellow is saved for the level chips and the main action.
+function Segmented({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div role="radiogroup" aria-label="I am a" className="flex gap-1 rounded-full bg-card p-1">
+      {ROLES.map((r) => {
+        const on = value === r.value;
+        return (
+          <button
+            key={r.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(r.value)}
+            className={`h-10 flex-1 rounded-full text-[14px] transition-colors ${on ? "bg-fg font-extrabold text-bg" : "font-semibold text-muted hover:text-fg"}`}
+          >
+            {r.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function LevelChip({ on, onClick, children }: { on: boolean; onClick: () => void; children: string }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={`h-10 rounded-full px-4 text-[14px] transition-colors ${on ? "bg-brand font-extrabold text-brand-fg" : "bg-card font-semibold text-fg hover:bg-card-elevated"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+// Institution comes from the institutions table. Where an institution has a curated structure, faculty and department
+// are closed lists chosen in our own picker (department unlocks after faculty). Where it doesn't, they stay typed fields
+// suggested from what exists, so an uncurated campus is never a dead end.
 export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | null; onSaved: () => void; onSkip: () => void }) {
   const { refresh } = useAuth();
   const [q, setQ] = useState("");
@@ -71,17 +119,32 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
   function choose(i: Inst) {
     setInst({ id: i.id, name: i.name, short_name: i.short_name });
     setOpts(null);
-    onboardingApi.options(i.id).then(setOpts).catch(() => setOpts({ faculties: [], departments: [] }));
+    setFaculty("");
+    setDepartment("");
+    onboardingApi.options(i.id).then(setOpts).catch(() => setOpts({ curated: false, faculties: [], departments: [] }));
   }
 
-  function onDepartment(v: string) {
+  function onFaculty(v: string) {
+    setFaculty(v);
+    if (department && !opts?.departments.some((d) => d.name === department && d.faculty === v)) setDepartment("");
+  }
+
+  function onDepartmentTyped(v: string) {
     setDepartment(v);
     const known = opts?.departments.find((d) => d.name.toLowerCase() === v.trim().toLowerCase());
     if (known?.faculty && !faculty.trim()) setFaculty(known.faculty);
   }
 
+  const curated = opts?.curated === true;
+  const facultyOptions = useMemo(() => (opts?.faculties ?? []).map((f) => ({ value: f, label: f })), [opts]);
+  const departmentOptions = useMemo(
+    () => (opts?.departments ?? []).filter((d) => d.faculty === faculty).map((d) => ({ value: d.name, label: d.name })),
+    [opts, faculty],
+  );
+  const ready = !curated || (!!faculty && !!department && (role !== "student" || !!level));
+
   async function save() {
-    if (!inst || busy) return;
+    if (!inst || busy || !ready) return;
     setBusy(true);
     setErr(null);
     try {
@@ -89,7 +152,7 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
         institution_id: inst.id,
         faculty: faculty.trim() || null,
         department: department.trim() || null,
-        level,
+        level: role === "student" ? level : null,
         campus_role: role,
       });
       await refresh();
@@ -104,8 +167,8 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
     return (
       <>
         {hint && (
-          <button type="button" onClick={() => choose(hint)} className="mb-4 flex items-center gap-3 rounded-2xl bg-surface-interactive px-4 py-3.5 text-left transition-colors hover:bg-surface-elevated">
-            <Icon name="diploma" className="size-6 shrink-0 text-fg" />
+          <button type="button" onClick={() => choose(hint)} className="mb-4 flex items-center gap-3.5 rounded-2xl bg-card px-4 py-3.5 text-left transition-colors hover:bg-card-elevated">
+            <Mono text={monogram(hint)} />
             <span className="min-w-0 flex-1">
               <span className="block text-supporting text-muted">This link is for</span>
               <span className="block truncate text-[15px] font-bold text-fg">{hint.short_name ?? hint.name}</span>
@@ -113,16 +176,16 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
             <span className="text-secondary font-bold text-fg">That&apos;s me</span>
           </button>
         )}
-        <div className="flex h-12 items-center gap-2.5 rounded-full bg-surface-interactive px-4">
+        <div className="flex h-12 items-center gap-2.5 rounded-full bg-card px-4 focus-within:ring-2 focus-within:ring-brand/60">
           <Icon name="search" className="size-5 shrink-0 text-muted" />
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search your institution" aria-label="Search institutions" className="min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-muted" />
         </div>
-        <div className="no-scrollbar mt-2 max-h-[40dvh] flex-1 overflow-y-auto md:max-h-[360px]">
+        <div className="no-scrollbar mt-2 max-h-[44dvh] flex-1 overflow-y-auto md:max-h-[380px]">
           {listErr ? (
             <p className="py-8 text-center text-body text-muted">{listErr}</p>
           ) : list === null ? (
             <div role="status" aria-busy="true" aria-label="Loading" className="space-y-3 py-3">
-              {[0, 1, 2, 3].map((k) => <Sk key={k} className="h-10 w-full rounded-xl" />)}
+              {[0, 1, 2, 3].map((k) => <Sk key={k} className="h-12 w-full rounded-2xl" />)}
             </div>
           ) : list.length === 0 ? (
             <p className="py-8 text-center text-body leading-snug text-muted">We don&apos;t have that institution yet. You can skip this and add it later.</p>
@@ -130,9 +193,9 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
             <ul>
               {list.map((i) => (
                 <li key={i.id}>
-                  <button type="button" onClick={() => choose(i)} className="flex w-full items-center gap-3 rounded-xl px-3 py-3.5 text-left transition-colors hover:bg-surface-interactive">
-                    <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{i.name}</span>
-                    {i.short_name && <span className="shrink-0 text-secondary text-muted">{i.short_name}</span>}
+                  <button type="button" onClick={() => choose(i)} className="flex w-full items-center gap-3.5 rounded-2xl px-2 py-3 text-left transition-colors hover:bg-card">
+                    <Mono text={monogram(i)} />
+                    <span className="min-w-0 flex-1 text-[15px] font-semibold leading-snug text-fg">{i.name}</span>
                   </button>
                 </li>
               ))}
@@ -146,37 +209,56 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
 
   return (
     <>
-      <div className="flex items-center gap-3 rounded-2xl bg-surface-interactive px-4 py-3.5">
-        <Icon name="checkCircle" filled className="size-6 shrink-0 text-fg" />
-        <span className="min-w-0 flex-1 truncate text-[15px] font-bold text-fg">{inst.name}</span>
+      <div className="flex items-center gap-3.5 rounded-2xl bg-card px-4 py-3.5">
+        <Mono text={monogram(inst)} />
+        <span className="min-w-0 flex-1 text-[15px] font-bold leading-snug text-fg">{inst.name}</span>
         <button type="button" onClick={() => { setInst(null); setOpts(null); }} className="text-secondary font-bold text-muted hover:text-fg">Change</button>
       </div>
 
       <p className={LABEL}>I am a</p>
-      <div className="flex flex-wrap gap-2">
-        {ROLES.map(([v, l]) => <Chip key={v} active={role === v} onClick={() => setRole(v)}>{l}</Chip>)}
-      </div>
+      <Segmented value={role} onChange={setRole} />
 
-      <p className={LABEL}>Faculty <span className="font-medium normal-case tracking-normal">(optional)</span></p>
-      <input className={inputClass} list="ob-faculties" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. Engineering" maxLength={60} />
-      <datalist id="ob-faculties">{(opts?.faculties ?? []).map((f) => <option key={f} value={f} />)}</datalist>
+      <p className={LABEL}>Faculty</p>
+      {curated ? (
+        <Picker label="Faculty" value={faculty} options={facultyOptions} onChange={onFaculty} placeholder="Select your faculty" />
+      ) : opts === null ? (
+        <Picker label="Faculty" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
+      ) : (
+        <>
+          <input className={inputClass} list="ob-faculties" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. Engineering" maxLength={60} />
+          <datalist id="ob-faculties">{opts.faculties.map((f) => <option key={f} value={f} />)}</datalist>
+        </>
+      )}
 
-      <p className={LABEL}>Department <span className="font-medium normal-case tracking-normal">(optional)</span></p>
-      <input className={inputClass} list="ob-departments" value={department} onChange={(e) => onDepartment(e.target.value)} placeholder="Type yours if it isn't suggested" maxLength={60} />
-      <datalist id="ob-departments">{(opts?.departments ?? []).map((d) => <option key={d.name} value={d.name} />)}</datalist>
+      <p className={LABEL}>Department</p>
+      {curated ? (
+        <Picker label="Department" value={department} options={departmentOptions} onChange={setDepartment} placeholder="Select your department" disabled={!faculty} disabledText="Choose a faculty first" />
+      ) : opts === null ? (
+        <Picker label="Department" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
+      ) : (
+        <>
+          <input className={inputClass} list="ob-departments" value={department} onChange={(e) => onDepartmentTyped(e.target.value)} placeholder="Type yours if it isn't suggested" maxLength={60} />
+          <datalist id="ob-departments">{opts.departments.map((d) => <option key={d.name} value={d.name} />)}</datalist>
+        </>
+      )}
 
       {role === "student" && (
         <>
-          <p className={LABEL}>Level <span className="font-medium normal-case tracking-normal">(optional)</span></p>
+          <p className={LABEL}>Level</p>
           <div className="flex flex-wrap gap-2">
-            {LEVELS.map((l) => <Chip key={l} active={level === l} onClick={() => setLevel(level === l ? null : l)}>{l}</Chip>)}
+            {LEVELS.map((l) => <LevelChip key={l} on={level === l} onClick={() => setLevel(level === l ? null : l)}>{l}</LevelChip>)}
           </div>
         </>
       )}
 
       {err && <p role="alert" className="mt-4 text-secondary text-danger">{err}</p>}
       <div className="mt-auto flex flex-col gap-1 pt-8">
-        <Button disabled={busy} onClick={() => void save()} className="h-14 w-full">{busy ? "Saving…" : "Continue"}</Button>
+        {curated && !ready && (
+          <p className="pb-3 text-center text-supporting text-muted">
+            {role === "student" ? "Pick your faculty, department and level to find your classes." : "Pick your faculty and department to continue."}
+          </p>
+        )}
+        <Button disabled={busy || !ready} onClick={() => void save()} className="h-14 w-full">{busy ? "Saving…" : "Continue"}</Button>
         <button type="button" disabled={busy} onClick={onSkip} className={GHOST}>Skip for now</button>
       </div>
     </>

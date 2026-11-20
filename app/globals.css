@@ -470,3 +470,18 @@ body {
 /* Communities: stays on the app's dark tokens. brand-ink = the yellow used for text/accents. */
 @theme { --color-brand-ink: #ffd84d; }
 .cm { color-scheme: dark; }
+
+/* Onboarding sheet motion. */
+@keyframes ob-sheet-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes ob-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ob-sheet { animation: ob-sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.ob-fade { animation: ob-fade-in 180ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .ob-sheet, .ob-fade { animation: none; }
+}
