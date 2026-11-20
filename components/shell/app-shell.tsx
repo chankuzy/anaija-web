@@ -36,7 +36,9 @@ const NAV: NavItem[] = [
   { href: "/me", label: "Profile", icon: "user", auth: true, mobile: "tab" },
 ];
 
-const SIDE = NAV.filter((n) => n.mobile !== "create");
+// The rail has no Profile row in the list: the avatar link at the bottom of the rail is the one Profile entry
+// (the mobile tab bar still uses the Profile tab from NAV).
+const SIDE = NAV.filter((n) => n.mobile !== "create" && n.href !== "/me");
 const CREATE = NAV.find((n) => n.mobile === "create")!;
 const TABS = NAV.filter((n) => n.mobile === "tab");
 
@@ -119,6 +121,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const railPanel = panelOpen && desktop;
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
+  const profileActive = isActive("/me") && !railPanel;
   // Create FAB (mobile): only on tab-root pages whose right edge is free. Home has the plus in its top bar and Media
   // keeps the action rail clear.
   const onCommunities = pathname === "/communities";
@@ -232,12 +235,17 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col gap-1.5">
             {status === "authed" && (
               <div className="flex flex-col gap-1.5 pt-4">
-                <Link href="/me" title="Profile" className="flex h-[52px] items-center gap-3 rounded-full px-[7px] transition-colors hover:bg-white/6">
-                  <Avatar url={avatar} name={user?.name ?? user?.username} size={38} />
-                  <span className={`min-w-0 ${label}`}>
-                    <span className="block truncate text-body font-semibold text-white">{user?.name ?? ""}</span>
-                    <span className="block truncate text-supporting text-white/50">{user?.username ? `@${user.username}` : ""}</span>
+                {/* The one Profile entry: your avatar and just your username. */}
+                <Link
+                  href="/me"
+                  title="Profile"
+                  aria-current={profileActive ? "page" : undefined}
+                  className={`${ITEM} ${profileActive ? ACTIVE : IDLE}`}
+                >
+                  <span className={`shrink-0 rounded-full p-[1.5px] ${profileActive ? "ring-2 ring-white" : "ring-1 ring-white/25"}`}>
+                    <Avatar url={avatar} name={user?.name ?? user?.username} size={28} />
                   </span>
+                  <span className={`min-w-0 truncate ${label}`}>{user?.username ?? "Profile"}</span>
                 </Link>
                 <Link href="/settings" title="Settings" className={`${ITEM} ${matches("/settings") && !railPanel ? ACTIVE : IDLE}`}>
                   <Icon name="settings" className="size-8 shrink-0" />

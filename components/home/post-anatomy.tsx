@@ -77,7 +77,10 @@ export function PostHeader({
   );
 }
 
-// Like, comment, share on the left with their counts beside them; save on the right.
+const plural = (n: number, one: string, many: string) => `${formatCount(n)} ${n === 1 ? one : many}`;
+
+// Like, comment, share on the left; save on the right. Icons only on phones and tablets, with the counts beside them
+// from lg up. Below lg the numbers live in the stats line under the row ("40 likes · 3 saves"), Instagram style.
 export function PostActions({
   post,
   onLike,
@@ -91,33 +94,43 @@ export function PostActions({
   onShare: () => void;
   onBookmark: () => void;
 }) {
-  const count = (n: number) => (n > 0 ? <span className="text-body font-semibold tabular-nums">{formatCount(n)}</span> : null);
+  const count = (n: number) =>
+    n > 0 ? <span className="hidden text-body font-semibold tabular-nums lg:inline">{formatCount(n)}</span> : null;
+  const stats = [
+    post.likes_count > 0 && plural(post.likes_count, "like", "likes"),
+    post.bookmarks_count > 0 && plural(post.bookmarks_count, "save", "saves"),
+    post.shares_count > 0 && plural(post.shares_count, "share", "shares"),
+  ].filter(Boolean);
   return (
-    <div className="flex items-center justify-between pt-1">
-      <div className="-ml-2 flex items-center gap-1">
-        <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
-          <Icon name="heart" filled={post.is_liked} className={`size-6 ${post.is_liked ? "text-like" : ""}`} />
-          {count(post.likes_count)}
-        </button>
-        <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
-          <Icon name="message" className="size-6" />
-          {count(post.comments_count)}
-        </button>
-        <button type="button" aria-label="Share" onClick={onShare} className={BTN}>
-          <Icon name="shareArrow" className="size-6" />
-          {count(post.shares_count)}
+    <>
+      <div className="flex items-center justify-between pt-1">
+        <div className="-ml-2 flex items-center gap-1">
+          <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
+            <Icon name="heart" filled={post.is_liked} className={`size-6 ${post.is_liked ? "text-like" : ""}`} />
+            {count(post.likes_count)}
+          </button>
+          <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
+            <Icon name="chatLine" className="size-6" />
+            {count(post.comments_count)}
+          </button>
+          <button type="button" aria-label="Share" onClick={onShare} className={BTN}>
+            <Icon name="shareArrow" className="size-6" />
+            {count(post.shares_count)}
+          </button>
+        </div>
+        <button
+          type="button"
+          aria-label={post.is_bookmarked ? "Remove bookmark" : "Bookmark"}
+          aria-pressed={post.is_bookmarked}
+          onClick={onBookmark}
+          className={`${BTN} -mr-2`}
+        >
+          <Icon name="bookmark" filled={post.is_bookmarked} className={`size-6 ${post.is_bookmarked ? "text-brand" : ""}`} />
+          {count(post.bookmarks_count)}
         </button>
       </div>
-      <button
-        type="button"
-        aria-label={post.is_bookmarked ? "Remove bookmark" : "Bookmark"}
-        aria-pressed={post.is_bookmarked}
-        onClick={onBookmark}
-        className={`${BTN} -mr-2`}
-      >
-        <Icon name="bookmark" filled={post.is_bookmarked} className={`size-6 ${post.is_bookmarked ? "text-brand" : ""}`} />
-      </button>
-    </div>
+      {stats.length > 0 && <p className="mt-0.5 text-body font-semibold text-fg lg:hidden">{stats.join(" · ")}</p>}
+    </>
   );
 }
 
