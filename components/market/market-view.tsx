@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
 import { MoreSkeleton, Sk } from "@/components/ui/skeleton";
@@ -21,10 +22,11 @@ const TYPES: { id: string; label: string }[] = [
   { id: "business", label: "Businesses" },
   { id: "wanted", label: "Wanted" },
 ];
-// Only the sorts the backend can page through (price sorts ignore the cursor server-side).
 const SORTS = [
   { id: "relevance", label: "Trending" },
   { id: "newest", label: "Newest" },
+  { id: "price_asc", label: "Lowest price" },
+  { id: "price_desc", label: "Highest price" },
 ] as const;
 type SortId = (typeof SORTS)[number]["id"];
 
@@ -45,10 +47,10 @@ interface Page {
   error: string | null;
 }
 
-async function fetchPage(type: string, sort: SortId, cursor: string | null, signal: AbortSignal) {
+async function fetchPage(type: string, sort: SortId, campus: boolean, cursor: string | null, signal: AbortSignal) {
   const res = await api.get<Raw>(
     "marketplace-index",
-    { listing_type: type || undefined, sort, cursor: cursor ?? undefined },
+    { listing_type: type || undefined, sort, campus: campus ? 1 : undefined, cursor: cursor ?? undefined },
     signal,
   );
   return {
@@ -147,16 +149,19 @@ function Message({ title, body, action }: { title: string; body: string; action?
 // Remembered across leaving and coming back to the screen.
 let rememberedType = "";
 let rememberedSort: SortId = "relevance";
+let rememberedCampus = false;
 
 export function MarketView() {
+  const router = useRouter();
   const { status } = useAuth();
   const authed = status === "authed";
   const [type, setTypeState] = useState(() => rememberedType);
   const [sort, setSortState] = useState<SortId>(() => rememberedSort);
+  const [campus, setCampusState] = useState(() => rememberedCampus);
   const [reloadTick, setReloadTick] = useState(0);
   const [page, setPage] = useState<Page | null>(null);
   const moreBusy = useRef(false);
-  const key = `${type}|${sort}|${reloadTick}`;
+  const key = `${type}|${sort}|${campus ? 1 : 0}|${reloadTick}`;
   const cur = page && page.key === key ? page : null;
 
   // The marketplace needs a signed-in user (the backend requires it), same as Discover.
@@ -168,14 +173,14 @@ export function MarketView() {
     if (!authed) return;
     const ac = new AbortController();
     moreBusy.current = false;
-    fetchPage(type, sort, null, ac.signal)
+    fetchPage(type, sort, campus, null, ac.signal)
       .then((r) => !ac.signal.aborted && setPage({ key, ...r, loadingMore: false, error: null }))
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
         setPage({ key, items: [], cursor: null, hasMore: false, loadingMore: false, error: e instanceof ApiError ? e.message : "Something went wrong." });
       });
     return () => ac.abort();
-  }, [authed, type, sort, key]);
+  }, [authed, type, sort, campus, key]);
 
   // Next page well before the fold.
   const sentinel = useRef<HTMLDivElement>(null);
@@ -192,8 +197,9 @@ export function MarketView() {
         moreBusy.current = true;
         setPage({ ...c, loadingMore: true });
         const ac = new AbortController();
-        fetchPage(type, sort, c.cursor, ac.signal)
+        fetchPage(type, sort, campus, c.cursor, ac.signal)
           .then((r) => {
+            // Trending ranks on live engagement, so a row can drift between pages; never show one twice.
             const seen = new Set(c.items.map((p) => p.id));
             setPage({ ...c, items: [...c.items, ...r.items.filter((p) => !seen.has(p.id))], cursor: r.cursor, hasMore: r.hasMore, loadingMore: false });
           })
@@ -206,7 +212,7 @@ export function MarketView() {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMore, count, cur, type, sort]);
+  }, [hasMore, count, cur, type, sort, campus]);
 
   function setType(t: string) {
     rememberedType = t;
@@ -216,11 +222,16 @@ export function MarketView() {
     rememberedSort = s;
     setSortState(s);
   }
+  function toggleCampus() {
+    rememberedCampus = !campus;
+    setCampusState(!campus);
+  }
   function sell() {
     if (!authed) return openAuth();
-    window.dispatchEvent(new Event("anaija:create"));
+    router.push("/create/new?mode=listing");
   }
 
+  const filtered = type !== "" || campus;
   let body: React.ReactNode;
   if (!authed || !cur) {
     body = <GridSkeleton />;
@@ -230,8 +241,19 @@ export function MarketView() {
     body = (
       <Message
         title="No listings here yet"
-        body={type ? "Try another category." : "Be the first to sell something."}
-        action={type ? { label: "Show all", onClick: () => setType("") } : { label: "Sell something", onClick: sell }}
+        body={campus ? "Nothing on your campus yet. Try All listings." : type ? "Try another category." : "Be the first to sell something."}
+        action={
+          filtered
+            ? {
+                label: "Show all",
+                onClick: () => {
+                  setType("");
+                  rememberedCampus = false;
+                  setCampusState(false);
+                },
+              }
+            : { label: "Sell something", onClick: sell }
+        }
       />
     );
   } else {
@@ -271,6 +293,17 @@ export function MarketView() {
           </button>
         </div>
         <div className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-3 md:mx-0 md:px-0">
+          <button
+            type="button"
+            onClick={toggleCampus}
+            aria-pressed={campus}
+            className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-secondary font-bold transition-colors ${
+              campus ? "bg-brand text-brand-fg" : "bg-surface-interactive text-fg hover:bg-surface-elevated"
+            }`}
+          >
+            <Icon name="mapPointSchool" filled={campus} className="size-4" />
+            My campus
+          </button>
           {TYPES.map((t) => (
             <button
               key={t.id || "all"}
