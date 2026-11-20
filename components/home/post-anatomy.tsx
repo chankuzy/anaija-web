@@ -13,7 +13,8 @@ import { useStoryRing } from "@/lib/stories/use-story-ring";
 import { CaptionText, withHashtags } from "./caption-text";
 
 const BTN =
-  "relative inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-pill px-2 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
+  "relative inline-flex h-10 min-w-9 items-center justify-center gap-1.5 rounded-pill px-1.5 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
+const ACT = "size-7"; // action icons (like, comment, share, save)
 
 // Instagram anatomy: avatar, username with the time beside it, a second line (the attached sound, else why you are
 // seeing the post, else the location), Follow, options. Horizontal padding is the host's job (HomePost).
@@ -84,7 +85,7 @@ export function PostHeader({
           Follow
         </button>
       )}
-      <button type="button" aria-label="More options" aria-haspopup="dialog" onClick={onMore} className={`${BTN} -mr-2`}>
+      <button type="button" aria-label="More options" aria-haspopup="dialog" onClick={onMore} className={`${BTN} -mr-1.5`}>
         <Icon name="dots" filled className="size-6" />
       </button>
     </div>
@@ -118,17 +119,17 @@ export function PostActions({
   return (
     <>
       <div className="flex items-center justify-between pt-1">
-        <div className="-ml-2 flex items-center gap-1">
+        <div className="-ml-1.5 flex items-center">
           <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
-            <Icon name="heart" filled={post.is_liked} className={`size-6 ${post.is_liked ? "text-like" : ""}`} />
+            <Icon name="heart" filled={post.is_liked} className={`${ACT} ${post.is_liked ? "text-like" : ""}`} />
             {count(post.likes_count)}
           </button>
           <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
-            <Icon name="chatLine" className="size-6" />
+            <Icon name="chatLine" className={ACT} />
             {count(post.comments_count)}
           </button>
           <button type="button" aria-label="Share" onClick={onShare} className={BTN}>
-            <Icon name="shareArrow" className="size-6" />
+            <Icon name="shareArrow" className={ACT} />
             {count(post.shares_count)}
           </button>
         </div>
@@ -137,9 +138,9 @@ export function PostActions({
           aria-label={post.is_bookmarked ? "Remove bookmark" : "Bookmark"}
           aria-pressed={post.is_bookmarked}
           onClick={onBookmark}
-          className={`${BTN} -mr-2`}
+          className={`${BTN} -mr-1.5`}
         >
-          <Icon name="bookmark" filled={post.is_bookmarked} className={`size-6 ${post.is_bookmarked ? "text-brand" : ""}`} />
+          <Icon name="bookmark" filled={post.is_bookmarked} className={`${ACT} ${post.is_bookmarked ? "text-brand" : ""}`} />
           {count(post.bookmarks_count)}
         </button>
       </div>
