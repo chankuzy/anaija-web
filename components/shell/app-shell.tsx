@@ -20,15 +20,17 @@ import { PublishShare } from "@/components/create/publish-share";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
-// Mobile bar (Instagram-flat, five tabs): Home, Discover, Communities, Media, Profile. Create lives in the Home top bar
-// (plus, beside the bell and messages) and as a floating button on Discover and Profile. Messages and Notifications live
-// in the rail on md+ and in the Home header on mobile. Guests get sent to sign-in for anything but Home and Media.
+// Mobile bar (Instagram-flat, five tabs): Home, Communities, Market, Media, Profile. Discover lives in the rail on md+.
+// Create lives in the Home top bar (plus, beside the bell and messages) and as a floating button on Communities and
+// Profile. Messages and Notifications live in the rail on md+ and in the Home header on mobile. Guests get sent to
+// sign-in for anything but Home and Media.
 // Notifications has no page: on md+ it is a slide-out panel beside the rail, on mobile a full-screen sheet
 // (opened by the bell, any link to /notifications).
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
-  { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
+  { href: "/discover", label: "Discover", icon: "search", auth: true },
   { href: "/communities", label: "Communities", icon: "usersGroupRounded", auth: true, mobile: "tab" },
+  { href: "/market", label: "Market", icon: "shop", auth: true, mobile: "tab" },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
   { href: "/watch", label: "Media", icon: "clapperboardPlay", mobile: "tab" },
   { href: "/messages", label: "Messages", icon: "message", auth: true },
@@ -50,8 +52,9 @@ const ASIDE_EXPAND =
 const LABEL_BASE = "whitespace-nowrap opacity-0 transition-opacity duration-150";
 const LABEL_SHOW = "group-hover/side:opacity-100 group-has-[:focus-visible]/side:opacity-100";
 const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
+// Idle is pure white (never greyed); the active row is told apart by its filled icon, bold label and pill.
 const ACTIVE = "bg-white/8 font-bold text-white";
-const IDLE = "font-medium text-white/60 hover:bg-white/6 hover:text-white";
+const IDLE = "font-medium text-white hover:bg-white/6";
 
 const MD = "(min-width: 768px)";
 function useIsDesktop() {
@@ -89,7 +92,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
     closePanel();
   }, [pathname, closePanel]);
 
-  // Anything in the app (e.g. the Home topbar plus) can ask for the Create sheet.
+  // Anything in the app (e.g. the Home topbar plus, the Marketplace Sell button) can ask for the Create sheet.
   useEffect(() => {
     const open = () => setCreateOpen(true);
     window.addEventListener("anaija:create", open);
@@ -109,6 +112,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
     if (href === "/communities") return matches("/communities") || matches("/c") || matches("/s") || matches("/join");
+    if (href === "/market") return matches("/market") || matches("/l");
     if (href === "/me") return matches("/me") || (!!user?.username && matches(`/u/${user.username}`));
     return matches(href);
   };
@@ -122,8 +126,8 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
   const label = `${LABEL_BASE} ${railPanel ? "" : LABEL_SHOW}`;
   const avatar = user ? mediaUrl(user.avatar) : null;
   const profileActive = isActive("/me") && !railPanel;
-  // Create FAB (mobile): only on tab-root pages whose right edge is free. Home has the plus in its top bar and Media
-  // keeps the action rail clear.
+  // Create FAB (mobile): only on tab-root pages whose right edge is free. Home has the plus in its top bar, Media
+  // keeps the action rail clear and Market has its own Sell button.
   const onCommunities = pathname === "/communities";
   const showFab = !bare && (onCommunities || pathname === "/discover" || pathname === "/me");
   // Signed-in users get the kind picker; guests keep the plain link to sign-in.
@@ -275,8 +279,8 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Mobile bottom bar: flat and solid like Instagram, five tabs. Filled icon = current tab, the Profile tab is
-          your avatar (ringed white while you are on it). */}
+      {/* Mobile bottom bar: flat and solid like Instagram, five tabs, all pure white. Filled icon = current tab, the
+          Profile tab is your avatar (ringed white while you are on it). */}
       <nav
         className={`fixed inset-x-0 bottom-0 z-40 ${bare ? "hidden" : "flex"} bg-bg md:hidden`}
         style={{ height: "calc(var(--nav-h) + env(safe-area-inset-bottom))", paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -290,9 +294,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               href={hrefFor(n)}
               aria-label={n.label}
               aria-current={active ? "page" : undefined}
-              className={`relative flex flex-1 items-center justify-center transition-transform active:scale-90 motion-reduce:active:scale-100 ${
-                active ? "text-white" : "text-white/60"
-              }`}
+              className="relative flex flex-1 items-center justify-center text-white transition-transform active:scale-90 motion-reduce:active:scale-100"
             >
               {profile ? (
                 <span className={`rounded-full p-[1.5px] ${active ? "ring-2 ring-white" : "ring-1 ring-white/25"}`}>
