@@ -15,20 +15,23 @@ import { CaptionText, withHashtags } from "./caption-text";
 const BTN =
   "relative inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-pill px-2 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
 
-// Instagram anatomy: avatar, username with the time beside it, optional location line underneath, Follow, options.
-// Horizontal padding is the host's job (HomePost), so these stay flush.
+// Instagram anatomy: avatar, username with the time beside it, a second line (the attached sound, else why you are
+// seeing the post, else the location), Follow, options. Horizontal padding is the host's job (HomePost).
 export function PostHeader({
   post,
   isOwn,
   following,
   onFollow,
   onMore,
+  reason,
 }: {
   post: Post;
   isOwn: boolean;
   following: boolean;
   onFollow: () => Promise<unknown>;
   onMore: () => void;
+  /** Why this post is in the viewer's feed ("Suggested for you"). Shown when the post has no attached sound. */
+  reason?: string | null;
 }) {
   const a = post.author;
   const { status } = useAuth();
@@ -37,7 +40,18 @@ export function PostHeader({
   const d = post.listing;
   const where = d?.location_info ? formatCompactLocation(d.location_info) : (post.location ?? d?.pickup_info ?? null);
   const when = timeAgo(post.created_at);
+  const sound = post.audio?.enabled ? (post.audio.name ?? "").trim() : "";
   // The backend does not send a verified flag for authors yet, so no badge is drawn.
+  const sub = sound ? (
+    <span className="flex min-w-0 items-center gap-1 text-supporting text-muted">
+      <Icon name="musicNote" filled className="size-3.5 shrink-0" />
+      <span className="truncate">{sound}</span>
+    </span>
+  ) : reason ? (
+    <span className="block truncate text-supporting text-muted">{reason}</span>
+  ) : where ? (
+    <span className="block truncate text-supporting text-muted">{where}</span>
+  ) : null;
   const who = (
     <>
       <ProfileHoverCard username={a?.username}>
@@ -48,7 +62,7 @@ export function PostHeader({
           <span className="truncate text-body font-bold text-fg">{a?.username ?? a?.name ?? "Anaija"}</span>
           {when && <span className="shrink-0 text-body text-muted">· {when}</span>}
         </span>
-        {where && <span className="block truncate text-supporting text-muted">{where}</span>}
+        {sub}
       </span>
     </>
   );
