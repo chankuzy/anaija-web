@@ -27,17 +27,19 @@ import { SessionsTab } from "./sessions-tab";
 import { TabPager } from "./tab-pager";
 
 interface TabDef { id: string; label: string; icon: IconName }
+// The feed is the first tab everywhere: it is what a community or desk opens on.
 const TABS: readonly TabDef[] = [
   { id: "feed", label: "Feed", icon: "feed" },
   { id: "library", label: "Library", icon: "notebookMinimalistic" },
   { id: "sessions", label: "Sessions", icon: "eyeClosed" },
   { id: "members", label: "Members", icon: "usersGroupRounded" },
 ];
-// Course Desks: no Sessions. "Posts" splits into Announcements and Discussions once the feed can filter by subtype.
+// Course Desks: no Sessions. Posts (the feed) comes first, then Overview and Materials. "Posts" splits into
+// Announcements and Discussions once the feed can filter by subtype.
 const DESK_TABS: readonly TabDef[] = [
+  { id: "posts", label: "Posts", icon: "feed" },
   { id: "overview", label: "Overview", icon: "notebookMinimalistic" },
   { id: "materials", label: "Materials", icon: "copy" },
-  { id: "posts", label: "Posts", icon: "feed" },
 ];
 const DESK_LEGACY: Record<string, string> = { library: "materials", feed: "posts" };
 const DESK_KINDS = ["lecturer", "course_assistant"];
