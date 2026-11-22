@@ -14,6 +14,7 @@ const CTA: Record<string, string> = { service: "View service", business: "View b
 
 // Marketplace: the product leads. Images slide on their own, and the price sits on the image as one frosted button
 // (price, Nego, arrow) that takes you straight to the listing. Title and where sit underneath.
+// Colour: white and glass, with the naira sign as the single touch of brand yellow.
 export function ListingBody({ post, index, active, paused, onOpen, onLike }: BodyProps) {
   const d = post.listing;
   const type = post.listing_type ?? "product";
@@ -65,12 +66,12 @@ export function ListingBody({ post, index, active, paused, onOpen, onLike }: Bod
               </span>
             </span>
             {nego && (
-              <span className="shrink-0 rounded-pill bg-brand/20 px-2 py-0.5 text-micro font-bold text-brand">Nego</span>
+              <span className="shrink-0 rounded-pill bg-white/15 px-2 py-0.5 text-micro font-semibold text-white/90">Nego</span>
             )}
             <span
               aria-hidden
               className={`grid size-8 shrink-0 place-items-center rounded-full transition-transform duration-150 group-hover/price:translate-x-0.5 motion-reduce:transition-none ${
-                sold ? "bg-white/20 text-white" : "bg-brand text-brand-fg"
+                sold ? "bg-white/20 text-white" : "bg-white text-black"
               }`}
             >
               <Icon name="chevronRight" className="size-4" />
