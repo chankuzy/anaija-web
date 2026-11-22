@@ -12,8 +12,8 @@ const TYPE_LABEL: Record<string, string> = { service: "Service", business: "Busi
 const PRICE_PREFIX: Record<string, string> = { service: "From", business: "From", wanted: "Budget" };
 const CTA: Record<string, string> = { service: "View service", business: "View business", wanted: "See request", rental: "View rental" };
 
-// Marketplace: the product leads. Images slide on their own, and the price sits on the image as one frosted button
-// (price, Nego, arrow) that takes you straight to the listing. Title and where sit underneath.
+// Marketplace: the product leads. Images slide on their own, and the price sits on the image as one frosted box
+// button (price, Nego, bare chevron) that takes you straight to the listing. Title and where sit underneath.
 // Colour: white and glass, with the naira sign as the single touch of brand yellow.
 export function ListingBody({ post, index, active, paused, onOpen, onLike }: BodyProps) {
   const d = post.listing;
@@ -48,7 +48,7 @@ export function ListingBody({ post, index, active, paused, onOpen, onLike }: Bod
           </span>
         )}
         {closed && (
-          <span className="pointer-events-none absolute left-3 top-3 rounded-pill bg-black/70 px-3 py-1 text-micro font-bold uppercase tracking-wide text-white">
+          <span className="pointer-events-none absolute left-3 top-3 rounded-lg bg-black/70 px-2.5 py-1 text-micro font-bold uppercase tracking-wide text-white">
             {sold ? "Sold" : "Reserved"}
           </span>
         )}
@@ -56,7 +56,7 @@ export function ListingBody({ post, index, active, paused, onOpen, onLike }: Bod
           <Link
             href={`/l/${post.id}`}
             aria-label={`${cta}, ₦${d.formatted_price}${nego ? ", negotiable" : ""}`}
-            className="group/price absolute bottom-3 left-3 z-10 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2.5 rounded-pill border border-white/15 bg-black/55 py-1.5 pl-4 pr-1.5 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-[transform,background-color] duration-150 hover:bg-black/65 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="group/price absolute bottom-3 left-3 z-10 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-3 rounded-[14px] border border-white/15 bg-black/55 py-2.5 pl-4 pr-3 text-white shadow-[0_8px_24px_-6px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-[transform,background-color] duration-150 hover:bg-black/65 active:scale-[0.97] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             <span className="flex min-w-0 items-baseline gap-1.5">
               {prefix && <span className="text-supporting font-medium text-white/65">{prefix}</span>}
@@ -66,16 +66,15 @@ export function ListingBody({ post, index, active, paused, onOpen, onLike }: Bod
               </span>
             </span>
             {nego && (
-              <span className="shrink-0 rounded-pill bg-white/15 px-2 py-0.5 text-micro font-semibold text-white/90">Nego</span>
+              <span className="shrink-0 rounded-md bg-white/15 px-2 py-0.5 text-micro font-semibold text-white/90">Nego</span>
             )}
-            <span
+            <Icon
+              name="chevronRight"
               aria-hidden
-              className={`grid size-8 shrink-0 place-items-center rounded-full transition-transform duration-150 group-hover/price:translate-x-0.5 motion-reduce:transition-none ${
-                sold ? "bg-white/20 text-white" : "bg-white text-black"
+              className={`size-5 shrink-0 transition-transform duration-150 group-hover/price:translate-x-0.5 motion-reduce:transition-none ${
+                sold ? "text-white/50" : "text-white"
               }`}
-            >
-              <Icon name="chevronRight" className="size-4" />
-            </span>
+            />
           </Link>
         )}
       </ImageCarousel>
