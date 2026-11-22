@@ -4,7 +4,7 @@ import { AnnouncementBody } from "./announcement";
 import { AudioReelBody } from "./audio-reel";
 import { DocumentBody } from "./document";
 import { GalleryBody } from "./gallery";
-import { ListingBody, ListingCta } from "./listing";
+import { ListingBody } from "./listing";
 import { PollBody } from "./poll";
 import { PublicationBody } from "./publication";
 import { QuestionBody } from "./question";
@@ -17,11 +17,12 @@ const detail = (p: { id: number }) => `/p/${p.id}`;
 // Record<ContentKind, ...>: a new ContentKind does not compile until it has a renderer here.
 // Only reels (video or image+audio) hand off to Immersive Media. Everything else opens its standalone page.
 // Questions open the comments sheet instead (HomePost special-cases them); href is only the fallback.
+// Listings have no Cta row: their price pill sits on the image and links to the listing.
 export const RENDERERS: Record<ContentKind, Renderer> = {
   reel: { Body: ReelBody, href: (p) => immersiveHref(p.id), prepare: stageForImmersive },
   audioReel: { Body: AudioReelBody, href: (p) => immersiveHref(p.id), prepare: stageForImmersive },
   gallery: { Body: GalleryBody, href: detail },
-  listing: { Body: ListingBody, Cta: ListingCta, ownsCaption: true, href: (p) => `/l/${p.id}` },
+  listing: { Body: ListingBody, ownsCaption: true, href: (p) => `/l/${p.id}` },
   text: { Body: TextBody, ownsCaption: true, href: detail },
   poll: { Body: PollBody, ownsCaption: true, href: detail },
   document: { Body: DocumentBody, ownsCaption: true, href: detail },
