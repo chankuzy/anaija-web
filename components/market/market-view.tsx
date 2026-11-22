@@ -41,6 +41,10 @@ const BTN_YELLOW = "bg-brand text-brand-fg hover:bg-brand-hover";
 const BTN_WHITE = "bg-fg text-bg hover:bg-white";
 const TEXT_YELLOW = "text-brand";
 
+// Card geometry is fixed so every card is identical whatever it contains:
+// image 5:4 + body 92px (10 pad + 18 title + 4 gap + 22 price + 8 gap + 20 meta + 10 pad).
+const CARD_BODY = "h-[92px]";
+
 interface Raw {
   listings?: Post[];
   next_cursor?: string | null;
@@ -205,13 +209,14 @@ export function useLike(raw: Post) {
   return { post, liked: post.is_liked, toggle };
 }
 
+// Every row below always renders at a fixed height and never wraps, so content can't change the card's size.
 export function MarketCard({ post: raw }: { post: Post }) {
   const [failed, setFailed] = useState(false);
   const { post, liked, toggle } = useLike(raw);
   const d = post.listing;
   const type = post.listing_type ?? "product";
   const cover = coverOf(post);
-  const title = ((type === "business" ? d?.business_name : null) || post.caption || "").trim();
+  const title = ((type === "business" ? d?.business_name : null) || post.caption || "").trim().split("\n")[0];
   const where = d?.location_info ? formatCompactLocation(d.location_info) : d?.pickup_info || post.location || "";
   const prefix = PREFIX[type];
   const views = post.views_count ?? (d as unknown as { views_count?: number } | null)?.views_count ?? 0;
@@ -219,9 +224,12 @@ export function MarketCard({ post: raw }: { post: Post }) {
   const badge = d?.condition ? (COND[d.condition] ?? null) : type === "rental" ? "For Rent" : null;
 
   return (
-    <div className="group relative min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15">
-      <Link href={`/l/${post.id}`} className="block min-w-0">
-        <div className="relative aspect-[5/4] overflow-hidden bg-card-elevated" style={{ backgroundColor: cover.color ?? undefined }}>
+    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15">
+      <Link href={`/l/${post.id}`} className="flex h-full min-w-0 flex-col">
+        <div
+          className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-card-elevated"
+          style={{ backgroundColor: cover.color ?? undefined }}
+        >
           {cover.url && !failed ? (
             <img
               src={cover.url}
@@ -237,33 +245,33 @@ export function MarketCard({ post: raw }: { post: Post }) {
             </span>
           )}
           {badge && (
-            <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+            <span className="absolute left-2 top-2 max-w-[70%] truncate rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold leading-4 text-white backdrop-blur">
               {badge}
             </span>
           )}
         </div>
-        <div className="p-2.5">
-          {title && <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-fg">{title}</p>}
-          {d && (
-            <p className="mt-1 flex flex-wrap items-baseline gap-x-1 text-[16px] font-extrabold leading-tight tracking-tight text-fg">
-              {prefix && <span className="text-[11px] font-medium text-muted">{prefix}</span>}
-              <span>
-                <span className="mr-px text-brand">₦</span>
-                {d.formatted_price}
-              </span>
-            </p>
-          )}
-          {(where || views > 0) && (
-            <div className="mt-2 flex items-center justify-between gap-1.5">
-              <span className="min-w-0 truncate text-[11px] text-muted">{where}</span>
-              {views > 0 && (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 py-0.5 text-[10px] font-semibold text-white/80">
-                  <Icon name="eye" className="size-3" />
-                  {formatCount(views).toLowerCase()}
+        <div className={`${CARD_BODY} shrink-0 overflow-hidden p-2.5`}>
+          <p className="h-[18px] truncate text-[13px] font-semibold leading-[18px] text-fg">{title || "Listing"}</p>
+          <p className="mt-1 flex h-[22px] items-baseline gap-1 overflow-hidden whitespace-nowrap text-[16px] font-extrabold leading-[22px] tracking-tight text-fg">
+            {d ? (
+              <>
+                {prefix && <span className="shrink-0 text-[11px] font-medium text-muted">{prefix}</span>}
+                <span className="min-w-0 truncate">
+                  <span className="mr-px text-brand">₦</span>
+                  {d.formatted_price}
                 </span>
-              )}
-            </div>
-          )}
+              </>
+            ) : null}
+          </p>
+          <div className="mt-2 flex h-5 items-center justify-between gap-1.5">
+            <span className="min-w-0 flex-1 truncate text-[11px] leading-5 text-muted">{where}</span>
+            {views > 0 && (
+              <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 text-[10px] font-semibold text-white/80">
+                <Icon name="eye" className="size-3" />
+                {formatCount(views).toLowerCase()}
+              </span>
+            )}
+          </div>
         </div>
       </Link>
       <button
@@ -275,6 +283,20 @@ export function MarketCard({ post: raw }: { post: Post }) {
       >
         <Icon name="heart" filled={liked} className={`size-[18px] ${liked ? "text-like" : "text-white"}`} />
       </button>
+    </div>
+  );
+}
+
+// Same outer dimensions as MarketCard so nothing shifts when data arrives.
+function CardSkeleton() {
+  return (
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card">
+      <Sk className="aspect-[5/4] w-full shrink-0 rounded-none" />
+      <div className={`${CARD_BODY} shrink-0 p-2.5`}>
+        <Sk className="h-[18px] w-[75%] rounded-full" />
+        <Sk className="mt-1 h-[22px] w-[45%] rounded-full" />
+        <Sk className="mt-2 h-5 w-[60%] rounded-full" />
+      </div>
     </div>
   );
 }
@@ -320,11 +342,7 @@ function GridSkeleton() {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
       {Array.from({ length: 8 }, (_, i) => (
-        <div key={i}>
-          <Sk className="aspect-[5/4] w-full rounded-2xl" />
-          <Sk className="mt-2.5 h-4 w-20 rounded-full" />
-          <Sk className="mt-2 h-3.5 w-[80%] rounded-full" />
-        </div>
+        <CardSkeleton key={i} />
       ))}
     </div>
   );
@@ -332,14 +350,16 @@ function GridSkeleton() {
 
 function HomeSkeleton() {
   return (
-    <div className="space-y-6" aria-hidden="true">
+    <div className="space-y-7" aria-hidden="true">
       <Sk className="h-[200px] w-full rounded-[26px] md:h-[260px]" />
       {[0, 1].map((r) => (
         <div key={r}>
           <Sk className="mb-3 h-6 w-48 rounded-full" />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             {Array.from({ length: 4 }, (_, i) => (
-              <Sk key={i} className="aspect-[4/5] w-full rounded-2xl" />
+              <div key={i} className={`min-w-0 ${i >= 4 ? "hidden md:block" : ""}`}>
+                <CardSkeleton />
+              </div>
             ))}
           </div>
         </div>
