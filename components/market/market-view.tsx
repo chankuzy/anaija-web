@@ -34,9 +34,10 @@ type SortId = (typeof SORTS)[number]["id"];
 const PREFIX: Record<string, string> = { service: "From", business: "From", wanted: "Budget" };
 const BADGE_COND: Record<string, string> = { new: "New", like_new: "Almost New" };
 
-// Marketplace accent (from the design): soft violet on near-black. Yellow stays reserved for prices.
-const ACCENT_BG = "bg-[#b79cff] text-[#17102b]";
-const ACCENT_TEXT = "text-[#b79cff]";
+// Brand palette: yellow for primary actions and highlights, white for selection and secondary actions.
+const BTN_YELLOW = "bg-brand text-brand-fg hover:bg-brand-hover";
+const BTN_WHITE = "bg-fg text-bg";
+const TEXT_YELLOW = "text-brand";
 
 interface Raw {
   listings?: Post[];
@@ -100,7 +101,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 size-60 rounded-full bg-[#b79cff]/15 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 size-60 rounded-full bg-brand/10 blur-3xl" />
       <div aria-hidden className="absolute inset-y-0 right-0 w-[56%] md:w-[48%]">
         <img src="/brand/market/banner.png" alt="" decoding="async" className="size-full object-cover" style={{ objectPosition: "50% 52%" }} />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0)_40%)]" />
@@ -118,14 +119,14 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
           >
             <p className="text-[20px] font-extrabold leading-[1.12] tracking-tight text-white md:text-[32px]">
               {s.title}
-              <span className={`block ${ACCENT_TEXT}`}>{s.accent}</span>
+              <span className={`block ${TEXT_YELLOW}`}>{s.accent}</span>
             </p>
             <p className="mt-1.5 text-[12px] text-white/75 md:text-[14px]">{s.sub}</p>
             <button
               type="button"
               tabIndex={active ? 0 : -1}
               onClick={() => onAction(s.action)}
-              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${ACCENT_BG}`}
+              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${BTN_YELLOW}`}
             >
               {s.cta}
               <span aria-hidden>→</span>
@@ -144,7 +145,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
             type="button"
             aria-label={`Banner ${n + 1}`}
             onClick={() => setI(n)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${n === i ? "w-5 bg-[#b79cff]" : "w-1.5 bg-white/25"}`}
+            className={`h-1.5 rounded-full transition-all duration-300 ${n === i ? "w-5 bg-white" : "w-1.5 bg-white/25"}`}
           />
         ))}
       </div>
@@ -226,10 +227,10 @@ function SectionHead({ icon, title, onSeeAll }: { icon: IconName; title: string;
   return (
     <div className="mb-3 flex items-center justify-between">
       <h2 className="flex items-center gap-2 text-[18px] font-extrabold tracking-tight text-fg">
-        <Icon name={icon} filled className={`size-6 ${ACCENT_TEXT}`} />
+        <Icon name={icon} filled className={`size-6 ${TEXT_YELLOW}`} />
         {title}
       </h2>
-      <button type="button" onClick={onSeeAll} className={`text-[13px] font-bold ${ACCENT_TEXT}`}>
+      <button type="button" onClick={onSeeAll} className="text-[13px] font-bold text-fg/80 transition-colors hover:text-fg">
         See all <span aria-hidden>→</span>
       </button>
     </div>
@@ -250,7 +251,7 @@ function ServicesStrip({ onExplore }: { onExplore: () => void }) {
         <span className="block text-[14px] font-bold text-fg">Services You Might Need</span>
         <span className="block truncate text-[12px] text-muted">From tutoring to repairs, find trusted services nearby.</span>
       </span>
-      <span className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-4 text-[13px] font-bold ${ACCENT_BG}`}>
+      <span className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-4 text-[13px] font-bold ${BTN_WHITE}`}>
         Explore <span aria-hidden>→</span>
       </span>
     </button>
@@ -298,7 +299,7 @@ function Message({ title, body, action }: { title: string; body: string; action?
         <p className="text-[15px] font-bold text-fg">{title}</p>
         <p className="mt-1 text-secondary text-muted">{body}</p>
         {action && (
-          <button type="button" onClick={action.onClick} className={`mt-5 h-10 rounded-full px-5 text-secondary font-extrabold ${ACCENT_BG}`}>
+          <button type="button" onClick={action.onClick} className={`mt-5 h-10 rounded-full px-5 text-secondary font-extrabold ${BTN_YELLOW}`}>
             {action.label}
           </button>
         )}
@@ -584,7 +585,7 @@ export function MarketView() {
                       type="button"
                       onClick={() => pickSort(s.id)}
                       className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-white/5 ${
-                        on ? ACCENT_TEXT : "text-fg"
+                        on ? TEXT_YELLOW : "text-fg"
                       }`}
                     >
                       {s.label}
@@ -606,7 +607,7 @@ export function MarketView() {
                 onClick={() => pickType(t.id)}
                 aria-pressed={on}
                 className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition-colors ${
-                  on ? ACCENT_BG : "border border-white/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
+                  on ? BTN_WHITE : "border border-white/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
                 }`}
               >
                 {t.icon && <Icon name={t.icon} className="size-[18px]" />}
