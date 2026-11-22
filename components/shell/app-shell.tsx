@@ -20,15 +20,16 @@ import { PublishShare } from "@/components/create/publish-share";
 
 type NavItem = { href: string; label: string; icon: IconName; auth?: boolean; mobile?: "tab" | "create" };
 
-// Mobile bar (Instagram-flat, five tabs): Home, Communities, Market, Media, Profile. Discover lives in the rail on md+.
-// Create lives in the Home top bar (plus, beside the bell and messages) and as a floating button on Communities and
-// Profile. Messages and Notifications live in the rail on md+ and in the Home header on mobile. Guests get sent to
-// sign-in for anything but Home and Media.
+// Mobile bar (Instagram-flat, six tabs): Home, Discover, Communities, Market, Media, Profile. The rail on md+ carries
+// the same destinations plus Messages and Notifications.
+// Create lives in the Home top bar (plus, beside the bell and messages) and as a floating button on Communities,
+// Discover and Profile. Messages and Notifications live in the rail on md+ and in the Home header on mobile. Guests get
+// sent to sign-in for anything but Home and Media.
 // Notifications has no page: on md+ it is a slide-out panel beside the rail, on mobile a full-screen sheet
 // (opened by the bell, any link to /notifications).
 const NAV: NavItem[] = [
   { href: "/", label: "Home", icon: "home", mobile: "tab" },
-  { href: "/discover", label: "Discover", icon: "search", auth: true },
+  { href: "/discover", label: "Discover", icon: "search", auth: true, mobile: "tab" },
   { href: "/communities", label: "Communities", icon: "usersGroupRounded", auth: true, mobile: "tab" },
   { href: "/market", label: "Market", icon: "shop", auth: true, mobile: "tab" },
   { href: "/create/new", label: "Create", icon: "plus", auth: true, mobile: "create" },
@@ -279,7 +280,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      {/* Mobile bottom bar: flat and solid like Instagram, five tabs, all pure white. Filled icon = current tab, the
+      {/* Mobile bottom bar: flat and solid like Instagram, six tabs, all pure white. Filled icon = current tab, the
           Profile tab is your avatar (ringed white while you are on it). */}
       <nav
         className={`fixed inset-x-0 bottom-0 z-40 ${bare ? "hidden" : "flex"} bg-bg md:hidden`}
@@ -294,7 +295,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               href={hrefFor(n)}
               aria-label={n.label}
               aria-current={active ? "page" : undefined}
-              className="relative flex flex-1 items-center justify-center text-white transition-transform active:scale-90 motion-reduce:active:scale-100"
+              className="relative flex min-w-0 flex-1 items-center justify-center text-white transition-transform active:scale-90 motion-reduce:active:scale-100"
             >
               {profile ? (
                 <span className={`rounded-full p-[1.5px] ${active ? "ring-2 ring-white" : "ring-1 ring-white/25"}`}>
