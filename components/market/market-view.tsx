@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { MoreSkeleton, Sk } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api/client";
 import { normPost } from "@/lib/api/feed";
@@ -12,15 +12,16 @@ import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
 import { openAuth } from "@/lib/auth/auth-modal";
 import { coverOf } from "@/lib/discover/tile";
+import { formatCount } from "@/lib/format";
 import { formatCompactLocation } from "@/lib/location/types";
 
-const TYPES: { id: string; label: string }[] = [
-  { id: "", label: "All" },
-  { id: "product", label: "Products" },
-  { id: "service", label: "Services" },
-  { id: "rental", label: "Rentals" },
-  { id: "business", label: "Businesses" },
-  { id: "wanted", label: "Wanted" },
+const TYPES: { id: string; label: string; icon: IconName | null }[] = [
+  { id: "", label: "All", icon: null },
+  { id: "product", label: "Products", icon: "bag" },
+  { id: "service", label: "Services", icon: "suitcase" },
+  { id: "rental", label: "Rentals", icon: "home" },
+  { id: "business", label: "Businesses", icon: "shop" },
+  { id: "wanted", label: "Wanted", icon: "search" },
 ];
 const SORTS = [
   { id: "relevance", label: "Trending" },
@@ -30,8 +31,12 @@ const SORTS = [
 ] as const;
 type SortId = (typeof SORTS)[number]["id"];
 
-const COND: Record<string, string> = { new: "New", like_new: "Like new", good: "Good", fair: "Fair", poor: "Poor" };
 const PREFIX: Record<string, string> = { service: "From", business: "From", wanted: "Budget" };
+const BADGE_COND: Record<string, string> = { new: "New", like_new: "Almost New" };
+
+// Marketplace accent (from the design): soft violet on near-black. Yellow stays reserved for prices.
+const ACCENT_BG = "bg-[#b79cff] text-[#17102b]";
+const ACCENT_TEXT = "text-[#b79cff]";
 
 interface Raw {
   listings?: Post[];
@@ -46,6 +51,12 @@ interface Page {
   hasMore: boolean;
   noCampus: boolean;
   loadingMore: boolean;
+  error: string | null;
+}
+interface HomeData {
+  trending: Post[];
+  fresh: Post[];
+  noCampus: boolean;
   error: string | null;
 }
 
@@ -64,21 +75,109 @@ async function fetchPage(type: string, sort: SortId, cursor: string | null, sign
   };
 }
 
+/* ───────────────────────────── Banner ───────────────────────────── */
+
+type BannerAction = "all" | "sell" | "services";
+const SLIDES: { title: string; accent: string; sub: string; cta: string; action: BannerAction }[] = [
+  { title: "Discover Quality Products,", accent: "Better Prices.", sub: "Shop smart. Live better.", cta: "Explore Marketplace", action: "all" },
+  { title: "Sell in minutes,", accent: "reach your campus.", sub: "List it free. Chat with buyers.", cta: "Start selling", action: "sell" },
+  { title: "Need a hand?", accent: "Trusted services nearby.", sub: "Tutoring, repairs and more.", cta: "Browse services", action: "services" },
+];
+
+function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const t = setTimeout(() => setI((n) => (n + 1) % SLIDES.length), 5500);
+    return () => clearTimeout(t);
+  }, [i, paused]);
+
+  return (
+    <section
+      className="relative isolate h-[200px] overflow-hidden rounded-[26px] border border-white/10 bg-black md:h-[260px]"
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
+    >
+      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 size-60 rounded-full bg-[#b79cff]/15 blur-3xl" />
+      <div aria-hidden className="absolute inset-y-0 right-0 w-[56%] md:w-[48%]">
+        <img src="/brand/market/banner.png" alt="" decoding="async" className="size-full object-cover" style={{ objectPosition: "50% 52%" }} />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0)_40%)]" />
+      </div>
+
+      {SLIDES.map((s, n) => {
+        const active = n === i;
+        return (
+          <div
+            key={s.title}
+            aria-hidden={!active}
+            className={`absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center pb-5 pl-5 transition-[opacity,transform] duration-500 md:w-[52%] md:pl-8 ${
+              active ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
+            }`}
+          >
+            <p className="text-[20px] font-extrabold leading-[1.12] tracking-tight text-white md:text-[32px]">
+              {s.title}
+              <span className={`block ${ACCENT_TEXT}`}>{s.accent}</span>
+            </p>
+            <p className="mt-1.5 text-[12px] text-white/75 md:text-[14px]">{s.sub}</p>
+            <button
+              type="button"
+              tabIndex={active ? 0 : -1}
+              onClick={() => onAction(s.action)}
+              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${ACCENT_BG}`}
+            >
+              {s.cta}
+              <span aria-hidden>→</span>
+            </button>
+          </div>
+        );
+      })}
+
+      <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+        {i + 1} / {SLIDES.length}
+      </span>
+      <div className="absolute bottom-3 left-5 flex items-center gap-1.5 md:left-8">
+        {SLIDES.map((s, n) => (
+          <button
+            key={s.title}
+            type="button"
+            aria-label={`Banner ${n + 1}`}
+            onClick={() => setI(n)}
+            className={`h-1.5 rounded-full transition-all duration-300 ${n === i ? "w-5 bg-[#b79cff]" : "w-1.5 bg-white/25"}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────────── Cards ───────────────────────────── */
+
 function MarketCard({ post }: { post: Post }) {
   const [failed, setFailed] = useState(false);
   const d = post.listing;
   const type = post.listing_type ?? "product";
   const cover = coverOf(post);
   const title = ((type === "business" ? d?.business_name : null) || post.caption || "").trim();
-  const where = d?.location_info ? formatCompactLocation(d.location_info) : (d?.pickup_info || post.location || "");
-  const cond = d?.condition ? COND[d.condition] : null;
+  const where = d?.location_info ? formatCompactLocation(d.location_info) : d?.pickup_info || post.location || "";
   const prefix = PREFIX[type];
+  const views = (d as unknown as { views_count?: number } | null)?.views_count;
+  const badge =
+    type === "rental"
+      ? "For Rent"
+      : d?.price_type === "negotiable"
+        ? "Negotiable"
+        : d?.condition
+          ? (BADGE_COND[d.condition] ?? null)
+          : null;
+
   return (
-    <Link href={`/l/${post.id}`} className="group block min-w-0">
-      <div
-        className="relative aspect-square overflow-hidden rounded-2xl bg-card"
-        style={{ backgroundColor: cover.color ?? undefined }}
-      >
+    <Link
+      href={`/l/${post.id}`}
+      className="group block min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15"
+    >
+      <div className="relative aspect-[5/4] overflow-hidden bg-card-elevated" style={{ backgroundColor: cover.color ?? undefined }}>
         {cover.url && !failed ? (
           <img
             src={cover.url}
@@ -90,44 +189,102 @@ function MarketCard({ post }: { post: Post }) {
           />
         ) : (
           <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
-            <Icon name="bag" filled className="size-9" />
+            <Icon name="bag" filled className="size-8" />
           </span>
         )}
-        {d?.price_type === "negotiable" && (
-          <span className="absolute left-2 top-2 rounded-pill bg-black/65 px-2 py-0.5 text-micro font-bold text-white">Nego</span>
+        {badge && (
+          <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+            {badge}
+          </span>
         )}
       </div>
-      <div className="px-0.5 pt-2">
+      <div className="p-2.5">
+        {title && <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-fg">{title}</p>}
         {d && (
-          <p className="flex flex-wrap items-baseline gap-x-1.5 text-[17px] font-extrabold leading-tight tracking-tight text-fg">
-            {prefix && <span className="text-secondary font-medium text-muted">{prefix}</span>}
-            <span>
-              <span className="mr-0.5 text-brand">₦</span>
-              {d.formatted_price}
-            </span>
+          <p className="mt-1 flex flex-wrap items-baseline gap-x-1 text-[16px] font-extrabold leading-tight tracking-tight text-brand">
+            {prefix && <span className="text-[11px] font-medium text-muted">{prefix}</span>}
+            <span>₦{d.formatted_price}</span>
           </p>
         )}
-        {title && <p className="mt-0.5 line-clamp-2 text-body leading-snug text-fg">{title}</p>}
-        {(cond || where) && (
-          <p className="mt-1 flex items-center gap-1 text-supporting text-muted">
-            {cond && <span className="shrink-0">{cond}</span>}
-            {cond && where && <span aria-hidden>·</span>}
-            {where && <span className="truncate">{where}</span>}
-          </p>
+        {(where || (views ?? 0) > 0) && (
+          <div className="mt-2 flex items-center justify-between gap-1.5">
+            <span className="min-w-0 truncate text-[11px] text-muted">{where}</span>
+            {(views ?? 0) > 0 && (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 py-0.5 text-[10px] font-semibold text-white/80">
+                <Icon name="eye" className="size-3" />
+                {formatCount(views ?? 0).toLowerCase()}
+              </span>
+            )}
+          </div>
         )}
       </div>
     </Link>
   );
 }
 
+function SectionHead({ icon, title, onSeeAll }: { icon: IconName; title: string; onSeeAll: () => void }) {
+  return (
+    <div className="mb-3 flex items-center justify-between">
+      <h2 className="flex items-center gap-2 text-[18px] font-extrabold tracking-tight text-fg">
+        <Icon name={icon} filled className={`size-6 ${ACCENT_TEXT}`} />
+        {title}
+      </h2>
+      <button type="button" onClick={onSeeAll} className={`text-[13px] font-bold ${ACCENT_TEXT}`}>
+        See all <span aria-hidden>→</span>
+      </button>
+    </div>
+  );
+}
+
+function ServicesStrip({ onExplore }: { onExplore: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onExplore}
+      className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-card px-3.5 py-3 text-left transition-colors hover:border-white/15"
+    >
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-interactive text-white">
+        <Icon name="caseMinimalistic" filled className="size-6" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-bold text-fg">Services You Might Need</span>
+        <span className="block truncate text-[12px] text-muted">From tutoring to repairs, find trusted services nearby.</span>
+      </span>
+      <span className={`inline-flex h-10 shrink-0 items-center gap-1 rounded-full px-4 text-[13px] font-bold ${ACCENT_BG}`}>
+        Explore <span aria-hidden>→</span>
+      </span>
+    </button>
+  );
+}
+
+/* ───────────────────────────── States ───────────────────────────── */
+
 function GridSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4" aria-hidden="true">
       {Array.from({ length: 8 }, (_, i) => (
         <div key={i}>
-          <Sk className="aspect-square w-full rounded-2xl" />
+          <Sk className="aspect-[5/4] w-full rounded-2xl" />
           <Sk className="mt-2.5 h-4 w-20 rounded-full" />
           <Sk className="mt-2 h-3.5 w-[80%] rounded-full" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HomeSkeleton() {
+  return (
+    <div className="space-y-6" aria-hidden="true">
+      <Sk className="h-[200px] w-full rounded-[26px] md:h-[260px]" />
+      {[0, 1].map((r) => (
+        <div key={r}>
+          <Sk className="mb-3 h-6 w-48 rounded-full" />
+          <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
+            {Array.from({ length: 3 }, (_, i) => (
+              <Sk key={i} className="aspect-[4/5] w-full rounded-2xl" />
+            ))}
+          </div>
         </div>
       ))}
     </div>
@@ -141,7 +298,7 @@ function Message({ title, body, action }: { title: string; body: string; action?
         <p className="text-[15px] font-bold text-fg">{title}</p>
         <p className="mt-1 text-secondary text-muted">{body}</p>
         {action && (
-          <button type="button" onClick={action.onClick} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
+          <button type="button" onClick={action.onClick} className={`mt-5 h-10 rounded-full px-5 text-secondary font-extrabold ${ACCENT_BG}`}>
             {action.label}
           </button>
         )}
@@ -150,9 +307,13 @@ function Message({ title, body, action }: { title: string; body: string; action?
   );
 }
 
+/* ───────────────────────────── Screen ───────────────────────────── */
+
 // Remembered across leaving and coming back to the screen.
 let rememberedType = "";
 let rememberedSort: SortId = "relevance";
+let rememberedGrid = false;
+let homeCache: HomeData | null = null;
 
 export function MarketView() {
   const router = useRouter();
@@ -160,19 +321,50 @@ export function MarketView() {
   const authed = status === "authed";
   const [type, setTypeState] = useState(() => rememberedType);
   const [sort, setSortState] = useState<SortId>(() => rememberedSort);
+  const [gridMode, setGridMode] = useState(() => rememberedGrid);
   const [reloadTick, setReloadTick] = useState(0);
   const [page, setPage] = useState<Page | null>(null);
+  const [home, setHome] = useState<HomeData | null>(() => homeCache);
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
   const moreBusy = useRef(false);
+  const isHome = !gridMode && type === "";
   const key = `${type}|${sort}|${reloadTick}`;
   const cur = page && page.key === key ? page : null;
 
   // The marketplace needs a signed-in user (the backend requires it), same as Discover.
   useEffect(() => {
-    if (status === "guest") openAuth();
+    if (status === "guest") {
+      homeCache = null;
+      openAuth();
+    }
   }, [status]);
 
+  // Home: trending + fresh. Cached copy renders instantly, the refresh reconciles silently.
   useEffect(() => {
-    if (!authed) return;
+    if (!authed || !isHome) return;
+    const ac = new AbortController();
+    Promise.all([fetchPage("", "relevance", null, ac.signal), fetchPage("", "newest", null, ac.signal)])
+      .then(([t, f]) => {
+        if (ac.signal.aborted) return;
+        const trending = t.items.slice(0, 6);
+        const seen = new Set(trending.map((p) => p.id));
+        const fresh = f.items.filter((p) => !seen.has(p.id)).slice(0, 6);
+        const next: HomeData = { trending, fresh, noCampus: t.noCampus || f.noCampus, error: null };
+        homeCache = next;
+        setHome(next);
+      })
+      .catch((e: unknown) => {
+        if (ac.signal.aborted) return;
+        const msg = e instanceof ApiError ? e.message : "Something went wrong.";
+        setHome((prev) => (prev && prev.trending.length > 0 ? prev : { trending: [], fresh: [], noCampus: false, error: msg }));
+      });
+    return () => ac.abort();
+  }, [authed, isHome, reloadTick]);
+
+  // Grid: full list for a type / sort, paged.
+  useEffect(() => {
+    if (!authed || isHome) return;
     const ac = new AbortController();
     moreBusy.current = false;
     fetchPage(type, sort, null, ac.signal)
@@ -182,7 +374,7 @@ export function MarketView() {
         setPage({ key, items: [], cursor: null, hasMore: false, noCampus: false, loadingMore: false, error: e instanceof ApiError ? e.message : "Something went wrong." });
       });
     return () => ac.abort();
-  }, [authed, type, sort, key]);
+  }, [authed, isHome, type, sort, key]);
 
   // Next page well before the fold.
   const sentinel = useRef<HTMLDivElement>(null);
@@ -216,11 +408,38 @@ export function MarketView() {
     return () => io.disconnect();
   }, [hasMore, count, cur, type, sort]);
 
-  function setType(t: string) {
+  // Close the sort menu on outside tap.
+  useEffect(() => {
+    if (!sortOpen) return;
+    const onDown = (e: PointerEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
+    };
+    document.addEventListener("pointerdown", onDown);
+    return () => document.removeEventListener("pointerdown", onDown);
+  }, [sortOpen]);
+
+  function pickType(t: string) {
     rememberedType = t;
     setTypeState(t);
+    if (t === "") {
+      // "All" returns to the home layout.
+      rememberedGrid = false;
+      setGridMode(false);
+      rememberedSort = "relevance";
+      setSortState("relevance");
+    }
   }
-  function setSort(s: SortId) {
+  function showAll(s: SortId) {
+    rememberedType = "";
+    setTypeState("");
+    rememberedSort = s;
+    setSortState(s);
+    rememberedGrid = true;
+    setGridMode(true);
+  }
+  function pickSort(s: SortId) {
+    setSortOpen(false);
+    if (isHome) return showAll(s);
     rememberedSort = s;
     setSortState(s);
   }
@@ -228,9 +447,61 @@ export function MarketView() {
     if (!authed) return openAuth();
     router.push("/create/new?mode=listing");
   }
+  function bannerAction(a: BannerAction) {
+    if (a === "sell") return sell();
+    if (a === "services") return pickType("service");
+    showAll("relevance");
+  }
 
   let body: React.ReactNode;
-  if (!authed || !cur) {
+  if (isHome) {
+    if (!authed || !home) {
+      body = <HomeSkeleton />;
+    } else if (home.noCampus) {
+      body = (
+        <Message
+          title="Set your campus to shop"
+          body="The marketplace shows listings from people on your campus."
+          action={{ label: "Set my campus", onClick: () => router.push("/settings/campus") }}
+        />
+      );
+    } else if (home.error && home.trending.length === 0) {
+      body = <Message title="Couldn't load the marketplace" body={home.error} action={{ label: "Try again", onClick: () => setReloadTick((n) => n + 1) }} />;
+    } else {
+      body = (
+        <div className="space-y-7">
+          <Banner onAction={bannerAction} />
+          {home.trending.length === 0 ? (
+            <Message title="No listings on your campus yet" body="Be the first to sell something." action={{ label: "Sell something", onClick: sell }} />
+          ) : (
+            <section>
+              <SectionHead icon="stars" title="Trending around Campus" onSeeAll={() => showAll("relevance")} />
+              <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
+                {home.trending.map((p, i) => (
+                  <div key={p.id} className={`min-w-0 ${i >= 3 ? "hidden md:block" : ""}`}>
+                    <MarketCard post={p} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          {home.fresh.length > 0 && (
+            <section>
+              <SectionHead icon="bag2" title="Fresh on Anaija" onSeeAll={() => showAll("newest")} />
+              <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
+                {home.fresh.map((p, i) => (
+                  <div key={p.id} className={`min-w-0 ${i >= 3 ? "hidden md:block" : ""}`}>
+                    <MarketCard post={p} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+          <ServicesStrip onExplore={() => pickType("service")} />
+        </div>
+      );
+    }
+  } else if (!authed || !cur) {
     body = <GridSkeleton />;
   } else if (cur.noCampus) {
     body = (
@@ -247,13 +518,19 @@ export function MarketView() {
       <Message
         title="No listings on your campus yet"
         body={type ? "Nothing in this category yet. Try All." : "Be the first to sell something."}
-        action={type ? { label: "Show all", onClick: () => setType("") } : { label: "Sell something", onClick: sell }}
+        action={type ? { label: "Show all", onClick: () => pickType("") } : { label: "Sell something", onClick: sell }}
       />
     );
   } else {
+    const typeLabel = TYPES.find((t) => t.id === type)?.label ?? "All listings";
+    const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? "";
     body = (
       <>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-5 md:grid-cols-3 xl:grid-cols-4">
+        <div className="flex items-center justify-between pb-3">
+          <h2 className="text-[18px] font-extrabold tracking-tight text-fg">{typeLabel}</h2>
+          <span className="text-[12px] font-semibold text-muted">{sortLabel}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
           {cur.items.map((p) => (
             <MarketCard key={p.id} post={p} />
           ))}
@@ -266,54 +543,77 @@ export function MarketView() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-3 pb-8 md:px-4">
-      <header className="sticky top-0 z-30 bg-bg/95" style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}>
-        <div className="flex items-center gap-2 pb-3 md:pt-4">
-          <h1 className="shrink-0 text-[22px] font-extrabold tracking-tight text-fg">Marketplace</h1>
-          <Link
-            href="/search"
-            aria-label="Search listings"
-            className="ml-2 flex h-11 min-w-0 flex-1 items-center gap-2.5 rounded-full bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive md:max-w-[460px]"
-          >
-            <Icon name="search" className="size-[18px] shrink-0" />
-            <span className="truncate text-body">Search listings...</span>
-          </Link>
+      <header className="sticky top-0 z-30 bg-bg/95 backdrop-blur" style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}>
+        <div className="flex items-center justify-between pb-3 pl-1 md:pt-4">
+          <h1 className="text-[28px] font-extrabold tracking-tight text-fg">Marketplace</h1>
           <button
             type="button"
             onClick={sell}
-            className="ml-auto inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-brand px-4 text-secondary font-extrabold text-brand-fg transition-transform active:scale-95"
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-interactive px-4 text-[15px] font-extrabold text-fg transition-transform active:scale-95"
           >
             <Icon name="plus" weight="strong" className="size-[18px]" />
             Sell
           </button>
         </div>
+        <div className="flex items-center gap-2 pb-3">
+          <Link
+            href="/search"
+            aria-label="Search listings"
+            className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/10 bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive"
+          >
+            <Icon name="search" className="size-[20px] shrink-0" />
+            <span className="truncate text-body">Search for products, services...</span>
+          </Link>
+          <div ref={sortRef} className="relative shrink-0">
+            <button
+              type="button"
+              aria-label="Sort listings"
+              aria-expanded={sortOpen}
+              onClick={() => setSortOpen((o) => !o)}
+              className="grid size-12 place-items-center rounded-full border border-white/10 bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive"
+            >
+              <Icon name="tuning2" className="size-[22px]" />
+            </button>
+            {sortOpen && (
+              <div className="absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-card-elevated p-1 shadow-2xl">
+                {SORTS.map((s) => {
+                  const on = !isHome && sort === s.id;
+                  return (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => pickSort(s.id)}
+                      className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-white/5 ${
+                        on ? ACCENT_TEXT : "text-fg"
+                      }`}
+                    >
+                      {s.label}
+                      {on && <span aria-hidden>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
         <div className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-3 md:mx-0 md:px-0">
-          {TYPES.map((t) => (
-            <button
-              key={t.id || "all"}
-              type="button"
-              onClick={() => setType(t.id)}
-              aria-pressed={type === t.id}
-              className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold transition-colors ${
-                type === t.id ? "bg-fg text-bg" : "bg-surface-interactive text-fg hover:bg-surface-elevated"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-          <span className="mx-1 h-5 w-px shrink-0 bg-white/15" aria-hidden />
-          {SORTS.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSort(s.id)}
-              aria-pressed={sort === s.id}
-              className={`h-9 shrink-0 rounded-full px-3.5 text-secondary font-semibold transition-colors ${
-                sort === s.id ? "text-fg underline decoration-brand decoration-2 underline-offset-[6px]" : "text-white/70 hover:text-fg"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
+          {TYPES.map((t) => {
+            const on = type === t.id;
+            return (
+              <button
+                key={t.id || "all"}
+                type="button"
+                onClick={() => pickType(t.id)}
+                aria-pressed={on}
+                className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition-colors ${
+                  on ? ACCENT_BG : "border border-white/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
+                }`}
+              >
+                {t.icon && <Icon name={t.icon} className="size-[18px]" />}
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </header>
       <div className="pt-1">{body}</div>
