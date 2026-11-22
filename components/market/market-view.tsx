@@ -85,6 +85,12 @@ const SLIDES: { title: string; accent: string; sub: string; cta: string; action:
   { title: "Need a hand?", accent: "Trusted services nearby.", sub: "Tutoring, repairs and more.", cta: "Browse services", action: "services" },
 ];
 
+// banner.png is 457x1024 portrait. The bag, its handles and the three icon bubbles sit in y 250..800,
+// so the art is cropped to that band (457x550) and the box is sized to it: the whole bag always shows,
+// scaled to the banner height, never cropped by object-cover.
+const ART_ASPECT = 457 / 550;
+const ART_TOP_PCT = (250 / 550) * 100; // how far the image is pulled up inside the box
+
 function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -102,9 +108,23 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
       onPointerLeave={() => setPaused(false)}
     >
       <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 size-60 rounded-full bg-brand/10 blur-3xl" />
-      <div aria-hidden className="absolute inset-y-0 right-0 w-[56%] md:w-[48%]">
-        <img src="/brand/market/banner.png" alt="" decoding="async" className="size-full object-cover" style={{ objectPosition: "50% 52%" }} />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#000_0%,rgba(0,0,0,0)_40%)]" />
+
+      <div
+        aria-hidden
+        className="absolute inset-y-0 right-1 overflow-hidden md:right-10"
+        style={{ aspectRatio: String(ART_ASPECT) }}
+      >
+        <img
+          src="/brand/market/banner.png"
+          alt=""
+          decoding="async"
+          className="absolute left-0 h-auto w-full max-w-none"
+          style={{ top: `-${ART_TOP_PCT}%` }}
+        />
+        {/* Thin edge blend only; the artwork's own background is already black. */}
+        <div className="absolute inset-y-0 left-0 w-[14%] bg-[linear-gradient(90deg,#000,rgba(0,0,0,0))]" />
+        <div className="absolute inset-x-0 top-0 h-[10%] bg-[linear-gradient(180deg,#000,rgba(0,0,0,0))]" />
+        <div className="absolute inset-x-0 bottom-0 h-[10%] bg-[linear-gradient(0deg,#000,rgba(0,0,0,0))]" />
       </div>
 
       {SLIDES.map((s, n) => {
@@ -135,10 +155,10 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
         );
       })}
 
-      <span className="absolute right-3 top-3 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+      <span className="absolute right-3 top-3 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
         {i + 1} / {SLIDES.length}
       </span>
-      <div className="absolute bottom-3 left-5 flex items-center gap-1.5 md:left-8">
+      <div className="absolute bottom-3 left-5 z-10 flex items-center gap-1.5 md:left-8">
         {SLIDES.map((s, n) => (
           <button
             key={s.title}
