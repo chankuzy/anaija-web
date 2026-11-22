@@ -485,3 +485,17 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .ob-sheet, .ob-fade { animation: none; }
 }
+
+/* ───── Marketplace fluidity (mk-*) ───── */
+@keyframes mk-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mk-pop { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .mk-in { animation: mk-in 180ms ease-out backwards; }
+  .mk-pop { transform-origin: top right; animation: mk-pop 160ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+}
+/* Skeleton: opacity pulse (compositor-only). Supersedes the sk-shimmer rules above, which animate
+   background-position and repaint every frame. */
+@keyframes sk-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+@media (prefers-reduced-motion: no-preference) {
+  .sk-block { background-image: none; animation: sk-pulse 1.5s ease-in-out infinite; }
+}

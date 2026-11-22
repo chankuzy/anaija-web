@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type SyntheticEvent } from "react";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { MoreSkeleton, Sk } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api/client";
@@ -12,6 +12,7 @@ import type { Post } from "@/lib/api/feed-types";
 import { postsApi } from "@/lib/api/posts";
 import { useAuth } from "@/lib/auth/auth-context";
 import { openAuth } from "@/lib/auth/auth-modal";
+import { useRenders } from "@/lib/dev/perf";
 import { coverOf } from "@/lib/discover/tile";
 import { setIx, useIx, withIx } from "@/lib/feed/interactions";
 import { formatCount } from "@/lib/format";
@@ -44,6 +45,8 @@ const TEXT_YELLOW = "text-brand";
 // Card geometry is fixed so every card is identical whatever it contains:
 // image 5:4 + body 92px (10 pad + 18 title + 4 gap + 22 price + 8 gap + 20 meta + 10 pad).
 const CARD_BODY = "h-[92px]";
+
+const RM = "(prefers-reduced-motion: reduce)";
 
 interface Raw {
   listings?: Post[];
@@ -82,6 +85,56 @@ async function fetchPage(type: string, sort: SortId, cursor: string | null, sign
   };
 }
 
+/* ───────────────────────────── Image ───────────────────────────── */
+
+// Fades an image in once it is loaded AND decoded, so it never pops in mid-scroll. An image that is already in the
+// browser's memory cache shows at once with no fade. The parent owns the box and its background colour.
+const T_FADE = "[transition:opacity_300ms_ease-out,transform_500ms_ease-out] motion-reduce:[transition:none]";
+const T_NOFADE = "[transition:transform_500ms_ease-out] motion-reduce:[transition:none]";
+
+function FadeImg({
+  src,
+  className = "",
+  priority = false,
+  width,
+  height,
+  onError,
+}: {
+  src: string;
+  className?: string;
+  priority?: boolean;
+  width?: number;
+  height?: number;
+  onError?: () => void;
+}) {
+  const [st, setSt] = useState<0 | 1 | 2>(0); // 0 loading, 1 revealed with fade, 2 was already cached
+  const attach = useCallback((el: HTMLImageElement | null) => {
+    if (el && el.complete && el.naturalWidth > 0) setSt((s) => (s === 0 ? 2 : s));
+  }, []);
+  const onLoad = (e: SyntheticEvent<HTMLImageElement>) => {
+    const el = e.currentTarget;
+    const done = () => setSt((s) => (s === 0 ? 1 : s));
+    if (typeof el.decode === "function") el.decode().then(done, done);
+    else done();
+  };
+  return (
+    <img
+      ref={attach}
+      src={src}
+      alt=""
+      width={width}
+      height={height}
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
+      decoding="async"
+      draggable={false}
+      onLoad={onLoad}
+      onError={onError}
+      className={`${className} ${st === 0 ? "opacity-0" : "opacity-100"} ${st === 2 ? T_NOFADE : T_FADE}`}
+    />
+  );
+}
+
 /* ───────────────────────────── Banner ───────────────────────────── */
 
 type BannerAction = "all" | "sell" | "services";
@@ -91,11 +144,9 @@ const SLIDES: { title: string; accent: string; sub: string; cta: string; action:
   { title: "Need a hand?", accent: "Trusted services nearby.", sub: "Tutoring, repairs and more.", cta: "Browse services", action: "services" },
 ];
 
-// banner.png is 457x1024 portrait. The bag, its handles and the three icon bubbles sit in y 250..800,
-// so the art is cropped to that band (457x550) and the box is sized to it: the whole bag always shows,
-// scaled to the banner height, never cropped by object-cover.
+// banner-band.webp is the 457x550 band (y 250..800) of banner.png: the bag, its handles and the three icon bubbles.
+// The box has exactly that aspect ratio, so the whole bag always shows, scaled to the banner height.
 const ART_ASPECT = 457 / 550;
-const ART_TOP_PCT = (250 / 550) * 100; // how far the image is pulled up inside the box
 
 function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
   const [i, setI] = useState(0);
@@ -103,6 +154,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
 
   useEffect(() => {
     if (paused) return;
+    if (window.matchMedia(RM).matches) return; // reduced motion: no auto-rotation, the dots still work
     const t = setTimeout(() => setI((n) => (n + 1) % SLIDES.length), 5500);
     return () => clearTimeout(t);
   }, [i, paused]);
@@ -113,20 +165,17 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >
-      <div aria-hidden className="pointer-events-none absolute -bottom-24 -left-16 size-60 rounded-full bg-brand/10 blur-3xl" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-28 -left-24 size-72 bg-[radial-gradient(closest-side,rgba(255,216,77,0.12),rgba(255,216,77,0))]"
+      />
 
       <div
         aria-hidden
         className="absolute inset-y-0 right-1 overflow-hidden md:right-10"
         style={{ aspectRatio: String(ART_ASPECT) }}
       >
-        <img
-          src="/brand/market/banner.png"
-          alt=""
-          decoding="async"
-          className="absolute left-0 h-auto w-full max-w-none"
-          style={{ top: `-${ART_TOP_PCT}%` }}
-        />
+        <FadeImg src="/brand/market/banner-band.webp" width={457} height={550} priority className="absolute inset-0 size-full object-cover" />
         {/* Thin edge blend only; the artwork's own background is already black. */}
         <div className="absolute inset-y-0 left-0 w-[14%] bg-[linear-gradient(90deg,#000,rgba(0,0,0,0))]" />
         <div className="absolute inset-x-0 top-0 h-[10%] bg-[linear-gradient(180deg,#000,rgba(0,0,0,0))]" />
@@ -139,7 +188,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
           <div
             key={s.title}
             aria-hidden={!active}
-            className={`absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center pb-5 pl-5 transition-[opacity,transform] duration-500 md:w-[52%] md:pl-8 ${
+            className={`absolute inset-y-0 left-0 flex w-[62%] flex-col justify-center pb-5 pl-5 transition-[opacity,transform] duration-500 motion-reduce:transition-none md:w-[52%] md:pl-8 ${
               active ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
             }`}
           >
@@ -152,7 +201,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
               type="button"
               tabIndex={active ? 0 : -1}
               onClick={() => onAction(s.action)}
-              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${BTN_WHITE}`}
+              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 motion-reduce:active:scale-100 md:h-11 md:px-6 md:text-[14px] ${BTN_WHITE}`}
             >
               {s.cta}
               <span aria-hidden>→</span>
@@ -161,7 +210,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
         );
       })}
 
-      <span className="absolute right-3 top-3 z-10 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
+      <span className="absolute right-3 top-3 z-10 rounded-full bg-black/60 px-2.5 py-1 text-[11px] font-semibold text-white">
         {i + 1} / {SLIDES.length}
       </span>
       <div className="absolute bottom-3 left-5 z-10 flex items-center gap-1.5 md:left-8">
@@ -171,7 +220,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
             type="button"
             aria-label={`Banner ${n + 1}`}
             onClick={() => setI(n)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${n === i ? "w-5 bg-white" : "w-1.5 bg-white/25"}`}
+            className={`h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none ${n === i ? "w-5 bg-white" : "w-1.5 bg-white/25"}`}
           />
         ))}
       </div>
@@ -210,7 +259,9 @@ export function useLike(raw: Post) {
 }
 
 // Every row below always renders at a fixed height and never wraps, so content can't change the card's size.
-export function MarketCard({ post: raw }: { post: Post }) {
+// Memoised: a list update (next page, loading flag) must not re-render cards whose post did not change.
+export const MarketCard = memo(function MarketCard({ post: raw, priority = false }: { post: Post; priority?: boolean }) {
+  useRenders("MarketCard");
   const [failed, setFailed] = useState(false);
   const { post, liked, toggle } = useLike(raw);
   const d = post.listing;
@@ -224,20 +275,18 @@ export function MarketCard({ post: raw }: { post: Post }) {
   const badge = d?.condition ? (COND[d.condition] ?? null) : type === "rental" ? "For Rent" : null;
 
   return (
-    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15">
+    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-[border-color,transform] duration-150 hover:border-white/15 has-[a:active]:scale-[0.985] motion-reduce:transition-none motion-reduce:has-[a:active]:scale-100">
       <Link href={`/l/${post.id}`} className="flex h-full min-w-0 flex-col">
         <div
           className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-card-elevated"
           style={{ backgroundColor: cover.color ?? undefined }}
         >
           {cover.url && !failed ? (
-            <img
+            <FadeImg
               src={cover.url}
-              alt=""
-              loading="lazy"
-              decoding="async"
+              priority={priority}
               onError={() => setFailed(true)}
-              className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+              className="absolute inset-0 size-full object-cover group-hover:scale-[1.04] motion-reduce:group-hover:scale-100"
             />
           ) : (
             <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
@@ -245,7 +294,7 @@ export function MarketCard({ post: raw }: { post: Post }) {
             </span>
           )}
           {badge && (
-            <span className="absolute left-2 top-2 max-w-[70%] truncate rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold leading-4 text-white backdrop-blur">
+            <span className="absolute left-2 top-2 max-w-[70%] truncate rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold leading-4 text-white">
               {badge}
             </span>
           )}
@@ -279,13 +328,13 @@ export function MarketCard({ post: raw }: { post: Post }) {
         aria-label={liked ? "Remove like" : "Like"}
         aria-pressed={liked}
         onClick={toggle}
-        className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/55 backdrop-blur transition-transform active:scale-90"
+        className="hit-area absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/60 transition-transform active:scale-90 motion-reduce:active:scale-100"
       >
-        <Icon name="heart" filled={liked} className={`size-[18px] ${liked ? "text-like" : "text-white"}`} />
+        <Icon name="heart" filled={liked} className={`size-[18px] transition-colors duration-150 ${liked ? "text-like" : "text-white"}`} />
       </button>
     </div>
   );
-}
+});
 
 // Same outer dimensions as MarketCard so nothing shifts when data arrives.
 function CardSkeleton() {
@@ -308,7 +357,7 @@ function SectionHead({ icon, title, onSeeAll }: { icon: IconName; title: string;
         <Icon name={icon} filled className={`size-6 ${TEXT_YELLOW}`} />
         {title}
       </h2>
-      <button type="button" onClick={onSeeAll} className="text-[13px] font-bold text-fg/80 transition-colors hover:text-fg">
+      <button type="button" onClick={onSeeAll} className="text-[13px] font-bold text-fg/80 transition-colors hover:text-fg active:text-fg">
         See all <span aria-hidden>→</span>
       </button>
     </div>
@@ -320,7 +369,7 @@ function ServicesStrip({ onExplore }: { onExplore: () => void }) {
     <button
       type="button"
       onClick={onExplore}
-      className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-card px-3.5 py-3 text-left transition-colors hover:border-white/15"
+      className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-card px-3.5 py-3 text-left transition-colors hover:border-white/15 active:bg-surface-subtle"
     >
       <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-interactive text-white">
         <Icon name="caseMinimalistic" filled className="size-6" />
@@ -348,15 +397,15 @@ function GridSkeleton() {
   );
 }
 
+// Rows only: the banner is mounted by the screen itself, so it never waits for data.
 function HomeSkeleton() {
   return (
     <div className="space-y-7" aria-hidden="true">
-      <Sk className="h-[200px] w-full rounded-[26px] md:h-[260px]" />
       {[0, 1].map((r) => (
         <div key={r}>
           <Sk className="mb-3 h-6 w-48 rounded-full" />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-            {Array.from({ length: 4 }, (_, i) => (
+            {Array.from({ length: 6 }, (_, i) => (
               <div key={i} className={`min-w-0 ${i >= 4 ? "hidden md:block" : ""}`}>
                 <CardSkeleton />
               </div>
@@ -364,6 +413,7 @@ function HomeSkeleton() {
           </div>
         </div>
       ))}
+      <Sk className="h-[70px] w-full rounded-2xl" />
     </div>
   );
 }
@@ -386,33 +436,48 @@ function Message({ title, body, action }: { title: string; body: string; action?
 
 /* ───────────────────────────── Screen ───────────────────────────── */
 
-// Remembered across leaving and coming back to the screen.
-let rememberedType = "";
-let rememberedSort: SortId = "relevance";
-let rememberedGrid = false;
-let homeCache: HomeData | null = null;
+// Remembered across leaving and coming back to the screen. Changed only through remember(), which lives outside
+// the component, so no render-time code ever reassigns module state.
+interface Remembered {
+  type: string;
+  sort: SortId;
+  grid: boolean;
+  home: HomeData | null;
+}
+const mem: Remembered = { type: "", sort: "relevance", grid: false, home: null };
+function remember(patch: Partial<Remembered>) {
+  Object.assign(mem, patch);
+}
 
 export function MarketView() {
+  useRenders("MarketView");
   const router = useRouter();
   const { status } = useAuth();
   const authed = status === "authed";
-  const [type, setTypeState] = useState(() => rememberedType);
-  const [sort, setSortState] = useState<SortId>(() => rememberedSort);
-  const [gridMode, setGridMode] = useState(() => rememberedGrid);
+  const [type, setTypeState] = useState(() => mem.type);
+  const [sort, setSortState] = useState<SortId>(() => mem.sort);
+  const [gridMode, setGridMode] = useState(() => mem.grid);
   const [reloadTick, setReloadTick] = useState(0);
   const [page, setPage] = useState<Page | null>(null);
-  const [home, setHome] = useState<HomeData | null>(() => homeCache);
+  const [home, setHome] = useState<HomeData | null>(() => mem.home);
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+  const chipsRef = useRef<HTMLDivElement>(null);
   const moreBusy = useRef(false);
+  const moreAc = useRef<AbortController | null>(null);
+  const pageRef = useRef<Page | null>(null);
   const isHome = !gridMode && type === "";
   const key = `${type}|${sort}|${reloadTick}`;
   const cur = page && page.key === key ? page : null;
 
+  useEffect(() => {
+    pageRef.current = page;
+  });
+
   // The marketplace needs a signed-in user (the backend requires it), same as Discover.
   useEffect(() => {
     if (status === "guest") {
-      homeCache = null;
+      remember({ home: null });
       openAuth();
     }
   }, [status]);
@@ -428,7 +493,7 @@ export function MarketView() {
         const seen = new Set(trending.map((p) => p.id));
         const fresh = f.items.filter((p) => !seen.has(p.id)).slice(0, 6);
         const next: HomeData = { trending, fresh, noCampus: t.noCampus || f.noCampus, error: null };
-        homeCache = next;
+        remember({ home: next });
         setHome(next);
       })
       .catch((e: unknown) => {
@@ -450,40 +515,56 @@ export function MarketView() {
         if (ac.signal.aborted) return;
         setPage({ key, items: [], cursor: null, hasMore: false, noCampus: false, loadingMore: false, error: e instanceof ApiError ? e.message : "Something went wrong." });
       });
-    return () => ac.abort();
+    return () => {
+      ac.abort();
+      moreAc.current?.abort(); // a late "next page" must never land on a different type / sort
+      moreBusy.current = false;
+    };
   }, [authed, isHome, type, sort, key]);
 
-  // Next page well before the fold.
+  // Next page. Results are applied only if the page is still the one the request was made for.
+  const loadMore = useCallback(() => {
+    if (moreBusy.current) return;
+    const c = pageRef.current;
+    if (!c || c.key !== key || !c.cursor) return;
+    moreBusy.current = true;
+    setPage((p) => (p && p.key === key ? { ...p, loadingMore: true, error: null } : p));
+    const ac = new AbortController();
+    moreAc.current = ac;
+    fetchPage(type, sort, c.cursor, ac.signal)
+      .then((r) => {
+        if (ac.signal.aborted) return;
+        // Trending ranks on live engagement, so a row can drift between pages; never show one twice.
+        setPage((p) => {
+          if (!p || p.key !== key) return p;
+          const seen = new Set(p.items.map((x) => x.id));
+          return { ...p, items: [...p.items, ...r.items.filter((x) => !seen.has(x.id))], cursor: r.cursor, hasMore: r.hasMore, loadingMore: false };
+        });
+      })
+      .catch(() => {
+        if (!ac.signal.aborted) setPage((p) => (p && p.key === key ? { ...p, loadingMore: false, error: "more" } : p));
+      })
+      .finally(() => {
+        if (moreAc.current === ac) moreBusy.current = false;
+      });
+  }, [key, type, sort]);
+
+  // Observe the sentinel well before the fold. A failed load does not recreate the observer, so it cannot loop.
   const sentinel = useRef<HTMLDivElement>(null);
   const hasMore = cur?.hasMore ?? false;
-  const count = cur?.items.length ?? 0;
+  const cursor = cur?.cursor ?? null;
   useEffect(() => {
     const el = sentinel.current;
     if (!el || !hasMore) return;
     const io = new IntersectionObserver(
       (es) => {
-        if (!es[0]?.isIntersecting || moreBusy.current) return;
-        const c = cur;
-        if (!c || !c.cursor) return;
-        moreBusy.current = true;
-        setPage({ ...c, loadingMore: true });
-        const ac = new AbortController();
-        fetchPage(type, sort, c.cursor, ac.signal)
-          .then((r) => {
-            // Trending ranks on live engagement, so a row can drift between pages; never show one twice.
-            const seen = new Set(c.items.map((p) => p.id));
-            setPage({ ...c, items: [...c.items, ...r.items.filter((p) => !seen.has(p.id))], cursor: r.cursor, hasMore: r.hasMore, loadingMore: false });
-          })
-          .catch(() => setPage({ ...c, loadingMore: false }))
-          .finally(() => {
-            moreBusy.current = false;
-          });
+        if (es[0]?.isIntersecting) loadMore();
       },
       { rootMargin: "900px 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [hasMore, count, cur, type, sort]);
+  }, [hasMore, cursor, loadMore]);
 
   // Close the sort menu on outside tap.
   useEffect(() => {
@@ -495,29 +576,35 @@ export function MarketView() {
     return () => document.removeEventListener("pointerdown", onDown);
   }, [sortOpen]);
 
+  // Bring the tapped chip to the middle of the row.
+  function centerChip(btn: HTMLElement) {
+    const row = chipsRef.current;
+    if (!row) return;
+    const b = btn.getBoundingClientRect();
+    const r = row.getBoundingClientRect();
+    row.scrollBy({ left: b.left + b.width / 2 - (r.left + r.width / 2), behavior: window.matchMedia(RM).matches ? "auto" : "smooth" });
+  }
+
   function pickType(t: string) {
-    rememberedType = t;
+    remember({ type: t });
     setTypeState(t);
     if (t === "") {
       // "All" returns to the home layout.
-      rememberedGrid = false;
+      remember({ grid: false, sort: "relevance" });
       setGridMode(false);
-      rememberedSort = "relevance";
       setSortState("relevance");
     }
   }
   function showAll(s: SortId) {
-    rememberedType = "";
+    remember({ type: "", sort: s, grid: true });
     setTypeState("");
-    rememberedSort = s;
     setSortState(s);
-    rememberedGrid = true;
     setGridMode(true);
   }
   function pickSort(s: SortId) {
     setSortOpen(false);
     if (isHome) return showAll(s);
-    rememberedSort = s;
+    remember({ sort: s });
     setSortState(s);
   }
   function sell() {
@@ -530,11 +617,17 @@ export function MarketView() {
     showAll("relevance");
   }
 
+  // The banner lives outside the keyed body below, so it mounts at once and survives loading -> content.
   let body: React.ReactNode;
+  let bodyKey = "sk";
+  let showBanner = false;
   if (isHome) {
+    showBanner = true;
     if (!authed || !home) {
       body = <HomeSkeleton />;
     } else if (home.noCampus) {
+      showBanner = false;
+      bodyKey = "msg";
       body = (
         <Message
           title="Set your campus to shop"
@@ -543,11 +636,13 @@ export function MarketView() {
         />
       );
     } else if (home.error && home.trending.length === 0) {
+      showBanner = false;
+      bodyKey = "msg";
       body = <Message title="Couldn't load the marketplace" body={home.error} action={{ label: "Try again", onClick: () => setReloadTick((n) => n + 1) }} />;
     } else {
+      bodyKey = "home";
       body = (
         <div className="space-y-7">
-          <Banner onAction={bannerAction} />
           {home.trending.length === 0 ? (
             <Message title="No listings on your campus yet" body="Be the first to sell something." action={{ label: "Sell something", onClick: sell }} />
           ) : (
@@ -556,7 +651,7 @@ export function MarketView() {
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                 {home.trending.map((p, i) => (
                   <div key={p.id} className={`min-w-0 ${i >= 4 ? "hidden md:block" : ""}`}>
-                    <MarketCard post={p} />
+                    <MarketCard post={p} priority={i < 2} />
                   </div>
                 ))}
               </div>
@@ -581,6 +676,7 @@ export function MarketView() {
   } else if (!authed || !cur) {
     body = <GridSkeleton />;
   } else if (cur.noCampus) {
+    bodyKey = "msg";
     body = (
       <Message
         title="Set your campus to shop"
@@ -589,8 +685,10 @@ export function MarketView() {
       />
     );
   } else if (cur.error && cur.items.length === 0) {
+    bodyKey = "msg";
     body = <Message title="Couldn't load the marketplace" body={cur.error} action={{ label: "Try again", onClick: () => setReloadTick((n) => n + 1) }} />;
   } else if (cur.items.length === 0) {
+    bodyKey = "msg";
     body = (
       <Message
         title="No listings on your campus yet"
@@ -599,6 +697,7 @@ export function MarketView() {
       />
     );
   } else {
+    bodyKey = `grid|${type}|${sort}`;
     const typeLabel = TYPES.find((t) => t.id === type)?.label ?? "All listings";
     const sortLabel = SORTS.find((s) => s.id === sort)?.label ?? "";
     body = (
@@ -608,25 +707,37 @@ export function MarketView() {
           <span className="text-[12px] font-semibold text-muted">{sortLabel}</span>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-          {cur.items.map((p) => (
-            <MarketCard key={p.id} post={p} />
+          {cur.items.map((p, i) => (
+            <MarketCard key={p.id} post={p} priority={i < 4} />
           ))}
         </div>
         <div ref={sentinel} className="h-px" />
-        {cur.loadingMore && <MoreSkeleton />}
+        {cur.loadingMore ? (
+          <MoreSkeleton />
+        ) : cur.error ? (
+          <div className="grid h-14 place-items-center">
+            <button
+              type="button"
+              onClick={loadMore}
+              className="h-9 rounded-full border border-white/10 bg-surface-subtle px-4 text-[13px] font-bold text-fg transition-colors active:bg-surface-interactive"
+            >
+              Retry loading more
+            </button>
+          </div>
+        ) : null}
       </>
     );
   }
 
   return (
     <div className="mx-auto w-full max-w-[1100px] px-3 pb-8 md:px-4">
-      <header className="sticky top-0 z-30 bg-bg/95 backdrop-blur" style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}>
+      <header className="sticky top-0 z-30 bg-bg" style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}>
         <div className="flex items-center justify-between pb-3 pl-1 md:pt-4">
           <h1 className="text-[28px] font-extrabold tracking-tight text-fg">Marketplace</h1>
           <button
             type="button"
             onClick={sell}
-            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-interactive px-4 text-[15px] font-extrabold text-fg transition-transform active:scale-95"
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-interactive px-4 text-[15px] font-extrabold text-fg transition-transform active:scale-95 motion-reduce:active:scale-100"
           >
             <Icon name="plus" weight="strong" className="size-[18px]" />
             Sell
@@ -636,7 +747,7 @@ export function MarketView() {
           <Link
             href="/search"
             aria-label="Search listings"
-            className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/10 bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive"
+            className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/10 bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
           >
             <Icon name="search" className="size-[20px] shrink-0" />
             <span className="truncate text-body">Search for products, services...</span>
@@ -647,12 +758,12 @@ export function MarketView() {
               aria-label="Sort listings"
               aria-expanded={sortOpen}
               onClick={() => setSortOpen((o) => !o)}
-              className="grid size-12 place-items-center rounded-full border border-white/10 bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive"
+              className="grid size-12 place-items-center rounded-full border border-white/10 bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
             >
               <Icon name="tuning2" className="size-[22px]" />
             </button>
             {sortOpen && (
-              <div className="absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-card-elevated p-1 shadow-2xl">
+              <div className="mk-pop absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-card-elevated p-1 shadow-2xl">
                 {SORTS.map((s) => {
                   const on = !isHome && sort === s.id;
                   return (
@@ -660,7 +771,7 @@ export function MarketView() {
                       key={s.id}
                       type="button"
                       onClick={() => pickSort(s.id)}
-                      className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-white/5 ${
+                      className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-white/5 active:bg-white/5 ${
                         on ? TEXT_YELLOW : "text-fg"
                       }`}
                     >
@@ -673,16 +784,19 @@ export function MarketView() {
             )}
           </div>
         </div>
-        <div className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto px-3 pb-3 md:mx-0 md:px-0">
+        <div ref={chipsRef} className="no-scrollbar -mx-3 flex items-center gap-2 overflow-x-auto overscroll-x-contain px-3 pb-3 md:mx-0 md:px-0">
           {TYPES.map((t) => {
             const on = type === t.id;
             return (
               <button
                 key={t.id || "all"}
                 type="button"
-                onClick={() => pickType(t.id)}
+                onClick={(e) => {
+                  pickType(t.id);
+                  centerChip(e.currentTarget);
+                }}
                 aria-pressed={on}
-                className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition-colors ${
+                className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition-[background-color,color,transform] active:scale-95 motion-reduce:active:scale-100 ${
                   on ? BTN_WHITE : "border border-white/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
                 }`}
               >
@@ -693,7 +807,16 @@ export function MarketView() {
           })}
         </div>
       </header>
-      <div className="pt-1">{body}</div>
+      <div className="pt-1">
+        {showBanner && (
+          <div className="mb-7">
+            <Banner onAction={bannerAction} />
+          </div>
+        )}
+        <div key={bodyKey} className="mk-in">
+          {body}
+        </div>
+      </div>
     </div>
   );
 }
