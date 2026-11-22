@@ -6,6 +6,7 @@ import { ListingSkeleton, UserRowsSkeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useLike } from "@/components/market/market-view";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
 import { Lightbox } from "@/components/ui/lightbox";
@@ -14,9 +15,10 @@ import { listingApi, type DayHours, type Inquiry, type ListingFull, type Listing
 import { useAuth } from "@/lib/auth/auth-context";
 import { useShare } from "@/lib/share/share-context";
 import type { Post } from "@/lib/api/feed-types";
-import { timeAgo } from "@/lib/format";
-import { formatFullLocation } from "@/lib/location/types";
+import { formatCount, timeAgo } from "@/lib/format";
+import { formatCompactLocation, formatFullLocation } from "@/lib/location/types";
 import { MoreLikeThis } from "./more-like-this";
+import { SimilarListings } from "./similar-listings";
 
 interface Data {
   id: string;
@@ -31,6 +33,7 @@ const DAYS: [string, string][] = [
 ];
 const COND: Record<string, string> = { new: "New", like_new: "Like New", good: "Good", fair: "Fair", poor: "Poor" };
 const FULFIL: Record<string, string> = { pickup: "Pickup", delivery: "Delivery", onsite: "On-site", remote: "Remote", digital: "Digital" };
+const TYPE_LABEL: Record<string, string> = { product: "Product", service: "Service", rental: "Rental", business: "Business", wanted: "Wanted" };
 
 function openNow(h: Record<string, DayHours>): boolean {
   const key = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
@@ -60,7 +63,7 @@ function Price({ d, size, prefix }: { d: NonNullable<ListingFull["listing"]>; si
       <span className="font-bold text-brand" style={{ fontSize: size * 0.75 }}>₦</span>
       <span className="font-bold text-fg" style={{ fontSize: size }}>{d.formatted_price}</span>
       {d.price_type === "negotiable" && (
-        <span className="ml-1 rounded-full bg-brand/15 px-2 py-0.5 font-bold text-brand" style={{ fontSize: size * 0.5 }}>Nego</span>
+        <span className="ml-1 rounded-full bg-surface-interactive px-2 py-0.5 font-bold text-white/80" style={{ fontSize: size * 0.5 }}>Negotiable</span>
       )}
     </span>
   );
@@ -83,34 +86,92 @@ function Row({ label, value }: { label: string; value: string }) {
   );
 }
 
-function Gallery({ urls, onOpen }: { urls: string[]; onOpen: (u: string) => void }) {
+function Gallery({ urls, badge, onOpen }: { urls: string[]; badge: string | null; onOpen: (u: string) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const [idx, setIdx] = useState(0);
-  if (urls.length === 0) {
-    return <div className="grid h-[320px] place-items-center bg-card text-muted md:h-[420px]">No photos</div>;
-  }
   return (
-    <div className="relative bg-card">
-      <div
-        ref={ref}
-        onScroll={() => {
-          const el = ref.current;
-          if (el?.clientWidth) setIdx(Math.round(el.scrollLeft / el.clientWidth));
-        }}
-        className="no-scrollbar flex h-[360px] snap-x snap-mandatory overflow-x-auto md:h-[460px]"
-      >
-        {urls.map((u) => (
-          <button key={u} type="button" onClick={() => onOpen(u)} className="h-full w-full shrink-0 snap-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={u} alt="" decoding="async" className="size-full object-contain" />
-          </button>
-        ))}
-      </div>
-      {urls.length > 1 && (
-        <span className="absolute bottom-3 right-3 rounded-[10px] bg-black/55 px-2.5 py-1 text-xs font-semibold text-white">
-          {idx + 1} / {urls.length}
+    <div className="relative mx-4 overflow-hidden rounded-[26px] bg-card md:mx-5">
+      {urls.length === 0 ? (
+        <div className="grid h-[240px] place-items-center text-muted md:h-[380px]">No photos</div>
+      ) : (
+        <div
+          ref={ref}
+          onScroll={() => {
+            const el = ref.current;
+            if (el?.clientWidth) setIdx(Math.round(el.scrollLeft / el.clientWidth));
+          }}
+          className="no-scrollbar flex h-[240px] snap-x snap-mandatory overflow-x-auto md:h-[380px]"
+        >
+          {urls.map((u) => (
+            <button key={u} type="button" onClick={() => onOpen(u)} className="h-full w-full shrink-0 snap-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={u} alt="" decoding="async" className="size-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+      {badge && (
+        <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[13px] font-semibold text-white backdrop-blur">
+          {badge}
         </span>
       )}
+      {urls.length > 1 && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
+          {urls.map((u, n) => (
+            <span key={u} className={`size-2 rounded-full transition-colors ${n === idx ? "bg-brand" : "bg-white/35"}`} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HeartButton({ post }: { post: Post }) {
+  const { liked, toggle } = useLike(post);
+  return (
+    <button type="button" aria-label={liked ? "Remove like" : "Like"} aria-pressed={liked} onClick={toggle} className="grid size-10 place-items-center text-white transition-transform active:scale-90">
+      <Icon name="heart" filled={liked} className={`size-[26px] ${liked ? "text-like" : "text-white"}`} />
+    </button>
+  );
+}
+
+function OfferSheet({ asking, busy, onClose, onSend }: { asking: string; busy: boolean; onClose: () => void; onSend: (amount: number) => void }) {
+  const [amt, setAmt] = useState("");
+  const n = Number(amt.replace(/\D/g, ""));
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="w-full max-w-[720px] rounded-t-[30px] bg-card-elevated px-5 pt-5"
+        style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-[18px] font-extrabold text-fg">Make an offer</p>
+        <p className="mt-1 text-secondary text-muted">Asking price ₦{asking}. Your offer goes to the seller as a chat message.</p>
+        <div className="mt-4 flex h-14 items-center gap-2 rounded-2xl bg-surface-subtle px-4">
+          <span className="text-[20px] font-bold text-brand">₦</span>
+          <input
+            inputMode="numeric"
+            autoFocus
+            value={amt ? n.toLocaleString("en-NG") : ""}
+            onChange={(e) => setAmt(e.target.value.replace(/\D/g, ""))}
+            placeholder="Your offer"
+            className="min-w-0 flex-1 bg-transparent text-[20px] font-bold text-fg outline-none placeholder:text-muted"
+          />
+        </div>
+        <div className="mt-4 flex gap-3">
+          <button type="button" onClick={onClose} className="h-[52px] flex-1 rounded-full bg-surface-interactive text-[15px] font-bold text-fg">
+            Cancel
+          </button>
+          <button
+            type="button"
+            disabled={n <= 0 || busy}
+            onClick={() => onSend(n)}
+            className="h-[52px] flex-1 rounded-full bg-brand text-[15px] font-extrabold text-brand-fg disabled:opacity-50"
+          >
+            {busy ? "…" : "Send offer"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -206,6 +267,8 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
   const [data, setData] = useState<Data | null>(null);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const [hoursOpen, setHoursOpen] = useState(false);
+  const [descOpen, setDescOpen] = useState(false);
+  const [offerOpen, setOfferOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [override, setOverride] = useState<{ id: string; status?: ListingStatus; inquired?: boolean; conv?: number } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -244,6 +307,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
   const cur = authed ? (data && data.id === id ? data : null) : publicData;
   const ov = override && override.id === id ? override : null;
 
+  // Used by the loading and error states only; the loaded screen has its own header row.
   const back = (
     <button
       type="button"
@@ -277,6 +341,8 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
   const hours = d?.opening_hours ?? null;
   const open = hours ? openNow(hours) : false;
   const enabled = curStatus === "available" || inquired;
+  const negotiable = d?.price_type === "negotiable";
+  const canOffer = !isOwn && !inquired && curStatus === "available" && negotiable && (type === "product" || type === "rental");
 
   const cta = inquired
     ? "View conversation"
@@ -284,9 +350,9 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
       ? accepting ? "Order now" : "View menu"
       : type === "service" ? "Book / contact"
       : type === "wanted" ? "Offer item"
-      : curStatus === "available" ? "I'm interested" : "Not available";
+      : curStatus === "available" ? "Chat with seller" : "Not available";
 
-  async function sendInquiry() {
+  async function sendInquiry(message = "Hi, I'm interested in your listing!") {
     if (busy) return;
     if (!authed) {
       openAuth();
@@ -298,12 +364,15 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
     }
     setBusy(true);
     try {
-      const r = await listingApi.inquire(n, "Hi, I'm interested in your listing!");
+      const r = await listingApi.inquire(n, message);
       setOverride({ id, status: ov?.status, inquired: true, conv: r.conversation_id });
-      flash("Inquiry sent. The seller has been notified.");
+      setOfferOpen(false);
+      flash("Sent. The seller has been notified.");
     } catch (e) {
-      if (e instanceof ApiError && e.status === 409) setOverride({ id, status: ov?.status, inquired: true });
-      else flash(e instanceof ApiError ? e.message : "Couldn't send inquiry");
+      if (e instanceof ApiError && e.status === 409) {
+        setOverride({ id, status: ov?.status, inquired: true });
+        setOfferOpen(false);
+      } else flash(e instanceof ApiError ? e.message : "Couldn't send");
     } finally {
       setBusy(false);
     }
@@ -329,24 +398,43 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
 
   const caption = (l.caption ?? "").trim();
   const sellerLabel = type === "business" ? "Vendor" : type === "service" ? "Provider" : type === "wanted" ? "Buyer" : "Seller";
+  const conditionLabel = d?.condition ? (COND[d.condition] ?? null) : null;
+  const imageBadge = conditionLabel ?? (type === "rental" ? "For Rent" : null);
+
+  // Product and rental: first line of the caption is the title, anything after it is the description.
+  const nl = caption.indexOf("\n");
+  const title = nl === -1 ? caption : caption.slice(0, nl).trim();
+  const desc = nl === -1 ? "" : caption.slice(nl + 1).trim();
+  const longDesc = desc.length > 150;
+  const tags = (l.hashtags ?? []).slice(0, 6);
+
+  const views = l.views_count || d?.views_count || 0;
+  const place = d?.location_info ? formatCompactLocation(d.location_info) : d?.pickup_info || l.location || "";
+  const ago = timeAgo(l.created_at);
+  const meta: { icon: "tag" | "pointOnMap"; text: string }[] | null = null;
+  void meta;
 
   return (
     <div className="mx-auto w-full max-w-[720px] pb-4">
-      <div className="relative">
-        {back}
+      <div className="flex items-center gap-3 px-4 pb-3" style={{ paddingTop: "calc(12px + env(safe-area-inset-top))" }}>
         <button
           type="button"
-          aria-label="Share"
-          onClick={() => void share()}
-          className="absolute right-3 z-10 grid size-9 place-items-center rounded-full bg-black/55 text-white"
-          style={{ top: "calc(12px + env(safe-area-inset-top))" }}
+          aria-label="Back"
+          onClick={() => (window.history.length > 1 ? router.back() : router.replace("/"))}
+          className="grid size-10 place-items-center text-white"
         >
-          <Icon name="share" className="size-[18px]" />
+          <Icon name="back" className="size-[26px]" />
         </button>
-        <Gallery urls={images} onOpen={setLightbox} />
+        <span className="min-w-0 flex-1 truncate text-[18px] font-medium text-white/90">{TYPE_LABEL[type] ?? "Listing"}</span>
+        <button type="button" aria-label="Share" onClick={() => void share()} className="grid size-10 place-items-center text-white">
+          <Icon name="share" className="size-[24px]" />
+        </button>
+        <HeartButton post={l as unknown as Post} />
       </div>
 
-      <div className="-mt-5 rounded-t-image bg-bg px-5 pt-5 md:mt-0 md:rounded-none">
+      <Gallery urls={images} badge={imageBadge} onOpen={setLightbox} />
+
+      <div className="px-5 pt-5">
         {/* Header, adapted by listing type (same split as _ListingHeader) */}
         {type === "business" ? (
           <>
@@ -382,27 +470,89 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           </>
         ) : (
           <>
-            {d && <Price d={d} size={30} />}
-            {caption && <p className="mt-3.5 whitespace-pre-wrap text-base leading-[1.55] text-fg">{caption}</p>}
-            <div className="mt-3.5 flex flex-wrap gap-2">
-              {d?.condition && <Badge color="#a1a1aa">{COND[d.condition] ?? "Used"}</Badge>}
-              {curStatus !== "available" && <Badge color={curStatus === "sold" ? "#ff5c5c" : "#ffb340"}>{curStatus.toUpperCase()}</Badge>}
-              {type === "rental" && <Badge color="#a1a1aa">RENTAL</Badge>}
+            {title && <h1 className="text-[28px] font-extrabold leading-[1.15] tracking-tight text-fg">{title}</h1>}
+            {d && (
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <span className="text-[30px] font-extrabold leading-none tracking-tight text-brand">₦{d.formatted_price}</span>
+                {negotiable && (
+                  <span className="rounded-full bg-surface-interactive px-3 py-1 text-[14px] font-bold text-white/85">Negotiable</span>
+                )}
+              </div>
+            )}
+            <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[15px] text-muted">
+              {conditionLabel && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="tag" className="size-[18px]" />
+                  {conditionLabel}
+                </span>
+              )}
+              {place && (
+                <>
+                  {conditionLabel && <span aria-hidden>•</span>}
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <Icon name={d?.location_info?.campus ? "mapPointSchool" : "pointOnMap"} className="size-[18px] shrink-0" />
+                    <span className="truncate">{place}</span>
+                  </span>
+                </>
+              )}
+              {ago && (
+                <>
+                  <span aria-hidden>•</span>
+                  <span>{ago === "now" ? "just now" : `${ago} ago`}</span>
+                </>
+              )}
+              {views > 0 && (
+                <>
+                  <span aria-hidden>•</span>
+                  <span>{formatCount(views)} views</span>
+                </>
+              )}
             </div>
+            {curStatus !== "available" && (
+              <div className="mt-3">
+                <Badge color={curStatus === "sold" ? "#ff5c5c" : "#ffb340"}>{curStatus.toUpperCase()}</Badge>
+              </div>
+            )}
           </>
         )}
 
         <div className="my-5" />
 
-        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card bg-card p-4">
-          <ProfileHoverCard username={l.author?.username}><Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={46} /></ProfileHoverCard>
+        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-white/[0.07] bg-card p-4">
+          <ProfileHoverCard username={l.author?.username}><Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={50} /></ProfileHoverCard>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[15px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
+            <span className="block truncate text-[17px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
             <span className="block truncate text-secondary text-muted">@{l.author?.username} · {sellerLabel}</span>
           </span>
-          <span className="text-xs text-muted">{timeAgo(l.created_at)}</span>
-          <Icon name="chevronRight" className="size-4 text-muted" />
+          <span className="inline-flex items-center gap-1 text-[15px] font-bold text-brand">
+            {isOwn ? "My profile" : "View Profile"}
+            <Icon name="chevronRight" className="size-4" />
+          </span>
         </Link>
+
+        {(type === "product" || type === "rental") && desc && (
+          <div className="mt-6">
+            <h2 className="mb-1.5 text-[18px] font-bold text-fg">Description</h2>
+            <p className={`whitespace-pre-wrap text-[16px] leading-[1.5] text-white/70 ${descOpen ? "" : "line-clamp-3"}`}>
+              {desc}
+            </p>
+            {longDesc && (
+              <button type="button" onClick={() => setDescOpen((o) => !o)} className="mt-1 text-[15px] font-semibold text-brand underline underline-offset-2">
+                {descOpen ? "Show less" : "Read more"}
+              </button>
+            )}
+          </div>
+        )}
+
+        {(type === "product" || type === "rental") && tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {tags.map((t) => (
+              <span key={t} className="rounded-xl bg-surface-interactive px-3.5 py-2 text-[14px] font-medium text-white/85">
+                {t.replace(/^#/, "")}
+              </span>
+            ))}
+          </div>
+        )}
 
         {isOwn && (
           <>
@@ -434,7 +584,6 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
               )}
               {d.contact_phone && ["whatsapp", "call", "any"].includes(d.contact_preference ?? "") && <Row label="Phone" value={d.contact_phone} />}
               <Row label="Contact" value={(d.contact_preference ?? "chat").replaceAll("_", " ").toUpperCase()} />
-              {(d.views_count ?? 0) > 0 && <Row label="Views" value={String(d.views_count)} />}
               {d.inquiries_count != null && <Row label="Inquiries" value={`${d.inquiries_count} interested`} />}
               {(type === "product" || type === "rental") && <Row label="Quantity" value={`${d.quantity ?? 1} available`} />}
               {type === "rental" && d.fulfillment_type && <Row label="Arrangement" value={FULFIL[d.fulfillment_type] ?? d.fulfillment_type} />}
@@ -482,24 +631,43 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
         )}
       </div>
 
-      <MoreLikeThis key={n} excludeId={n} type={type} />
+      {authed ? <SimilarListings key={n} excludeId={n} type={type} /> : <MoreLikeThis key={n} excludeId={n} type={type} />}
 
       {!isOwn && (
         <div
-          className="sticky z-30 mt-6 bg-bg/95 px-5 py-3.5"
+          className="sticky z-30 mt-6 flex gap-3 border-t border-white/[0.06] bg-bg/95 px-5 py-3.5 backdrop-blur"
           style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
         >
+          {canOffer && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setOfferOpen(true)}
+              className="h-[54px] flex-1 rounded-full border-2 border-brand/70 text-[16px] font-extrabold text-brand transition active:scale-[0.98] disabled:opacity-60"
+            >
+              Make an offer
+            </button>
+          )}
           <button
             type="button"
             disabled={!enabled || busy}
             onClick={() => void sendInquiry()}
-            className={`h-[52px] w-full rounded-full text-[15px] font-extrabold transition disabled:opacity-60 ${
+            className={`h-[54px] flex-1 rounded-full text-[16px] font-extrabold transition active:scale-[0.98] disabled:opacity-60 ${
               !enabled ? "bg-card-elevated text-muted" : inquired ? "bg-card-elevated text-white" : "bg-brand text-brand-fg"
             }`}
           >
             {busy ? "…" : cta}
           </button>
         </div>
+      )}
+
+      {offerOpen && d && (
+        <OfferSheet
+          asking={d.formatted_price}
+          busy={busy}
+          onClose={() => setOfferOpen(false)}
+          onSend={(amount) => void sendInquiry(`Hi, I'd like to offer ₦${amount.toLocaleString("en-NG")} for this listing. Is that okay?`)}
+        />
       )}
 
       {toast && (

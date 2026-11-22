@@ -178,7 +178,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
 /* ───────────────────────────── Cards ───────────────────────────── */
 
 // Same store and endpoint as the feed's like (interactions + postsApi), so a like here is a like everywhere.
-function useLike(raw: Post) {
+export function useLike(raw: Post) {
   const { status } = useAuth();
   const ix = useIx(raw.id);
   const post = withIx(raw, ix);
@@ -205,7 +205,7 @@ function useLike(raw: Post) {
   return { post, liked: post.is_liked, toggle };
 }
 
-function MarketCard({ post: raw }: { post: Post }) {
+export function MarketCard({ post: raw }: { post: Post }) {
   const [failed, setFailed] = useState(false);
   const { post, liked, toggle } = useLike(raw);
   const d = post.listing;
@@ -337,8 +337,8 @@ function HomeSkeleton() {
       {[0, 1].map((r) => (
         <div key={r}>
           <Sk className="mb-3 h-6 w-48 rounded-full" />
-          <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
-            {Array.from({ length: 3 }, (_, i) => (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            {Array.from({ length: 4 }, (_, i) => (
               <Sk key={i} className="aspect-[4/5] w-full rounded-2xl" />
             ))}
           </div>
@@ -533,9 +533,9 @@ export function MarketView() {
           ) : (
             <section>
               <SectionHead icon="fire" title="Trending around Campus" onSeeAll={() => showAll("relevance")} />
-              <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                 {home.trending.map((p, i) => (
-                  <div key={p.id} className={`min-w-0 ${i >= 3 ? "hidden md:block" : ""}`}>
+                  <div key={p.id} className={`min-w-0 ${i >= 4 ? "hidden md:block" : ""}`}>
                     <MarketCard post={p} />
                   </div>
                 ))}
@@ -545,9 +545,9 @@ export function MarketView() {
           {home.fresh.length > 0 && (
             <section>
               <SectionHead icon="bag2" title="Fresh on Anaija" onSeeAll={() => showAll("newest")} />
-              <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
                 {home.fresh.map((p, i) => (
-                  <div key={p.id} className={`min-w-0 ${i >= 3 ? "hidden md:block" : ""}`}>
+                  <div key={p.id} className={`min-w-0 ${i >= 4 ? "hidden md:block" : ""}`}>
                     <MarketCard post={p} />
                   </div>
                 ))}
