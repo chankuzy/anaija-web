@@ -9,9 +9,11 @@ import { MoreSkeleton, Sk } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api/client";
 import { normPost } from "@/lib/api/feed";
 import type { Post } from "@/lib/api/feed-types";
+import { postsApi } from "@/lib/api/posts";
 import { useAuth } from "@/lib/auth/auth-context";
 import { openAuth } from "@/lib/auth/auth-modal";
 import { coverOf } from "@/lib/discover/tile";
+import { setIx, useIx, withIx } from "@/lib/feed/interactions";
 import { formatCount } from "@/lib/format";
 import { formatCompactLocation } from "@/lib/location/types";
 
@@ -32,11 +34,11 @@ const SORTS = [
 type SortId = (typeof SORTS)[number]["id"];
 
 const PREFIX: Record<string, string> = { service: "From", business: "From", wanted: "Budget" };
-const BADGE_COND: Record<string, string> = { new: "New", like_new: "Almost New" };
+const COND: Record<string, string> = { new: "New", like_new: "Like new", good: "Good", fair: "Fair", poor: "Poor" };
 
 // Brand palette: yellow for primary actions and highlights, white for selection and secondary actions.
 const BTN_YELLOW = "bg-brand text-brand-fg hover:bg-brand-hover";
-const BTN_WHITE = "bg-fg text-bg";
+const BTN_WHITE = "bg-fg text-bg hover:bg-white";
 const TEXT_YELLOW = "text-brand";
 
 interface Raw {
@@ -146,7 +148,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
               type="button"
               tabIndex={active ? 0 : -1}
               onClick={() => onAction(s.action)}
-              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${BTN_YELLOW}`}
+              className={`mt-3 inline-flex h-9 w-fit items-center gap-1.5 rounded-full px-4 text-[13px] font-bold transition-transform active:scale-95 md:h-11 md:px-6 md:text-[14px] ${BTN_WHITE}`}
             >
               {s.cta}
               <span aria-hidden>→</span>
@@ -175,71 +177,105 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
 
 /* ───────────────────────────── Cards ───────────────────────────── */
 
-function MarketCard({ post }: { post: Post }) {
+// Same store and endpoint as the feed's like (interactions + postsApi), so a like here is a like everywhere.
+function useLike(raw: Post) {
+  const { status } = useAuth();
+  const ix = useIx(raw.id);
+  const post = withIx(raw, ix);
+  const busy = useRef(false);
+
+  async function toggle() {
+    if (status !== "authed") return openAuth({ reason: "Sign in to like listings." });
+    if (busy.current) return;
+    busy.current = true;
+    const target = !post.is_liked;
+    const prev = { is_liked: post.is_liked, likes_count: post.likes_count };
+    setIx(post.id, { is_liked: target, likes_count: Math.max(0, post.likes_count + (target ? 1 : -1)) });
+    try {
+      let r = await postsApi.toggleLike(post.id);
+      if (r.liked !== target) r = await postsApi.toggleLike(post.id); // server toggles: flip back once if our view was stale
+      setIx(post.id, { is_liked: r.liked, ...(typeof r.likes_count === "number" ? { likes_count: r.likes_count } : {}) });
+    } catch (e) {
+      setIx(post.id, prev);
+      if (e instanceof ApiError && e.status === 401) openAuth({ reason: "Your session ended. Sign in again to continue." });
+    } finally {
+      busy.current = false;
+    }
+  }
+  return { post, liked: post.is_liked, toggle };
+}
+
+function MarketCard({ post: raw }: { post: Post }) {
   const [failed, setFailed] = useState(false);
+  const { post, liked, toggle } = useLike(raw);
   const d = post.listing;
   const type = post.listing_type ?? "product";
   const cover = coverOf(post);
   const title = ((type === "business" ? d?.business_name : null) || post.caption || "").trim();
   const where = d?.location_info ? formatCompactLocation(d.location_info) : d?.pickup_info || post.location || "";
   const prefix = PREFIX[type];
-  const views = (d as unknown as { views_count?: number } | null)?.views_count;
-  const badge =
-    type === "rental"
-      ? "For Rent"
-      : d?.price_type === "negotiable"
-        ? "Negotiable"
-        : d?.condition
-          ? (BADGE_COND[d.condition] ?? null)
-          : null;
+  const views = post.views_count ?? (d as unknown as { views_count?: number } | null)?.views_count ?? 0;
+  // Listing condition (New, Like new, ...). Rentals and services carry no condition, so rentals say so instead.
+  const badge = d?.condition ? (COND[d.condition] ?? null) : type === "rental" ? "For Rent" : null;
 
   return (
-    <Link
-      href={`/l/${post.id}`}
-      className="group block min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15"
-    >
-      <div className="relative aspect-[5/4] overflow-hidden bg-card-elevated" style={{ backgroundColor: cover.color ?? undefined }}>
-        {cover.url && !failed ? (
-          <img
-            src={cover.url}
-            alt=""
-            loading="lazy"
-            decoding="async"
-            onError={() => setFailed(true)}
-            className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
-        ) : (
-          <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
-            <Icon name="bag" filled className="size-8" />
-          </span>
-        )}
-        {badge && (
-          <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
-            {badge}
-          </span>
-        )}
-      </div>
-      <div className="p-2.5">
-        {title && <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-fg">{title}</p>}
-        {d && (
-          <p className="mt-1 flex flex-wrap items-baseline gap-x-1 text-[16px] font-extrabold leading-tight tracking-tight text-brand">
-            {prefix && <span className="text-[11px] font-medium text-muted">{prefix}</span>}
-            <span>₦{d.formatted_price}</span>
-          </p>
-        )}
-        {(where || (views ?? 0) > 0) && (
-          <div className="mt-2 flex items-center justify-between gap-1.5">
-            <span className="min-w-0 truncate text-[11px] text-muted">{where}</span>
-            {(views ?? 0) > 0 && (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 py-0.5 text-[10px] font-semibold text-white/80">
-                <Icon name="eye" className="size-3" />
-                {formatCount(views ?? 0).toLowerCase()}
+    <div className="group relative min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-colors hover:border-white/15">
+      <Link href={`/l/${post.id}`} className="block min-w-0">
+        <div className="relative aspect-[5/4] overflow-hidden bg-card-elevated" style={{ backgroundColor: cover.color ?? undefined }}>
+          {cover.url && !failed ? (
+            <img
+              src={cover.url}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              onError={() => setFailed(true)}
+              className="absolute inset-0 size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+            />
+          ) : (
+            <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
+              <Icon name="bag" filled className="size-8" />
+            </span>
+          )}
+          {badge && (
+            <span className="absolute left-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur">
+              {badge}
+            </span>
+          )}
+        </div>
+        <div className="p-2.5">
+          {title && <p className="line-clamp-1 text-[13px] font-semibold leading-snug text-fg">{title}</p>}
+          {d && (
+            <p className="mt-1 flex flex-wrap items-baseline gap-x-1 text-[16px] font-extrabold leading-tight tracking-tight text-fg">
+              {prefix && <span className="text-[11px] font-medium text-muted">{prefix}</span>}
+              <span>
+                <span className="mr-px text-brand">₦</span>
+                {d.formatted_price}
               </span>
-            )}
-          </div>
-        )}
-      </div>
-    </Link>
+            </p>
+          )}
+          {(where || views > 0) && (
+            <div className="mt-2 flex items-center justify-between gap-1.5">
+              <span className="min-w-0 truncate text-[11px] text-muted">{where}</span>
+              {views > 0 && (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 py-0.5 text-[10px] font-semibold text-white/80">
+                  <Icon name="eye" className="size-3" />
+                  {formatCount(views).toLowerCase()}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </Link>
+      <button
+        type="button"
+        aria-label={liked ? "Remove like" : "Like"}
+        aria-pressed={liked}
+        onClick={toggle}
+        className="absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/55 backdrop-blur transition-transform active:scale-90"
+      >
+        <Icon name="heart" filled={liked} className={`size-[18px] ${liked ? "text-like" : "text-white"}`} />
+      </button>
+    </div>
   );
 }
 
@@ -496,7 +532,7 @@ export function MarketView() {
             <Message title="No listings on your campus yet" body="Be the first to sell something." action={{ label: "Sell something", onClick: sell }} />
           ) : (
             <section>
-              <SectionHead icon="stars" title="Trending around Campus" onSeeAll={() => showAll("relevance")} />
+              <SectionHead icon="fire" title="Trending around Campus" onSeeAll={() => showAll("relevance")} />
               <div className="grid grid-cols-3 gap-2.5 md:grid-cols-6 md:gap-3">
                 {home.trending.map((p, i) => (
                   <div key={p.id} className={`min-w-0 ${i >= 3 ? "hidden md:block" : ""}`}>
