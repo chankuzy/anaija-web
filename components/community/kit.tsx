@@ -22,7 +22,7 @@ export const CATEGORIES: [string, string][] = [
   ["interest", "Interest"], ["creator", "Creator"], ["professional", "Professional"], ["seller", "Seller"], ["other", "Other"],
 ];
 export const categoryLabel = (c: string) => CATEGORIES.find(([id]) => id === c)?.[1] ?? "Community";
-export const ROLE_LABEL: Record<Role, string> = { owner: "Owner", admin: "Admin", moderator: "Moderator", member: "Member" };
+export const ROLE_LABEL: Record<Role, string> = { owner: "Community Leader", admin: "Admin", moderator: "Moderator", member: "Member" };
 export const ROLE_RANK: Record<string, number> = { member: 1, moderator: 2, admin: 3, owner: 4 };
 export const DESIG_LABEL: Record<string, string> = {
   class_rep: "Class Representative", course_rep: "Course Representative",

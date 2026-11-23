@@ -7,6 +7,7 @@ import { Group, Toggle } from "./cm-kit";
 import { communitiesApi, type CommunityDetail } from "@/lib/api/communities";
 import { confirmDialog } from "@/lib/ui/dialog";
 import { Chip, Label, MenuRow, Sheet, messageOf, shareLink, siteUrl, useFetch } from "./kit";
+import { INSIGHTS_ICON } from "./insights/ui";
 import { ManageSheet } from "./manage-sheet";
 import { MembersSheet } from "./members-sheet";
 import { SessionCreate } from "./session-create";
@@ -62,6 +63,15 @@ export function CommunityMenu({ c, reload, onClose, onEditImage, onToast }: {
         {c.is_member && <MenuRow icon="star" label="Start a Moment" hint="Hot Seat, Verdict, Confession Drop and more" onClick={() => setView("moment")} />}
         {/* Course Desks have no Sessions tab, so there is nowhere to see a session started here. */}
         {c.can.session && !isDesk && <MenuRow icon="eyeClosed" label="Anonymous session" hint="A temporary feed where posts have no names" onClick={() => setView("session")} />}
+        {/* Course Desks have their own Course insights; every other community gets Community Insights. */}
+        {c.can.manage && !isDesk && (
+          <MenuRow
+            icon={INSIGHTS_ICON}
+            label="Community Insights"
+            hint="Growth, engagement, retention and rewards"
+            onClick={() => { router.push(`/c/${c.slug}/insights`); onClose(); }}
+          />
+        )}
         {c.can.moderate && <MenuRow icon="settings" label="Manage" hint="Requests, invites, reports, settings" onClick={() => setView("manage")} />}
         {c.can.manage && (
           <>

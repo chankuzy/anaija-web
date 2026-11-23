@@ -15,7 +15,7 @@ import { Empty, Label, useFetch } from "./kit";
 
 const ACCESS_TEXT: Record<DeskAccess, string> = {
   open: "Anyone with the link can join instantly.",
-  restricted: "Joining needs approval from the owner or an assistant.",
+  restricted: "Joining needs approval from the Community Leader or an assistant.",
   institutional: "Only students of this campus can join.",
 };
 const SEMESTER: Record<Semester, string> = { first: "First semester", second: "Second semester", summer: "Summer" };
@@ -100,7 +100,7 @@ export function DeskOverview({ c, onTab }: { c: CommunityDetail; onTab: (id: str
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-[15px] font-bold text-fg">{l.name}</p>
                   <p className="truncate text-supporting text-muted">
-                    @{l.username} · {l.lecturer ? "Lecturer" : l.assistant ? "Course assistant" : l.role === "owner" ? "Owner" : "Moderator"}
+                    @{l.username} · {l.lecturer ? "Lecturer" : l.assistant ? "Course assistant" : l.role === "owner" ? "Community Leader" : "Moderator"}
                   </p>
                 </div>
                 {l.lecturer && <Icon name="verifiedCheck" filled className="size-5 text-brand-ink" />}

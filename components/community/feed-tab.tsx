@@ -11,6 +11,7 @@ import { Sk } from "@/components/ui/skeleton";
 import { communitiesApi, type CPost, type CommunityDetail } from "@/lib/api/communities";
 import { mediaUrl } from "@/lib/api/feed";
 import { useAuth } from "@/lib/auth/auth-context";
+import { trackCommunityOpen, trackPostView } from "@/lib/community/insights-track";
 import { KIND_META, type CreateKind } from "@/lib/create/kinds";
 import { uploadManager } from "@/lib/create/upload-manager";
 import { usePaged } from "@/lib/paged/use-paged";
@@ -75,6 +76,14 @@ function FeedList({ c, filter, canShare, onShare }: { c: CommunityDetail; filter
     for (const [k, v] of ratios.current) if (v > top) { top = v; best = k; }
     setActiveId((prev) => (prev === best ? prev : best));
   }, []);
+
+  // Reach for Community Insights: a member counts as having viewed a post once it has been the most visible one for 1.5s.
+  const track = c.is_member && !isDesk;
+  useEffect(() => {
+    if (!track || activeId === null) return;
+    const t = window.setTimeout(() => trackPostView(c.id, activeId), 1500);
+    return () => window.clearTimeout(t);
+  }, [track, activeId, c.id]);
 
   // Same key and loader as the desk Overview, so both tabs share one cached request.
   const ov = useFetch(
@@ -211,6 +220,11 @@ export function FeedTab({ c, onOpenSessions }: { c: CommunityDetail; onOpenSessi
   const isDesk = c.kind === "course_desk";
   const raw = sp.get("filter");
   const filter: Filter = isDesk && (raw === "announcements" || raw === "discussions") ? raw : "all";
+
+  // Community Insights: a member opening the community counts once per visit (desks track their own opens).
+  useEffect(() => {
+    if (c.is_member && !isDesk) trackCommunityOpen(c.id);
+  }, [c.id, c.is_member, isDesk]);
 
   // Course Desks have no Sessions tab, so they never fetch sessions.
   const sessions = useFetch(c.can.read && !isDesk ? `sessions:${c.id}` : null, () => communitiesApi.sessions(c.slug));
