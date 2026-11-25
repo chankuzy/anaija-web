@@ -205,6 +205,16 @@ export function DiscoverView() {
         <p className="px-3 pb-2 pt-2 text-center text-xs font-semibold text-muted">{view.notice}</p>
       )}
 
+      {authed && (
+        <Link href="/discoveries" className="mx-3 mb-3 flex items-center justify-between rounded-2xl bg-surface-subtle px-4 py-3 transition-colors hover:bg-surface-interactive md:mx-0">
+          <span className="min-w-0">
+            <span className="block text-[15px] font-bold text-fg">Discoveries</span>
+            <span className="block truncate text-secondary text-muted">Opportunities, people and communities matched to what you declared</span>
+          </span>
+          <span aria-hidden="true" className="ml-3 text-muted">&rsaquo;</span>
+        </Link>
+      )}
+
       {body}
 
       {viewer && (
