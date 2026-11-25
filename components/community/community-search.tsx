@@ -11,7 +11,7 @@ import { communitiesApi, type Community } from "@/lib/api/communities";
 import { homeApi } from "@/lib/api/community-home";
 import { useAuth } from "@/lib/auth/auth-context";
 import { addSearch, clearSearches, removeSearch, useSearches } from "@/lib/community/search-recents";
-import { CATEGORIES, Chip, Cm, Empty, categoryLabel, useFetch } from "./kit";
+import { CATEGORIES, Chip, Cm, Empty, OfficialMark, categoryLabel, useFetch } from "./kit";
 
 type Extra = { key: string; items: Community[]; more: boolean; page: number };
 
@@ -36,7 +36,7 @@ function Row({ c, q, onOpen }: { c: Community; q: string; onOpen: () => void }) 
     <Link href={`/c/${c.slug}`} onClick={onOpen} className="flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-surface-interactive">
       <Avatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-bold text-fg">{mark(c.name, q)}</span>
+        <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{mark(c.name, q)}</span>{c.academic_origin && <OfficialMark />}</span>
         <span className="mt-0.5 block truncate text-supporting text-muted">{metaOf(c)}</span>
       </span>
       <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{state}</span>

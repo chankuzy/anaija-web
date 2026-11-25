@@ -16,6 +16,8 @@ export interface Community {
   status: string; is_member: boolean; my_role: Role | null; request_status: "pending" | null;
   /** Absent on payloads cached before Course Desks shipped: treat as "community". */
   kind?: CommunityKind;
+  /** Set on Anaija's official faculty/department spaces. Absent on older cached payloads: treat as not official. */
+  academic_origin?: "faculty" | "department" | null;
   /** Course Desks only. */
   course_title?: string | null; verified?: boolean; institution_only?: boolean;
 }

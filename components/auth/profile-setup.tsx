@@ -11,17 +11,18 @@ import { readNext } from "@/lib/auth/next";
 import { Button } from "@/components/ui/button";
 import { inputClass } from "@/components/ui/input";
 import { CampusStep } from "@/components/onboarding/campus-step";
-import { DiscoverStep } from "@/components/onboarding/discover-step";
 import { Frame, type Stage } from "@/components/onboarding/frame";
+import { PersonalizeFlow } from "@/components/onboarding/personalize-flow";
 import { PhotoStep } from "@/components/onboarding/photo-step";
 
 const USERNAME_RE = /^[a-zA-Z0-9_]+$/;
 const JOIN_RE = /^\/join\/([A-Za-z0-9]+)/;
 type Avail = "idle" | "checking" | "ok" | "taken" | "invalid" | "unknown";
 
-// First-session flow: profile -> photo -> campus -> discovery. Every step after the first is skippable and every step
-// after the first has a Back. An invite link (?next=/join/<token>) is carried through and returned to, so a
-// lecturer's link never dumps anyone on the feed.
+// First-session flow: profile -> photo -> campus -> personalization (interests, skills, goals, offers, reveal).
+// Every step after the first is skippable and has a Back. An invite link (?next=/join/<token>) is carried through and
+// returned to straight after campus, so a lecturer's link never dumps anyone on the feed. Existing users reach the
+// personalization steps from /setup?personalize=1 (the home prompt); they are never sent there automatically.
 export function ProfileSetup() {
   const router = useRouter();
   const { status, user, refresh } = useAuth();
@@ -30,6 +31,7 @@ export function ProfileSetup() {
 
   const [stage, setStage] = useState<Stage>("profile");
   const [began, setBegan] = useState(false); // once the profile is saved, needsProfileSetup flips: don't redirect away
+  const [pz, setPz] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("personalize") === "1");
   const [invite, setInvite] = useState<InvitePeek | null>(null);
   const source = useRef<OnboardingSource>(token ? "invite_community" : "direct");
   const started = useRef(false);
@@ -46,8 +48,8 @@ export function ProfileSetup() {
 
   useEffect(() => {
     if (status === "guest") router.replace(`/login?next=${encodeURIComponent(next)}`);
-    else if (status === "authed" && !began && !needsProfileSetup(user)) router.replace(next);
-  }, [status, user, began, next, router]);
+    else if (status === "authed" && !pz && !began && !needsProfileSetup(user)) router.replace(next);
+  }, [status, user, began, pz, next, router]);
 
   // "start" is the first honest signal we can record: someone with an account who reached setup.
   useEffect(() => {
@@ -111,9 +113,9 @@ export function ProfileSetup() {
     router.replace(dest ?? "/");
   }, [ev, router]);
 
-  const onShown = useCallback(() => ev({ kind: "discovery_shown", step: "discovery" }), [ev]);
-
-  if (status !== "authed" || (!began && !needsProfileSetup(user))) return <div className="min-h-dvh" />;
+  if (status !== "authed") return <div className="min-h-dvh" />;
+  if (pz) return <PersonalizeFlow standalone={!began} onBack={began ? () => { setPz(false); setStage("campus"); } : undefined} />;
+  if (!began && !needsProfileSetup(user)) return <div className="min-h-dvh" />;
 
   const hint: Record<Avail, { text: string; cls: string }> = {
     idle: { text: "Letters, numbers and underscores", cls: "text-muted" },
@@ -151,26 +153,12 @@ export function ProfileSetup() {
           onSaved={() => {
             ev({ kind: "step_done", step: "campus" });
             if (token) finish(next);
-            else setStage("discover");
+            else setPz(true);
           }}
           onSkip={() => {
             ev({ kind: "step_skip", step: "campus" });
-            finish(token ? next : null);
-          }}
-        />
-      </Frame>
-    );
-  }
-
-  if (stage === "discover") {
-    return (
-      <Frame stage="discover" title="Find your place." sub="Anaija's own spaces, communities worth joining, and people to follow." onBack={() => setStage("campus")}>
-        <DiscoverStep
-          onShown={onShown}
-          onFirstAction={(action) => ev({ kind: "first_action", step: "discovery", action })}
-          onFinish={(dest) => {
-            ev({ kind: "step_done", step: "discovery" });
-            finish(dest);
+            if (token) finish(next);
+            else setPz(true);
           }}
         />
       </Frame>

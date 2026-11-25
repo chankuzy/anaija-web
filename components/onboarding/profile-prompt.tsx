@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { personalizationApi } from "@/lib/api/personalization";
 import { useAuth } from "@/lib/auth/auth-context";
 
 const DAY = 86_400_000;
@@ -29,13 +30,21 @@ function snooze(k: string) {
     localStorage.setItem(KEY(k), JSON.stringify({ n: rec(k).n + 1, at: Date.now() }));
   } catch {}
 }
+function visitCount(): number {
+  try {
+    return Number(localStorage.getItem("anaija:visits") || 0);
+  } catch {
+    return 0;
+  }
+}
 
 type Prompt = { k: string; title: string; body: string; cta: string; href: string };
 
 // Whichever single thing is missing and most useful. Never more than one card, never a prerequisite for anything.
-function pick(u: { institution_id: number | null; avatar: string | null; bio: string | null }): Prompt | null {
+function pick(u: { institution_id: number | null; avatar: string | null; bio: string | null }, personalize: boolean): Prompt | null {
   const list: Prompt[] = [];
   if (!u.institution_id) list.push({ k: "campus", title: "Find your classmates", body: "Add your campus and we'll show you the communities and Course Desks for your department and level.", cta: "Add my campus", href: "/settings/campus" });
+  if (personalize) list.push({ k: "personalize", title: "Make Anaija yours", body: "Tell us your interests, skills and goals and we'll match you with people and opportunities. You choose what's saved.", cta: "Personalize", href: "/setup?personalize=1" });
   if (!u.avatar) list.push({ k: "photo", title: "Give your profile a face", body: "Let people recognize you around Anaija.", cta: "Add a photo", href: "/settings/edit" });
   if (!u.bio) list.push({ k: "bio", title: "Say a little about yourself", body: "A short bio helps people know who you are.", cta: "Add a bio", href: "/settings/edit" });
   return list.find((p) => due(p.k)) ?? null;
@@ -44,13 +53,29 @@ function pick(u: { institution_id: number | null; avatar: string | null; bio: st
 export function ProfilePrompt() {
   const { status, user } = useAuth();
   const [gone, setGone] = useState(false);
-  if (gone || status !== "authed" || !user || !user.profile_completed) return null;
-  let visits = 0;
-  try {
-    visits = Number(localStorage.getItem("anaija:visits") || 0);
-  } catch {}
-  if (visits < 2) return null;
-  const p = pick(user);
+  const [personalize, setPersonalize] = useState(false);
+  const ready = status === "authed" && !!user?.profile_completed;
+
+  // Offered only when personalization is on and the person hasn't finished it, or finished with nothing declared.
+  useEffect(() => {
+    if (!ready || visitCount() < 2 || !due("personalize")) return;
+    let alive = true;
+    personalizationApi
+      .get()
+      .then((s) => {
+        const p = s.profile;
+        const empty = p.interests.length + p.seeking.length + p.skills.length + p.offers.length === 0;
+        if (alive) setPersonalize(p.personalization_enabled && (!p.completed || empty));
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [ready]);
+
+  if (gone || !ready || !user) return null;
+  if (visitCount() < 2) return null;
+  const p = pick(user, personalize);
   if (!p) return null;
 
   return (

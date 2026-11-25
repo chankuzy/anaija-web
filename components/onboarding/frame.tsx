@@ -2,13 +2,15 @@
 
 import type { ReactNode } from "react";
 
-export type Stage = "profile" | "photo" | "campus" | "discover";
-const ORDER: Stage[] = ["profile", "photo", "campus", "discover"];
+export type Stage = "profile" | "photo" | "campus" | "interests" | "skills" | "goals" | "offers" | "reveal";
+export const ORDER: Stage[] = ["profile", "photo", "campus", "interests", "skills", "goals", "offers", "reveal"];
+/** Existing users reaching personalization from the home prompt see only their own five steps. */
+export const PZ_ORDER: Stage[] = ["interests", "skills", "goals", "offers", "reveal"];
 
 // One calm frame for every step: a back chevron, yellow progress, a quiet step kicker, a title, then the content.
 // The surface is the app's normal dark theme. Yellow stays on small elements so long sessions never glare.
-export function Frame({ stage, title, sub, children, onBack }: { stage: Stage; title: ReactNode; sub?: string; children: ReactNode; onBack?: () => void }) {
-  const i = ORDER.indexOf(stage);
+export function Frame({ stage, steps = ORDER, title, sub, children, onBack }: { stage: Stage; steps?: Stage[]; title: ReactNode; sub?: string; children: ReactNode; onBack?: () => void }) {
+  const i = Math.max(0, steps.indexOf(stage));
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-6 md:max-w-[480px]" style={{ paddingTop: "max(env(safe-area-inset-top), 20px)", paddingBottom: "max(env(safe-area-inset-bottom), 24px)" }}>
       <div className="flex h-10 items-center gap-2">
@@ -19,14 +21,14 @@ export function Frame({ stage, title, sub, children, onBack }: { stage: Stage; t
             </svg>
           </button>
         )}
-        <div role="progressbar" aria-label={`Step ${i + 1} of ${ORDER.length}`} aria-valuemin={1} aria-valuemax={ORDER.length} aria-valuenow={i + 1} className="flex flex-1 gap-1.5">
-          {ORDER.map((s, k) => (
+        <div role="progressbar" aria-label={`Step ${i + 1} of ${steps.length}`} aria-valuemin={1} aria-valuemax={steps.length} aria-valuenow={i + 1} className="flex flex-1 gap-1.5">
+          {steps.map((s, k) => (
             <span key={s} className={`h-1 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none ${k <= i ? "bg-brand" : "bg-surface-interactive"}`} />
           ))}
         </div>
       </div>
       <div key={stage} className="sv-rise flex flex-1 flex-col pt-7">
-        <p className="text-micro font-semibold uppercase tracking-[0.1em] text-muted">Step {i + 1} of {ORDER.length}</p>
+        <p className="text-micro font-semibold uppercase tracking-[0.1em] text-muted">Step {i + 1} of {steps.length}</p>
         <h1 className="mt-3 text-[30px] font-extrabold leading-[1.1] tracking-tight text-fg">{title}</h1>
         {sub && <p className="mt-2.5 text-[15px] leading-[1.45] text-muted">{sub}</p>}
         <div className="mt-8 flex flex-1 flex-col">{children}</div>

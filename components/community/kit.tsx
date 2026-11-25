@@ -113,6 +113,16 @@ export function Chip({ active, onClick, children, disabled }: { active?: boolean
   );
 }
 
+// Marks Anaija's official faculty and department spaces. Shown only where the server sent academic_origin.
+export function OfficialMark() {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-brand/15 px-2 py-0.5 text-micro font-extrabold uppercase tracking-[0.06em] text-brand-ink">
+      <Icon name="verifiedCheck" filled className="size-3" />
+      Official
+    </span>
+  );
+}
+
 export function Label({ children, hint }: { children: ReactNode; hint?: string }) {
   return (
     <p className="px-1 pb-2 pt-5 text-micro font-semibold uppercase tracking-[0.08em] text-muted">

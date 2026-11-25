@@ -16,7 +16,7 @@ import { useRecent } from "@/lib/community/recent";
 import { timeAgo } from "@/lib/format";
 import { useNotificationsPanel } from "@/lib/notifications/panel-context";
 import { usePullRefresh } from "@/lib/ui/use-pull-refresh";
-import { CATEGORIES, Chip, Cm, Empty, SectionHead, Sheet, StatusChip, categoryLabel, useFetch } from "./kit";
+import { CATEGORIES, Chip, Cm, Empty, OfficialMark, SectionHead, Sheet, StatusChip, categoryLabel, useFetch } from "./kit";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 const metaOf = (c: Community) => [categoryLabel(c.category), c.course_code, plural(c.members_count, "member", "members")].filter(Boolean).join(" · ");
@@ -58,7 +58,7 @@ function CommunityRow({ c, reason }: { c: Community; reason?: string | null }) {
     <Link href={`/c/${c.slug}`} className="flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-surface-interactive">
       <Avatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[15px] font-bold text-fg">{c.name}</span>
+        <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{c.name}</span>{c.academic_origin && <OfficialMark />}</span>
         <span className="mt-0.5 block truncate text-supporting text-muted">{metaOf(c)}</span>
         {reason && <span className="mt-0.5 block truncate text-supporting font-semibold text-brand-ink">{reason}</span>}
       </span>
@@ -93,7 +93,7 @@ function MineTile({ c }: { c: MineRow }) {
         )}
       </span>
       <span className="mt-2.5 line-clamp-2 block min-h-[32px] text-[13.5px] font-bold leading-[1.2] text-fg">{c.name}</span>
-      <span className="mt-1 block truncate text-micro text-muted">{c.course_code ?? categoryLabel(c.category)} · {c.members_count}</span>
+      <span className={`mt-1 block truncate text-micro ${c.academic_origin ? "font-extrabold text-brand-ink" : "text-muted"}`}>{c.academic_origin ? "Official" : (c.course_code ?? categoryLabel(c.category))} · {c.members_count}</span>
     </Link>
   );
 }
@@ -105,7 +105,7 @@ function RecTile({ r }: { r: Rec }) {
     <Link href={`/c/${c.slug}`} className="flex w-[168px] shrink-0 flex-col rounded-2xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive">
       <Avatar url={c.avatar} name={c.name} size={48} />
       <span className="mt-3 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] text-fg">{c.name}</span>
-      <span className="mt-1 block truncate text-micro text-muted">{c.course_code ?? categoryLabel(c.category)}</span>
+      <span className="mt-1 flex items-center truncate text-micro text-muted">{c.academic_origin ? <OfficialMark /> : (c.course_code ?? categoryLabel(c.category))}</span>
       <span className="mt-2 line-clamp-2 block min-h-[28px] text-supporting font-semibold leading-[1.3] text-brand-ink">{r.reason}</span>
       <span className="mt-2 block text-micro font-semibold uppercase tracking-[0.08em] text-muted">{c.join_policy === "open" ? "Open" : "Approval"}</span>
     </Link>
