@@ -7,12 +7,13 @@ import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
 import { Picker } from "@/components/ui/picker";
 import { Sk } from "@/components/ui/skeleton";
-import { onboardingApi, type InvitePeek, type OnboardingOptions } from "@/lib/api/onboarding";
+import { onboardingApi, type AcademicLevel, type InvitePeek, type OnboardingOptions } from "@/lib/api/onboarding";
 import { settingsApi, type Institution } from "@/lib/api/settings";
 import { useAuth } from "@/lib/auth/auth-context";
 import { GHOST } from "./frame";
 
-const LEVELS = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"];
+// Used only where an institution has no academic reference data yet.
+const FALLBACK_LEVELS: AcademicLevel[] = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"].map((l) => ({ code: l, label: l, tier: "" }));
 const ROLES = [
   { value: "student", label: "Student" },
   { value: "staff", label: "Staff" },
@@ -63,9 +64,10 @@ function LevelChip({ on, onClick, children }: { on: boolean; onClick: () => void
   );
 }
 
-// Institution comes from the institutions table. Where an institution has a curated structure, faculty and department
-// are closed lists chosen in our own picker (department unlocks after faculty). Where it doesn't, they stay typed fields
-// suggested from what exists, so an uncurated campus is never a dead end.
+// Institution comes from the institutions table. Where an institution has academic reference data, faculty, department and
+// (when a department has more than one) programme are closed lists chosen by id, each unlocking after the one above and
+// resetting everything below it when changed. Where it doesn't, faculty and department stay typed fields suggested from what
+// exists, so an uncurated campus is never a dead end.
 export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | null; onSaved: () => void; onSkip: () => void }) {
   const { refresh } = useAuth();
   const [q, setQ] = useState("");
@@ -74,6 +76,11 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
   const [hint, setHint] = useState<Institution | null>(null);
   const [inst, setInst] = useState<Inst | null>(null);
   const [opts, setOpts] = useState<OnboardingOptions | null>(null);
+  // curated selections (ids as strings, the Picker's value type)
+  const [facultyId, setFacultyId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [programmeId, setProgrammeId] = useState("");
+  // uncurated free text
   const [faculty, setFaculty] = useState("");
   const [department, setDepartment] = useState("");
   const [level, setLevel] = useState<string | null>(null);
@@ -119,42 +126,77 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
   function choose(i: Inst) {
     setInst({ id: i.id, name: i.name, short_name: i.short_name });
     setOpts(null);
+    setFacultyId("");
+    setDepartmentId("");
+    setProgrammeId("");
     setFaculty("");
     setDepartment("");
-    onboardingApi.options(i.id).then(setOpts).catch(() => setOpts({ curated: false, faculties: [], departments: [] }));
+    setLevel(null);
+    onboardingApi
+      .options(i.id)
+      .then(setOpts)
+      .catch(() => setOpts({ curated: false, faculties: [], departments: [], tree: [], levels: [] }));
   }
 
-  function onFaculty(v: string) {
+  const curated = opts?.curated === true;
+  const tree = opts?.tree ?? [];
+  const fac = tree.find((f) => String(f.id) === facultyId) ?? null;
+  const dep = fac?.departments.find((d) => String(d.id) === departmentId) ?? null;
+  const programmes = dep?.programmes ?? [];
+  const needsProgramme = programmes.length > 1;
+  const programme = programmes.find((p) => String(p.id) === programmeId) ?? null;
+
+  // Changing a level of the hierarchy always resets what hangs below it.
+  function onFacultyPick(v: string) {
+    if (v === facultyId) return;
+    setFacultyId(v);
+    setDepartmentId("");
+    setProgrammeId("");
+  }
+  function onDepartmentPick(v: string) {
+    if (v === departmentId) return;
+    setDepartmentId(v);
+    const d = fac?.departments.find((x) => String(x.id) === v);
+    setProgrammeId(d && d.programmes.length === 1 ? String(d.programmes[0].id) : "");
+  }
+
+  // Uncurated only: typing a known department fills in its faculty.
+  function onFacultyTyped(v: string) {
     setFaculty(v);
     if (department && !opts?.departments.some((d) => d.name === department && d.faculty === v)) setDepartment("");
   }
-
   function onDepartmentTyped(v: string) {
     setDepartment(v);
     const known = opts?.departments.find((d) => d.name.toLowerCase() === v.trim().toLowerCase());
     if (known?.faculty && !faculty.trim()) setFaculty(known.faculty);
   }
 
-  const curated = opts?.curated === true;
-  const facultyOptions = useMemo(() => (opts?.faculties ?? []).map((f) => ({ value: f, label: f })), [opts]);
-  const departmentOptions = useMemo(
-    () => (opts?.departments ?? []).filter((d) => d.faculty === faculty).map((d) => ({ value: d.name, label: d.name })),
-    [opts, faculty],
-  );
-  const ready = !curated || (!!faculty && !!department && (role !== "student" || !!level));
+  const facultyOptions = useMemo(() => tree.map((f) => ({ value: String(f.id), label: f.name })), [tree]);
+  const departmentOptions = useMemo(() => (fac?.departments ?? []).map((d) => ({ value: String(d.id), label: d.name })), [fac]);
+  const programmeOptions = useMemo(() => programmes.map((p) => ({ value: String(p.id), label: p.name, hint: p.award })), [programmes]);
+
+  // Levels follow the programme's tier (degree until one is known); postgraduate is always offered.
+  const levelOptions = useMemo(() => {
+    const all = opts?.levels ?? [];
+    if (!curated || all.length === 0) return FALLBACK_LEVELS;
+    const tier = programme?.tier ?? "degree";
+    return all.filter((l) => l.tier === tier || l.tier === "postgraduate");
+  }, [opts, curated, programme]);
+  const lvl = levelOptions.some((l) => l.code === level) ? level : null;
+
+  const ready = !curated || (!!dep && (!needsProgramme || !!programme) && (role !== "student" || !!lvl));
 
   async function save() {
     if (!inst || busy || !ready) return;
     setBusy(true);
     setErr(null);
     try {
-      await onboardingApi.saveCampus({
-        institution_id: inst.id,
-        faculty: faculty.trim() || null,
-        department: department.trim() || null,
-        level: role === "student" ? level : null,
-        campus_role: role,
-      });
+      const common = { institution_id: inst.id, level: role === "student" ? lvl : null, campus_role: role };
+      await onboardingApi.saveCampus(
+        curated && dep
+          ? { ...common, academic_unit_id: dep.id, academic_programme_id: programme?.id ?? null }
+          : { ...common, faculty: faculty.trim() || null, department: department.trim() || null },
+      );
       await refresh();
       onSaved();
     } catch (e) {
@@ -220,19 +262,19 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
 
       <p className={LABEL}>Faculty</p>
       {curated ? (
-        <Picker label="Faculty" value={faculty} options={facultyOptions} onChange={onFaculty} placeholder="Select your faculty" />
+        <Picker label="Faculty" value={facultyId} options={facultyOptions} onChange={onFacultyPick} placeholder="Select your faculty" />
       ) : opts === null ? (
         <Picker label="Faculty" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
       ) : (
         <>
-          <input className={inputClass} list="ob-faculties" value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. Engineering" maxLength={60} />
+          <input className={inputClass} list="ob-faculties" value={faculty} onChange={(e) => onFacultyTyped(e.target.value)} placeholder="e.g. Engineering" maxLength={60} />
           <datalist id="ob-faculties">{opts.faculties.map((f) => <option key={f} value={f} />)}</datalist>
         </>
       )}
 
       <p className={LABEL}>Department</p>
       {curated ? (
-        <Picker label="Department" value={department} options={departmentOptions} onChange={setDepartment} placeholder="Select your department" disabled={!faculty} disabledText="Choose a faculty first" />
+        <Picker label="Department" value={departmentId} options={departmentOptions} onChange={onDepartmentPick} placeholder="Select your department" disabled={!fac} disabledText="Choose a faculty first" />
       ) : opts === null ? (
         <Picker label="Department" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
       ) : (
@@ -242,11 +284,18 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
         </>
       )}
 
+      {curated && needsProgramme && (
+        <>
+          <p className={LABEL}>Programme</p>
+          <Picker label="Programme" value={programmeId} options={programmeOptions} onChange={setProgrammeId} placeholder="Select your programme" />
+        </>
+      )}
+
       {role === "student" && (
         <>
           <p className={LABEL}>Level</p>
           <div className="flex flex-wrap gap-2">
-            {LEVELS.map((l) => <LevelChip key={l} on={level === l} onClick={() => setLevel(level === l ? null : l)}>{l}</LevelChip>)}
+            {levelOptions.map((l) => <LevelChip key={l.code} on={lvl === l.code} onClick={() => setLevel(lvl === l.code ? null : l.code)}>{l.label}</LevelChip>)}
           </div>
         </>
       )}
@@ -255,7 +304,9 @@ export function CampusStep({ invite, onSaved, onSkip }: { invite: InvitePeek | n
       <div className="mt-auto flex flex-col gap-1 pt-8">
         {curated && !ready && (
           <p className="pb-3 text-center text-supporting text-muted">
-            {role === "student" ? "Pick your faculty, department and level to find your classes." : "Pick your faculty and department to continue."}
+            {role === "student"
+              ? needsProgramme ? "Pick your faculty, department, programme and level to find your classes." : "Pick your faculty, department and level to find your classes."
+              : "Pick your faculty and department to continue."}
           </p>
         )}
         <Button disabled={busy || !ready} onClick={() => void save()} className="h-14 w-full">{busy ? "Saving…" : "Continue"}</Button>

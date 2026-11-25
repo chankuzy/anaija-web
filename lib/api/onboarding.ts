@@ -11,11 +11,19 @@ export interface OnboardingEvent {
   action?: string;
 }
 
+export interface AcademicProgramme { id: number; name: string; award: string; tier: string }
+export interface AcademicDepartment { id: number; name: string; programmes: AcademicProgramme[] }
+export interface AcademicFaculty { id: number; name: string; departments: AcademicDepartment[] }
+export interface AcademicLevel { code: string; label: string; tier: string }
+
 export interface OnboardingOptions {
-  /** true: the institution has a curated structure and the lists are closed. false: names seen on communities, free text allowed. */
+  /** true: the institution has reference data and the lists are closed (pick by id). false: names seen on communities, free text allowed. */
   curated: boolean;
   faculties: string[];
   departments: { name: string; faculty: string | null }[];
+  /** Faculty > department > programme, straight from the academic reference tables. Empty when not curated. */
+  tree: AcademicFaculty[];
+  levels: AcademicLevel[];
 }
 export type Suggestion = Community & { reason: string };
 
@@ -56,13 +64,29 @@ export type InvitePeek = InvitePreview & {
   } | null;
 };
 
+/** Curated institutions save by id (the server writes the faculty/department text); others save typed text. */
+export type CampusSave = {
+  institution_id: number;
+  level: string | null;
+  campus_role: string;
+} & (
+  | { academic_unit_id: number; academic_programme_id: number | null }
+  | { faculty: string | null; department: string | null }
+);
+
 const space = (c: Suggestion): Suggestion => ({ ...c, avatar: mediaUrl(c.avatar), cover: mediaUrl(c.cover) });
 const person = (p: Person): Person => ({ ...p, avatar: mediaUrl(p.avatar) });
 
 export const onboardingApi = {
   options: async (institutionId: number): Promise<OnboardingOptions> => {
     const r = await api.get<Partial<OnboardingOptions>>("communities/onboarding-options", { institution_id: institutionId });
-    return { curated: r.curated === true, faculties: r.faculties ?? [], departments: r.departments ?? [] };
+    return {
+      curated: r.curated === true,
+      faculties: r.faculties ?? [],
+      departments: r.departments ?? [],
+      tree: r.tree ?? [],
+      levels: r.levels ?? [],
+    };
   },
 
   picks: async (): Promise<Picks> => {
@@ -79,8 +103,7 @@ export const onboardingApi = {
   },
 
   // profile-update is a patch; institution_id is always sent so the call is never empty.
-  saveCampus: (b: { institution_id: number; faculty: string | null; department: string | null; level: string | null; campus_role: string }) =>
-    api.patch("profile-update", b),
+  saveCampus: (b: CampusSave) => api.patch("profile-update", b),
 
   // Fire and forget: analytics must never block or fail the flow.
   event: (e: OnboardingEvent) => {

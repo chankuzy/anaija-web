@@ -1,22 +1,41 @@
 "use client";
 import { SettingsGroupsSkeleton, UserRowsSkeleton } from "@/components/ui/skeleton";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import { inputClass } from "@/components/ui/input";
+import { Picker } from "@/components/ui/picker";
 import { ApiError } from "@/lib/api/client";
+import { onboardingApi, type AcademicLevel, type OnboardingOptions } from "@/lib/api/onboarding";
 import { settingsApi, type CampusProfile, type Institution } from "@/lib/api/settings";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCached } from "@/lib/cache/swr";
 import { Group, SectionLabel, SettingsPage, Tile, useRequireAuth, useToast } from "./settings-kit";
 
-const LEVELS = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"];
+// profile-get already returns these; CampusProfile just doesn't type them yet.
+type CampusFull = CampusProfile & {
+  department?: string | null;
+  academic_unit_id?: number | null;
+  academic_programme_id?: number | null;
+};
+
+// Used only where an institution has no academic reference data yet.
+const FALLBACK_LEVELS: AcademicLevel[] = ["100L", "200L", "300L", "400L", "500L", "Postgraduate"].map((l) => ({ code: l, label: l, tier: "" }));
 const ROLES: [string, string][] = [
   ["student", "Student"],
   ["staff", "Staff"],
   ["alumni", "Alumni"],
 ];
+
+// "300", "300L" and "Level 300" are the same level; postgraduate is always "PG". ND1/HND2 stay as they are.
+const toCode = (v: string | null | undefined) => {
+  const s = String(v ?? "").trim().toUpperCase();
+  if (!s) return "";
+  if (/^(PG|POST|MSC|M\.SC|PHD|PH\.D)/.test(s)) return "PG";
+  const m = s.match(/\d{3}/);
+  return m ? m[0] : s;
+};
 
 function Chip({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) {
   return (
@@ -33,7 +52,7 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
   );
 }
 
-function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose: () => void }) {
+function InstitutionPicker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose: () => void }) {
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [res, setRes] = useState<{ q: string; list: Institution[] | null; error: string | null }>({ q: "\u0000", list: null, error: null });
@@ -109,28 +128,139 @@ function Picker({ onPick, onClose }: { onPick: (i: Institution) => void; onClose
   );
 }
 
-function CampusForm({ initial, onSaved }: { initial: CampusProfile; onSaved: () => void }) {
+// Same rules as onboarding: where the institution has academic reference data, faculty > department > programme are closed
+// lists saved by id, each resetting what hangs below it. Where it doesn't, faculty and department stay typed text.
+function CampusForm({ initial, onSaved }: { initial: CampusFull; onSaved: () => void }) {
   const router = useRouter();
   const { refresh } = useAuth();
   const { toast, show } = useToast();
   const [inst, setInst] = useState<{ id: number; name: string } | null>(initial.institution);
+  const [opts, setOpts] = useState<OnboardingOptions | null>(null);
+  const [facultyId, setFacultyId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [programmeId, setProgrammeId] = useState("");
   const [faculty, setFaculty] = useState(initial.faculty ?? "");
+  const [department, setDepartment] = useState(initial.department ?? "");
   const [level, setLevel] = useState<string | null>(initial.level);
   const [role, setRole] = useState(initial.campus_role ?? "student");
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState(false);
+  const seeded = useRef(false);
+
+  // Load the academic structure for the chosen institution. The first load also pre-selects what the user already has.
+  useEffect(() => {
+    if (!inst) {
+      setOpts(null);
+      return;
+    }
+    let alive = true;
+    setOpts(null);
+    onboardingApi
+      .options(inst.id)
+      .then((o) => {
+        if (!alive) return;
+        setOpts(o);
+        if (!seeded.current && inst.id === initial.institution?.id && o.curated && initial.academic_unit_id) {
+          const uid = initial.academic_unit_id;
+          for (const f of o.tree) {
+            if (f.id === uid) {
+              setFacultyId(String(f.id));
+              break;
+            }
+            const d = f.departments.find((x) => x.id === uid);
+            if (d) {
+              setFacultyId(String(f.id));
+              setDepartmentId(String(d.id));
+              const pid = initial.academic_programme_id ?? (d.programmes.length === 1 ? d.programmes[0].id : null);
+              if (pid) setProgrammeId(String(pid));
+              break;
+            }
+          }
+        }
+        seeded.current = true;
+      })
+      .catch(() => {
+        if (!alive) return;
+        setOpts({ curated: false, faculties: [], departments: [], tree: [], levels: [] });
+        seeded.current = true;
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inst?.id]);
+
+  const curated = opts?.curated === true;
+  const tree = opts?.tree ?? [];
+  const fac = tree.find((f) => String(f.id) === facultyId) ?? null;
+  const dep = fac?.departments.find((d) => String(d.id) === departmentId) ?? null;
+  const programmes = dep?.programmes ?? [];
+  const needsProgramme = programmes.length > 1;
+  const programme = programmes.find((p) => String(p.id) === programmeId) ?? null;
+
+  function pickInstitution(i: Institution) {
+    setInst({ id: i.id, name: i.name });
+    setFacultyId("");
+    setDepartmentId("");
+    setProgrammeId("");
+    setFaculty("");
+    setDepartment("");
+    setLevel(null);
+    setPicking(false);
+  }
+
+  // Changing a level of the hierarchy always resets what hangs below it.
+  function onFacultyPick(v: string) {
+    if (v === facultyId) return;
+    setFacultyId(v);
+    setDepartmentId("");
+    setProgrammeId("");
+  }
+  function onDepartmentPick(v: string) {
+    if (v === departmentId) return;
+    setDepartmentId(v);
+    const d = fac?.departments.find((x) => String(x.id) === v);
+    setProgrammeId(d && d.programmes.length === 1 ? String(d.programmes[0].id) : "");
+  }
+
+  // Uncurated only: typing a known department fills in its faculty.
+  function onFacultyTyped(v: string) {
+    setFaculty(v);
+    if (department && !opts?.departments.some((d) => d.name === department && d.faculty === v)) setDepartment("");
+  }
+  function onDepartmentTyped(v: string) {
+    setDepartment(v);
+    const known = opts?.departments.find((d) => d.name.toLowerCase() === v.trim().toLowerCase());
+    if (known?.faculty && !faculty.trim()) setFaculty(known.faculty);
+  }
+
+  const facultyOptions = useMemo(() => tree.map((f) => ({ value: String(f.id), label: f.name })), [tree]);
+  const departmentOptions = useMemo(() => (fac?.departments ?? []).map((d) => ({ value: String(d.id), label: d.name })), [fac]);
+  const programmeOptions = useMemo(() => programmes.map((p) => ({ value: String(p.id), label: p.name, hint: p.award })), [programmes]);
+
+  const levelOptions = useMemo(() => {
+    const all = opts?.levels ?? [];
+    if (!curated || all.length === 0) return FALLBACK_LEVELS;
+    const tier = programme?.tier ?? "degree";
+    return all.filter((l) => l.tier === tier || l.tier === "postgraduate");
+  }, [opts, curated, programme]);
+  const lvl = levelOptions.find((l) => toCode(l.code) === toCode(level))?.code ?? null;
+
+  const ready = !curated || (!!dep && (!needsProgramme || !!programme) && (role !== "student" || !!lvl));
+  const hadText = !!(initial.faculty || initial.department);
 
   async function save() {
     if (busy) return;
     if (!inst) return show("Choose your institution first");
+    if (!ready) return;
     setBusy(true);
     try {
-      await settingsApi.joinInstitution({
-        institution_id: inst.id,
-        faculty: faculty.trim() || null,
-        level,
-        campus_role: role,
-      });
+      const common = { institution_id: inst.id, level: role === "student" ? lvl : null, campus_role: role };
+      await onboardingApi.saveCampus(
+        curated && dep
+          ? { ...common, academic_unit_id: dep.id, academic_programme_id: programme?.id ?? null }
+          : { ...common, faculty: faculty.trim(), department: department.trim() },
+      );
       onSaved();
       await refresh();
       router.replace("/settings");
@@ -147,17 +277,59 @@ function CampusForm({ initial, onSaved }: { initial: CampusProfile; onSaved: () 
         <Tile icon="diploma" label={inst?.name ?? "Choose your institution"} trailing={inst ? "Change" : undefined} onClick={() => setPicking(true)} />
       </Group>
 
-      <div className="h-6" />
-      <SectionLabel>Faculty</SectionLabel>
-      <input className={inputClass} value={faculty} onChange={(e) => setFaculty(e.target.value)} placeholder="e.g. Engineering" />
+      {inst && (
+        <>
+          {curated && !dep && hadText && !initial.academic_unit_id && (
+            <p className="mt-5 px-1 text-secondary leading-[1.45] text-muted">We&apos;ve updated our faculty and department lists. Please choose yours again.</p>
+          )}
 
-      <div className="h-6" />
-      <SectionLabel>Level</SectionLabel>
-      <div className="flex flex-wrap gap-2">
-        {LEVELS.map((l) => (
-          <Chip key={l} label={l} selected={level === l} onClick={() => setLevel(level === l ? null : l)} />
-        ))}
-      </div>
+          <div className="h-6" />
+          <SectionLabel>Faculty</SectionLabel>
+          {curated ? (
+            <Picker label="Faculty" value={facultyId} options={facultyOptions} onChange={onFacultyPick} placeholder="Select your faculty" />
+          ) : opts === null ? (
+            <Picker label="Faculty" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
+          ) : (
+            <>
+              <input className={inputClass} list="cv-faculties" value={faculty} onChange={(e) => onFacultyTyped(e.target.value)} placeholder="e.g. Engineering" maxLength={60} />
+              <datalist id="cv-faculties">{opts.faculties.map((f) => <option key={f} value={f} />)}</datalist>
+            </>
+          )}
+
+          <div className="h-6" />
+          <SectionLabel>Department</SectionLabel>
+          {curated ? (
+            <Picker label="Department" value={departmentId} options={departmentOptions} onChange={onDepartmentPick} placeholder="Select your department" disabled={!fac} disabledText="Choose a faculty first" />
+          ) : opts === null ? (
+            <Picker label="Department" value="" options={[]} onChange={() => {}} disabled disabledText="Loading…" />
+          ) : (
+            <>
+              <input className={inputClass} list="cv-departments" value={department} onChange={(e) => onDepartmentTyped(e.target.value)} placeholder="Type yours if it isn't suggested" maxLength={60} />
+              <datalist id="cv-departments">{opts.departments.map((d) => <option key={d.name} value={d.name} />)}</datalist>
+            </>
+          )}
+
+          {curated && needsProgramme && (
+            <>
+              <div className="h-6" />
+              <SectionLabel>Programme</SectionLabel>
+              <Picker label="Programme" value={programmeId} options={programmeOptions} onChange={setProgrammeId} placeholder="Select your programme" />
+            </>
+          )}
+        </>
+      )}
+
+      {role === "student" && (
+        <>
+          <div className="h-6" />
+          <SectionLabel>Level</SectionLabel>
+          <div className="flex flex-wrap gap-2">
+            {levelOptions.map((l) => (
+              <Chip key={l.code} label={l.label} selected={lvl === l.code} onClick={() => setLevel(lvl === l.code ? null : l.code)} />
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="h-6" />
       <SectionLabel>I am a</SectionLabel>
@@ -170,21 +342,13 @@ function CampusForm({ initial, onSaved }: { initial: CampusProfile; onSaved: () 
       <button
         type="button"
         onClick={() => void save()}
-        disabled={busy}
+        disabled={busy || (!!inst && !ready)}
         className="mt-8 h-12 w-full rounded-full bg-brand text-[15px] font-extrabold text-brand-fg transition hover:bg-brand-hover active:scale-[0.99] disabled:opacity-50"
       >
         {busy ? "Saving…" : "Save"}
       </button>
 
-      {picking && (
-        <Picker
-          onClose={() => setPicking(false)}
-          onPick={(i) => {
-            setInst({ id: i.id, name: i.name });
-            setPicking(false);
-          }}
-        />
-      )}
+      {picking && <InstitutionPicker onClose={() => setPicking(false)} onPick={pickInstitution} />}
       {toast}
     </SettingsPage>
   );
@@ -194,9 +358,9 @@ export function CampusView() {
   const ready = useRequireAuth();
 
   // Cached copy opens the form instantly; staleMs 0 re-reads the server on every visit in the background.
-  const { data, error, refresh } = useCached<CampusProfile>(
+  const { data, error, refresh } = useCached<CampusFull>(
     ready ? "settings:campus" : null,
-    () => settingsApi.campus(),
+    () => settingsApi.campus() as Promise<CampusFull>,
     { staleMs: 0 },
   );
 
