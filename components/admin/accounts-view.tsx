@@ -91,6 +91,7 @@ export function AccountsView() {
           <Group>
             {showContent && <Tile icon="clapperboard" label="Content studio" href="/admin/content" />}
             {showCommunities && <Tile icon="usersGroupRounded" label="Communities" href="/admin/communities" />}
+            {showCommunities && <Tile icon="diploma" label="Academic structure" href="/admin/academic" />}
             {showStaff && <Tile icon="user" label="Staff" href="/admin/staff" />}
             {showAudit && <Tile icon="clockCircle" label="Audit log" href="/admin/audit" />}
           </Group>
