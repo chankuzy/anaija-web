@@ -499,3 +499,59 @@ body {
 @media (prefers-reduced-motion: no-preference) {
   .sk-block { background-image: none; animation: sk-pulse 1.5s ease-in-out infinite; }
 }
+
+/* ───── Semantic theme (F1). Light is the :root default; dark is opt-in via data-theme="dark". ───── */
+:root {
+  color-scheme: light;
+  --c-bg: #ffffff; --c-card: #f5f5fa; --c-card-elevated: #ececf4; --c-line: #e4e4ee; --c-elevated: #e2e2ee;
+  --c-fg: #0e0e16; --c-text2: #55556a; --c-muted: #6a6a80;
+  --c-brand: #5b5bf0; --c-brand-hover: #4a4ae2; --c-brand-soft: #c9c9ff; --c-brand-fg: #ffffff;
+  --c-brand-ink: #4338ca; --c-brand-glow: rgba(91, 91, 240, 0.28);
+  --c-accent: #0f9d6a; --c-warm: #d97706; --c-info: #2563eb; --c-success: #059669; --c-danger: #dc2626; --c-like: #ff3b5c;
+  --color-bg: var(--c-bg);
+  --color-fg: var(--c-fg);
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: #09090b; --c-card: #19191d; --c-card-elevated: #26262b; --c-line: #26262b; --c-elevated: #34343a;
+  --c-fg: #f4f4f6; --c-text2: #a1a1aa; --c-muted: #85858f;
+  --c-brand: #8b84ff; --c-brand-hover: #a39eff; --c-brand-soft: #c9c5ff; --c-brand-fg: #0d0b24;
+  --c-brand-ink: #a9a3ff; --c-brand-glow: rgba(139, 132, 255, 0.3);
+  --c-accent: #4cc38a; --c-warm: #ffb340; --c-info: #4c8dff; --c-success: #00e676; --c-danger: #ff5c5c; --c-like: #ff3b5c;
+}
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-surface: var(--c-card);
+  --color-card: var(--c-card);
+  --color-card-alt: var(--c-card);
+  --color-card-elevated: var(--c-card-elevated);
+  --color-line: var(--c-line);
+  --color-fg: var(--c-fg);
+  --color-muted: var(--c-muted);
+  --color-accent: var(--c-accent);
+  --color-warm: var(--c-warm);
+  --color-info: var(--c-info);
+  --color-success: var(--c-success);
+  --color-danger: var(--c-danger);
+  --color-like: var(--c-like);
+  --color-brand: var(--c-brand);
+  --color-brand-hover: var(--c-brand-hover);
+  --color-brand-soft: var(--c-brand-soft);
+  --color-brand-fg: var(--c-brand-fg);
+  --color-brand-glow: var(--c-brand-glow);
+  --color-brand-ink: var(--c-brand-ink);
+  --color-brand-primary: var(--c-brand);
+  --color-brand-accent: var(--c-brand-hover);
+  --color-brand-text-on-yellow: var(--c-brand-fg);
+  --color-surface-canvas: var(--c-bg);
+  --color-surface-subtle: var(--c-card);
+  --color-surface-interactive: var(--c-card-elevated);
+  --color-surface-elevated: var(--c-elevated);
+  --color-text-primary: var(--c-fg);
+  --color-text-secondary: var(--c-text2);
+  --color-text-muted: var(--c-muted);
+}
+.glass { background: color-mix(in srgb, var(--c-card-elevated) 92%, transparent); }
+.sk-block { background-color: color-mix(in srgb, var(--c-fg) 8%, transparent); }
+.cm { color-scheme: inherit; }
+.bubble-sent { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-hover)); color: var(--c-brand-fg); }

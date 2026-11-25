@@ -6,10 +6,14 @@ import "./globals.css";
 import { AuthRoot } from "@/components/shell/auth-root";
 import { CacheCurtain } from "@/components/shell/cache-curtain";
 import { AppLogo } from "@/components/ui/app-logo";
+import { DEFAULT_THEME } from "@/lib/theme/default";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 // Wordmark only: one weight keeps the download to a single small file.
 const manrope = Manrope({ subsets: ["latin"], weight: ["800"], variable: "--font-manrope", display: "swap" });
+
+// Runs before first paint so the chosen theme never flashes. Preference: "light" | "dark" | "system" in localStorage.
+const THEME_SCRIPT = `(function(){try{var s=localStorage.getItem("anaija:theme"),d=${JSON.stringify(DEFAULT_THEME)},m=s==="light"||s==="dark"?s:s==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):d;document.documentElement.setAttribute("data-theme",m);var t=document.querySelector('meta[name="theme-color"]');if(t)t.setAttribute("content",m==="dark"?"#09090b":"#ffffff")}catch(e){document.documentElement.setAttribute("data-theme",${JSON.stringify(DEFAULT_THEME)})}})();`;
 
 const site = process.env.NEXT_PUBLIC_SITE_URL;
 
@@ -36,7 +40,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0A0A0A",
-  colorScheme: "dark",
+  colorScheme: "light dark",
   viewportFit: "cover",
   interactiveWidget: "resizes-content",
 };
@@ -52,9 +56,10 @@ function Splash() {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${manrope.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${manrope.variable}`}>
       <body>
         <Script id="anaija-install-capture" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE }} />
+        <Script id="anaija-theme" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <Suspense fallback={<Splash />}>
           <AuthRoot>{children}</AuthRoot>
         </Suspense>

@@ -10,6 +10,7 @@ import { usePlayback } from "@/components/feed/playback-context";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useCached } from "@/lib/cache/swr";
 import { Footnote, Group, SectionLabel, SettingsPage, Tile, Toggle, useRequireAuth, useToast } from "./settings-kit";
+import { ThemeRow } from "./theme-row";
 
 export function SettingsView() {
   const router = useRouter();
@@ -68,6 +69,12 @@ export function SettingsView() {
         <Tile icon="user" label="Edit profile" href="/settings/edit" />
         <Tile icon="diploma" label="Campus & Institution" href="/settings/campus" />
         <Tile icon="forbidden" label="Blocked accounts" href="/settings/blocked" />
+      </Group>
+
+      <div className="h-6" />
+      <SectionLabel>Appearance</SectionLabel>
+      <Group>
+        <ThemeRow />
       </Group>
 
       <div className="h-6" />
