@@ -34,7 +34,8 @@ const TABS: readonly TabDef[] = [
   { id: "sessions", label: "Sessions", icon: "eyeClosed" },
   { id: "members", label: "Members", icon: "usersGroupRounded" },
 ];
-// Course Desks: no Sessions. Posts (the feed) comes first, then Overview and Materials.
+// Course Desks: no Sessions. Posts (the feed) comes first, then Overview and Materials. "Posts" splits into
+// Announcements and Discussions once the feed can filter by subtype.
 const DESK_TABS: readonly TabDef[] = [
   { id: "posts", label: "Posts", icon: "feed" },
   { id: "overview", label: "Overview", icon: "notebookMinimalistic" },
@@ -54,10 +55,6 @@ const JOIN_FAIL: Record<string, string> = {
 
 const first = (n: string | null) => (n ?? "").trim().split(/\s+/)[0] || "Someone";
 
-// ONE width rule for the whole page. Phones: full width. md: a 640px column. lg: 620px feed + 40px gap + 320px About card.
-const PAGE = "mx-auto w-full max-w-[640px] px-3 lg:max-w-[1004px]";
-const ICON_BTN = "grid size-10 place-items-center rounded-full border border-line bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive active:scale-95";
-
 function Faces({ c }: { c: CommunityDetail }) {
   const faces = c.face_pile ?? [];
   if (!faces.length) return null;
@@ -65,7 +62,7 @@ function Faces({ c }: { c: CommunityDetail }) {
   const rest = Math.max(0, c.members_count - names.length);
   const label = rest > 0 ? `${names.join(", ")} and ${rest} more` : names.join(" and ");
   return (
-    <div className="mt-4 flex items-center gap-3">
+    <div className="mt-3 flex items-center gap-3 px-1">
       <span className="flex">
         {faces.map((f, i) => (
           <span key={f.id} className={`rounded-full ring-2 ring-bg ${i > 0 ? "-ml-2.5" : ""}`}>
@@ -78,8 +75,8 @@ function Faces({ c }: { c: CommunityDetail }) {
   );
 }
 
-// Identity header. The cover bleeds edge to edge on phones (it keeps the crop's own 8:3 ratio, so nothing is cut)
-// and is a rounded card from md up. A bottom gradient melts it into the page; the avatar sits half over it.
+// Identity header. Cover keeps the crop's own 8:3 ratio on phones (so nothing is cut), a fixed compact height from md up,
+// and the same radius token Home gives post media. The 84px avatar sits half over the cover on a bg-coloured ring.
 function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onAbout, onMembers }: {
   c: CommunityDetail; cover: string | null; avatar: string | null; saving: Kind | null; joining: boolean;
   onJoin: () => void; onMenu: () => void; onView: (url: string) => void; onAbout: () => void; onMembers: () => void;
@@ -91,8 +88,7 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
     : [categoryLabel(c.category), c.course_code, members].filter(Boolean).join(" · ");
   const title = desk ? (c.course_title ?? c.name) : c.name;
   const spinner = <span className="size-5 animate-spin rounded-full border-2 border-fg border-t-transparent" />;
-  const overlayBtn = "absolute grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95";
-  const topPos = { top: "max(12px, env(safe-area-inset-top))" } as const;
+  const pill = "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated";
 
   let join: ReactNode = null;
   if (!c.is_member) {
@@ -105,72 +101,65 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
     );
   }
 
-  const badges: ReactNode[] = [];
-  if (desk) {
-    badges.push(<span key="desk" className="inline-flex h-7 items-center rounded-full bg-surface-interactive px-3 text-supporting font-bold text-fg">Course Desk</span>);
-    badges.push(
-      c.verified ? (
-        <span key="ver" className="inline-flex h-7 items-center gap-1.5 rounded-full bg-brand/15 px-3 text-supporting font-extrabold text-brand-ink">
-          <Icon name="verifiedCheck" filled className="size-3.5" />Verified
-        </span>
-      ) : (
-        <span key="led" className="inline-flex h-7 items-center rounded-full bg-surface-interactive px-3 text-supporting font-semibold text-muted">Student-led</span>
-      ),
-    );
-  }
-  if (c.is_member && c.my_role && c.my_role !== "member") {
-    badges.push(<span key="role" className="inline-flex h-7 items-center rounded-full bg-brand/15 px-3 text-supporting font-extrabold text-brand-ink">{ROLE_LABEL[c.my_role]}</span>);
-  }
-  if (c.is_member) {
-    c.my_designations
-      .filter((d) => !desk || !DESK_KINDS.includes(d.kind as string))
-      .forEach((d, i) => badges.push(<DesigBadge key={`d${i}`} d={d} />));
-  }
-
   return (
     <div>
-      <div className="relative -mx-3 aspect-[8/3] overflow-hidden bg-surface-interactive md:mx-0 md:rounded-image">
+      <div className="relative aspect-[8/3] overflow-hidden rounded-image bg-surface-interactive md:aspect-auto md:h-[168px]">
         {cover && <img src={cover} alt="" className="size-full object-cover" />}
         {cover && <button type="button" aria-label="View cover" onClick={() => onView(cover)} className="absolute inset-0 cursor-zoom-in" />}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-bg/70 to-transparent" />
-        <Link href="/communities" aria-label="Communities" style={topPos} className={`${overlayBtn} left-3`}>
+        <Link href="/communities" aria-label="Communities" className="absolute left-3 top-3 grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
           <Icon name="back" className="size-5" />
         </Link>
-        <button type="button" aria-label="Community menu" onClick={onMenu} style={topPos} className={`${overlayBtn} right-3`}>
+        <button type="button" aria-label="Community menu" onClick={onMenu} className="absolute right-3 top-3 grid size-10 place-items-center rounded-full bg-black/45 text-white backdrop-blur-md transition-transform active:scale-95">
           <Icon name="dots" filled className="size-5" />
         </button>
         {saving === "cover" && <div className="absolute inset-0 grid place-items-center bg-black/40">{spinner}</div>}
       </div>
 
-      <div className="flex items-end gap-3">
+      <div className="flex items-center gap-3 px-1">
         <span className="relative -mt-11 shrink-0 rounded-full bg-bg p-1">
           <button type="button" aria-label="View picture" disabled={!avatar} onClick={() => avatar && onView(avatar)} className="block rounded-full">
-            <Avatar url={avatar} name={title} size={88} />
+            <Avatar url={avatar} name={title} size={84} />
           </button>
           {saving === "avatar" && <span className="absolute inset-1 grid place-items-center rounded-full bg-black/45">{spinner}</span>}
         </span>
         <span className="flex-1" />
-        <div className="flex items-center gap-2 pb-1">
-          {join}
-          {c.is_member && c.chat_conversation_id && (
-            <Link href={`/c/${c.slug}/chat`} className="inline-flex h-10 items-center gap-1.5 rounded-full bg-fg px-4 text-secondary font-bold text-bg transition-transform active:scale-95">
-              <Icon name="message" className="size-4" />Chat
-            </Link>
-          )}
-          {desk && c.is_member && (
-            <button type="button" aria-label="Members" onClick={onMembers} className={ICON_BTN}><Icon name="usersGroupRounded" className="size-[18px]" /></button>
-          )}
-          <button type="button" aria-label="About" onClick={onAbout} className={`${ICON_BTN} lg:hidden`}><Icon name="notebookMinimalistic" className="size-[18px]" /></button>
-        </div>
+        {join}
       </div>
 
-      <div className="pt-3">
-        <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-[-0.02em] text-fg">{title}</h1>
-        <p className="mt-2 truncate text-micro font-semibold uppercase tracking-[0.1em] text-muted">{meta}</p>
-        {c.description && <p className="mt-3 line-clamp-3 text-body leading-[1.5] text-fg/80">{c.description}</p>}
-        {badges.length > 0 && <div className="mt-3 flex flex-wrap items-center gap-1.5">{badges}</div>}
-        <Faces c={c} />
+      <div className="px-1 pt-1">
+        <h1 className="text-[22px] font-extrabold leading-[1.15] tracking-tight text-fg">{title}</h1>
+        <p className="mt-1 truncate text-secondary text-muted">{meta}</p>
+        {c.description && <p className="mt-2 line-clamp-2 text-secondary leading-[1.45] text-fg/80">{c.description}</p>}
       </div>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 px-1">
+        {desk && (
+          <>
+            <span className="inline-flex h-9 items-center rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg">Course Desk</span>
+            {c.verified ? (
+              <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand/15 px-3.5 text-secondary font-extrabold text-brand-ink">
+                <Icon name="verifiedCheck" filled className="size-4" />Verified
+              </span>
+            ) : (
+              <span className="inline-flex h-9 items-center rounded-full bg-surface-interactive px-3.5 text-secondary font-semibold text-muted">Student-led</span>
+            )}
+          </>
+        )}
+        {c.is_member && c.my_role && c.my_role !== "member" && (
+          <span className="inline-flex h-9 items-center rounded-full bg-brand/15 px-3.5 text-secondary font-extrabold text-brand-ink">{ROLE_LABEL[c.my_role]}</span>
+        )}
+        {c.is_member && c.my_designations
+          .filter((d) => !desk || !DESK_KINDS.includes(d.kind as string))
+          .map((d, i) => <DesigBadge key={i} d={d} />)}
+        {c.is_member && c.chat_conversation_id && (
+          <Link href={`/c/${c.slug}/chat`} className={pill}><Icon name="message" className="size-4" />Chat</Link>
+        )}
+        {desk && c.is_member && (
+          <button type="button" onClick={onMembers} className={pill}><Icon name="usersGroupRounded" className="size-4" />Members</button>
+        )}
+        <button type="button" onClick={onAbout} className={pill}><Icon name="usersGroupRounded" className="size-4" />About</button>
+      </div>
+      <Faces c={c} />
     </div>
   );
 }
@@ -292,15 +281,15 @@ export function CommunityView({ slug }: { slug: string }) {
   if (!c) {
     return (
       <Cm>
-        <div className={`${PAGE} md:pt-8`}>
+        <div className="mx-auto w-full max-w-[720px] px-3 pt-3 md:pt-8">
           {det.error ? (
             <Empty title={det.error.includes("banned") || det.error.includes("can't access") ? "You can't access this community" : det.error.includes("internet") ? "You're offline" : "Community not found"} body={det.error}>
               <Link href="/communities" className={buttonClass("primary", "h-10 px-5")}>Browse communities</Link>
             </Empty>
           ) : (
             <div role="status" aria-busy="true" aria-label="Loading community" className="space-y-4">
-              <Sk className="-mx-3 aspect-[8/3] md:mx-0 md:rounded-image" />
-              <Sk className="h-7 w-56 rounded-full" />
+              <Sk className="aspect-[8/3] w-full rounded-image" />
+              <Sk className="h-6 w-56 rounded-full" />
               <Sk className="h-4 w-72 rounded-full" />
             </div>
           )}
@@ -309,13 +298,15 @@ export function CommunityView({ slug }: { slug: string }) {
     );
   }
 
+  // Below lg the page is one column capped like Home's (it only ever fills a phone); from lg the feed column takes
+  // all the space the About sidebar leaves.
   return (
     <Cm>
-      <div className={`${PAGE} pb-28 md:pt-8`}>
+      <div className="mx-auto w-full max-w-[720px] px-3 pb-28 pt-3 md:pt-8 lg:max-w-[1040px]">
         <input ref={coverRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setCrop({ kind: "cover", file: f }); e.target.value = ""; }} />
         <input ref={avatarRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) setCrop({ kind: "avatar", file: f }); e.target.value = ""; }} />
 
-        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10">
+        <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
           <div className="min-w-0">
             <Header
               c={c}
@@ -330,8 +321,8 @@ export function CommunityView({ slug }: { slug: string }) {
               onMembers={() => setMembersSheet(true)}
             />
 
-            <div ref={anchor} className="mt-4" />
-            <div className="sticky top-0 z-10 -mx-3 border-b border-line bg-bg/90 px-3 backdrop-blur-xl" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+            <div ref={anchor} className="mt-5" />
+            <div className="sticky top-0 z-10 -mx-3 border-b border-line bg-bg/95 px-3 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top)" }}>
               <div className="relative grid" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
                 {tabs.map((t, i) => {
                   const on = i === index;
@@ -343,13 +334,13 @@ export function CommunityView({ slug }: { slug: string }) {
                       onClick={() => goId(t.id)}
                       className={`flex h-12 items-center justify-center gap-1.5 text-secondary font-bold transition-colors ${on ? "text-fg" : "text-muted hover:text-fg"}`}
                     >
-                      <Icon name={t.icon} filled={on} className="size-[18px] max-[400px]:hidden" />
+                      <Icon name={t.icon} filled={on} className="size-[19px] max-[400px]:hidden" />
                       {t.label}
                     </button>
                   );
                 })}
                 <span ref={indRef} aria-hidden="true" className="absolute -bottom-px left-0 will-change-transform" style={{ width: `${100 / tabs.length}%` }}>
-                  <span className="mx-auto block h-[3px] w-10 rounded-full bg-brand" />
+                  <span className="mx-auto block h-0.5 w-10 rounded-full bg-brand" />
                 </span>
               </div>
             </div>
@@ -376,11 +367,8 @@ export function CommunityView({ slug }: { slug: string }) {
           </div>
 
           <aside className="hidden lg:block">
-            <div className="sticky top-6 max-h-[calc(100dvh-48px)] overflow-y-auto no-scrollbar">
-              <div className="rounded-[24px] border border-line bg-surface-subtle p-5">
-                <p className="mb-4 text-micro font-semibold uppercase tracking-[0.1em] text-muted">About</p>
-                <AboutTab c={c} />
-              </div>
+            <div className="sticky top-6 max-h-[calc(100dvh-48px)] overflow-y-auto pt-4 no-scrollbar">
+              <AboutTab c={c} />
             </div>
           </aside>
         </div>

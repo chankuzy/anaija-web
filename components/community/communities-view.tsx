@@ -23,6 +23,12 @@ const metaOf = (c: Community) => [categoryLabel(c.category), c.course_code, plur
 const ICON_BTN =
   "relative grid size-11 shrink-0 place-items-center rounded-full text-fg transition-[background-color,transform] hover:bg-surface-interactive active:scale-95 motion-reduce:active:scale-100";
 
+// ONE width rule for the page. Phones: full width. md: a 640px column. lg: 640px column + 40px gap + 320px sidebar.
+const PAGE = "mx-auto w-full max-w-[640px] px-4 lg:max-w-[1000px]";
+// Horizontal rails bleed to the screen edge on phones only; from md up they stop at the column edge.
+const RAIL = "no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 md:mx-0 md:px-0";
+const CARD = "overflow-hidden rounded-3xl border border-line bg-surface-subtle";
+
 // Recommendation signals that exist today. A community is only recommended when at least one holds, and the reason shown
 // is exactly that signal. Thresholds are deliberately plain; a real ranking needs the backend (see handoff notes).
 const POPULAR = 25;
@@ -52,28 +58,28 @@ function recommend(inst: number | null, pools: (Community[] | undefined)[]): Rec
   return rows.slice(0, 8).map(({ c, reason }) => ({ c, reason }));
 }
 
-function CommunityRow({ c, reason }: { c: Community; reason?: string | null }) {
+function CommunityRow({ c, reason, flush = false }: { c: Community; reason?: string | null; flush?: boolean }) {
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
   return (
-    <Link href={`/c/${c.slug}`} className="flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-surface-interactive">
+    <Link href={`/c/${c.slug}`} className={`flex items-center gap-3.5 transition-colors active:bg-surface-interactive ${flush ? "px-4 py-3.5" : "rounded-2xl px-1 py-2.5"}`}>
       <Avatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{c.name}</span>{c.academic_origin && <OfficialMark />}</span>
         <span className="mt-0.5 block truncate text-supporting text-muted">{metaOf(c)}</span>
         {reason && <span className="mt-0.5 block truncate text-supporting font-semibold text-brand-ink">{reason}</span>}
       </span>
-      <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{state}</span>
+      <span className="shrink-0 rounded-full bg-surface-interactive px-2.5 py-1 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{state}</span>
     </Link>
   );
 }
 
 function RowsSkeleton({ n = 4 }: { n?: number }) {
   return (
-    <div role="status" aria-busy="true" aria-label="Loading" className="space-y-3">
+    <div role="status" aria-busy="true" aria-label="Loading" className={`${CARD} divide-y divide-line`}>
       {Array.from({ length: n }, (_, i) => (
-        <div key={i} className="flex items-center gap-3 px-1 py-1.5">
+        <div key={i} className="flex items-center gap-3.5 px-4 py-3.5">
           <Sk className="size-12 rounded-full" />
-          <div className="flex-1 space-y-2"><Sk className="h-3.5 w-40 rounded-full" /><Sk className="h-3 w-56 rounded-full" /></div>
+          <div className="flex-1 space-y-2"><Sk className="h-3.5 w-40 max-w-full rounded-full" /><Sk className="h-3 w-56 max-w-full rounded-full" /></div>
         </div>
       ))}
     </div>
@@ -83,17 +89,17 @@ function RowsSkeleton({ n = 4 }: { n?: number }) {
 // ── My communities ────────────────────────────────────────────────────────────────────────
 function MineTile({ c }: { c: MineRow }) {
   return (
-    <Link href={`/c/${c.slug}`} className="relative flex w-[136px] shrink-0 flex-col rounded-2xl border border-line bg-surface-subtle p-3 transition-colors active:bg-surface-interactive">
+    <Link href={`/c/${c.slug}`} className="relative flex w-[148px] shrink-0 flex-col rounded-3xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive">
       <span className="relative w-fit">
-        <Avatar url={c.avatar} name={c.name} size={44} />
+        <Avatar url={c.avatar} name={c.name} size={48} />
         {c.chat_unread > 0 && (
-          <span aria-label={`${c.chat_unread} unread chat messages`} className="absolute -right-1.5 -top-1.5 grid h-[18px] min-w-[18px] place-items-center rounded-full bg-brand px-1 text-[10px] font-extrabold text-brand-fg ring-2 ring-surface">
+          <span aria-label={`${c.chat_unread} unread chat messages`} className="absolute -right-2 -top-2 grid h-[20px] min-w-[20px] place-items-center rounded-full bg-brand px-1 text-[10px] font-extrabold text-brand-fg ring-2 ring-surface">
             {c.chat_unread > 99 ? "99+" : c.chat_unread}
           </span>
         )}
       </span>
-      <span className="mt-2.5 line-clamp-2 block min-h-[32px] text-[13.5px] font-bold leading-[1.2] text-fg">{c.name}</span>
-      <span className={`mt-1 block truncate text-micro ${c.academic_origin ? "font-extrabold text-brand-ink" : "text-muted"}`}>{c.academic_origin ? "Official" : (c.course_code ?? categoryLabel(c.category))} · {c.members_count}</span>
+      <span className="mt-3 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] tracking-[-0.01em] text-fg">{c.name}</span>
+      <span className={`mt-1.5 block truncate text-micro ${c.academic_origin ? "font-extrabold text-brand-ink" : "text-muted"}`}>{c.academic_origin ? "Official" : (c.course_code ?? categoryLabel(c.category))} · {c.members_count}</span>
     </Link>
   );
 }
@@ -102,9 +108,9 @@ function MineTile({ c }: { c: MineRow }) {
 function RecTile({ r }: { r: Rec }) {
   const { c } = r;
   return (
-    <Link href={`/c/${c.slug}`} className="flex w-[168px] shrink-0 flex-col rounded-2xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive">
-      <Avatar url={c.avatar} name={c.name} size={48} />
-      <span className="mt-3 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] text-fg">{c.name}</span>
+    <Link href={`/c/${c.slug}`} className="flex w-[172px] shrink-0 flex-col rounded-3xl border border-line bg-surface-subtle p-4 transition-colors active:bg-surface-interactive">
+      <Avatar url={c.avatar} name={c.name} size={52} />
+      <span className="mt-3.5 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] tracking-[-0.01em] text-fg">{c.name}</span>
       <span className="mt-1 flex items-center truncate text-micro text-muted">{c.academic_origin ? <OfficialMark /> : (c.course_code ?? categoryLabel(c.category))}</span>
       <span className="mt-2 line-clamp-2 block min-h-[28px] text-supporting font-semibold leading-[1.3] text-brand-ink">{r.reason}</span>
       <span className="mt-2 block text-micro font-semibold uppercase tracking-[0.08em] text-muted">{c.join_policy === "open" ? "Open" : "Approval"}</span>
@@ -115,7 +121,7 @@ function RecTile({ r }: { r: Rec }) {
 // ── Pulse: only what the backend returned, grouped, never padded ────────────────────────────────
 function PulseRow({ href, icon, title, sub, tail }: { href: string; icon: IconName; title: string; sub: string; tail?: ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-3 px-3 py-3 transition-colors active:bg-surface-interactive">
+    <Link href={href} className="flex items-center gap-3 px-4 py-3.5 transition-colors active:bg-surface-interactive">
       <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-surface-interactive text-fg"><Icon name={icon} className="size-[18px]" /></span>
       <span className="min-w-0 flex-1">
         <span className="line-clamp-1 block text-[14px] font-semibold text-fg">{title}</span>
@@ -145,11 +151,11 @@ function PulseCard({ p, loading }: { p: Pulse | undefined; loading: boolean }) {
   return (
     <section>
       <SectionHead title="What's happening" />
-      <div className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface-subtle">
+      <div className={`${CARD} divide-y divide-line`}>
         {loading && !p ? (
-          <div className="space-y-3 p-3"><Sk className="h-9 w-full rounded-xl" /><Sk className="h-9 w-full rounded-xl" /></div>
+          <div className="space-y-3 p-4"><Sk className="h-9 w-full rounded-xl" /><Sk className="h-9 w-full rounded-xl" /></div>
         ) : rows.length === 0 ? (
-          <p className="px-4 py-5 text-secondary leading-[1.4] text-muted">Quiet right now. Live sessions, active discussions and upcoming events from your communities show up here.</p>
+          <p className="px-5 py-6 text-secondary leading-[1.45] text-muted">Quiet right now. Live sessions, active discussions and upcoming events from your communities show up here.</p>
         ) : rows}
       </div>
     </section>
@@ -161,11 +167,11 @@ function Highlights({ p }: { p: Pulse | undefined }) {
   const ann = [...(p?.announcements ?? [])].sort((a, b) => Number(!!b.pinned) - Number(!!a.pinned)).slice(0, 4);
   const res = (p?.resources ?? []).slice(0, 3);
   if (!ann.length && !res.length) return null;
-  const card = "flex w-[232px] shrink-0 flex-col rounded-2xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive";
+  const card = "flex w-[232px] shrink-0 flex-col rounded-3xl border border-line bg-surface-subtle p-4 transition-colors active:bg-surface-interactive";
   return (
     <section>
       <SectionHead title="Highlights" />
-      <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+      <div className={RAIL}>
         {ann.map((a) => (
           <Link key={`a${a.id}`} href={`/p/${a.id}`} className={card}>
             <span className="flex items-center gap-2">
@@ -173,7 +179,7 @@ function Highlights({ p }: { p: Pulse | undefined }) {
               <span className="min-w-0 flex-1 truncate text-supporting font-semibold text-muted">{a.community.name}</span>
               {a.pinned && <span className="text-micro font-extrabold uppercase tracking-[0.08em] text-brand-ink">Pinned</span>}
             </span>
-            <span className="mt-2.5 line-clamp-3 block text-[14px] font-bold leading-[1.3] text-fg">{a.title}</span>
+            <span className="mt-3 line-clamp-3 block text-[14px] font-bold leading-[1.3] text-fg">{a.title}</span>
             <span className="mt-2 block text-supporting text-muted">Announcement · {timeAgo(a.created_at)}</span>
           </Link>
         ))}
@@ -183,7 +189,7 @@ function Highlights({ p }: { p: Pulse | undefined }) {
               <Avatar url={r.community.avatar} name={r.community.name} size={20} />
               <span className="min-w-0 flex-1 truncate text-supporting font-semibold text-muted">{r.community.name}</span>
             </span>
-            <span className="mt-2.5 line-clamp-3 block text-[14px] font-bold leading-[1.3] text-fg">{r.title}</span>
+            <span className="mt-3 line-clamp-3 block text-[14px] font-bold leading-[1.3] text-fg">{r.title}</span>
             <span className="mt-2 block text-supporting text-muted">{[r.course_code, "Resource"].filter(Boolean).join(" · ")} · {timeAgo(r.created_at)}</span>
           </Link>
         ))}
@@ -263,7 +269,7 @@ export function CommunitiesView() {
 
   return (
     <Cm>
-      <div className="mx-auto w-full max-w-[1040px] px-4 pb-12 pt-3 md:pt-8">
+      <div className={`${PAGE} pb-16 pt-3 md:pt-10`}>
         <div aria-hidden style={{ height: pull }} className="flex items-end justify-center overflow-hidden">
           {pull > 8 && (
             <span
@@ -273,14 +279,12 @@ export function CommunitiesView() {
           )}
         </div>
 
-        <header className="flex items-center gap-0.5">
+        <header className="flex items-start gap-1">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[26px] font-extrabold leading-none tracking-tight text-fg">Communities</h1>
-            <p className="mt-1.5 truncate text-secondary text-muted">Your campus. Your people. Your conversations.</p>
+            <p className="text-micro font-semibold uppercase tracking-[0.14em] text-muted">Anaija</p>
+            <h1 className="mt-1 text-[32px] font-extrabold leading-[1.05] tracking-[-0.03em] text-fg">Communities</h1>
+            <p className="mt-2 truncate text-secondary text-muted">Your campus. Your people. Your conversations.</p>
           </div>
-          <Link href="/communities/search" aria-label="Search communities" className={ICON_BTN}>
-            <Icon name="search" className="size-[24px]" />
-          </Link>
           {authed ? (
             <button type="button" aria-label={unseen > 0 ? `${unseen} new notifications` : "Notifications"} onClick={panel.toggle} className={`${ICON_BTN} -mr-2`}>
               <Icon name="bell" filled={unseen > 0} className="size-[24px]" />
@@ -291,31 +295,40 @@ export function CommunitiesView() {
           ) : null}
         </header>
 
-        <div className="mt-6 flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-x-10 lg:gap-y-8">
+        <Link
+          href="/communities/search"
+          aria-label="Search communities"
+          className="mt-5 flex h-12 items-center gap-3 rounded-full border border-line bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive active:scale-[0.99]"
+        >
+          <Icon name="search" className="size-[19px] shrink-0" />
+          <span className="min-w-0 flex-1 truncate text-[15px] font-medium">Search communities, courses, departments</span>
+        </Link>
+
+        <div className="mt-8 flex flex-col gap-9 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-10 lg:gap-y-9">
           <section className="min-w-0 lg:col-start-1 lg:row-start-1">
             <SectionHead title="My communities">
               {hasMine && <button type="button" onClick={() => setAll(true)} className="text-secondary font-bold text-muted hover:text-fg">See all</button>}
             </SectionHead>
             {!authed && status !== "loading" ? (
-              <div className="rounded-2xl border border-line bg-surface-subtle p-4">
-                <p className="text-[15px] font-bold text-fg">Find where you belong</p>
-                <p className="mt-1 text-secondary leading-[1.4] text-muted">Sign in to join classes, departments and interests, and keep them one tap away.</p>
-                <Link href={loginHref()} className={buttonClass("primary", "mt-3 h-10 px-5")}>Sign in</Link>
+              <div className={`${CARD} p-5`}>
+                <p className="text-[16px] font-bold tracking-tight text-fg">Find where you belong</p>
+                <p className="mt-1.5 text-secondary leading-[1.45] text-muted">Sign in to join classes, departments and interests, and keep them one tap away.</p>
+                <Link href={loginHref()} className={buttonClass("primary", "mt-4 h-10 px-5")}>Sign in</Link>
               </div>
             ) : mine.loading ? (
-              <div role="status" aria-busy="true" aria-label="Loading your communities" className="no-scrollbar -mx-4 flex gap-2.5 overflow-hidden px-4 lg:mx-0 lg:px-0">
-                {[0, 1, 2, 3].map((i) => <Sk key={i} className="h-[118px] w-[136px] shrink-0 rounded-2xl" />)}
+              <div role="status" aria-busy="true" aria-label="Loading your communities" className={`${RAIL} overflow-hidden`}>
+                {[0, 1, 2, 3].map((i) => <Sk key={i} className="h-[128px] w-[148px] shrink-0 rounded-3xl" />)}
               </div>
             ) : !hasMine ? (
-              <p className="rounded-2xl border border-line bg-surface-subtle px-4 py-5 text-secondary leading-[1.4] text-muted">You haven&apos;t joined any community yet. Start with the ones below.</p>
+              <p className={`${CARD} px-5 py-6 text-secondary leading-[1.45] text-muted`}>You haven&apos;t joined any community yet. Start with the ones below.</p>
             ) : (
-              <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+              <div className={RAIL}>
                 {mineList.map((c) => <MineTile key={c.id} c={c} />)}
               </div>
             )}
             {authed && viewed.length > 0 && (
-              <div className="no-scrollbar -mx-4 mt-3 flex items-center gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
-                <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.08em] text-muted">Recently viewed</span>
+              <div className={`${RAIL} mt-4 items-center`}>
+                <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.1em] text-muted">Recently viewed</span>
                 {viewed.map((r) => (
                   <Link key={r.slug} href={`/c/${r.slug}`} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-surface-interactive pl-1.5 pr-3.5 text-secondary font-bold text-fg">
                     <Avatar url={r.avatar} name={r.name} size={24} />
@@ -327,7 +340,7 @@ export function CommunitiesView() {
           </section>
 
           {authed && (mine.loading || hasMine) && (
-            <div className="flex min-w-0 flex-col gap-8 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-start">
+            <div className="flex min-w-0 flex-col gap-9 lg:sticky lg:top-6 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-start">
               <PulseCard p={pulse.data} loading={mine.loading || pulse.loading} />
               <Highlights p={pulse.data} />
             </div>
@@ -336,9 +349,9 @@ export function CommunitiesView() {
           {authed && (recLoading || recs.length > 0) && (
             <section className="min-w-0 lg:col-start-1 lg:row-start-2">
               <SectionHead title="Recommended for you" />
-              <div className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+              <div className={RAIL}>
                 {recLoading
-                  ? [0, 1, 2].map((i) => <Sk key={i} className="h-[196px] w-[168px] shrink-0 rounded-2xl" />)
+                  ? [0, 1, 2].map((i) => <Sk key={i} className="h-[204px] w-[172px] shrink-0 rounded-3xl" />)
                   : recs.map((r) => <RecTile key={r.c.id} r={r} />)}
               </div>
             </section>
@@ -347,12 +360,12 @@ export function CommunitiesView() {
           <section className="min-w-0 lg:col-start-1 lg:row-start-3">
             <SectionHead title="Discover" />
             {inst && (
-              <div className="mb-2 flex gap-2">
+              <div className="mb-2.5 flex gap-2">
                 <Chip active={campus} onClick={() => { setScope("campus"); setExtra(null); }}>My campus</Chip>
                 <Chip active={!campus} onClick={() => { setScope("all"); setExtra(null); }}>Everywhere</Chip>
               </div>
             )}
-            <div className="no-scrollbar -mx-4 mb-3 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
+            <div className="no-scrollbar -mx-4 mb-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:px-0">
               <Chip active={cat === null} onClick={() => setCat(null)}>All</Chip>
               {CATEGORIES.map(([id, label]) => <Chip key={id} active={cat === id} onClick={() => setCat(cat === id ? null : id)}>{label}</Chip>)}
             </div>
@@ -368,18 +381,18 @@ export function CommunitiesView() {
               </Empty>
             ) : (
               <>
-                <div className="grid gap-x-8 md:grid-cols-2">
-                  {items.map((c) => <CommunityRow key={c.id} c={c} reason={!campus && inst && c.institution_id === inst ? "At your campus" : null} />)}
+                <div className={`${CARD} divide-y divide-line`}>
+                  {items.map((c) => <CommunityRow key={c.id} c={c} flush reason={!campus && inst && c.institution_id === inst ? "At your campus" : null} />)}
                 </div>
                 {hasMore && (
-                  <button type="button" disabled={moreBusy} onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-4 h-10")}>
+                  <button type="button" disabled={moreBusy} onClick={() => void loadMore()} className={buttonClass("outline", "mx-auto mt-5 h-10")}>
                     {moreBusy ? "Loading…" : "Show more"}
                   </button>
                 )}
               </>
             )}
             {authed && (
-              <Link href="/communities/new" className="mt-6 flex items-center justify-center gap-2 text-secondary font-bold text-muted hover:text-fg">
+              <Link href="/communities/new" className="mt-7 flex items-center justify-center gap-2 text-secondary font-bold text-muted hover:text-fg">
                 <Icon name="plus" className="size-4" />Start a community
               </Link>
             )}
