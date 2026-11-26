@@ -24,7 +24,7 @@ type Kind = "avatar" | "cover";
 
 const SPECS: Record<Kind, CropSpec> = {
   avatar: { aspect: 1, circle: true, title: "Move and scale", outW: 720, viewW: 300 },
-  cover: { aspect: 3, circle: false, title: "Crop cover", outW: 1500, viewW: 480 },
+  cover: { aspect: 4 / 3, circle: false, title: "Crop cover", outW: 1200, viewW: 360 },
 };
 
 const areaCls =
@@ -127,6 +127,22 @@ function EditForm({ profile }: { profile: UserProfile }) {
     }
   }
 
+  async function removeCover() {
+    if (uploading !== null || !cover) return;
+    setUploading("cover");
+    try {
+      await profileApi.removeCover();
+      setCover(null);
+      put(profileKey(profile.username), { ...profile, cover: null } as UserProfile);
+      show("Cover removed");
+      void refresh();
+    } catch (e) {
+      show(e instanceof ApiError ? e.message : "Couldn't remove cover");
+    } finally {
+      setUploading(null);
+    }
+  }
+
   async function save() {
     if (!canSave) return;
     setBusy(true);
@@ -210,8 +226,9 @@ function EditForm({ profile }: { profile: UserProfile }) {
       <input ref={coverInput} type="file" accept="image/*" hidden onChange={(e) => pick("cover", e)} />
 
       <div className="relative mb-14">
-        <div className="relative aspect-[3/1] overflow-hidden rounded-[20px] bg-surface-subtle">
-          {cover && <img src={cover} alt="" className="size-full object-cover" />}
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] bg-surface-subtle">
+          {cover && <img src={cover} alt="" className="size-full object-cover object-top" />}
+          {cover && <button type="button" aria-label="Remove cover photo" onClick={() => void removeCover()} className="absolute right-2 top-2 z-10 h-8 rounded-full bg-black/55 px-3 text-supporting font-bold text-white transition hover:bg-black/70">Remove</button>}
           <button
             type="button"
             aria-label="Change cover photo"

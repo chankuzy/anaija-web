@@ -156,7 +156,7 @@ function Stat({ value, label, href, inline }: { value: number; label: string; hr
     </>
   ) : (
     <>
-      <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(value)}</p>
+      <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg">{formatCount(value)}</p>
       <p className="mt-1 text-body text-fg/55">{label}</p>
     </>
   );
@@ -522,14 +522,14 @@ export function ProfileView({ username }: { username: string }) {
   return (
     <div className="mx-auto w-full max-w-[935px] pb-8">
       {/* ───────── MOBILE header: cover as a shadow behind everything, no card ───────── */}
-      <section className="relative isolate overflow-hidden md:hidden">
+      <section className={`relative isolate overflow-hidden md:hidden ${profile.cover ? "on-cover" : ""}`}>
         {profile.cover ? (
           <>
             <img
               src={profile.cover}
               alt=""
               decoding="async"
-              className="absolute inset-0 -z-20 size-full object-cover saturate-[0.6]"
+              className="absolute inset-0 -z-20 size-full object-cover object-top saturate-[0.6]"
               style={{ WebkitMaskImage: COVER_MASK, maskImage: COVER_MASK, WebkitMaskComposite: "source-in", maskComposite: "intersect" }}
             />
             <span className="absolute inset-0 -z-10 bg-gradient-to-b from-black/45 via-black/55 to-black/72" />
@@ -570,8 +570,8 @@ export function ProfileView({ username }: { username: string }) {
         <div className="relative px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 64px)" }}>
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1 pt-1">
-              <NameRow profile={profile} className="text-[25px] leading-[1.1] text-fg text-shadow" />
-              <p className="mt-0.5 truncate text-[15px] text-fg/55 text-shadow">@{profile.username}</p>
+              <NameRow profile={profile} className="text-[25px] leading-[1.1] text-fg" />
+              <p className="mt-0.5 truncate text-[15px] text-fg/55">@{profile.username}</p>
               <div className="mt-3.5 flex items-start gap-7">
                 <Stat value={profile.counts.following} label="Following" href={`/u/${profile.username}/following`} />
                 <Stat value={profile.counts.followers} label="Followers" href={`/u/${profile.username}/followers`} />
@@ -582,7 +582,7 @@ export function ProfileView({ username }: { username: string }) {
           </div>
 
           {/* Bio spans the full width, like TikTok: it is not boxed into the stats column. */}
-          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90 text-shadow">{bio}</p>}
+          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90">{bio}</p>}
           <BioLink links={profile.links} onMore={goInfo} />
 
           {!own && (

@@ -574,3 +574,7 @@ body {
   0%, 100% { box-shadow: 0 10px 28px rgba(0,0,0,0.2), 0 0 0 0 color-mix(in srgb, var(--c-brand) 40%, transparent); }
   50% { box-shadow: 0 10px 28px rgba(0,0,0,0.2), 0 0 0 8px color-mix(in srgb, var(--c-brand) 0%, transparent); }
 }
+
+/* F4: light text shadow for labels over photos; cover headers use light text in any theme. */
+.text-shadow-soft { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
+.on-cover { --c-fg: #ffffff; --c-muted: rgba(255, 255, 255, 0.68); --c-text2: rgba(255, 255, 255, 0.82); }

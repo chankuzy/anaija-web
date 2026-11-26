@@ -35,6 +35,9 @@ export const profileApi = {
     const r = await api.post<{ avatar_url?: string | null }>("profile-avatar", { storage_key: key });
     return mediaUrl(r.avatar_url ?? null);
   },
+  removeCover: async () => {
+    await api.post("profile-cover", { remove: true });
+  },
   uploadCover: async (blob: Blob) => {
     const key = await uploadBlob(blob, `cover_${Date.now()}.jpg`, "image/jpeg");
     const r = await api.post<{ cover_url?: string | null }>("profile-cover", { storage_key: key });
