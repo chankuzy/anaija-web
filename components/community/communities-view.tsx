@@ -28,6 +28,8 @@ const PAGE = "mx-auto w-full max-w-[640px] px-4 lg:max-w-[1000px]";
 // Horizontal rails bleed to the screen edge on phones only; from md up they stop at the column edge.
 const RAIL = "no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 md:mx-0 md:px-0";
 const CARD = "overflow-hidden rounded-3xl border border-line bg-surface-subtle";
+// Flat full-width list (Discover): no card, hairline dividers, bleeds to the screen edges on phones.
+const FLAT = "-mx-4 divide-y divide-line md:mx-0";
 
 // Recommendation signals that exist today. A community is only recommended when at least one holds, and the reason shown
 // is exactly that signal. Thresholds are deliberately plain; a real ranking needs the backend (see handoff notes).
@@ -61,7 +63,7 @@ function recommend(inst: number | null, pools: (Community[] | undefined)[]): Rec
 function CommunityRow({ c, reason, flush = false }: { c: Community; reason?: string | null; flush?: boolean }) {
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
   return (
-    <Link href={`/c/${c.slug}`} className={`flex items-center gap-3.5 transition-colors active:bg-surface-interactive ${flush ? "px-4 py-3.5" : "rounded-2xl px-1 py-2.5"}`}>
+    <Link href={`/c/${c.slug}`} className={`flex items-center gap-3.5 transition-colors active:bg-surface-interactive ${flush ? "px-4 py-3.5 md:px-0" : "rounded-2xl px-1 py-2.5"}`}>
       <Avatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{c.name}</span>{c.academic_origin && <OfficialMark />}</span>
@@ -75,9 +77,9 @@ function CommunityRow({ c, reason, flush = false }: { c: Community; reason?: str
 
 function RowsSkeleton({ n = 4 }: { n?: number }) {
   return (
-    <div role="status" aria-busy="true" aria-label="Loading" className={`${CARD} divide-y divide-line`}>
+    <div role="status" aria-busy="true" aria-label="Loading" className={FLAT}>
       {Array.from({ length: n }, (_, i) => (
-        <div key={i} className="flex items-center gap-3.5 px-4 py-3.5">
+        <div key={i} className="flex items-center gap-3.5 px-4 py-3.5 md:px-0">
           <Sk className="size-12 rounded-full" />
           <div className="flex-1 space-y-2"><Sk className="h-3.5 w-40 max-w-full rounded-full" /><Sk className="h-3 w-56 max-w-full rounded-full" /></div>
         </div>
@@ -381,7 +383,7 @@ export function CommunitiesView() {
               </Empty>
             ) : (
               <>
-                <div className={`${CARD} divide-y divide-line`}>
+                <div className={FLAT}>
                   {items.map((c) => <CommunityRow key={c.id} c={c} flush reason={!campus && inst && c.institution_id === inst ? "At your campus" : null} />)}
                 </div>
                 {hasMore && (
