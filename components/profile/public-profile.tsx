@@ -16,14 +16,14 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
 
   return (
     <main className="mx-auto min-h-dvh w-full max-w-[935px] pb-20">
-      <section className="relative isolate overflow-hidden">
+      <section className={`relative isolate overflow-hidden ${p.cover ? "on-cover" : ""}`}>
         {p.cover ? (
           <>
             <img
               src={p.cover}
               alt=""
               decoding="async"
-              className="absolute inset-0 -z-20 size-full object-cover saturate-[0.6]"
+              className="absolute inset-0 -z-20 size-full object-cover object-top saturate-[0.6]"
               style={{ WebkitMaskImage: COVER_MASK, maskImage: COVER_MASK, WebkitMaskComposite: "source-in", maskComposite: "intersect" }}
             />
             <span className="absolute inset-0 -z-10 bg-gradient-to-b from-black/45 via-black/55 to-black/72" />
@@ -47,27 +47,27 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
               <Avatar url={p.avatar} name={p.name ?? p.username} size={96} />
             </div>
             <div className="min-w-0 flex-1 pt-1">
-              <h1 className="truncate text-[25px] font-extrabold leading-[1.1] tracking-tight text-fg text-shadow">
+              <h1 className="truncate text-[25px] font-extrabold leading-[1.1] tracking-tight text-fg">
                 {p.name ?? p.username}
               </h1>
-              <p className="mt-0.5 truncate text-[15px] text-fg/55 text-shadow">
+              <p className="mt-0.5 truncate text-[15px] text-fg/55">
                 @{p.username}
                 {p.institution ? ` · ${p.institution}` : ""}
               </p>
               <div className="mt-3.5 flex items-start gap-7">
                 <div>
-                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(p.counts.followers)}</p>
+                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg">{formatCount(p.counts.followers)}</p>
                   <p className="mt-1 text-body text-fg/55">Followers</p>
                 </div>
                 <div>
-                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(total)}</p>
+                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg">{formatCount(total)}</p>
                   <p className="mt-1 text-body text-fg/55">Posts</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90 text-shadow md:max-w-[620px]">{bio}</p>}
+          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90 md:max-w-[620px]">{bio}</p>}
 
           <Link
             href={login}
