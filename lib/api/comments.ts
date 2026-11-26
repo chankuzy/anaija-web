@@ -1,6 +1,6 @@
 import { api } from "./client";
 
-// Contracts read from comments-list / -replies / -store / -like / -destroy / -edit / -resolve.
+// Contracts read from comments-list / -replies / -store / -like / -destroy / -edit / -resolve / -accept.
 export interface CommentAuthor {
   id: number;
   name: string | null;
@@ -29,6 +29,9 @@ export interface Comment {
   likes_count: number;
   replies_count: number;
   is_liked: boolean;
+  /** Course Desk questions only. */
+  is_accepted?: boolean;
+  is_staff?: boolean;
   created_at: string;
   edited_at?: string | null;
   media?: CommentMedia[];
@@ -55,6 +58,9 @@ export const commentsApi = {
   edit: (id: number, body: string) => api.post<Comment>(`comments-edit/${id}`, { body }),
   /** Course Desk questions: the author or a course team member marks the question answered / reopens it. */
   resolve: (postId: number, resolved: boolean) => api.post<{ resolved: boolean }>(`comments-resolve/${postId}`, { resolved }),
+  /** Course Desk questions: accept one answer (null clears it). */
+  accept: (postId: number, commentId: number | null) =>
+    api.post<{ accepted_comment_id: number | null; resolved?: boolean }>(`comments-accept/${postId}`, { comment_id: commentId }),
   like: (id: number) => api.post<{ liked: boolean; likes_count: number }>(`comments-like/${id}`, {}),
   remove: (id: number) => api.delete<{ message: string }>(`comments-destroy/${id}`),
 };

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Icon } from "@/components/ui/icon";
+import { UpvoteIcon } from "@/components/ui/upvote-icon";
 import { commentsApi, type Comment, type CommentMedia, type CommentMediaInput } from "@/lib/api/comments";
 import { uploadBlob } from "@/lib/api/upload";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -18,11 +19,15 @@ import { timeAgo } from "@/lib/format";
 type Top = { items: Comment[]; cursor: string | null; hasMore: boolean; loading: boolean; more: boolean; error: string | null };
 type Thread = { items: Comment[]; expanded: boolean; loaded: boolean; loading: boolean; hasMore: boolean; cursor: string | null };
 
-/** Course Desk question threads only: replies may carry images, own replies can be edited, the question can be marked answered. */
+/**
+ * Course Desk questions only ("answers mode"): no replies, upvotes instead of likes, one accepted answer, images,
+ * own answers can be edited, the question can be marked answered.
+ */
 export interface QuestionCtx {
   resolved: boolean;
   canResolve: boolean;
   onResolved: (resolved: boolean) => void;
+  onAccepted?: (commentId: number | null) => void;
 }
 
 const EMPTY_THREAD: Thread = { items: [], expanded: false, loaded: false, loading: false, hasMore: false, cursor: null };
@@ -78,22 +83,30 @@ function Media({ items, small, onOpen }: { items: CommentMedia[]; small?: boolea
 function Row({
   c,
   small,
+  answers,
   mine,
   editable,
   editing,
   onLike,
   onReply,
+  onAccept,
+  accepting,
   onDelete,
   onEdit,
   onImage,
 }: {
   c: Comment;
   small?: boolean;
+  /** Answers mode (Course Desk question). Small rows are then old replies: visible, read-only. */
+  answers: boolean;
   mine: boolean;
   editable: boolean;
   editing: { text: string; busy: boolean; onText: (t: string) => void; onSave: () => void; onCancel: () => void } | null;
   onLike: () => void;
   onReply: () => void;
+  /** Set only when the viewer may accept this answer. */
+  onAccept?: () => void;
+  accepting?: boolean;
   onDelete: () => void;
   onEdit: () => void;
   onImage: (url: string) => void;
@@ -101,12 +114,26 @@ function Row({
   const href = c.author.username ? `/u/${c.author.username}` : null;
   const who = <span className="text-secondary font-bold text-fg">{c.author.username}</span>;
   const act = "text-supporting font-semibold text-muted";
+  const accepted = answers && !small && !!c.is_accepted;
+  const readOnly = answers && !!small;
   return (
-    <div data-comment-id={c.id} className={`flex gap-2.5 py-2 ${small ? "pl-[58px] pr-4" : "px-4"} ${c.pending ? "opacity-70" : ""}`}>
+    <div
+      data-comment-id={c.id}
+      className={`flex gap-2.5 py-2 ${small ? "pl-[58px] pr-4" : "px-4"} ${accepted ? "bg-brand/10" : ""} ${c.pending ? "opacity-70" : ""}`}
+    >
       <ProfileHoverCard username={c.author.username}><Avatar url={c.author.avatar} name={c.author.name ?? c.author.username} size={small ? 26 : 36} /></ProfileHoverCard>
       <div className="min-w-0 flex-1">
+        {accepted && (
+          <span className="mb-1 flex items-center gap-1 text-micro font-extrabold uppercase tracking-wide text-brand-ink">
+            <Icon name="check" className="size-3.5" />
+            Accepted answer
+          </span>
+        )}
         <div className="flex items-center gap-1.5">
           {href ? <Link href={href}>{who}</Link> : who}
+          {answers && c.is_staff && (
+            <span className="rounded-pill bg-brand/15 px-2 py-0.5 text-micro font-extrabold uppercase tracking-wide text-brand-ink">Staff</span>
+          )}
           <span className="text-micro text-muted">
             {c.pending ? "Posting…" : timeAgo(c.created_at)}
             {c.edited_at && !c.pending ? " · edited" : ""}
@@ -140,14 +167,37 @@ function Row({
         )}
         {!editing && (
           <div className="mt-1.5 flex items-center gap-4">
-            <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-like" : ""}`}>
-              <Icon name="heart" filled={c.is_liked} className="size-3.5" />
-              {c.likes_count > 0 && c.likes_count}
-            </button>
-            <button type="button" disabled={c.pending} onClick={onReply} className={act}>
-              Reply
-            </button>
-            {mine && editable && !c.pending && (
+            {answers ? (
+              !readOnly && (
+                <button
+                  type="button"
+                  aria-label={c.is_liked ? "Remove upvote" : "Upvote"}
+                  aria-pressed={c.is_liked}
+                  disabled={c.pending}
+                  onClick={onLike}
+                  className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-brand-ink" : ""}`}
+                >
+                  <UpvoteIcon filled={c.is_liked} className="size-4" />
+                  {c.likes_count > 0 && c.likes_count}
+                </button>
+              )
+            ) : (
+              <>
+                <button type="button" disabled={c.pending} onClick={onLike} className={`flex items-center gap-1 ${act} ${c.is_liked ? "!text-like" : ""}`}>
+                  <Icon name="heart" filled={c.is_liked} className="size-3.5" />
+                  {c.likes_count > 0 && c.likes_count}
+                </button>
+                <button type="button" disabled={c.pending} onClick={onReply} className={act}>
+                  Reply
+                </button>
+              </>
+            )}
+            {onAccept && !c.pending && (
+              <button type="button" disabled={accepting} onClick={onAccept} className="text-supporting font-bold text-brand-ink disabled:opacity-50">
+                {accepted ? "Remove acceptance" : "Accept answer"}
+              </button>
+            )}
+            {mine && editable && !readOnly && !c.pending && (
               <button type="button" onClick={onEdit} className={act}>
                 Edit
               </button>
@@ -199,6 +249,7 @@ export function CommentsSheet({
   const [edit, setEdit] = useState<{ id: number; parentId: number | null; text: string; busy: boolean } | null>(null);
   const [resolved, setResolved] = useState(question?.resolved ?? false);
   const [resolving, setResolving] = useState(false);
+  const [accepting, setAccepting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -365,8 +416,37 @@ export function CommentsSheet({
     }
   }
 
+  function applyAccepted(id: number | null) {
+    const mark = (x: Comment): Comment => ({ ...x, is_accepted: x.id === id });
+    setTop((t) => ({ ...t, items: t.items.map(mark) }));
+    const f = firstPages.get(postId);
+    if (f) rememberFirst(postId, { ...f, items: f.items.map(mark) });
+  }
+
+  async function toggleAccept(c: Comment) {
+    if (!question || accepting || c.pending || c.id < 0) return;
+    const next = c.is_accepted ? null : c.id;
+    const previous = top.items.find((x) => x.is_accepted)?.id ?? null;
+    const wasResolved = resolved;
+    setAccepting(true);
+    applyAccepted(next);
+    if (next !== null) setResolved(true);
+    try {
+      await commentsApi.accept(postId, next);
+      if (question.onAccepted) question.onAccepted(next);
+      else if (next !== null) question.onResolved(true);
+    } catch (e) {
+      applyAccepted(previous);
+      setResolved(wasResolved);
+      flash(msg(e));
+    } finally {
+      setAccepting(false);
+    }
+  }
+
   async function remove(c: Comment, parentId: number | null) {
-    if (!(await confirmDialog({ title: isQ ? "Delete this reply?" : "Delete comment?", message: "This can't be undone.", confirmLabel: "Delete", danger: true }))) return;
+    const title = !isQ ? "Delete comment?" : parentId === null ? "Delete this answer?" : "Delete this reply?";
+    if (!(await confirmDialog({ title, message: "This can't be undone.", confirmLabel: "Delete", danger: true }))) return;
     if (parentId === null) {
       const prev = top.items;
       setTop((t) => ({ ...t, items: t.items.filter((x) => x.id !== c.id) }));
@@ -375,6 +455,7 @@ export function CommentsSheet({
         await commentsApi.remove(c.id);
         const f = firstPages.get(postId);
         if (f) rememberFirst(postId, { ...f, items: f.items.filter((x) => x.id !== c.id) });
+        if (c.is_accepted) question?.onAccepted?.(null);
       } catch {
         setTop((t) => ({ ...t, items: prev }));
         bump(1);
@@ -425,7 +506,6 @@ export function CommentsSheet({
           onCancel: () => setEdit(null),
         }
       : null;
-  void editingFor;
 
   async function toggleResolved() {
     if (!question || resolving) return;
@@ -434,6 +514,7 @@ export function CommentsSheet({
     setResolved(next);
     try {
       await commentsApi.resolve(postId, next);
+      if (!next) applyAccepted(null); // the server clears the accepted answer on reopen
       question.onResolved(next);
     } catch (e) {
       setResolved(!next);
@@ -444,7 +525,7 @@ export function CommentsSheet({
   }
 
   function startReply(username: string | null, parentId: number) {
-    if (!username) return;
+    if (!username || isQ) return;
     setReplyTo({ username, parentId });
     setText(`@${username} `);
     inputRef.current?.focus();
@@ -567,12 +648,16 @@ export function CommentsSheet({
 
   const rowProps = (c: Comment, parentId: number | null) => ({
     c,
+    answers: isQ,
     mine: user?.id === c.author.id,
     editable: isQ,
     editing: editingFor(c, parentId),
     onImage: setViewer,
     onEdit: () => setEdit({ id: c.id, parentId, text: c.body, busy: false }),
   });
+
+  // The accepted answer stays on top, including right after accepting. Everything else keeps the server's order.
+  const shown = isQ ? [...top.items].sort((a, b) => Number(!!b.is_accepted) - Number(!!a.is_accepted)) : top.items;
 
   const linkBtn = "py-1.5 text-xs font-semibold text-muted";
   const noun = isQ ? "Answers" : "Comments";
@@ -618,7 +703,7 @@ export function CommentsSheet({
               <p className="text-secondary text-muted">{isQ ? "Be the first to answer" : "Start the conversation"}</p>
             </div>
           ) : (
-            top.items.map((c) => {
+            shown.map((c) => {
               const th = threads[c.id];
               const n = c.replies_count;
               return (
@@ -627,6 +712,8 @@ export function CommentsSheet({
                     {...rowProps(c, null)}
                     onLike={() => void like(c, null)}
                     onReply={() => startReply(c.author.username, c.id)}
+                    onAccept={question?.canResolve ? () => void toggleAccept(c) : undefined}
+                    accepting={accepting}
                     onDelete={() => void remove(c, null)}
                   />
                   {th?.expanded &&

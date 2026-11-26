@@ -5,8 +5,10 @@ import { useState } from "react";
 import { ProfileHoverCard } from "@/components/profile/profile-hover-card";
 import { StoryRingAvatar } from "@/components/profile/story-ring-avatar";
 import { Icon } from "@/components/ui/icon";
+import { UpvoteIcon } from "@/components/ui/upvote-icon";
 import type { Post } from "@/lib/api/feed-types";
 import { useAuth } from "@/lib/auth/auth-context";
+import { structuredOf } from "@/lib/feed/structured";
 import { formatCount, timeAgo } from "@/lib/format";
 import { formatCompactLocation } from "@/lib/location/types";
 import { useStoryRing } from "@/lib/stories/use-story-ring";
@@ -15,6 +17,8 @@ import { CaptionText, withHashtags } from "./caption-text";
 const BTN =
   "relative inline-flex h-10 min-w-9 items-center justify-center gap-1.5 rounded-pill px-1.5 text-fg transition-[background-color,transform] duration-150 hover:bg-fg/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
 const ACT = "size-[26px]"; // action icons (like, comment, share, save)
+const PILL =
+  "inline-flex h-9 items-center gap-1.5 rounded-pill px-3.5 text-secondary font-semibold transition-[background-color,transform] duration-150 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
 
 // Header: avatar, the username alone on the first line, and a quiet second line (attached sound, else why you are
 // seeing the post, else the location) with the time at its end. Follow is a calm pill; yellow is kept for state
@@ -106,45 +110,72 @@ export function PostHeader({
 
 const plural = (n: number, one: string, many: string) => `${formatCount(n)} ${n === 1 ? one : many}`;
 
-// Like, comment, share on the left; save on the right. Icons only on phones and tablets, with the counts beside them
-// from lg up. Below lg the numbers live in the stats line under the row: likes lead in white, the rest sit muted.
-export function PostActions({
-  post,
-  onLike,
-  onComment,
-  onShare,
-  onBookmark,
-}: {
+type ActionProps = {
   post: Post;
   onLike: () => void;
   onComment: () => void;
   onShare: () => void;
   onBookmark: () => void;
-}) {
+};
+
+// Like, comment, share on the left; save on the right. Icons only on phones and tablets, with the counts beside them
+// from lg up. Below lg the numbers live in the stats line under the row: likes lead in white, the rest sit muted.
+// Course Desk questions swap like and comment for Upvote and Answer.
+export function PostActions({ post, onLike, onComment, onShare, onBookmark }: ActionProps) {
+  const isQuestion = structuredOf(post)?.kind === "question";
   const count = (n: number) =>
     n > 0 ? <span className="hidden text-body font-semibold tabular-nums lg:inline">{formatCount(n)}</span> : null;
   const secondary = [
     post.bookmarks_count > 0 && plural(post.bookmarks_count, "save", "saves"),
     post.shares_count > 0 && plural(post.shares_count, "share", "shares"),
   ].filter(Boolean) as string[];
-  const hasStats = post.likes_count > 0 || secondary.length > 0;
+  // A question shows its upvote count on the button itself.
+  const likes = isQuestion ? 0 : post.likes_count;
+  const hasStats = likes > 0 || secondary.length > 0;
+  const share = (
+    <button type="button" aria-label={isQuestion ? "Forward" : "Share"} onClick={onShare} className={BTN}>
+      <Icon name="shareArrow" className={ACT} />
+      {count(post.shares_count)}
+    </button>
+  );
   return (
     <>
       <div className="flex items-center justify-between pt-1">
-        <div className="-ml-1.5 flex items-center">
-          <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
-            <Icon name="heart" filled={post.is_liked} className={`${ACT} ${post.is_liked ? "text-like" : ""}`} />
-            {count(post.likes_count)}
-          </button>
-          <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
-            <Icon name="chatLine" className={ACT} />
-            {count(post.comments_count)}
-          </button>
-          <button type="button" aria-label="Share" onClick={onShare} className={BTN}>
-            <Icon name="shareArrow" className={ACT} />
-            {count(post.shares_count)}
-          </button>
-        </div>
+        {isQuestion ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              aria-label={post.is_liked ? "Remove upvote" : "Upvote"}
+              aria-pressed={post.is_liked}
+              onClick={onLike}
+              className={`${PILL} ${post.is_liked ? "bg-brand/15 text-brand-ink" : "bg-fg/8 text-fg hover:bg-fg/14"}`}
+            >
+              <UpvoteIcon filled={post.is_liked} className="size-5" />
+              Upvote
+              {post.likes_count > 0 && <span className="tabular-nums">{formatCount(post.likes_count)}</span>}
+            </button>
+            <button
+              type="button"
+              onClick={onComment}
+              className={`${PILL} bg-fg/8 text-fg hover:bg-fg/14 ${post.allow_comments ? "" : "opacity-50"}`}
+            >
+              Answer
+            </button>
+            {share}
+          </div>
+        ) : (
+          <div className="-ml-1.5 flex items-center">
+            <button type="button" aria-label={post.is_liked ? "Unlike" : "Like"} aria-pressed={post.is_liked} onClick={onLike} className={BTN}>
+              <Icon name="heart" filled={post.is_liked} className={`${ACT} ${post.is_liked ? "text-like" : ""}`} />
+              {count(post.likes_count)}
+            </button>
+            <button type="button" aria-label="Comments" onClick={onComment} className={`${BTN} ${post.allow_comments ? "" : "opacity-50"}`}>
+              <Icon name="chatLine" className={ACT} />
+              {count(post.comments_count)}
+            </button>
+            {share}
+          </div>
+        )}
         <button
           type="button"
           aria-label={post.is_bookmarked ? "Remove bookmark" : "Bookmark"}
@@ -158,10 +189,10 @@ export function PostActions({
       </div>
       {hasStats && (
         <p className="mt-0.5 text-body text-muted lg:hidden">
-          {post.likes_count > 0 && <span className="font-semibold text-fg">{plural(post.likes_count, "like", "likes")}</span>}
+          {likes > 0 && <span className="font-semibold text-fg">{plural(likes, "like", "likes")}</span>}
           {secondary.map((s, i) => (
             <span key={s}>
-              {post.likes_count > 0 || i > 0 ? " · " : ""}
+              {likes > 0 || i > 0 ? " · " : ""}
               {s}
             </span>
           ))}

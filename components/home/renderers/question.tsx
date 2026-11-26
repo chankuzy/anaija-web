@@ -10,6 +10,7 @@ export function QuestionBody({ post, onOpen, onLike }: BodyProps) {
   const c = structuredOf(post);
   if (!c || c.kind !== "question") return null;
   const n = post.comments_count;
+  const accepted = !!(c as typeof c & { accepted_comment_id?: number }).accepted_comment_id;
   const resolved = !!c.resolved_at;
   const pics = post.media.filter((m) => m.type === "image" && (m.thumbnail || m.url)).slice(0, 4);
   return (
@@ -17,10 +18,10 @@ export function QuestionBody({ post, onOpen, onLike }: BodyProps) {
       <span className="flex items-center gap-2">
         <Icon name="questionCircle" filled className="size-4 text-brand-ink" />
         <span className="text-micro font-semibold uppercase tracking-[0.08em] text-muted">Question</span>
-        {resolved && (
+        {(resolved || accepted) && (
           <span className="ml-auto inline-flex items-center gap-1 rounded-pill bg-brand/15 px-2.5 py-1 text-micro font-extrabold uppercase tracking-wide text-brand-ink">
             <Icon name="check" className="size-3" />
-            Answered
+            {accepted ? "Accepted answer" : "Answered"}
           </span>
         )}
       </span>

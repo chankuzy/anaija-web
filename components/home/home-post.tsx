@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { CommentsSheet } from "@/components/feed/comments-sheet";
 import { OptionsSheet, type SheetAction } from "@/components/feed/options-sheet";
 import { Icon } from "@/components/ui/icon";
+import { UpvoteIcon } from "@/components/ui/upvote-icon";
 import type { Post } from "@/lib/api/feed-types";
 import { contentKind, type ContentKind } from "@/lib/feed/content";
 import { usePostActions } from "@/lib/feed/use-post-actions";
@@ -36,7 +37,7 @@ export const HomePost = memo(function HomePost({
   extra?: SheetAction[];
   /** Drop the side padding when the host already pads. */
   flush?: boolean;
-  /** Course Desk questions: the viewer holds the 'coordinate' power (besides the author) and may mark answered. */
+  /** Course Desk questions: the viewer holds the 'coordinate' power (besides the author): mark answered, accept. */
   canCoordinate?: boolean;
 }) {
   const router = useRouter();
@@ -77,12 +78,12 @@ export const HomePost = memo(function HomePost({
   );
 
   const openComments = useCallback(() => {
-    if (!post.allow_comments) return a.flash("Comments are turned off for this post");
+    if (!post.allow_comments) return a.flash(kind === "question" ? "Answers are turned off for this question" : "Comments are turned off for this post");
     if (!a.requireAuth("Sign in to join the conversation.")) return;
     setCommentsOpen(true);
-  }, [post.allow_comments, a]);
+  }, [post.allow_comments, a, kind]);
 
-  // A Course Desk question is read and answered in the comments sheet (replies are comments); everything else
+  // A Course Desk question is read and answered in the comments sheet (answers are comments); everything else
   // opens its own page or hands off to Immersive.
   const open = () => {
     if (kind === "question") return openComments();
@@ -98,15 +99,29 @@ export const HomePost = memo(function HomePost({
     void a.like(true);
   };
 
-  // The resolved flag lives in the post's own content (mirrored by the server), so patching it updates the card too.
+  // Resolved and accepted state live in the post's own content (mirrored by the server), so patching it updates the card.
+  const content = () => ({
+    ...((post.content && typeof post.content === "object" ? post.content : {}) as Record<string, unknown>),
+  });
   const setResolved = (resolved: boolean) => {
-    const base = (post.content && typeof post.content === "object" ? post.content : {}) as Record<string, unknown>;
-    const next = { ...base };
+    const next = content();
     if (resolved) {
       next.resolved_at = new Date().toISOString();
     } else {
       delete next.resolved_at;
       delete next.resolved_by;
+      delete next.accepted_comment_id; // reopening clears the accepted answer on the server
+    }
+    a.patch(post.id, { content: next });
+  };
+  // Accepting also resolves; clearing leaves the resolved state alone.
+  const setAccepted = (commentId: number | null) => {
+    const next = content();
+    if (commentId === null) {
+      delete next.accepted_comment_id;
+    } else {
+      next.accepted_comment_id = commentId;
+      next.resolved_at = next.resolved_at ?? new Date().toISOString();
     }
     a.patch(post.id, { content: next });
   };
@@ -116,6 +131,7 @@ export const HomePost = memo(function HomePost({
           resolved: !!(post.content as { resolved_at?: string } | null | undefined)?.resolved_at,
           canResolve: a.isOwn || canCoordinate,
           onResolved: setResolved,
+          onAccepted: setAccepted,
         }
       : undefined;
 
@@ -132,7 +148,11 @@ export const HomePost = memo(function HomePost({
         {burst && (
           <div className="pointer-events-none absolute inset-0 grid place-items-center">
             <div className="heart-burst">
-              <Icon name="heart" filled className="icon-shadow size-24 text-like" />
+              {kind === "question" ? (
+                <UpvoteIcon filled className="icon-shadow size-24 text-brand" />
+              ) : (
+                <Icon name="heart" filled className="icon-shadow size-24 text-like" />
+              )}
             </div>
           </div>
         )}
