@@ -183,7 +183,7 @@ export function PostActions({ post, onLike, onComment, onShare, onBookmark }: Ac
           onClick={onBookmark}
           className={`${BTN} -mr-1.5`}
         >
-          <Icon name="bookmark" filled={post.is_bookmarked} className={`${ACT} ${post.is_bookmarked ? "text-brand" : ""}`} />
+          <Icon name="bookmark" filled={post.is_bookmarked} className={`${ACT}`} />
           {count(post.bookmarks_count)}
         </button>
       </div>

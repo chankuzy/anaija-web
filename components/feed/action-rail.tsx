@@ -100,7 +100,7 @@ export function ActionRail({
         <Icon name="heart" filled className={`${big} ${post.is_liked ? "text-like" : "text-white"}`} />
       </RailButton>
       <RailButton aria="Comments" side={side} label={formatCount(post.comments_count)} onClick={onComment}>
-        <Icon name="message" filled className={big} />
+        <Icon name="comment" filled className={big} />
       </RailButton>
       <RailButton
         aria="Bookmark"
@@ -109,10 +109,10 @@ export function ActionRail({
         label={formatCount(post.bookmarks_count)}
         onClick={onBookmark}
       >
-        <Icon name="bookmark" filled className={`${big} ${post.is_bookmarked ? "text-brand" : "text-white"}`} />
+        <Icon name="bookmark" filled tone={post.is_bookmarked ? "amber" : "none"} className={`${big} text-white`} />
       </RailButton>
       <RailButton aria="Share" side={side} label={formatCount(post.shares_count)} onClick={onShare}>
-        <Icon name="shareArrow" filled className={big} />
+        <Icon name="share" filled className={big} />
       </RailButton>
       <RailButton aria="More options" side={side} onClick={onOptions}>
         <Icon name="dots" filled className={side ? "size-7" : "size-[30px]"} />

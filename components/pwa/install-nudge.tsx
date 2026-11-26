@@ -28,7 +28,7 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
     </li>
   );
 }
-const Share = <Icon name="share" className="mx-0.5 size-[18px] translate-y-[3px] text-brand" />;
+const Share = <Icon name="shareIos" className="mx-0.5 size-[18px] translate-y-[3px] text-brand" />;
 const Dots = <Icon name="menuDots" className="mx-0.5 size-[18px] translate-y-[3px] text-brand" />;
 const B = ({ children }: { children: ReactNode }) => <b className="text-fg">{children}</b>;
 

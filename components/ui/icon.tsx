@@ -19,23 +19,49 @@ const WEIGHT = {
 
 export type IconWeight = keyof typeof WEIGHT;
 
+// Multi-colour palette for casual icons (settings rows, info glyphs, state icons).
+// Buttons and main nav never pass a tone, so they keep following currentColor.
+export const TONES = {
+  fire: "#FF5A1F",
+  orange: "#FF8A1F",
+  amber: "#FFB020",
+  gold: "#FFC300",
+  sky: "#2EA8FF",
+  mint: "#1FC98E",
+  violet: "#9B6BFF",
+  rose: "#FF4D7D",
+  steel: "#8A94A6",
+} as const;
+
+// "none" opts out of every automatic colour (used for the unsaved bookmark on dark media).
+export type IconTone = keyof typeof TONES | "none";
+
 export function Icon({
   name,
   className = "size-6",
   filled = false,
   weight = "medium",
+  tone,
 }: {
   name: IconName;
   className?: string;
   filled?: boolean;
   weight?: IconWeight;
+  tone?: IconTone;
 }) {
   const Glyph = SOLAR[name][filled ? "bold" : "outline"];
   const extra = filled ? "" : WEIGHT[weight];
+  // A filled bookmark is a SAVED bookmark everywhere: always orange/yellow, never the brand purple.
+  const effective: IconTone | undefined = tone ?? (name === "bookmark" && filled ? "amber" : undefined);
+  const color = effective && effective !== "none" ? TONES[effective] : undefined;
   // The wrapper owns the size (className), the glyph fills it. Sizing the glyph itself via size="1em"
   // made every icon follow the parent's font-size and ignore size-* classes.
   return (
-    <span className={`inline-flex shrink-0 items-center justify-center ${className}`.trim()} aria-hidden="true">
+    <span
+      className={`inline-flex shrink-0 items-center justify-center ${className}`.trim()}
+      style={color ? { color } : undefined}
+      aria-hidden="true"
+    >
       <Glyph className={`size-full ${extra}`.trim()} size="100%" color="currentColor" />
     </span>
   );

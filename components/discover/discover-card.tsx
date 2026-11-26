@@ -154,7 +154,7 @@ export function DiscoverCard({
           {compact.format(post.likes_count ?? 0)}
         </span>
         <span className="flex items-center gap-1.5 drop-shadow">
-          <Icon name="message" filled className="size-[19px]" />
+          <Icon name="comment" filled className="size-[19px]" />
           {compact.format(post.comments_count ?? 0)}
         </span>
       </span>

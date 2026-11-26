@@ -698,7 +698,7 @@ export function CommentsSheet({
             <p className="px-6 py-16 text-center text-sm text-muted">{top.error}</p>
           ) : top.items.length === 0 ? (
             <div className="flex flex-col items-center gap-1 py-16">
-              <Icon name="message" filled className="mb-2 size-9 text-fg/50" />
+              <Icon name="comment" filled className="mb-2 size-9 text-fg/50" />
               <p className="text-[15px] font-bold text-fg">{isQ ? "No answers yet" : "No comments yet"}</p>
               <p className="text-secondary text-muted">{isQ ? "Be the first to answer" : "Start the conversation"}</p>
             </div>
