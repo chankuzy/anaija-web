@@ -2,7 +2,7 @@
 "use client";
 
 // Standalone post page (/p/:id) for everything that is not a reel or a listing: text and image posts, polls,
-// documents, publications and announcements. Same actions, comments and options sheet as a Home post.
+// documents, publications, announcements and Course Desk questions. Same actions, comments and options sheet as a Home post.
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CommentsSheet } from "@/components/feed/comments-sheet";
@@ -14,6 +14,7 @@ import { ImageCarousel, slidesOf } from "@/components/home/renderers/image-carou
 import { PollCard } from "@/components/home/renderers/poll";
 import { PostActions, PostHeader } from "@/components/home/post-anatomy";
 import { Icon } from "@/components/ui/icon";
+import { api } from "@/lib/api/client";
 import type { Post } from "@/lib/api/feed-types";
 import { postDetailApi } from "@/lib/api/post-detail";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -149,13 +150,55 @@ function Detail({ post, onLike }: { post: Post; onLike: () => void }) {
 function ReaderBody({ post: raw, focus, patch, onRemove }: { post: Post; focus?: number; patch: (id: number, p: Partial<Post>) => void; onRemove: (id: number) => void }) {
   const a = usePostActions(raw, { patch, onRemove });
   const post = a.post;
+  const { status } = useAuth();
   const [commentsOpen, setCommentsOpen] = useState(focus !== undefined);
   const [optionsOpen, setOptionsOpen] = useState(false);
+  const structured = structuredOf(post);
+  const question = structured?.kind === "question" ? structured : null;
+  const isQuestion = !!question;
+  // Course staff may resolve and accept too. The asker already can, so only others need the lookup.
+  const { data: powers } = useCached<{ coordinate: boolean }>(
+    status === "authed" && isQuestion && !a.isOwn ? `question-powers:${post.id}` : null,
+    () => api.get<{ coordinate: boolean }>(`comments/powers/${post.id}`),
+    { staleMs: 60_000, persist: false },
+  );
   const openComments = useCallback(() => {
-    if (!post.allow_comments) return a.flash("Comments are turned off for this post");
+    if (!post.allow_comments) return a.flash(isQuestion ? "Answers are turned off for this question" : "Comments are turned off for this post");
     if (!a.requireAuth()) return;
     setCommentsOpen(true);
-  }, [post.allow_comments, a]);
+  }, [post.allow_comments, a, isQuestion]);
+
+  // Same mirroring as HomePost: resolved and accepted state live in the post's content.
+  const patchContent = (change: (next: Record<string, unknown>) => void) => {
+    const next = { ...((post.content && typeof post.content === "object" ? post.content : {}) as Record<string, unknown>) };
+    change(next);
+    a.patch(post.id, { content: next });
+  };
+  const questionCtx = question
+    ? {
+        resolved: !!question.resolved_at,
+        canResolve: a.isOwn || powers?.coordinate === true,
+        onResolved: (resolved: boolean) =>
+          patchContent((next) => {
+            if (resolved) {
+              next.resolved_at = new Date().toISOString();
+              return;
+            }
+            delete next.resolved_at;
+            delete next.resolved_by;
+            delete next.accepted_comment_id;
+          }),
+        onAccepted: (commentId: number | null) =>
+          patchContent((next) => {
+            if (commentId === null) {
+              delete next.accepted_comment_id;
+              return;
+            }
+            next.accepted_comment_id = commentId;
+            next.resolved_at = next.resolved_at ?? new Date().toISOString();
+          }),
+      }
+    : undefined;
 
   return (
     <>
@@ -166,7 +209,7 @@ function ReaderBody({ post: raw, focus, patch, onRemove }: { post: Post; focus?:
       <PostActions post={post} onLike={() => void a.like(!post.is_liked)} onComment={openComments} onShare={a.share} onBookmark={() => void a.bookmark()} />
       {post.allow_comments && post.comments_count > 0 && (
         <button type="button" onClick={openComments} className="mt-1 text-secondary text-muted">
-          View all {post.comments_count} comments
+          View all {post.comments_count} {isQuestion ? "answers" : "comments"}
         </button>
       )}
       {a.toast && (
@@ -175,7 +218,7 @@ function ReaderBody({ post: raw, focus, patch, onRemove }: { post: Post; focus?:
         </div>
       )}
       {commentsOpen && (
-        <CommentsSheet postId={post.id} focusId={focus} initialCount={post.comments_count} onCountChange={(n) => a.patch(post.id, { comments_count: n })} onClose={() => setCommentsOpen(false)} />
+        <CommentsSheet postId={post.id} focusId={focus} initialCount={post.comments_count} onCountChange={(n) => a.patch(post.id, { comments_count: n })} onClose={() => setCommentsOpen(false)} question={questionCtx} />
       )}
       {optionsOpen && (
         <OptionsSheet
