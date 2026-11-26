@@ -555,3 +555,6 @@ body {
 .sk-block { background-color: color-mix(in srgb, var(--c-fg) 8%, transparent); }
 .cm { color-scheme: inherit; }
 .bubble-sent { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-hover)); color: var(--c-brand-fg); }
+
+/* Banners: hairline ring + soft shadow that works in light and dark. */
+.anaija-banner { box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--c-line); }

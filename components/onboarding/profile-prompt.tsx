@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/ui/icon";
+import { Icon, type IconName } from "@/components/ui/icon";
 import { personalizationApi } from "@/lib/api/personalization";
 import { useAuth } from "@/lib/auth/auth-context";
 
@@ -38,15 +38,15 @@ function visitCount(): number {
   }
 }
 
-type Prompt = { k: string; title: string; body: string; cta: string; href: string };
+type Prompt = { k: string; icon: IconName; title: string; body: string; cta: string; href: string };
 
 // Whichever single thing is missing and most useful. Never more than one card, never a prerequisite for anything.
 function pick(u: { institution_id: number | null; avatar: string | null; bio: string | null }, personalize: boolean): Prompt | null {
   const list: Prompt[] = [];
-  if (!u.institution_id) list.push({ k: "campus", title: "Find your classmates", body: "Add your campus and we'll show you the communities and Course Desks for your department and level.", cta: "Add my campus", href: "/settings/campus" });
-  if (personalize) list.push({ k: "personalize", title: "Make Anaija yours", body: "Tell us your interests, skills and goals and we'll match you with people and opportunities. You choose what's saved.", cta: "Personalize", href: "/setup?personalize=1" });
-  if (!u.avatar) list.push({ k: "photo", title: "Give your profile a face", body: "Let people recognize you around Anaija.", cta: "Add a photo", href: "/settings/edit" });
-  if (!u.bio) list.push({ k: "bio", title: "Say a little about yourself", body: "A short bio helps people know who you are.", cta: "Add a bio", href: "/settings/edit" });
+  if (!u.institution_id) list.push({ k: "campus", icon: "school", title: "Find your classmates", body: "Add your campus to see the communities and Course Desks for your department and level.", cta: "Add my campus", href: "/settings/campus" });
+  if (personalize) list.push({ k: "personalize", icon: "stars", title: "Make Anaija yours", body: "Share your interests, skills and goals to get matched with people and opportunities. You choose what's saved.", cta: "Personalize", href: "/setup?personalize=1" });
+  if (!u.avatar) list.push({ k: "photo", icon: "camera", title: "Give your profile a face", body: "Let people recognize you around Anaija.", cta: "Add a photo", href: "/settings/edit" });
+  if (!u.bio) list.push({ k: "bio", icon: "pen", title: "Say a little about yourself", body: "A short bio helps people know who you are.", cta: "Add a bio", href: "/settings/edit" });
   return list.find((p) => due(p.k)) ?? null;
 }
 
@@ -79,15 +79,20 @@ export function ProfilePrompt() {
   if (!p) return null;
 
   return (
-    <section aria-label={p.title} className="sv-rise relative mx-3 mb-4 rounded-2xl bg-surface-subtle p-4 md:mx-0">
-      <button type="button" aria-label="Not now" onClick={() => { snooze(p.k); setGone(true); }} className="absolute right-2 top-2 grid size-9 place-items-center rounded-full text-muted hover:bg-surface-interactive hover:text-fg">
+    <section aria-label={p.title} className="sv-rise relative mx-3 mb-4 flex items-start gap-3 rounded-2xl bg-surface-subtle p-3.5 ring-1 ring-line md:mx-0">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand/12 text-brand-ink">
+        <Icon name={p.icon} filled className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1 pr-7">
+        <h2 className="text-[14.5px] font-extrabold leading-tight tracking-tight text-fg">{p.title}</h2>
+        <p className="mt-0.5 text-[12.5px] leading-[1.4] text-muted">{p.body}</p>
+        <Link href={p.href} className="mt-2.5 inline-flex h-8 items-center rounded-full bg-brand px-4 text-[12.5px] font-extrabold text-brand-fg transition-transform active:scale-[0.97]">
+          {p.cta}
+        </Link>
+      </div>
+      <button type="button" aria-label="Not now" onClick={() => { snooze(p.k); setGone(true); }} className="absolute right-1.5 top-1.5 grid size-8 place-items-center rounded-full text-muted transition-colors hover:bg-fg/8 hover:text-fg">
         <Icon name="close" className="size-4" />
       </button>
-      <h2 className="pr-8 text-[15px] font-extrabold tracking-tight text-fg">{p.title}</h2>
-      <p className="mt-1 pr-6 text-secondary leading-[1.4] text-muted">{p.body}</p>
-      <Link href={p.href} className="mt-3 inline-flex h-10 items-center rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg transition-transform active:scale-[0.97]">
-        {p.cta}
-      </Link>
     </section>
   );
 }

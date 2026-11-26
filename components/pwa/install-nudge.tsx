@@ -12,7 +12,7 @@ const NO_BAR = [/^\/login/, /^\/setup/, /^\/create/, /^\/watch/, /^\/messages\/\
 const NO_SHEET = [/^\/login/, /^\/setup/, /^\/create/, /^\/messages\/\d+/, /^\/c\/[^/]+\/chat/];
 
 const PRIMARY = "h-12 w-full rounded-full bg-brand px-5 text-[15px] font-extrabold text-brand-fg transition active:scale-[0.98] disabled:opacity-60";
-const GHOST = "h-11 w-full rounded-full text-[14px] font-semibold text-white/70 transition-colors hover:bg-white/8 hover:text-white";
+const GHOST = "h-11 w-full rounded-full text-[14px] font-semibold text-fg/70 transition-colors hover:bg-fg/8 hover:text-fg";
 
 const BENEFITS: [IconName, string][] = [
   ["bell", "Instant notifications for messages and likes"],
@@ -24,7 +24,7 @@ function Step({ n, children }: { n: number; children: ReactNode }) {
   return (
     <li className="flex items-start gap-3">
       <span className="mt-px grid size-6 shrink-0 place-items-center rounded-full bg-brand text-[12px] font-extrabold text-brand-fg">{n}</span>
-      <span className="text-[14px] leading-[1.4] text-white/80">{children}</span>
+      <span className="text-[14px] leading-[1.4] text-fg/80">{children}</span>
     </li>
   );
 }
@@ -76,7 +76,7 @@ function Bar({ info, busy, onInstall, onHow }: { info: InstallInfo; busy: boolea
     <div
       role="region"
       aria-label="Install Anaija"
-      className="fixed inset-x-3 z-[55] mx-auto flex max-w-[440px] items-center gap-3 rounded-[22px] bg-surface-interactive p-3 shadow-[0_8px_28px_rgba(0,0,0,0.5)] ring-1 ring-white/8 md:inset-x-auto md:right-6 md:mx-0 md:w-[420px]"
+      className="fixed inset-x-3 z-[55] mx-auto flex max-w-[440px] items-center gap-3 rounded-2xl bg-surface-subtle p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.2)] ring-1 ring-line md:inset-x-auto md:right-6 md:mx-0 md:w-[420px]"
       style={{ bottom: "calc(var(--nav-h, 0px) + env(safe-area-inset-bottom) + 10px)" }}
     >
       <img src="/icons/icon-192.png" alt="" className="size-10 shrink-0 rounded-[10px]" />
@@ -134,12 +134,12 @@ function Sheet({ info, busy, onInstall, onLater }: { info: InstallInfo; busy: bo
       <div className="relative w-full max-w-[440px] rounded-t-[30px] bg-surface-subtle px-5 pt-6 md:rounded-[30px]" style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}>
         <img src="/icons/icon-192.png" alt="" className="mx-auto size-16 rounded-[18px]" />
         <h2 className="mt-4 text-center text-[20px] font-extrabold tracking-tight text-fg">{title}</h2>
-        <p className="mx-auto mt-1.5 max-w-[320px] text-center text-[14px] leading-[1.4] text-white/65">{sub}</p>
+        <p className="mx-auto mt-1.5 max-w-[320px] text-center text-[14px] leading-[1.4] text-fg/65">{sub}</p>
 
         {m === "native" && (
           <ul className="mt-5 flex flex-col gap-3 rounded-2xl bg-surface-interactive p-4">
             {BENEFITS.map(([ic, t]) => (
-              <li key={t} className="flex items-center gap-3 text-[13.5px] text-white/85">
+              <li key={t} className="flex items-center gap-3 text-[13.5px] text-fg/85">
                 <Icon name={ic} filled className="size-5 shrink-0 text-brand" />
                 {t}
               </li>
@@ -245,7 +245,7 @@ export function InstallNudge() {
       {showSheet && <Sheet info={info} busy={busy} onInstall={() => void install()} onLater={later} />}
       {toast && (
         <div role="status" className="pointer-events-none fixed inset-x-0 z-[90] flex justify-center px-4" style={{ bottom: "calc(28px + env(safe-area-inset-bottom))" }}>
-          <span className="max-w-[88vw] rounded-full bg-white px-4 py-2 text-secondary font-semibold text-black shadow-lg">Anaija is installed. Open it from your home screen.</span>
+          <span className="max-w-[88vw] rounded-full bg-fg px-4 py-2 text-secondary font-semibold text-bg shadow-lg">Anaija is installed. Open it from your home screen.</span>
         </div>
       )}
     </>

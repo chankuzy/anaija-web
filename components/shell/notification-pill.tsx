@@ -61,7 +61,7 @@ function ActRow({ it, onOpen, onThumb, onFollow }: { it: ActivityItem; onOpen: (
   const unread = !it.is_read;
   const preview = it.preview ? (it.quote ? `\u201C${it.preview}\u201D` : it.preview) : null;
   return (
-    <div className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
+    <div className="group relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-fg/5">
       <button type="button" aria-label="Open" onClick={onOpen} className="absolute inset-0" />
       <span className="pointer-events-none relative shrink-0">
         <Avatar url={a?.avatar} name={a?.name} size={46} />
@@ -183,7 +183,7 @@ function MiniChat({
   return (
     <div className="flex h-[min(540px,calc(100dvh-140px))] flex-col">
       <header className="flex items-center gap-2 px-2 py-2.5">
-        <button type="button" aria-label="Back" onClick={onBack} className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/8">
+        <button type="button" aria-label="Back" onClick={onBack} className="grid size-9 place-items-center rounded-full text-fg/80 hover:bg-fg/8">
           <Icon name="back" className="size-5" />
         </button>
         <Avatar url={convAvatar(conv)} name={convName(conv)} size={36} />
@@ -191,10 +191,10 @@ function MiniChat({
           <p className="truncate text-[15px] font-semibold leading-tight text-fg">{convName(conv)}</p>
           {conv.other_user?.username && <p className="truncate text-supporting leading-tight text-muted">@{conv.other_user.username}</p>}
         </div>
-        <button type="button" aria-label="Open full chat" title="Open full chat" onClick={onExpand} className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/8">
+        <button type="button" aria-label="Open full chat" title="Open full chat" onClick={onExpand} className="grid size-9 place-items-center rounded-full text-fg/80 hover:bg-fg/8">
           <ExpandIcon />
         </button>
-        <button type="button" aria-label="Close" onClick={onClose} className="grid size-9 place-items-center rounded-full text-white/80 hover:bg-white/8">
+        <button type="button" aria-label="Close" onClick={onClose} className="grid size-9 place-items-center rounded-full text-fg/80 hover:bg-fg/8">
           <Icon name="close" className="size-5" />
         </button>
       </header>
@@ -553,7 +553,7 @@ export function NotificationPill() {
                         type="button"
                         onClick={() => pickTab(t)}
                         className={`flex h-9 flex-1 items-center justify-center gap-2 rounded-full text-secondary font-semibold transition-colors ${
-                          on ? "bg-brand font-extrabold text-brand-fg" : "text-white/60 hover:text-white"
+                          on ? "bg-brand font-extrabold text-brand-fg" : "text-fg/60 hover:text-fg"
                         }`}
                       >
                         {t === "chats" ? "Chats" : "Activity"}
@@ -571,7 +571,7 @@ export function NotificationPill() {
                       <button
                         type="button"
                         onClick={() => go("/messages")}
-                        className="mx-3 mb-1 flex w-[calc(100%-24px)] items-center gap-3 rounded-2xl bg-white/6 px-3 py-2.5 text-left transition-colors hover:bg-white/10"
+                        className="mx-3 mb-1 flex w-[calc(100%-24px)] items-center gap-3 rounded-2xl bg-fg/6 px-3 py-2.5 text-left transition-colors hover:bg-fg/10"
                       >
                         <span className="grid size-9 place-items-center rounded-full bg-brand/15 text-brand">
                           <Icon name="userPlus" className="size-[18px]" />
@@ -596,7 +596,7 @@ export function NotificationPill() {
                     {list.map((c) => {
                       const unread = c.unread_count > 0 && !c.is_muted;
                       return (
-                        <div key={c.id} className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
+                        <div key={c.id} className="relative flex items-center gap-3 px-4 py-3 transition-colors hover:bg-fg/5">
                           <button type="button" aria-label={`Open ${convName(c)}`} onClick={() => openChat(c.id)} className="absolute inset-0" />
                           <span className="pointer-events-none shrink-0">
                             <Avatar url={convAvatar(c)} name={convName(c)} size={48} />
@@ -639,7 +639,7 @@ export function NotificationPill() {
                 <button
                   type="button"
                   onClick={() => (tab === "chats" ? go("/messages") : openFull())}
-                  className="h-10 w-full rounded-full text-secondary font-semibold text-white/70 transition-colors hover:bg-white/8 hover:text-white"
+                  className="h-10 w-full rounded-full text-secondary font-semibold text-fg/70 transition-colors hover:bg-fg/8 hover:text-fg"
                 >
                   {tab === "chats" ? "Open inbox" : "See all activity"}
                 </button>
@@ -659,12 +659,12 @@ export function NotificationPill() {
             if (p.conv) openChat(p.conv);
             else if (p.act) openAct(p.act, p.act.destination);
           }}
-          className="pill-card flex w-[320px] max-w-[calc(100vw-48px)] items-center gap-3 rounded-[24px] bg-surface-subtle p-3 text-left shadow-[0_16px_48px_rgba(0,0,0,0.55)] transition-colors hover:bg-surface-interactive"
+          className="pill-card flex w-[320px] max-w-[calc(100vw-48px)] items-center gap-3 rounded-2xl bg-surface-subtle p-3 text-left ring-1 ring-line shadow-[0_12px_32px_rgba(0,0,0,0.2)] transition-colors hover:bg-surface-interactive"
         >
           <Avatar url={peek.avatar} name={peek.name} size={42} />
           <span className="min-w-0 flex-1">
             <span className="block truncate text-body font-semibold text-fg">{peek.name}</span>
-            <span className="line-clamp-2 text-secondary leading-[1.3] text-white/65">{peek.text}</span>
+            <span className="line-clamp-2 text-secondary leading-[1.3] text-fg/65">{peek.text}</span>
           </span>
           <span className="size-2 shrink-0 rounded-full bg-brand" />
         </button>
@@ -680,7 +680,7 @@ export function NotificationPill() {
         }`}
       >
         {open ? (
-          <span className="grid size-10 place-items-center rounded-full bg-white/10">
+          <span className="grid size-10 place-items-center rounded-full bg-fg/10">
             <Icon name="close" className="size-5" />
           </span>
         ) : stack.length > 0 ? (

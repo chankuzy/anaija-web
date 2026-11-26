@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ApiError } from "@/lib/api/client";
 import { onboardingApi, type InvitePeek, type OnboardingEvent, type OnboardingSource } from "@/lib/api/onboarding";
 import { profileApi } from "@/lib/api/profile";
@@ -31,7 +31,9 @@ export function ProfileSetup() {
 
   const [stage, setStage] = useState<Stage>("profile");
   const [began, setBegan] = useState(false); // once the profile is saved, needsProfileSetup flips: don't redirect away
-  const [pz, setPz] = useState(() => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("personalize") === "1");
+  const sp = useSearchParams();
+  const [pzLocal, setPz] = useState(false);
+  const pz = pzLocal || sp.get("personalize") === "1";
   const [invite, setInvite] = useState<InvitePeek | null>(null);
   const source = useRef<OnboardingSource>(token ? "invite_community" : "direct");
   const started = useRef(false);
@@ -114,7 +116,7 @@ export function ProfileSetup() {
   }, [ev, router]);
 
   if (status !== "authed") return <div className="min-h-dvh" />;
-  if (pz) return <PersonalizeFlow standalone={!began} onBack={began ? () => { setPz(false); setStage("campus"); } : undefined} />;
+  if (pz) return <PersonalizeFlow standalone={!began} onBack={began ? () => { setPz(false); setStage("campus"); } : () => (window.history.length > 1 ? router.back() : router.replace("/"))} />;
   if (!began && !needsProfileSetup(user)) return <div className="min-h-dvh" />;
 
   const hint: Record<Avail, { text: string; cls: string }> = {

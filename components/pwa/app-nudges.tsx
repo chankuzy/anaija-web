@@ -44,7 +44,7 @@ function snooze(k: Kind) {
 }
 
 const BTN = "h-11 rounded-full bg-brand px-5 text-[14px] font-extrabold text-brand-fg transition active:scale-[0.97] disabled:opacity-50";
-const GHOST = "h-11 rounded-full px-4 text-[14px] font-semibold text-white/70 transition-colors hover:bg-white/8 hover:text-white";
+const GHOST = "h-11 rounded-full px-4 text-[14px] font-semibold text-fg/70 transition-colors hover:bg-fg/8 hover:text-fg";
 
 function ShareGlyph() {
   return (
@@ -58,7 +58,7 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
   return (
     <li className="flex items-center gap-3">
       <span className="grid size-6 shrink-0 place-items-center rounded-full bg-brand text-[12px] font-extrabold text-brand-fg">{n}</span>
-      <span className="text-[13.5px] leading-[1.3] text-white/80">{children}</span>
+      <span className="text-[13.5px] leading-[1.3] text-fg/80">{children}</span>
     </li>
   );
 }
@@ -200,10 +200,10 @@ export function AppNudges() {
     <div
       role="region"
       aria-label={card === "push" ? "Turn on notifications" : "Install Anaija"}
-      className="anaija-nudge fixed inset-x-3 z-50 mx-auto max-w-[440px] overflow-hidden rounded-[28px] bg-surface-subtle p-4 shadow-[0_24px_80px_rgba(0,0,0,0.65)] ring-1 ring-white/8 md:inset-x-auto md:left-24 md:mx-0 md:w-[400px]"
+      className="anaija-nudge fixed inset-x-3 z-50 mx-auto max-w-[440px] overflow-hidden rounded-3xl bg-surface-subtle p-4 shadow-[0_18px_50px_rgba(0,0,0,0.22)] ring-1 ring-line md:inset-x-auto md:left-24 md:mx-0 md:w-[400px]"
       style={{ bottom: "calc(var(--nav-h, 0px) + env(safe-area-inset-bottom) + 12px)" }}
     >
-      <button type="button" aria-label="Not now" onClick={later} className="absolute right-3 top-3 grid size-8 place-items-center rounded-full text-muted hover:bg-white/8 hover:text-fg">
+      <button type="button" aria-label="Not now" onClick={later} className="absolute right-3 top-3 grid size-8 place-items-center rounded-full text-muted hover:bg-fg/8 hover:text-fg">
         <Icon name="close" className="size-4" />
       </button>
 
@@ -211,16 +211,16 @@ export function AppNudges() {
         <>
           <div className="rounded-2xl bg-surface-interactive p-2.5">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-[15px] font-extrabold text-brand-fg">A</span>
+              <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand text-brand-fg"><Icon name="bell" filled className="size-5" /></span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[13px] font-bold text-fg">Amina sent you a reel</span>
-                <span className="block truncate text-[12px] text-muted">&ldquo;you have to see this&rdquo;</span>
+                <span className="block truncate text-[13px] font-bold text-fg">New message</span>
+                <span className="block truncate text-[12px] text-muted">Tap to open the conversation</span>
               </span>
               <span className="size-10 shrink-0 rounded-xl" style={{ background: "linear-gradient(135deg, var(--color-brand), var(--color-warm))" }} />
             </div>
           </div>
           <h2 className="mt-3.5 pr-8 text-[17px] font-extrabold tracking-tight text-fg">{done ? "You're all set" : "Never miss a message"}</h2>
-          <p className="mt-1 text-[13.5px] leading-[1.4] text-white/65">
+          <p className="mt-1 text-[13.5px] leading-[1.4] text-fg/65">
             {done
               ? "We'll let you know when something happens."
               : "Know the moment someone messages you, likes your post or asks about your listing, even when Anaija is closed."}
@@ -243,7 +243,7 @@ export function AppNudges() {
             <img src="/icons/icon-192.png" alt="" className="size-12 shrink-0 rounded-[14px]" />
             <div className="min-w-0 pr-8">
               <h2 className="text-[17px] font-extrabold tracking-tight text-fg">{card === "install-ios" ? "Add Anaija to your Home Screen" : "Get the Anaija app"}</h2>
-              <p className="mt-0.5 text-[13.5px] leading-[1.4] text-white/65">
+              <p className="mt-0.5 text-[13.5px] leading-[1.4] text-fg/65">
                 {card === "install-ios" ? "Do this once and you also unlock notifications on iPhone." : "One tap to open, full screen, and it feels like a native app."}
               </p>
             </div>

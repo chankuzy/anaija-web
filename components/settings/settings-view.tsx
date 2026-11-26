@@ -68,6 +68,7 @@ export function SettingsView() {
       <Group>
         <Tile icon="user" label="Edit profile" href="/settings/edit" />
         <Tile icon="diploma" label="Campus & Institution" href="/settings/campus" />
+        <Tile icon="stars" label="Interests, skills & goals" href="/setup?personalize=1" />
         <Tile icon="forbidden" label="Blocked accounts" href="/settings/blocked" />
       </Group>
 

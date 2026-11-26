@@ -179,7 +179,7 @@ export function InAppBanner() {
         onPointerCancel={onUp}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => !press.current && setPaused(false)}
-        className={`anaija-banner group pointer-events-auto relative w-full max-w-[420px] cursor-pointer touch-none select-none overflow-hidden rounded-floating bg-surface-subtle/90 backdrop-blur-xl ${
+        className={`anaija-banner group pointer-events-auto relative w-full max-w-[420px] cursor-pointer touch-none select-none overflow-hidden rounded-[22px] bg-surface-subtle/95 backdrop-blur-xl ${
           leaving ? "anaija-banner-out" : ""
         }`}
         style={{
@@ -201,7 +201,7 @@ export function InAppBanner() {
 
           <span className="min-w-0 flex-1">
             <span className="line-clamp-2 block text-[14.5px] font-bold leading-[1.25] text-fg">{cur.title}</span>
-            {cur.body && <span className="mt-0.5 line-clamp-2 block text-[13px] leading-[1.3] text-white/65">{cur.body}</span>}
+            {cur.body && <span className="mt-0.5 line-clamp-2 block text-[13px] leading-[1.3] text-muted">{cur.body}</span>}
             {cur.more > 0 && <span className="mt-1 block text-micro font-bold text-brand">+{cur.more} more</span>}
           </span>
 
@@ -236,7 +236,7 @@ export function InAppBanner() {
 
         <span
           key={cur.seq}
-          className="anaija-banner-bar absolute inset-x-0 bottom-0 h-[3px] origin-left bg-brand/70"
+          className="anaija-banner-bar absolute inset-x-0 bottom-0 h-[2px] origin-left bg-brand/60"
           style={{ animationPlayState: paused ? "paused" : "running" }}
           onAnimationEnd={dismiss}
         />
