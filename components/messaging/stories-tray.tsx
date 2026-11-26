@@ -18,7 +18,7 @@ function Label({
   onDark?: boolean;
   big?: boolean;
 }) {
-  const tone = onDark ? `text-shadow-soft ${dim ? "text-white/70" : "text-white"}` : dim ? "text-muted" : "text-fg";
+  const tone = onDark ? `text-shadow-soft ${dim ? "text-fg/70" : "text-fg"}` : dim ? "text-muted" : "text-fg";
   return <span className={`w-full truncate font-bold ${big ? "text-secondary" : "text-supporting"} ${tone}`}>{children}</span>;
 }
 

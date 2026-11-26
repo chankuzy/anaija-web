@@ -32,9 +32,9 @@ export const MessagesCtx = createContext<Ctx | null>(null);
 const messageOf = (e: unknown) => (e instanceof ApiError ? e.message : "Something went wrong.");
 const at = (c: Conversation) => Date.parse(c.last_message_at ?? "") || 0;
 const byRecent = (a: Conversation, b: Conversation) => at(b) - at(a);
-// Your own story is never "unwatched" to you: it shows faded and opens from its first story.
-const asOwn = (me: number) => (g: StoryGroup): StoryGroup =>
-  g.author.id === me ? { ...g, has_unseen: false, stories: g.stories.map((s) => (s.seen ? s : { ...s, seen: true })) } : g;
+// Your own groups are used as the server sends them, so your ring is coloured while you have an unwatched story.
+const asOwn = (_me: number) => (g: StoryGroup): StoryGroup =>
+  g;
 
 type InboxUpdate = { conversation_id?: number; last_message_body?: string; last_message_at?: string; last_message_by?: number; unread_count?: number };
 

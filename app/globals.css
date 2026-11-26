@@ -578,3 +578,7 @@ body {
 /* F4: light text shadow for labels over photos; cover headers use light text in any theme. */
 .text-shadow-soft { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
 .on-cover { --c-fg: #ffffff; --c-muted: rgba(255, 255, 255, 0.68); --c-text2: rgba(255, 255, 255, 0.82); }
+
+/* F5: no label shadow in Light; a soft one only in Dark. */
+.text-shadow-soft { text-shadow: none; }
+:root[data-theme="dark"] .text-shadow-soft { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
