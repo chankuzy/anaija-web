@@ -1,11 +1,11 @@
 import type { ContentStatus } from "@/lib/api/platform-content";
 
 const MAP: Record<ContentStatus, { label: string; cls: string }> = {
-  draft: { label: "Draft", cls: "bg-white/8 text-white/70" },
+  draft: { label: "Draft", cls: "bg-fg/8 text-fg/70" },
   scheduled: { label: "Scheduled", cls: "bg-info/15 text-info" },
-  publishing: { label: "Publishing", cls: "bg-white/8 text-white/70" },
+  publishing: { label: "Publishing", cls: "bg-fg/8 text-fg/70" },
   published: { label: "Live", cls: "bg-brand text-brand-fg" },
-  archived: { label: "Archived", cls: "bg-white/8 text-white/40" },
+  archived: { label: "Archived", cls: "bg-fg/8 text-fg/40" },
 };
 
 export function ContentStatusPill({ status }: { status: ContentStatus }) {

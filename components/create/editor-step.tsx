@@ -47,7 +47,7 @@ function RailButton({ icon, label, active, onClick }: { icon: IconName; label: s
       >
         <Icon name={icon} filled className="size-[19px]" />
       </span>
-      <span className="mt-[3px] text-[10px] font-semibold text-white text-shadow">{label}</span>
+      <span className="mt-[3px] text-[10px] font-semibold text-fg text-shadow">{label}</span>
     </button>
   );
 }
@@ -112,7 +112,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
     <div className="flex min-h-0 flex-1 flex-col bg-black">
       <FilterDefs />
       <div className="flex items-center px-1 pb-1 pt-1.5">
-        <button type="button" aria-label="Back" disabled={c.busy} onClick={onBack} className="grid size-12 place-items-center text-white disabled:opacity-50">
+        <button type="button" aria-label="Back" disabled={c.busy} onClick={onBack} className="grid size-12 place-items-center text-fg disabled:opacity-50">
           <Icon name="back" className="size-5" />
         </button>
       </div>
@@ -177,7 +177,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
                     type="button"
                     onClick={() => selectRatio(i)}
                     className={`shrink-0 rounded-full px-3.5 text-[12px] font-bold ${
-                      curEdit.ratioIdx === i ? "bg-brand text-brand-fg" : "bg-white/12 text-white"
+                      curEdit.ratioIdx === i ? "bg-brand text-brand-fg" : "bg-fg/12 text-fg"
                     }`}
                   >
                     {r.label}
@@ -202,7 +202,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
                   <span className={`size-[60px] overflow-hidden rounded-[10px] border-2 ${curEdit.filterIdx === i ? "border-brand" : "border-transparent"}`}>
                     <img src={previews[cur.id] ?? ""} alt="" draggable={false} className="size-full rounded-[8px] object-cover" style={{ filter: filterCss(i) }} />
                   </span>
-                  <span className={`mt-1 text-[10px] ${curEdit.filterIdx === i ? "font-bold text-white" : "text-white/70"}`}>{f.label}</span>
+                  <span className={`mt-1 text-[10px] ${curEdit.filterIdx === i ? "font-bold text-fg" : "text-fg/70"}`}>{f.label}</span>
                 </button>
               ))}
             </div>
@@ -212,7 +212,7 @@ export function EditorStep({ c, onBack, onNext }: { c: Composer; onBack: () => v
 
       {n > 1 && (
         <div className="flex h-[60px] items-center">
-          <button type="button" aria-label="Back to selection" onClick={onBack} className="px-4 text-white/70">
+          <button type="button" aria-label="Back to selection" onClick={onBack} className="px-4 text-fg/70">
             <Icon name="gallery" className="size-[22px]" />
           </button>
           <div className="no-scrollbar flex min-w-0 flex-1 gap-2 overflow-x-auto pr-4">

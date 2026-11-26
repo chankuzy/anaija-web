@@ -17,10 +17,10 @@ function AccountRow({ a }: { a: PlatformAccount }) {
     : a.status === "suspended" && a.suspended_at ? `Suspended ${day(a.suspended_at)}`
     : `Created ${day(a.created_at)}`;
   return (
-    <Link href={`/admin/accounts/${encodeURIComponent(a.key)}`} className="flex items-center gap-3.5 px-4 py-4 transition-colors hover:bg-white/5">
+    <Link href={`/admin/accounts/${encodeURIComponent(a.key)}`} className="flex items-center gap-3.5 px-4 py-4 transition-colors hover:bg-fg/5">
       <Avatar url={a.avatar} name={a.name ?? a.username} size={44} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-[15px] font-semibold text-white">{a.name ?? a.key}</p>
+        <p className="truncate text-[15px] font-semibold text-fg">{a.name ?? a.key}</p>
         <p className="truncate text-secondary text-muted">
           {a.username ? `@${a.username}` : a.key} · {a.followers.toLocaleString()} {a.followers === 1 ? "follower" : "followers"}
         </p>
@@ -44,9 +44,9 @@ export function AccountsView() {
   if (!data) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
           Try again
         </button>
       </div>

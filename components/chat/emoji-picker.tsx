@@ -78,7 +78,7 @@ export function EmojiPicker({ onPick }: { onPick: (unicode: string) => void }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search emoji"
-          className="mb-1 h-9 w-full rounded-full bg-white/8 px-4 text-[13px] text-fg outline-none placeholder:text-muted"
+          className="mb-1 h-9 w-full rounded-full bg-fg/8 px-4 text-[13px] text-fg outline-none placeholder:text-muted"
         />
         {!q && (
           <div className="no-scrollbar flex gap-0.5 overflow-x-auto">
@@ -93,7 +93,7 @@ export function EmojiPicker({ onPick }: { onPick: (unicode: string) => void }) {
       ) : (
         <div className="grid grid-cols-8 gap-0.5 pt-1">
           {items.map((u) => (
-            <button key={u} type="button" onClick={() => pick(u)} className="grid aspect-square place-items-center rounded-xl transition hover:bg-white/8 active:scale-90">
+            <button key={u} type="button" onClick={() => pick(u)} className="grid aspect-square place-items-center rounded-xl transition hover:bg-fg/8 active:scale-90">
               <EmojiGlyph code={u} size={30} />
             </button>
           ))}

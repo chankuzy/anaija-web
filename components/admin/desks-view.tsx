@@ -11,8 +11,8 @@ import { useCached } from "@/lib/cache/swr";
 import { Footnote, Group, SettingsPage } from "@/components/settings/settings-kit";
 
 const LABEL: Record<DeskVerification, { label: string; cls: string }> = {
-  pending: { label: "Pending", cls: "bg-white/10 text-white" },
-  unverified: { label: "Not asked", cls: "bg-white/8 text-white/60" },
+  pending: { label: "Pending", cls: "bg-fg/10 text-fg" },
+  unverified: { label: "Not asked", cls: "bg-fg/8 text-fg/60" },
   verified: { label: "Verified", cls: "bg-brand/15 text-brand" },
   rejected: { label: "Rejected", cls: "bg-danger/15 text-danger" },
 };
@@ -38,9 +38,9 @@ function Queue({ status }: { status: DeskQueue }) {
   if (!data) {
     return error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">Try again</button>
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">Try again</button>
       </div>
     ) : (
       <SettingsGroupsSkeleton groups={1} rows={4} />
@@ -69,9 +69,9 @@ function Queue({ status }: { status: DeskQueue }) {
       <Group>
         {items.length === 0 && <p className="px-4 py-6 text-body text-muted">{status === "pending" ? "No requests waiting." : "Nothing here."}</p>}
         {items.map((d) => (
-          <Link key={d.id} href={`/admin/desks/${d.id}`} className="flex items-center gap-3.5 px-4 py-4 transition-colors hover:bg-white/5">
+          <Link key={d.id} href={`/admin/desks/${d.id}`} className="flex items-center gap-3.5 px-4 py-4 transition-colors hover:bg-fg/5">
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold text-white">{d.course_code} · {d.course_title}</p>
+              <p className="truncate text-[15px] font-semibold text-fg">{d.course_code} · {d.course_title}</p>
               <p className="truncate text-secondary text-muted">
                 {d.owner?.username ? `@${d.owner.username}` : "No owner"} · {d.members.toLocaleString()} {d.members === 1 ? "member" : "members"} · {day(d.verification_requested_at ?? d.created_at)}
               </p>
@@ -83,7 +83,7 @@ function Queue({ status }: { status: DeskQueue }) {
         ))}
       </Group>
       {cursor && (
-        <button type="button" disabled={busy} onClick={() => void loadMore()} className="mx-auto mt-4 block h-10 rounded-full bg-surface-interactive px-6 text-secondary font-bold text-white disabled:opacity-50">
+        <button type="button" disabled={busy} onClick={() => void loadMore()} className="mx-auto mt-4 block h-10 rounded-full bg-surface-interactive px-6 text-secondary font-bold text-fg disabled:opacity-50">
           {busy ? "Loading…" : "Show more"}
         </button>
       )}
@@ -102,7 +102,7 @@ export function DesksView() {
             key={id}
             type="button"
             onClick={() => setStatus(id)}
-            className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold transition-colors ${status === id ? "bg-white text-black" : "bg-surface-interactive text-white hover:bg-white/10"}`}
+            className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold transition-colors ${status === id ? "bg-fg text-bg" : "bg-surface-interactive text-fg hover:bg-fg/10"}`}
           >
             {label}
           </button>

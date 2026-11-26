@@ -12,19 +12,19 @@ export function FeedSkeleton() {
       <div className="feed-card relative overflow-hidden bg-[linear-gradient(to_bottom,#0c0c0c,#000)]">
         <div className="absolute bottom-6 right-3 flex flex-col gap-5" style={{ marginBottom: "var(--nav-h)" }}>
           {[0, 1, 2].map((i) => (
-            <div key={i} className="size-[34px] animate-pulse rounded-full bg-white/8" />
+            <div key={i} className="size-[34px] animate-pulse rounded-full bg-fg/8" />
           ))}
         </div>
         <div className="absolute inset-x-4 bottom-5 flex flex-col gap-3" style={{ marginBottom: "var(--nav-h)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="size-[38px] animate-pulse rounded-full bg-white/8" />
+            <div className="size-[38px] animate-pulse rounded-full bg-fg/8" />
             <div className="flex flex-col gap-1.5">
-              <div className="h-3 w-28 animate-pulse rounded-lg bg-white/8" />
-              <div className="h-2.5 w-16 animate-pulse rounded-lg bg-white/8" />
+              <div className="h-3 w-28 animate-pulse rounded-lg bg-fg/8" />
+              <div className="h-2.5 w-16 animate-pulse rounded-lg bg-fg/8" />
             </div>
           </div>
-          <div className="h-3 w-full animate-pulse rounded-lg bg-white/8" />
-          <div className="h-3 w-44 animate-pulse rounded-lg bg-white/8" />
+          <div className="h-3 w-full animate-pulse rounded-lg bg-fg/8" />
+          <div className="h-3 w-44 animate-pulse rounded-lg bg-fg/8" />
         </div>
       </div>
     </div>
@@ -73,8 +73,8 @@ export function FeedEmpty({ scope }: { scope: FeedScope }) {
   const e = EMPTY[scope];
   return (
     <div className="flex h-dvh flex-col items-center justify-center gap-2 px-9 text-center">
-      <h2 className="text-lg font-bold text-white">{e.title}</h2>
-      <p className="max-w-xs text-secondary leading-snug text-white/60">{e.sub}</p>
+      <h2 className="text-lg font-bold text-fg">{e.title}</h2>
+      <p className="max-w-xs text-secondary leading-snug text-fg/60">{e.sub}</p>
       <Link href={e.href} className={buttonClass("outline", "mt-5 h-11 text-secondary")}>
         {e.cta}
       </Link>
@@ -111,8 +111,8 @@ export function CaughtUp({
   return (
     <section className="relative flex h-dvh snap-start items-center justify-center">
       <div className={`feed-card relative flex flex-col items-center justify-center px-8 text-center ${pageBg}`}>
-        <h2 className="text-[22px] font-extrabold text-white">You&apos;re all caught up</h2>
-        <p className="mb-6 mt-2 max-w-xs text-body leading-snug text-white/60">
+        <h2 className="text-[22px] font-extrabold text-fg">You&apos;re all caught up</h2>
+        <p className="mb-6 mt-2 max-w-xs text-body leading-snug text-fg/60">
           {isGuest
             ? "That's everything public on Anaija right now. Sign up to follow people and get a feed built around you."
             : "You've seen everything for now. New posts land all the time."}
@@ -122,7 +122,7 @@ export function CaughtUp({
             const cls =
               i === 0
                 ? "h-12 w-full rounded-full bg-brand text-[15px] font-extrabold text-brand-fg disabled:opacity-60 inline-flex items-center justify-center"
-                : "h-12 w-full rounded-full bg-white/12 text-[15px] font-bold text-white inline-flex items-center justify-center";
+                : "h-12 w-full rounded-full bg-fg/12 text-[15px] font-bold text-fg inline-flex items-center justify-center";
             return a === "refresh" ? (
               <button key={a} type="button" disabled={busy} onClick={onRefresh} className={cls}>
                 {busy ? "Refreshing…" : ACTION_LABELS[a]}

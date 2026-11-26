@@ -44,7 +44,7 @@ function Chip({ label, selected, onClick }: { label: string; selected: boolean; 
       aria-pressed={selected}
       onClick={onClick}
       className={`rounded-full px-4 py-2 text-[14px] transition ${
-        selected ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-white/70 hover:text-white"
+        selected ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-fg/70 hover:text-fg"
       }`}
     >
       {label}
@@ -91,8 +91,8 @@ function InstitutionPicker({ onPick, onClose }: { onPick: (i: Institution) => vo
       <ul className={loading ? "opacity-50 transition-opacity" : "transition-opacity"}>
         {res.list.map((i) => (
           <li key={i.id}>
-            <button type="button" onClick={() => onPick(i)} className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-white/6">
-              <span className="min-w-0 flex-1 text-[15px] font-semibold text-white">{i.name}</span>
+            <button type="button" onClick={() => onPick(i)} className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors hover:bg-fg/6">
+              <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{i.name}</span>
               {i.short_name && <span className="shrink-0 text-secondary text-muted">{i.short_name}</span>}
             </button>
           </li>
@@ -105,8 +105,8 @@ function InstitutionPicker({ onPick, onClose }: { onPick: (i: Institution) => vo
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60" />
       <div className="glass relative flex h-[min(78dvh,600px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] md:rounded-[28px]">
         <div className="flex items-center justify-between px-5 pb-2 pt-5">
-          <h2 className="text-[17px] font-bold tracking-tight text-white">Your institution</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="grid size-10 place-items-center rounded-full text-white/60 hover:bg-white/8 hover:text-white">
+          <h2 className="text-[17px] font-bold tracking-tight text-fg">Your institution</h2>
+          <button type="button" aria-label="Close" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg/60 hover:bg-fg/8 hover:text-fg">
             <Icon name="close" className="size-6" />
           </button>
         </div>
@@ -118,7 +118,7 @@ function InstitutionPicker({ onPick, onClose }: { onPick: (i: Institution) => vo
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Search institutions"
-              className="min-w-0 flex-1 bg-transparent text-body text-white outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-muted"
             />
           </div>
         </div>
@@ -369,7 +369,7 @@ export function CampusView() {
     <SettingsPage title="Campus & Institution" backHref="/settings">
       {error ? (
         <div className="py-16 text-center">
-          <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+          <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
           <p className="mt-1 text-body text-muted">{error}</p>
           <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             Try again

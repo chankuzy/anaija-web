@@ -45,7 +45,7 @@ export function DeleteDialog({
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-sm rounded-[24px] bg-card-elevated border border-white/10 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+        className="w-full max-w-sm rounded-[24px] bg-card-elevated border border-fg/10 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
       >
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-full bg-danger/15 text-danger">
@@ -68,7 +68,7 @@ export function DeleteDialog({
             type="button"
             disabled={busy}
             onClick={onClose}
-            className="h-10 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg hover:bg-white/10 active:scale-95 transition disabled:opacity-50"
+            className="h-10 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg hover:bg-fg/10 active:scale-95 transition disabled:opacity-50"
           >
             Cancel
           </button>
@@ -79,7 +79,7 @@ export function DeleteDialog({
             className="h-10 flex-1 rounded-full bg-danger px-4 text-secondary font-extrabold text-white hover:brightness-110 active:scale-95 transition disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {busy ? (
-              <span className="size-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <span className="size-4 border-2 border-fg border-t-transparent rounded-full animate-spin" />
             ) : (
               "Delete"
             )}

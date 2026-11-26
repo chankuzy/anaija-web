@@ -17,7 +17,7 @@ export function ScrollArrows({
     if (el) el.scrollBy({ top: d * el.clientHeight, behavior: "smooth" });
   };
   const cls =
-    "grid size-12 place-items-center rounded-full bg-white/12 text-white backdrop-blur-sm transition hover:bg-white/20 disabled:pointer-events-none disabled:opacity-30";
+    "grid size-12 place-items-center rounded-full bg-fg/12 text-fg backdrop-blur-sm transition hover:bg-fg/20 disabled:pointer-events-none disabled:opacity-30";
   return (
     <div className="absolute right-6 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
       <button type="button" aria-label="Previous post" disabled={index <= 0} onClick={() => go(-1)} className={cls}>

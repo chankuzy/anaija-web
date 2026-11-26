@@ -39,7 +39,7 @@ const COND: Record<string, string> = { new: "New", like_new: "Like new", good: "
 
 // Brand palette: yellow for primary actions and highlights, white for selection and secondary actions.
 const BTN_YELLOW = "bg-brand text-brand-fg hover:bg-brand-hover";
-const BTN_WHITE = "bg-fg text-bg hover:bg-white";
+const BTN_WHITE = "bg-fg text-bg hover:bg-fg";
 const TEXT_YELLOW = "text-brand";
 
 // Card geometry is fixed so every card is identical whatever it contains:
@@ -161,7 +161,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
 
   return (
     <section
-      className="relative isolate h-[200px] overflow-hidden rounded-[26px] border border-white/10 bg-black md:h-[260px]"
+      className="relative isolate h-[200px] overflow-hidden rounded-[26px] border border-fg/10 bg-black md:h-[260px]"
       onPointerEnter={() => setPaused(true)}
       onPointerLeave={() => setPaused(false)}
     >
@@ -192,11 +192,11 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
               active ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-2 opacity-0"
             }`}
           >
-            <p className="text-[20px] font-extrabold leading-[1.12] tracking-tight text-white md:text-[32px]">
+            <p className="text-[20px] font-extrabold leading-[1.12] tracking-tight text-fg md:text-[32px]">
               {s.title}
               <span className={`block ${TEXT_YELLOW}`}>{s.accent}</span>
             </p>
-            <p className="mt-1.5 text-[12px] text-white/75 md:text-[14px]">{s.sub}</p>
+            <p className="mt-1.5 text-[12px] text-fg/75 md:text-[14px]">{s.sub}</p>
             <button
               type="button"
               tabIndex={active ? 0 : -1}
@@ -220,7 +220,7 @@ function Banner({ onAction }: { onAction: (a: BannerAction) => void }) {
             type="button"
             aria-label={`Banner ${n + 1}`}
             onClick={() => setI(n)}
-            className={`h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none ${n === i ? "w-5 bg-white" : "w-1.5 bg-white/25"}`}
+            className={`h-1.5 rounded-full transition-[width,background-color] duration-300 motion-reduce:transition-none ${n === i ? "w-5 bg-fg" : "w-1.5 bg-fg/25"}`}
           />
         ))}
       </div>
@@ -275,7 +275,7 @@ export const MarketCard = memo(function MarketCard({ post: raw, priority = false
   const badge = d?.condition ? (COND[d.condition] ?? null) : type === "rental" ? "For Rent" : null;
 
   return (
-    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card transition-[border-color,transform] duration-150 hover:border-white/15 has-[a:active]:scale-[0.985] motion-reduce:transition-none motion-reduce:has-[a:active]:scale-100">
+    <div className="group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-fg/[0.07] bg-card transition-[border-color,transform] duration-150 hover:border-fg/15 has-[a:active]:scale-[0.985] motion-reduce:transition-none motion-reduce:has-[a:active]:scale-100">
       <Link href={`/l/${post.id}`} className="flex h-full min-w-0 flex-col">
         <div
           className="relative aspect-[5/4] w-full shrink-0 overflow-hidden bg-card-elevated"
@@ -289,7 +289,7 @@ export const MarketCard = memo(function MarketCard({ post: raw, priority = false
               className="absolute inset-0 size-full object-cover group-hover:scale-[1.04] motion-reduce:group-hover:scale-100"
             />
           ) : (
-            <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
+            <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-fg/35">
               <Icon name="bag" filled className="size-8" />
             </span>
           )}
@@ -315,7 +315,7 @@ export const MarketCard = memo(function MarketCard({ post: raw, priority = false
           <div className="mt-2 flex h-5 items-center justify-between gap-1.5">
             <span className="min-w-0 flex-1 truncate text-[11px] leading-5 text-muted">{where}</span>
             {views > 0 && (
-              <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 text-[10px] font-semibold text-white/80">
+              <span className="inline-flex h-5 shrink-0 items-center gap-1 rounded-full bg-surface-interactive px-1.5 text-[10px] font-semibold text-fg/80">
                 <Icon name="eye" className="size-3" />
                 {formatCount(views).toLowerCase()}
               </span>
@@ -330,7 +330,7 @@ export const MarketCard = memo(function MarketCard({ post: raw, priority = false
         onClick={toggle}
         className="hit-area absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-black/60 transition-transform active:scale-90 motion-reduce:active:scale-100"
       >
-        <Icon name="heart" filled={liked} className={`size-[18px] transition-colors duration-150 ${liked ? "text-like" : "text-white"}`} />
+        <Icon name="heart" filled={liked} className={`size-[18px] transition-colors duration-150 ${liked ? "text-like" : "text-fg"}`} />
       </button>
     </div>
   );
@@ -339,7 +339,7 @@ export const MarketCard = memo(function MarketCard({ post: raw, priority = false
 // Same outer dimensions as MarketCard so nothing shifts when data arrives.
 function CardSkeleton() {
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-white/[0.07] bg-card">
+    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-fg/[0.07] bg-card">
       <Sk className="aspect-[5/4] w-full shrink-0 rounded-none" />
       <div className={`${CARD_BODY} shrink-0 p-2.5`}>
         <Sk className="h-[18px] w-[75%] rounded-full" />
@@ -369,9 +369,9 @@ function ServicesStrip({ onExplore }: { onExplore: () => void }) {
     <button
       type="button"
       onClick={onExplore}
-      className="flex w-full items-center gap-3 rounded-2xl border border-white/[0.07] bg-card px-3.5 py-3 text-left transition-colors hover:border-white/15 active:bg-surface-subtle"
+      className="flex w-full items-center gap-3 rounded-2xl border border-fg/[0.07] bg-card px-3.5 py-3 text-left transition-colors hover:border-fg/15 active:bg-surface-subtle"
     >
-      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-interactive text-white">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-surface-interactive text-fg">
         <Icon name="caseMinimalistic" filled className="size-6" />
       </span>
       <span className="min-w-0 flex-1">
@@ -719,7 +719,7 @@ export function MarketView() {
             <button
               type="button"
               onClick={loadMore}
-              className="h-9 rounded-full border border-white/10 bg-surface-subtle px-4 text-[13px] font-bold text-fg transition-colors active:bg-surface-interactive"
+              className="h-9 rounded-full border border-fg/10 bg-surface-subtle px-4 text-[13px] font-bold text-fg transition-colors active:bg-surface-interactive"
             >
               Retry loading more
             </button>
@@ -737,7 +737,7 @@ export function MarketView() {
           <button
             type="button"
             onClick={sell}
-            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-interactive px-4 text-[15px] font-extrabold text-fg transition-transform active:scale-95 motion-reduce:active:scale-100"
+            className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-fg/10 bg-surface-interactive px-4 text-[15px] font-extrabold text-fg transition-transform active:scale-95 motion-reduce:active:scale-100"
           >
             <Icon name="plus" weight="strong" className="size-[18px]" />
             Sell
@@ -747,7 +747,7 @@ export function MarketView() {
           <Link
             href="/search"
             aria-label="Search listings"
-            className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-white/10 bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
+            className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border border-fg/10 bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
           >
             <Icon name="search" className="size-[20px] shrink-0" />
             <span className="truncate text-body">Search for products, services...</span>
@@ -758,12 +758,12 @@ export function MarketView() {
               aria-label="Sort listings"
               aria-expanded={sortOpen}
               onClick={() => setSortOpen((o) => !o)}
-              className="grid size-12 place-items-center rounded-full border border-white/10 bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
+              className="grid size-12 place-items-center rounded-full border border-fg/10 bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive active:bg-surface-interactive"
             >
               <Icon name="tuning2" className="size-[22px]" />
             </button>
             {sortOpen && (
-              <div className="mk-pop absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-white/10 bg-card-elevated p-1 shadow-2xl">
+              <div className="mk-pop absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-2xl border border-fg/10 bg-card-elevated p-1 shadow-2xl">
                 {SORTS.map((s) => {
                   const on = !isHome && sort === s.id;
                   return (
@@ -771,7 +771,7 @@ export function MarketView() {
                       key={s.id}
                       type="button"
                       onClick={() => pickSort(s.id)}
-                      className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-white/5 active:bg-white/5 ${
+                      className={`flex h-10 w-full items-center justify-between rounded-xl px-3 text-[14px] font-semibold transition-colors hover:bg-fg/5 active:bg-fg/5 ${
                         on ? TEXT_YELLOW : "text-fg"
                       }`}
                     >
@@ -797,7 +797,7 @@ export function MarketView() {
                 }}
                 aria-pressed={on}
                 className={`inline-flex h-11 shrink-0 items-center gap-2 rounded-full px-4 text-[14px] font-bold transition-[background-color,color,transform] active:scale-95 motion-reduce:active:scale-100 ${
-                  on ? BTN_WHITE : "border border-white/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
+                  on ? BTN_WHITE : "border border-fg/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
                 }`}
               >
                 {t.icon && <Icon name={t.icon} className="size-[18px]" />}

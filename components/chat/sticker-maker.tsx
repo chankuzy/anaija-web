@@ -35,7 +35,7 @@ export function StickerMaker({ file, onCancel, onSave }: { file: File; onCancel:
   }, [onCancel]);
 
   const seg = (on: boolean) =>
-    `h-9 flex-1 rounded-full text-[13px] font-bold transition-colors ${on ? "bg-white text-black" : "text-white/70 hover:text-white"}`;
+    `h-9 flex-1 rounded-full text-[13px] font-bold transition-colors ${on ? "bg-fg text-bg" : "text-fg/70 hover:text-fg"}`;
 
   return (
     <div className="fixed inset-0 z-[85] grid place-items-center bg-black/80 p-4" role="dialog" aria-modal="true" aria-label="Create sticker">
@@ -47,10 +47,10 @@ export function StickerMaker({ file, onCancel, onSave }: { file: File; onCancel:
           ) : err ? (
             <p role="alert" className="px-6 text-center text-secondary text-danger">{err}</p>
           ) : (
-            <span role="status" aria-label="Loading" className="size-7 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+            <span role="status" aria-label="Loading" className="size-7 animate-spin rounded-full border-2 border-fg/25 border-t-white" />
           )}
         </div>
-        <div className="mt-4 flex gap-1 rounded-full bg-white/8 p-1">
+        <div className="mt-4 flex gap-1 rounded-full bg-fg/8 p-1">
           <button type="button" aria-pressed={!fit} onClick={() => setFit(false)} className={seg(!fit)}>Fill</button>
           <button type="button" aria-pressed={fit} onClick={() => setFit(true)} className={seg(fit)}>Fit</button>
           <button type="button" aria-pressed={round} onClick={() => setRound((r) => !r)} className={seg(round)}>Rounded</button>

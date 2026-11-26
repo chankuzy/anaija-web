@@ -170,7 +170,7 @@ export function useReact(code: string, patchOne: (id: number, p: Partial<Entry>)
 export function AliasDot({ alias, size = 32 }: { alias: string; size?: number }) {
   const n = parseInt(alias.replace(/\D/g, ""), 10) || 0;
   return (
-    <span className="grid shrink-0 place-items-center rounded-full font-extrabold text-black" style={{ width: size, height: size, fontSize: size * 0.34, background: `hsl(${(n * 47) % 360} 70% 72%)` }}>
+    <span className="grid shrink-0 place-items-center rounded-full font-extrabold text-bg" style={{ width: size, height: size, fontSize: size * 0.34, background: `hsl(${(n * 47) % 360} 70% 72%)` }}>
       {String(n).slice(-2)}
     </span>
   );
@@ -271,7 +271,7 @@ export function EntryCard({ code, e, big = false, animate = null, delay = 0, can
       </div>
       {footer}
       {open && (
-        <div className="mt-3 border-l-2 border-white/10 pl-4">
+        <div className="mt-3 border-l-2 border-fg/10 pl-4">
           {(replies.data ?? []).map((r) => (
             <div key={r.id} className="py-2">
               <div className="flex items-center gap-2"><Byline e={r} size={24} /><span className="text-supporting text-muted">{timeAgo(r.created_at)}</span></div>

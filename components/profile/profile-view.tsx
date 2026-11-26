@@ -85,11 +85,11 @@ const EMPTY_COPY: Record<ListTab, { title: string; sub: string }> = {
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
 
-const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,color-mix(in_srgb,var(--c-brand)_12%,transparent),transparent_70%)]";
 
 // Message state: visible tonal glass with a hairline ring so it never melts into the cover.
-const MESSAGE_MOBILE = "bg-white/25 text-white backdrop-blur-md hover:bg-white/30";
-const MESSAGE_DESKTOP = "bg-surface-elevated text-white hover:bg-white/20";
+const MESSAGE_MOBILE = "bg-fg/25 text-fg backdrop-blur-md hover:bg-fg/30";
+const MESSAGE_DESKTOP = "bg-surface-elevated text-fg hover:bg-fg/20";
 
 function safeHref(raw: string): { href: string; label: string } | null {
   const t = raw.trim();
@@ -141,7 +141,7 @@ function RoundBtn({ label, onClick, children }: { label: string; onClick: () => 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated active:scale-92"
+      className="grid size-11 place-items-center rounded-full bg-surface-interactive text-fg transition hover:bg-surface-elevated active:scale-92"
     >
       {children}
     </button>
@@ -151,13 +151,13 @@ function RoundBtn({ label, onClick, children }: { label: string; onClick: () => 
 function Stat({ value, label, href, inline }: { value: number; label: string; href?: string; inline?: boolean }) {
   const inner = inline ? (
     <>
-      <span className="text-section font-extrabold tracking-tight text-white">{formatCount(value)}</span>{" "}
-      <span className="text-[15px] text-white/55">{label}</span>
+      <span className="text-section font-extrabold tracking-tight text-fg">{formatCount(value)}</span>{" "}
+      <span className="text-[15px] text-fg/55">{label}</span>
     </>
   ) : (
     <>
-      <p className="text-[21px] font-extrabold leading-none tracking-tight text-white text-shadow">{formatCount(value)}</p>
-      <p className="mt-1 text-body text-white/55">{label}</p>
+      <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(value)}</p>
+      <p className="mt-1 text-body text-fg/55">{label}</p>
     </>
   );
   return href ? (
@@ -236,13 +236,13 @@ function BioLink({ links, onMore }: { links: string[]; onMore: () => void }) {
         href={first.href}
         target="_blank"
         rel="noopener noreferrer nofollow"
-        className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-white/10 py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold text-white transition hover:bg-white/15 active:scale-98"
+        className="inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full bg-fg/10 py-1.5 pl-2.5 pr-3.5 text-[13px] font-semibold text-fg transition hover:bg-fg/15 active:scale-98"
       >
         <Icon name="link" weight="strong" className="size-4 shrink-0 text-info" />
         <span className="truncate">{first.label}</span>
       </a>
       {extra > 0 && (
-        <button type="button" onClick={onMore} className="shrink-0 text-[13px] font-semibold text-white/55 transition hover:text-white">
+        <button type="button" onClick={onMore} className="shrink-0 text-[13px] font-semibold text-fg/55 transition hover:text-fg">
           +{extra} more
         </button>
       )}
@@ -255,7 +255,7 @@ function InfoRow({
   label,
   value,
   href,
-  tile = "bg-white/[0.07] text-white/70",
+  tile = "bg-fg/[0.07] text-fg/70",
 }: {
   icon: IconName;
   label: string;
@@ -269,13 +269,13 @@ function InfoRow({
         <Icon name={icon} filled className="size-[19.4px]" />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/40">{label}</p>
-        <p className={`mt-0.5 truncate text-[15px] font-semibold ${href ? "text-info" : "text-white"}`}>{value}</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-fg/40">{label}</p>
+        <p className={`mt-0.5 truncate text-[15px] font-semibold ${href ? "text-info" : "text-fg"}`}>{value}</p>
       </div>
     </div>
   );
   return href ? (
-    <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="block transition hover:bg-white/[0.04] active:bg-white/[0.06]">
+    <a href={href} target="_blank" rel="noopener noreferrer nofollow" className="block transition hover:bg-fg/[0.04] active:bg-fg/[0.06]">
       {inner}
     </a>
   ) : (
@@ -293,17 +293,17 @@ function InfoPanel({ profile }: { profile: UserProfile }) {
   if (empty) return <TabMessage title="Nothing here yet" sub="Tagline, location and links show up here" />;
 
   const card = "overflow-hidden rounded-2xl bg-surface-subtle";
-  const label = "mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-white/40";
+  const label = "mb-2 px-1 text-[11px] font-bold uppercase tracking-wider text-fg/40";
 
   return (
     <div className="space-y-5 px-4 py-4 md:px-0">
       {tagline && (
         <div className="rounded-2xl bg-surface-subtle p-4">
           <div className="flex items-start gap-3">
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/[0.07] text-white/70">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-fg/[0.07] text-fg/70">
               <Icon name="chatRoundDots" filled className="size-[19.4px]" />
             </span>
-            <p className="min-w-0 flex-1 whitespace-pre-line pt-1.5 text-[15px] font-medium leading-snug text-white">{tagline}</p>
+            <p className="min-w-0 flex-1 whitespace-pre-line pt-1.5 text-[15px] font-medium leading-snug text-fg">{tagline}</p>
           </div>
         </div>
       )}
@@ -500,7 +500,7 @@ export function ProfileView({ username }: { username: string }) {
         {tab === "updates" ? (
           <div className="w-full max-w-[11cm] px-4 md:px-0 [&_[aria-roledescription=carousel]]:!aspect-[4/5]">
             {curItems.map((p, i) => (
-              <div key={p.id} className="border-b border-white/[0.06] pt-4 last:border-none">
+              <div key={p.id} className="border-b border-fg/[0.06] pt-4 last:border-none">
                 <HomePost post={p} index={i} active={false} onVisible={noopVisible} patch={src.patch} onRemove={src.remove} flush />
               </div>
             ))}
@@ -570,8 +570,8 @@ export function ProfileView({ username }: { username: string }) {
         <div className="relative px-4 pb-3" style={{ paddingTop: "calc(env(safe-area-inset-top) + 64px)" }}>
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1 pt-1">
-              <NameRow profile={profile} className="text-[25px] leading-[1.1] text-white text-shadow" />
-              <p className="mt-0.5 truncate text-[15px] text-white/55 text-shadow">@{profile.username}</p>
+              <NameRow profile={profile} className="text-[25px] leading-[1.1] text-fg text-shadow" />
+              <p className="mt-0.5 truncate text-[15px] text-fg/55 text-shadow">@{profile.username}</p>
               <div className="mt-3.5 flex items-start gap-7">
                 <Stat value={profile.counts.following} label="Following" href={`/u/${profile.username}/following`} />
                 <Stat value={profile.counts.followers} label="Followers" href={`/u/${profile.username}/followers`} />
@@ -582,7 +582,7 @@ export function ProfileView({ username }: { username: string }) {
           </div>
 
           {/* Bio spans the full width, like TikTok: it is not boxed into the stats column. */}
-          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-white/90 text-shadow">{bio}</p>}
+          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90 text-shadow">{bio}</p>}
           <BioLink links={profile.links} onMore={goInfo} />
 
           {!own && (
@@ -607,8 +607,8 @@ export function ProfileView({ username }: { username: string }) {
 
           <div className="min-w-0 flex-1 pt-1.5">
             <div className="flex flex-wrap items-baseline gap-x-3">
-              <NameRow profile={profile} className="text-[26px] leading-tight text-white" />
-              <span className="truncate text-label text-white/50">@{profile.username}</span>
+              <NameRow profile={profile} className="text-[26px] leading-tight text-fg" />
+              <span className="truncate text-label text-fg/50">@{profile.username}</span>
             </div>
 
             <div className="mt-3 flex items-center gap-6">
@@ -623,7 +623,7 @@ export function ProfileView({ username }: { username: string }) {
                   <button
                     type="button"
                     onClick={() => router.push("/settings/edit")}
-                    className="h-11 rounded-full bg-surface-interactive px-6 text-[15px] font-bold text-white transition hover:bg-surface-elevated active:scale-98"
+                    className="h-11 rounded-full bg-surface-interactive px-6 text-[15px] font-bold text-fg transition hover:bg-surface-elevated active:scale-98"
                   >
                     Edit profile
                   </button>
@@ -652,7 +652,7 @@ export function ProfileView({ username }: { username: string }) {
               )}
             </div>
 
-            {bio && <p className="mt-4 max-w-[620px] whitespace-pre-line text-[15px] leading-[1.45] text-white/90">{bio}</p>}
+            {bio && <p className="mt-4 max-w-[620px] whitespace-pre-line text-[15px] leading-[1.45] text-fg/90">{bio}</p>}
             <BioLink links={profile.links} onMore={goInfo} />
           </div>
         </div>
@@ -672,10 +672,10 @@ export function ProfileView({ username }: { username: string }) {
                 aria-label={t.label}
                 onClick={() => selectTab(t.id)}
                 className={`relative flex shrink-0 items-center justify-center gap-2.5 px-5 py-2.5 text-label font-bold transition md:px-0 md:pb-3 md:pt-2.5 ${
-                  active ? "text-white" : "text-white/45 hover:text-white/75"
+                  active ? "text-fg" : "text-fg/45 hover:text-fg/75"
                 }`}
               >
-                <Icon name={TAB_ICON[t.id]} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? "text-brand" : "text-white"}`} />
+                <Icon name={TAB_ICON[t.id]} filled={active} className={`size-[24.6px] transition-all duration-200 ${active ? "text-brand" : "text-fg"}`} />
                 <span className="hidden md:inline">{t.label}</span>
                 {active && (
                   <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-brand md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />

@@ -17,9 +17,9 @@ import { ContentStatusPill, fmtWhen } from "./content-status";
 import { useStaff } from "./staff-context";
 
 const MAX_MEDIA = 10;
-const inputCls = "w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-white outline-none placeholder:text-muted disabled:opacity-60";
-const primary = "h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40";
-const secondary = "h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-white disabled:opacity-40";
+const inputCls = "w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-fg outline-none placeholder:text-muted disabled:opacity-60";
+const primary = "h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40";
+const secondary = "h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-fg disabled:opacity-40";
 
 const toLocalInput = (iso: string) => {
   const d = new Date(iso);
@@ -169,9 +169,9 @@ function ItemForm({ item, accounts, show }: { item: ContentItem | null; accounts
           <Group>
             <div className="p-4">
               <select aria-label="Account" value={account} onChange={(e) => setAccount(e.target.value)} className={`${inputCls} h-12`}>
-                <option value="" className="bg-[#26262b]">Pick an account…</option>
+                <option value="" className="bg-card-elevated">Pick an account…</option>
                 {accounts.filter((a) => a.status !== "suspended").map((a) => (
-                  <option key={a.key} value={a.key} className="bg-[#26262b]">{a.name ?? a.key}</option>
+                  <option key={a.key} value={a.key} className="bg-card-elevated">{a.name ?? a.key}</option>
                 ))}
               </select>
             </div>
@@ -199,15 +199,15 @@ function ItemForm({ item, accounts, show }: { item: ContentItem | null; accounts
             ))}
             {!mediaLocked && media.length < MAX_MEDIA && (
               <button type="button" disabled={uploading || busy} onClick={() => fileRef.current?.click()}
-                className="grid size-[88px] place-items-center rounded-2xl bg-surface-interactive text-white disabled:opacity-50">
+                className="grid size-[88px] place-items-center rounded-2xl bg-surface-interactive text-fg disabled:opacity-50">
                 {uploading ? <span className="text-micro font-bold">…</span> : <Icon name="plus" className="size-7" />}
               </button>
             )}
           </div>
           <select aria-label="Audience" value={visibility} disabled={locked || busy} onChange={(e) => setVisibility(e.target.value)} className={`${inputCls} h-12`}>
-            <option value="public" className="bg-[#26262b]">Everyone</option>
-            <option value="followers" className="bg-[#26262b]">Followers</option>
-            <option value="campus" className="bg-[#26262b]">Campus</option>
+            <option value="public" className="bg-card-elevated">Everyone</option>
+            <option value="followers" className="bg-card-elevated">Followers</option>
+            <option value="campus" className="bg-card-elevated">Campus</option>
           </select>
         </div>
         <Toggle icon="chatLine" label="Allow comments" value={comments} disabled={locked || busy} onChange={setComments} />
@@ -225,14 +225,14 @@ function ItemForm({ item, accounts, show }: { item: ContentItem | null; accounts
         <div className="flex items-center gap-3 px-4 py-3">
           <Avatar url={acctAvatar} name={acctName ?? acctUser} size={36} />
           <div className="min-w-0">
-            <p className="truncate text-[15px] font-semibold text-white">{acctName ?? "Pick an account"}</p>
+            <p className="truncate text-[15px] font-semibold text-fg">{acctName ?? "Pick an account"}</p>
             {acctUser && <p className="truncate text-supporting text-muted">@{acctUser}</p>}
           </div>
         </div>
         {firstSrc && <img src={firstSrc} alt="" className="max-h-[420px] w-full bg-card object-contain" />}
         {media.length > 1 && <p className="px-4 pt-2 text-supporting text-muted">1 of {media.length}</p>}
         {caption.trim() ? (
-          <p className="whitespace-pre-wrap px-4 py-3 text-[15px] leading-[1.4] text-white">{caption}</p>
+          <p className="whitespace-pre-wrap px-4 py-3 text-[15px] leading-[1.4] text-fg">{caption}</p>
         ) : (
           <p className="px-4 py-3 text-body text-muted">No caption</p>
         )}
@@ -271,10 +271,10 @@ function ItemForm({ item, accounts, show }: { item: ContentItem | null; accounts
           <div className="h-6" />
           <SectionLabel>Performance</SectionLabel>
           <Group>
-            <div className="grid grid-cols-3 gap-px bg-white/5">
+            <div className="grid grid-cols-3 gap-px bg-fg/5">
               {STAT_ROWS.map(([label, k]) => (
                 <div key={k} className="bg-surface-subtle px-4 py-3">
-                  <p className="text-[17px] font-extrabold text-white">{item.stats![k].toLocaleString()}</p>
+                  <p className="text-[17px] font-extrabold text-fg">{item.stats![k].toLocaleString()}</p>
                   <p className="text-supporting text-muted">{label}</p>
                 </div>
               ))}
@@ -308,9 +308,9 @@ export function ContentEditor({ id }: { id: number | null }) {
   if (id && !item) {
     body = itemQ.error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{itemQ.error}</p>
-        <button type="button" onClick={() => void itemQ.refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+        <button type="button" onClick={() => void itemQ.refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
           Try again
         </button>
       </div>

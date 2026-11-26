@@ -46,7 +46,7 @@ export function Toggle({ icon, label, value, onChange, disabled = false }: {
         onClick={() => onChange(!value)}
         className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${value ? "bg-brand" : "bg-surface-elevated"}`}
       >
-        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-brand-fg" : "left-0.5 bg-white shadow"}`} />
+        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-brand-fg" : "left-0.5 bg-fg shadow"}`} />
       </button>
     </div>
   );

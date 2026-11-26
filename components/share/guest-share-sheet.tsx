@@ -60,13 +60,13 @@ export function GuestShareSheet({ post, onClose, flash }: { post: Post; onClose:
         style={{ marginBottom: "calc(10px + env(safe-area-inset-bottom))" }}
       >
         <div className="relative flex h-12 shrink-0 items-center justify-center">
-          <span className="absolute top-2 h-1 w-9 rounded-full bg-white/20 md:hidden" />
+          <span className="absolute top-2 h-1 w-9 rounded-full bg-fg/20 md:hidden" />
           <h2 className="mt-1.5 text-[16px] font-bold tracking-tight text-fg md:mt-0">Share</h2>
           <button
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="absolute right-2 hidden size-9 place-items-center rounded-full text-fg hover:bg-white/8 md:grid"
+            className="absolute right-2 hidden size-9 place-items-center rounded-full text-fg hover:bg-fg/8 md:grid"
           >
             <Icon name="close" weight="regular" className="size-5" />
           </button>
@@ -91,7 +91,7 @@ export function GuestShareSheet({ post, onClose, flash }: { post: Post; onClose:
             onClose();
             openAuth({ reason: "Sign in to send it to people on Anaija." });
           }}
-          className="mx-auto mt-5 block text-secondary font-semibold text-white/60 hover:text-white"
+          className="mx-auto mt-5 block text-secondary font-semibold text-fg/60 hover:text-fg"
         >
           Sign in to send it to people on Anaija
         </button>

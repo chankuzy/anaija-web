@@ -189,7 +189,7 @@ export function MentionTextarea({
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(u)}
                 onMouseEnter={() => setHi(i)}
-                className={`flex w-full items-center gap-2.5 px-3 py-2 text-left ${i === hi ? "bg-white/8" : ""}`}
+                className={`flex w-full items-center gap-2.5 px-3 py-2 text-left ${i === hi ? "bg-fg/8" : ""}`}
               >
                 <Avatar url={u.avatar} name={u.name ?? u.username} size={30} />
                 <span className="min-w-0">

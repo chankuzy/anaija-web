@@ -162,13 +162,13 @@ function Sheet({
     >
       <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="ob-fade absolute inset-0 cursor-default bg-black/65" />
       <div
-        className="ob-sheet relative flex max-h-[min(82dvh,640px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] bg-card-elevated text-fg shadow-[0_-12px_48px_rgba(0,0,0,0.5)] md:rounded-[28px] md:shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
+        className="ob-sheet relative flex max-h-[min(82dvh,640px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] bg-card-elevated text-fg shadow-[0_-10px_36px_rgba(0,0,0,0.2)] md:rounded-[28px] md:shadow-[0_18px_48px_rgba(0,0,0,0.25)]"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-white/20 md:hidden" />
+        <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-fg/20 md:hidden" />
         <div className="flex items-center justify-between px-6 pb-2 pt-4">
           <h2 className="text-[18px] font-extrabold tracking-tight">{label}</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="-mr-2 grid size-10 place-items-center rounded-full text-muted transition-colors hover:bg-white/8 hover:text-fg">
+          <button type="button" aria-label="Close" onClick={onClose} className="-mr-2 grid size-10 place-items-center rounded-full text-muted transition-colors hover:bg-fg/8 hover:text-fg">
             <Cross />
           </button>
         </div>
@@ -206,7 +206,7 @@ function Sheet({
                   aria-selected={sel}
                   onMouseMove={() => k !== at && setActive(k)}
                   onClick={() => onPick(o.value)}
-                  className={`flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors ${k === at ? "bg-white/8" : ""}`}
+                  className={`flex cursor-pointer items-center gap-3 rounded-2xl px-4 py-3.5 transition-colors ${k === at ? "bg-fg/8" : ""}`}
                 >
                   <span className="min-w-0 flex-1">
                     <span className={`block text-[15px] leading-snug text-fg ${sel ? "font-extrabold" : "font-semibold"}`}>{o.label}</span>

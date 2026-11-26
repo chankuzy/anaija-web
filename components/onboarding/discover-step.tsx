@@ -25,7 +25,7 @@ function Pill({ label, tone, state, done, disabled, onClick }: { label: string; 
       ? "bg-surface-interactive text-fg"
       : tone === "yellow"
         ? "bg-brand text-brand-fg hover:bg-brand-hover"
-        : "bg-fg text-bg hover:bg-white";
+        : "bg-fg text-bg hover:bg-fg";
   return (
     <button
       type="button"

@@ -83,9 +83,9 @@ export function CommunityDetailView() {
   if (!c) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
           Try again
         </button>
       </div>
@@ -104,7 +104,7 @@ export function CommunityDetailView() {
           <div className="space-y-3 p-4">
             <textarea aria-label="Description" rows={4} maxLength={500} value={description} disabled={!manage || busy}
               onChange={(e) => setDesc(e.target.value)}
-              className="w-full resize-none rounded-[18px] bg-surface-interactive px-4 py-3 text-[15px] leading-[1.4] text-white outline-none disabled:opacity-60" />
+              className="w-full resize-none rounded-[18px] bg-surface-interactive px-4 py-3 text-[15px] leading-[1.4] text-fg outline-none disabled:opacity-60" />
             <p className="text-supporting text-muted">
               /{c.slug} · {c.members.toLocaleString()} {c.members === 1 ? "member" : "members"}
               {c.join_policy ? ` · join: ${c.join_policy}` : ""}{c.read_policy ? ` · read: ${c.read_policy}` : ""}
@@ -117,13 +117,13 @@ export function CommunityDetailView() {
         <Group>
           {PERMISSION_ACTIONS.map((a) => (
             <div key={a.key} className="flex items-center gap-3.5 px-4 py-3">
-              <span className="min-w-0 flex-1 text-[15px] font-semibold text-white">{a.label}</span>
+              <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{a.label}</span>
               <select aria-label={a.label} disabled={!manage || busy}
                 value={perms[a.key] ?? c.permissions[a.key] ?? a.def}
                 onChange={(e) => setPerms((p) => ({ ...p, [a.key]: e.target.value }))}
-                className="h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-white outline-none disabled:opacity-50">
+                className="h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-fg outline-none disabled:opacity-50">
                 {ROLE_OPTIONS.map((o) => (
-                  <option key={o.v} value={o.v} className="bg-[#26262b]">{o.l}</option>
+                  <option key={o.v} value={o.v} className="bg-card-elevated">{o.l}</option>
                 ))}
               </select>
             </div>
@@ -131,7 +131,7 @@ export function CommunityDetailView() {
         </Group>
         {manage && (
           <button type="button" disabled={!dirty || busy} onClick={() => void save()}
-            className="mt-4 h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40">
+            className="mt-4 h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40">
             Save changes
           </button>
         )}

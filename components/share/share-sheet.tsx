@@ -34,12 +34,12 @@ export function Quick({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className="flex flex-1 flex-col items-center gap-2 text-white transition-transform active:scale-95 disabled:opacity-60"
+      className="flex flex-1 flex-col items-center gap-2 text-fg transition-transform active:scale-95 disabled:opacity-60"
     >
       <span className="grid size-14 place-items-center rounded-full bg-surface-interactive transition-colors hover:bg-surface-elevated">
         {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""} ${active ? "text-brand" : ""}`} />)}
       </span>
-      <span className="text-supporting font-semibold text-white/85">{label}</span>
+      <span className="text-supporting font-semibold text-fg/85">{label}</span>
     </button>
   );
 }
@@ -268,13 +268,13 @@ export function ShareSheet({
         style={{ marginBottom: "calc(10px + env(safe-area-inset-bottom))" }}
       >
         <div className="relative flex h-12 shrink-0 items-center justify-center">
-          <span className="absolute top-2 h-1 w-9 rounded-full bg-white/20 md:hidden" />
+          <span className="absolute top-2 h-1 w-9 rounded-full bg-fg/20 md:hidden" />
           <h2 className="mt-1.5 text-[16px] font-bold tracking-tight text-fg md:mt-0">Share</h2>
           <button
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="absolute right-2 hidden size-9 place-items-center rounded-full text-fg hover:bg-white/8 md:grid"
+            className="absolute right-2 hidden size-9 place-items-center rounded-full text-fg hover:bg-fg/8 md:grid"
           >
             <Icon name="close" weight="regular" className="size-5" />
           </button>
@@ -297,7 +297,7 @@ export function ShareSheet({
               placeholder="Search people"
               enterKeyHint="search"
               autoComplete="off"
-              className="min-w-0 flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-muted"
+              className="min-w-0 flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-muted"
             />
           </label>
         </div>

@@ -69,7 +69,7 @@ export function AuthModal({
       <div
         ref={panel}
         tabIndex={-1}
-        className="am-panel relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] bg-bg px-6 pt-3 text-fg ring-1 ring-white/[0.08] shadow-[0_-12px_48px_rgba(0,0,0,0.5)] outline-none md:max-w-[400px] md:rounded-[28px] md:px-8 md:pt-8 md:shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+        className="am-panel relative max-h-[92dvh] w-full overflow-y-auto rounded-t-[28px] bg-bg px-6 pt-3 text-fg ring-1 ring-fg/[0.08] shadow-[0_-12px_48px_rgba(0,0,0,0.5)] outline-none md:max-w-[400px] md:rounded-[28px] md:px-8 md:pt-8 md:shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 28px)" }}
       >
         <span aria-hidden className="mx-auto mb-3 block h-1 w-9 rounded-full bg-surface-elevated md:hidden" />

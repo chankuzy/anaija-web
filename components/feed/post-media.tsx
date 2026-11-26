@@ -18,7 +18,7 @@ function Dots({ count, index }: { count: number; index: number }) {
       {Array.from({ length: count }, (_, i) => (
         <span
           key={i}
-          className={`h-[5px] rounded-full transition-all duration-150 ${i === index ? "w-4 bg-white" : "w-[5px] bg-white/40"}`}
+          className={`h-[5px] rounded-full transition-all duration-150 ${i === index ? "w-4 bg-fg" : "w-[5px] bg-fg/40"}`}
         />
       ))}
     </div>

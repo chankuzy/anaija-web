@@ -1,7 +1,7 @@
 import type { AccountStatus } from "@/lib/api/platform";
 
 const STATUS: Record<AccountStatus, { label: string; cls: string }> = {
-  provisioned: { label: "Not live", cls: "bg-white/8 text-white/70" },
+  provisioned: { label: "Not live", cls: "bg-fg/8 text-fg/70" },
   active: { label: "Live", cls: "bg-brand text-brand-fg" },
   suspended: { label: "Suspended", cls: "bg-danger/15 text-danger" },
 };

@@ -10,7 +10,7 @@ import { confirmDialog } from "@/lib/ui/dialog";
 import { Footnote, Group, SectionLabel, SettingsPage, useToast } from "@/components/settings/settings-kit";
 import { useStaff } from "./staff-context";
 
-const selectCls = "h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-white outline-none disabled:opacity-50";
+const selectCls = "h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-fg outline-none disabled:opacity-50";
 
 export function StaffView() {
   const me = useStaff();
@@ -49,9 +49,9 @@ export function StaffView() {
   if (!data) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
           Try again
         </button>
       </div>
@@ -69,13 +69,13 @@ export function StaffView() {
               <div key={s.user_id} className="flex items-center gap-3 px-4 py-3">
                 <Avatar url={s.avatar} name={s.name ?? s.username} size={40} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[15px] font-semibold text-white">{s.name ?? s.username ?? `User ${s.user_id}`}</p>
+                  <p className="truncate text-[15px] font-semibold text-fg">{s.name ?? s.username ?? `User ${s.user_id}`}</p>
                   <p className="truncate text-supporting text-muted">{s.username ? `@${s.username}` : ""}{self ? " · you" : ""}</p>
                 </div>
                 <select aria-label="Role" value={s.role} disabled={busy || self} className={selectCls}
                   onChange={(e) => void run(() => platformApi.setStaffRole(s.user_id, e.target.value), "Role updated")}>
                   {STAFF_ROLES.map((r) => (
-                    <option key={r} value={r} className="bg-[#26262b]">{roleLabel(r)}</option>
+                    <option key={r} value={r} className="bg-card-elevated">{roleLabel(r)}</option>
                   ))}
                 </select>
                 {!self && (
@@ -94,15 +94,15 @@ export function StaffView() {
           <div className="space-y-3 p-4">
             <input aria-label="Username" placeholder="Username" value={username} disabled={busy}
               onChange={(e) => setUsername(e.target.value)}
-              className="h-12 w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-white outline-none placeholder:text-muted" />
+              className="h-12 w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-fg outline-none placeholder:text-muted" />
             <select aria-label="Role" value={role} disabled={busy} onChange={(e) => setRole(e.target.value)} className={`${selectCls} w-full`}>
               {STAFF_ROLES.map((r) => (
-                <option key={r} value={r} className="bg-[#26262b]">{roleLabel(r)}</option>
+                <option key={r} value={r} className="bg-card-elevated">{roleLabel(r)}</option>
               ))}
             </select>
             <button type="button" disabled={busy || !username.trim()}
               onClick={() => void run(async () => { await platformApi.grantStaff({ username: username.trim(), role }); setUsername(""); }, "Added")}
-              className="h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40">
+              className="h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40">
               Add to staff
             </button>
           </div>

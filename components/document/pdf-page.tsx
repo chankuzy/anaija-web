@@ -66,7 +66,7 @@ function Inner({ doc, n, width, height, quality = 1 }: Props) {
 
   return (
     <>
-      <canvas ref={ref} className={`bg-white transition-opacity duration-150 ${state === "done" ? "opacity-100" : "opacity-0"}`} />
+      <canvas ref={ref} className={`bg-fg transition-opacity duration-150 ${state === "done" ? "opacity-100" : "opacity-0"}`} />
       {state === "loading" && (
         <span aria-hidden className="absolute size-6 animate-spin rounded-full border-2 border-current/25 border-t-current text-muted" />
       )}

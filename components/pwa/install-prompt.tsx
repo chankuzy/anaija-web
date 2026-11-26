@@ -88,7 +88,7 @@ export function InstallPrompt() {
           Install
         </button>
       )}
-      <button type="button" aria-label="Dismiss" onClick={dismiss} className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-white/8">
+      <button type="button" aria-label="Dismiss" onClick={dismiss} className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-fg/8">
         <Icon name="close" className="size-4" />
       </button>
     </div>

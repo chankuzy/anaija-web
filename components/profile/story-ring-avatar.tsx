@@ -13,8 +13,8 @@ const GAP = 2;
 
 const RING_BG: Record<StoryRingState, string> = {
   unseen: "linear-gradient(45deg, #ffe27a 0%, #ffd84d 28%, #ffad32 58%, #ff7a3d 82%, #ff3b5c 100%)",
-  seen: "rgba(255,255,255,0.22)",
-  none: "rgba(255,255,255,0.14)",
+  seen: "color-mix(in srgb, var(--c-fg) 24%, transparent)",
+  none: "color-mix(in srgb, var(--c-fg) 14%, transparent)",
 };
 
 export function StoryRingAvatar({
@@ -40,7 +40,7 @@ export function StoryRingAvatar({
         boxShadow: ring === "unseen" ? "0 0 14px rgba(255,173,50,0.28)" : undefined,
       }}
     >
-      <span className="grid place-items-center rounded-full bg-black" style={{ padding: GAP }}>
+      <span className="grid place-items-center rounded-full bg-bg" style={{ padding: GAP }}>
         <Avatar url={url} name={name} size={size} />
       </span>
     </span>

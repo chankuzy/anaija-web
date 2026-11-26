@@ -21,17 +21,17 @@ const DEVICE_NOTE: Record<PushState, string> = {
 function HourRow({ label, value, disabled, onChange }: { label: string; value: number; disabled: boolean; onChange: (h: number) => void }) {
   return (
     <div className={`flex items-center gap-3.5 px-4 py-3 ${disabled ? "opacity-50" : ""}`}>
-      <Icon name="clockCircle" className="size-6 shrink-0 text-white/75" />
-      <span className="min-w-0 flex-1 text-[15px] font-semibold text-white">{label}</span>
+      <Icon name="clockCircle" className="size-6 shrink-0 text-fg/75" />
+      <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{label}</span>
       <select
         aria-label={label}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-white outline-none"
+        className="h-10 rounded-full bg-surface-interactive px-3 text-secondary font-bold text-fg outline-none"
       >
         {Array.from({ length: 24 }, (_, h) => (
-          <option key={h} value={h} className="bg-[#26262b]">
+          <option key={h} value={h} className="bg-card-elevated">
             {fmtHour(h)}
           </option>
         ))}
@@ -76,7 +76,7 @@ export function NotificationsView() {
   if (!p) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
         <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
           Try again

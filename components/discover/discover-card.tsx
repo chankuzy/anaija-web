@@ -17,14 +17,14 @@ const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFracti
 
 function Badge({ children, className }: { children: React.ReactNode; className: string }) {
   return (
-    <span className={`icon-shadow absolute z-[2] grid place-items-center text-white ${className}`}>{children}</span>
+    <span className={`icon-shadow absolute z-[2] grid place-items-center text-fg ${className}`}>{children}</span>
   );
 }
 
 // Shown when a tile has no thumbnail (or it fails to load) and no caption, so a tile is never blank.
 function Fallback({ icon }: { icon: IconName }) {
   return (
-    <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-white/35">
+    <span className="absolute inset-0 grid place-items-center bg-[linear-gradient(145deg,#26211c,#141416)] text-fg/35">
       <Icon name={icon} filled className="size-9" />
     </span>
   );

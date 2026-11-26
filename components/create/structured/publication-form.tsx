@@ -114,13 +114,13 @@ export function PublicationForm({ onClose }: { onClose: () => void }) {
           <div key={b.id} className="rounded-2xl bg-surface-subtle p-3">
             <div className="mb-2 flex items-center gap-1">
               <span className="flex-1 text-micro font-semibold uppercase tracking-[0.08em] text-muted">{NAMES[b.type]}</span>
-              <button type="button" aria-label="Move up" disabled={pub.busy || i === 0} onClick={() => move(b.id, -1)} className="grid size-8 place-items-center rounded-full text-muted hover:bg-white/8 disabled:opacity-30">
+              <button type="button" aria-label="Move up" disabled={pub.busy || i === 0} onClick={() => move(b.id, -1)} className="grid size-8 place-items-center rounded-full text-muted hover:bg-fg/8 disabled:opacity-30">
                 <Icon name="chevronDown" className="size-4 rotate-180" />
               </button>
-              <button type="button" aria-label="Move down" disabled={pub.busy || i === blocks.length - 1} onClick={() => move(b.id, 1)} className="grid size-8 place-items-center rounded-full text-muted hover:bg-white/8 disabled:opacity-30">
+              <button type="button" aria-label="Move down" disabled={pub.busy || i === blocks.length - 1} onClick={() => move(b.id, 1)} className="grid size-8 place-items-center rounded-full text-muted hover:bg-fg/8 disabled:opacity-30">
                 <Icon name="chevronDown" className="size-4" />
               </button>
-              <button type="button" aria-label="Remove block" disabled={pub.busy || blocks.length === 1} onClick={() => setBlocks((p) => p.filter((x) => x.id !== b.id))} className="grid size-8 place-items-center rounded-full text-muted hover:bg-white/8 disabled:opacity-30">
+              <button type="button" aria-label="Remove block" disabled={pub.busy || blocks.length === 1} onClick={() => setBlocks((p) => p.filter((x) => x.id !== b.id))} className="grid size-8 place-items-center rounded-full text-muted hover:bg-fg/8 disabled:opacity-30">
                 <Icon name="close" className="size-4" />
               </button>
             </div>

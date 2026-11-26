@@ -127,7 +127,7 @@ export function MembersSheet({ c, onClose }: { c: CommunityDetail; onClose: () =
                     <p className="truncate text-supporting text-muted">@{m.username}{m.role !== "member" ? ` · ${ROLE_LABEL[m.role]}` : ""}</p>
                   </div>
                   {canAct && (
-                    <button type="button" aria-label="Manage member" onClick={() => setOpen(open === m.id ? null : m.id)} className="grid size-9 place-items-center rounded-full text-muted hover:bg-white/10">
+                    <button type="button" aria-label="Manage member" onClick={() => setOpen(open === m.id ? null : m.id)} className="grid size-9 place-items-center rounded-full text-muted hover:bg-fg/10">
                       <Icon name="dots" filled className="size-5" />
                     </button>
                   )}

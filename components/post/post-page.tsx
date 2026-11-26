@@ -97,8 +97,8 @@ function Msg({ title, sub }: { title: string; sub?: string }) {
   return (
     <div className="grid h-dvh place-items-center px-6 text-center">
       <div>
-        <p className="text-[17px] font-bold text-white">{title}</p>
-        {sub && <p className="mt-1.5 text-secondary text-white/60">{sub}</p>}
+        <p className="text-[17px] font-bold text-fg">{title}</p>
+        {sub && <p className="mt-1.5 text-secondary text-fg/60">{sub}</p>}
       </div>
     </div>
   );

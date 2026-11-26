@@ -49,7 +49,7 @@ export function ReportView() {
     <SettingsPage title="Report a problem" backHref="/settings">
       {sent ? (
         <div className="py-16 text-center">
-          <p className="text-[20px] font-bold text-white">Thanks, we got your report</p>
+          <p className="text-[20px] font-bold text-fg">Thanks, we got your report</p>
           <p className="mt-1 text-body text-muted">We&apos;ll look into it.</p>
           <LinkButton href="/settings" className="mt-6 px-8">
             Back to settings
@@ -65,7 +65,7 @@ export function ReportView() {
                 type="button"
                 onClick={() => setCat(value)}
                 className={`rounded-full px-4 py-2 text-[14px] transition ${
-                  cat === value ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-white/70 hover:text-white"
+                  cat === value ? "bg-brand font-extrabold text-brand-fg" : "bg-surface-interactive font-bold text-fg/70 hover:text-fg"
                 }`}
               >
                 {label}

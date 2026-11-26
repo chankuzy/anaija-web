@@ -21,7 +21,7 @@ export function PushHint() {
 
   return (
     <div className="shrink-0 px-3 pb-2">
-      <div className="flex items-center gap-3 rounded-2xl bg-white/6 px-3 py-2.5">
+      <div className="flex items-center gap-3 rounded-2xl bg-fg/6 px-3 py-2.5">
         <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand/15 text-brand">
           <Icon name="bell" filled className="size-[18px]" />
         </span>

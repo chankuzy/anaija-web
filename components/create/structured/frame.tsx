@@ -42,7 +42,7 @@ export function FormFrame({
 
       <div className="bg-bg px-4 pb-3 pt-2.5">
         {pub.stage === "uploading" && (
-          <div className="mb-2.5 h-1 overflow-hidden rounded bg-white/10">
+          <div className="mb-2.5 h-1 overflow-hidden rounded bg-fg/10">
             <div className="h-full bg-brand transition-[width]" style={{ width: `${Math.round(pub.progress * 100)}%` }} />
           </div>
         )}
@@ -62,10 +62,10 @@ export function FormFrame({
             <p className="text-base font-bold text-fg">Discard this draft?</p>
             <p className="mt-1.5 text-[12.5px] leading-[1.4] text-muted">Drafts of written content are not saved yet.</p>
           </div>
-          <button type="button" onClick={onClose} className="w-full py-4 text-[15px] font-semibold text-danger hover:bg-white/4">
+          <button type="button" onClick={onClose} className="w-full py-4 text-[15px] font-semibold text-danger hover:bg-fg/4">
             Discard
           </button>
-          <button type="button" onClick={() => setLeaving(false)} className="w-full py-4 text-[15px] font-semibold text-muted hover:bg-white/4">
+          <button type="button" onClick={() => setLeaving(false)} className="w-full py-4 text-[15px] font-semibold text-muted hover:bg-fg/4">
             Keep editing
           </button>
           <div className="h-2" />

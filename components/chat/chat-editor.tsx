@@ -84,10 +84,10 @@ function DrawLayer({ w, h, strokes, active, color, width, onStroke }: { w: numbe
 function ToolBtn({ icon, label, active = false, onClick, disabled = false }: { icon: IconName; label: string; active?: boolean; onClick: () => void; disabled?: boolean }) {
   return (
     <button type="button" onClick={onClick} disabled={disabled} aria-pressed={active} className="flex min-w-[64px] flex-col items-center gap-1 disabled:opacity-40">
-      <span className={`grid size-11 place-items-center rounded-full transition-colors ${active ? "bg-brand text-brand-fg" : "bg-white/12 text-white"}`}>
+      <span className={`grid size-11 place-items-center rounded-full transition-colors ${active ? "bg-brand text-brand-fg" : "bg-fg/12 text-fg"}`}>
         <Icon name={icon} filled={icon !== "pen"} className="size-[19px]" />
       </span>
-      <span className="text-[10.5px] font-semibold text-white">{label}</span>
+      <span className="text-[10.5px] font-semibold text-fg">{label}</span>
     </button>
   );
 }
@@ -208,7 +208,7 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
     <div className="fixed inset-0 z-[80] flex flex-col bg-black text-white" role="dialog" aria-modal="true" aria-label="Edit photos">
       <FilterDefs />
       <div className="flex items-center px-2 pb-1" style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}>
-        <button type="button" aria-label="Cancel editing" disabled={busy} onClick={onCancel} className="grid size-11 place-items-center rounded-full transition-colors hover:bg-white/10 disabled:opacity-50">
+        <button type="button" aria-label="Cancel editing" disabled={busy} onClick={onCancel} className="grid size-11 place-items-center rounded-full transition-colors hover:bg-fg/10 disabled:opacity-50">
           <Icon name="close" className="size-6" />
         </button>
         <p className="flex-1 text-center text-[14px] font-bold">{list.length > 1 ? `${index + 1} of ${list.length}` : "Edit photo"}</p>
@@ -227,7 +227,7 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
 
       <div ref={stage} className="relative min-h-0 flex-1">
         {base === null ? (
-          <p className="absolute inset-0 grid place-items-center px-8 text-center text-secondary text-white/70">This photo can&apos;t be edited. You can still send it as it is.</p>
+          <p className="absolute inset-0 grid place-items-center px-8 text-center text-secondary text-fg/70">This photo can&apos;t be edited. You can still send it as it is.</p>
         ) : v && sc > 0 ? (
           <div className="absolute" style={{ left: (box.w - dw) / 2, top: (box.h - dh) / 2, width: dw, height: dh }}>
             <img src={v.url} alt="" draggable={false} className="size-full select-none" style={{ filter: filterCss(edit.filterIdx) }} />
@@ -244,7 +244,7 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
           </div>
         ) : (
           <span className="absolute inset-0 grid place-items-center">
-            <span role="status" aria-label="Loading photo" className="size-8 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+            <span role="status" aria-label="Loading photo" className="size-8 animate-spin rounded-full border-2 border-fg/25 border-t-white" />
           </span>
         )}
       </div>
@@ -253,7 +253,7 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
 
       {tool === "crop" && (
         <div className="flex items-center justify-between gap-3 px-4 py-2">
-          <p className="text-[12.5px] text-white/70">Drag a corner to resize freely. Drag inside to move.</p>
+          <p className="text-[12.5px] text-fg/70">Drag a corner to resize freely. Drag inside to move.</p>
           {!isFullCrop(edit.crop) && (
             <button type="button" onClick={() => update(cur.id, (e) => ({ ...e, crop: FULL_CROP }))} className="shrink-0 text-[12.5px] font-bold text-brand">Reset crop</button>
           )}
@@ -266,7 +266,7 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
               <span className={`size-[60px] overflow-hidden rounded-[10px] border-2 ${edit.filterIdx === i ? "border-brand" : "border-transparent"}`}>
                 <img src={v.url} alt="" draggable={false} className="size-full rounded-[8px] object-cover" style={{ filter: filterCss(i) }} />
               </span>
-              <span className={`mt-1 text-[10px] ${edit.filterIdx === i ? "font-bold" : "text-white/70"}`}>{f.label}</span>
+              <span className={`mt-1 text-[10px] ${edit.filterIdx === i ? "font-bold" : "text-fg/70"}`}>{f.label}</span>
             </button>
           ))}
         </div>
@@ -275,14 +275,14 @@ export function ChatEditor({ items, onCancel, onDone }: { items: PickedFile[]; o
         <div className="space-y-2 px-4 py-2">
           <div className="flex items-center gap-2">
             {COLORS.map((c) => (
-              <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} className={`size-7 rounded-full border-2 ${color === c ? "border-brand" : "border-white/30"}`} style={{ background: c }} />
+              <button key={c} type="button" aria-label={`Colour ${c}`} aria-pressed={color === c} onClick={() => setColor(c)} className={`size-7 rounded-full border-2 ${color === c ? "border-brand" : "border-fg/30"}`} style={{ background: c }} />
             ))}
             <span className="ml-auto flex gap-1">
-              <button type="button" disabled={edit.strokes.length === 0} onClick={() => update(cur.id, (e) => ({ ...e, strokes: e.strokes.slice(0, -1) }))} className="h-8 rounded-full bg-white/12 px-3 text-[12.5px] font-bold disabled:opacity-35">Undo</button>
-              <button type="button" disabled={edit.strokes.length === 0} onClick={() => update(cur.id, (e) => ({ ...e, strokes: [] }))} className="h-8 rounded-full bg-white/12 px-3 text-[12.5px] font-bold disabled:opacity-35">Clear</button>
+              <button type="button" disabled={edit.strokes.length === 0} onClick={() => update(cur.id, (e) => ({ ...e, strokes: e.strokes.slice(0, -1) }))} className="h-8 rounded-full bg-fg/12 px-3 text-[12.5px] font-bold disabled:opacity-35">Undo</button>
+              <button type="button" disabled={edit.strokes.length === 0} onClick={() => update(cur.id, (e) => ({ ...e, strokes: [] }))} className="h-8 rounded-full bg-fg/12 px-3 text-[12.5px] font-bold disabled:opacity-35">Clear</button>
             </span>
           </div>
-          <label className="flex items-center gap-3 text-[12px] text-white/70">
+          <label className="flex items-center gap-3 text-[12px] text-fg/70">
             Thickness
             <input type="range" min={1} max={10} value={thick} onChange={(e) => setThick(Number(e.target.value))} className="flex-1" aria-label="Stroke thickness" />
           </label>

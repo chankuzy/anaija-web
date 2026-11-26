@@ -582,8 +582,8 @@ export function CommentsSheet({
       <div className="glass relative flex h-[75dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-sheet md:rounded-sheet">
         <div className="flex items-center justify-center gap-2 px-4 py-3.5">
           <span className="text-[15px] font-bold tracking-tight text-fg">{noun}</span>
-          <span className="rounded-[10px] bg-white/8 px-2 py-0.5 text-xs font-bold text-white/70">{count}</span>
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-white/60 hit-area">
+          <span className="rounded-[10px] bg-fg/8 px-2 py-0.5 text-xs font-bold text-fg/70">{count}</span>
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-3 grid size-9 place-items-center text-fg/60 hit-area">
             <Icon name="close" className="size-[18px]" />
           </button>
         </div>
@@ -613,7 +613,7 @@ export function CommentsSheet({
             <p className="px-6 py-16 text-center text-sm text-muted">{top.error}</p>
           ) : top.items.length === 0 ? (
             <div className="flex flex-col items-center gap-1 py-16">
-              <Icon name="message" filled className="mb-2 size-9 text-white/50" />
+              <Icon name="message" filled className="mb-2 size-9 text-fg/50" />
               <p className="text-[15px] font-bold text-fg">{isQ ? "No answers yet" : "No comments yet"}</p>
               <p className="text-secondary text-muted">{isQ ? "Be the first to answer" : "Start the conversation"}</p>
             </div>
@@ -685,7 +685,7 @@ export function CommentsSheet({
 
         <div className="bg-surface" style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
           {replyTo && (
-            <div className="flex items-center justify-between bg-card px-4 py-1.5 text-xs font-semibold text-white/70">
+            <div className="flex items-center justify-between bg-card px-4 py-1.5 text-xs font-semibold text-fg/70">
               <span>Replying to @{replyTo.username}</span>
               <button
                 type="button"
@@ -764,7 +764,7 @@ export function CommentsSheet({
               aria-label="Send"
               disabled={!text.trim() || reading}
               onClick={() => void submit()}
-              className="grid size-[38px] shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition disabled:bg-surface-interactive disabled:text-white/25"
+              className="grid size-[38px] shrink-0 place-items-center rounded-full bg-brand text-brand-fg transition disabled:bg-surface-interactive disabled:text-fg/25"
             >
               <Icon name="send" filled className="size-4" />
             </button>

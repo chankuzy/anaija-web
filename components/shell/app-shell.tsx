@@ -49,13 +49,13 @@ const ASIDE_BASE =
   "group/side sticky top-0 z-[2] flex h-dvh w-[76px] flex-col justify-between overflow-hidden px-3 py-6 transition-[width,background-color,box-shadow] duration-200 ease-out";
 // Expand on hover or keyboard focus only (focus-visible), so a mouse click never leaves the rail stuck open.
 const ASIDE_EXPAND =
-  "hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_48px_rgba(0,0,0,0.55)] hover:backdrop-blur-xl has-[:focus-visible]:w-[256px] has-[:focus-visible]:bg-bg/92 has-[:focus-visible]:shadow-[12px_0_48px_rgba(0,0,0,0.55)] has-[:focus-visible]:backdrop-blur-xl";
+  "hover:w-[256px] hover:bg-bg/92 hover:shadow-[12px_0_40px_rgba(0,0,0,0.16)] hover:backdrop-blur-xl has-[:focus-visible]:w-[256px] has-[:focus-visible]:bg-bg/92 has-[:focus-visible]:shadow-[12px_0_40px_rgba(0,0,0,0.16)] has-[:focus-visible]:backdrop-blur-xl";
 const LABEL_BASE = "whitespace-nowrap opacity-0 transition-opacity duration-150";
 const LABEL_SHOW = "group-hover/side:opacity-100 group-has-[:focus-visible]/side:opacity-100";
 const ITEM = "flex h-[52px] items-center gap-4 rounded-full px-[10px] text-[15px] transition-colors";
 // Idle is pure white (never greyed); the active row is told apart by its filled icon, bold label and pill.
-const ACTIVE = "bg-white/8 font-bold text-white";
-const IDLE = "font-medium text-white hover:bg-white/6";
+const ACTIVE = "bg-fg/8 font-bold text-fg";
+const IDLE = "font-medium text-fg hover:bg-fg/6";
 
 const MD = "(min-width: 768px)";
 function useIsDesktop() {
@@ -153,7 +153,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               <div
                 role="dialog"
                 aria-label="Notifications"
-                className="notif-panel absolute left-full top-0 h-dvh w-[400px] max-w-[calc(100vw-76px)] overflow-hidden rounded-r-[28px] bg-bg shadow-[12px_0_48px_rgba(0,0,0,0.55)]"
+                className="notif-panel absolute left-full top-0 h-dvh w-[400px] max-w-[calc(100vw-76px)] overflow-hidden rounded-r-[28px] bg-bg shadow-[12px_0_40px_rgba(0,0,0,0.16)]"
               >
                 <NotificationsView onClose={closePanel} />
               </div>
@@ -247,7 +247,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                   aria-current={profileActive ? "page" : undefined}
                   className={`${ITEM} ${profileActive ? ACTIVE : IDLE}`}
                 >
-                  <span className={`shrink-0 rounded-full p-[1.5px] ${profileActive ? "ring-2 ring-white" : "ring-1 ring-white/25"}`}>
+                  <span className={`shrink-0 rounded-full p-[1.5px] ${profileActive ? "ring-2 ring-fg" : "ring-1 ring-fg/25"}`}>
                     <Avatar url={avatar} name={user?.name ?? user?.username} size={28} />
                   </span>
                   <span className={`min-w-0 truncate ${label}`}>{user?.username ?? "Profile"}</span>
@@ -295,10 +295,10 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
               href={hrefFor(n)}
               aria-label={n.label}
               aria-current={active ? "page" : undefined}
-              className="relative flex min-w-0 flex-1 items-center justify-center text-white transition-transform active:scale-90 motion-reduce:active:scale-100"
+              className="relative flex min-w-0 flex-1 items-center justify-center text-fg transition-transform active:scale-90 motion-reduce:active:scale-100"
             >
               {profile ? (
-                <span className={`rounded-full p-[1.5px] ${active ? "ring-2 ring-white" : "ring-1 ring-white/25"}`}>
+                <span className={`rounded-full p-[1.5px] ${active ? "ring-2 ring-fg" : "ring-1 ring-fg/25"}`}>
                   <Avatar url={avatar} name={user?.name ?? user?.username} size={26} />
                 </span>
               ) : (
@@ -315,7 +315,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
           href={hrefFor(onCommunities ? { ...CREATE, href: "/communities/new" } : CREATE)}
           aria-label={onCommunities ? "New community" : "Create"}
           onClick={onCommunities ? undefined : openCreate}
-          className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-white ring-1 ring-white/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-10px_18px_rgba(0,0,0,0.5),0_20px_38px_-10px_rgba(0,0,0,0.95),0_4px_10px_rgba(0,0,0,0.6)] transition-transform duration-150 active:scale-90 md:hidden"
+          className="fab-in fixed right-4 z-30 grid size-[58px] place-items-center rounded-full text-white ring-1 ring-fg/12 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),inset_0_-10px_18px_rgba(0,0,0,0.5),0_20px_38px_-10px_rgba(0,0,0,0.95),0_4px_10px_rgba(0,0,0,0.6)] transition-transform duration-150 active:scale-90 md:hidden"
           style={{
             bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)",
             background: "linear-gradient(145deg, #2d2d33 0%, #18181b 55%, #0c0c0e 100%)",

@@ -68,9 +68,9 @@ function ToggleRow({
       aria-checked={on}
       disabled={busy || disabled}
       onClick={onClick}
-      className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-white/4 disabled:opacity-60"
+      className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-fg/4 disabled:opacity-60"
     >
-      <Icon name={icon} className="size-5 shrink-0 text-white/85" />
+      <Icon name={icon} className="size-5 shrink-0 text-fg/85" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium text-fg">{label}</span>
         {hint && <span className="block truncate text-supporting text-muted">{hint}</span>}
@@ -78,7 +78,7 @@ function ToggleRow({
       <span aria-hidden="true" className={`relative h-[26px] w-[46px] shrink-0 rounded-full transition-colors ${on ? "bg-brand" : "bg-surface-elevated"}`}>
         <span
           className={`absolute left-[3px] top-[3px] size-5 rounded-full transition-transform duration-200 ${
-            on ? "translate-x-5 bg-brand-fg" : "translate-x-0 bg-white/80"
+            on ? "translate-x-5 bg-brand-fg" : "translate-x-0 bg-fg/80"
           }`}
         />
       </span>
@@ -98,11 +98,11 @@ function Tile({ it }: { it: SharedItem }) {
           <span className="absolute inset-0" style={{ background: "linear-gradient(160deg,#1d1d24 0%,#0b0b0f 100%)" }} />
         )}
         {it.postIsVideo && (
-          <span className="icon-shadow absolute inset-0 grid place-items-center text-white">
+          <span className="icon-shadow absolute inset-0 grid place-items-center text-fg">
             <Icon name="play" filled className="size-7" />
           </span>
         )}
-        <Icon name="link" filled className="icon-shadow absolute right-1.5 top-1.5 size-3.5 text-white" />
+        <Icon name="link" filled className="icon-shadow absolute right-1.5 top-1.5 size-3.5 text-fg" />
       </Link>
     );
   }
@@ -113,7 +113,7 @@ function Tile({ it }: { it: SharedItem }) {
       ) : (
         <>
           <video src={it.url ?? undefined} preload="metadata" muted className="size-full object-cover" />
-          <span className="icon-shadow absolute inset-0 grid place-items-center text-white">
+          <span className="icon-shadow absolute inset-0 grid place-items-center text-fg">
             <Icon name="play" filled className="size-7" />
           </span>
         </>
@@ -310,7 +310,7 @@ export function ConversationDetails({
               setTab(id);
               setLimit(PAGE);
             }}
-            className={`relative pb-2.5 text-[14.5px] ${tab === id ? "font-bold text-white" : "font-medium text-muted"}`}
+            className={`relative pb-2.5 text-[14.5px] ${tab === id ? "font-bold text-fg" : "font-medium text-muted"}`}
           >
             {label}
             {n > 0 && <span className="ml-1.5 text-supporting font-semibold text-muted">{n}</span>}
@@ -334,7 +334,7 @@ export function ConversationDetails({
             </button>
           </div>
         ) : list.length === 0 ? (
-          <p className="rounded-2xl bg-white/5 px-4 py-8 text-center text-secondary text-muted">
+          <p className="rounded-2xl bg-fg/5 px-4 py-8 text-center text-secondary text-muted">
             {tab === "media" ? "No photos or videos yet" : "No shared posts yet"}
           </p>
         ) : (
@@ -363,7 +363,7 @@ export function ConversationDetails({
             type="button"
             disabled={blockBusy || blocked === undefined}
             onClick={() => (isBlocked ? void setBlocked(false) : setConfirm(true))}
-            className="flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold text-danger transition-colors hover:bg-white/4 disabled:opacity-50"
+            className="flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold text-danger transition-colors hover:bg-fg/4 disabled:opacity-50"
           >
             <Icon name="forbidden" className="size-5 shrink-0" />
             {isBlocked ? `Unblock ${handle}` : `Block ${handle}`}
@@ -382,14 +382,14 @@ export function ConversationDetails({
             <p className="text-base font-bold text-fg">Block {handle}?</p>
             <p className="mt-1 text-sm text-muted">You can undo this any time from Settings.</p>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-semibold text-fg hover:bg-white/8">
+              <button type="button" onClick={() => setConfirm(false)} className="h-10 rounded-full px-4 text-sm font-semibold text-fg hover:bg-fg/8">
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={blockBusy}
                 onClick={() => void setBlocked(true)}
-                className="h-10 rounded-full px-4 text-sm font-semibold text-danger hover:bg-white/8 disabled:opacity-50"
+                className="h-10 rounded-full px-4 text-sm font-semibold text-danger hover:bg-fg/8 disabled:opacity-50"
               >
                 {blockBusy ? "Blocking…" : "Block"}
               </button>
@@ -406,7 +406,7 @@ export function ConversationDetails({
       <aside className="flex w-[340px] shrink-0 flex-col" aria-label="Conversation details">
         <div className="flex items-center gap-2 px-4 py-3.5">
           <h2 className="flex-1 text-[15px] font-bold text-fg">Details</h2>
-          <button type="button" aria-label="Close details" onClick={onClose} className="grid size-9 place-items-center rounded-full text-white/60 hover:bg-white/8 hover:text-white">
+          <button type="button" aria-label="Close details" onClick={onClose} className="grid size-9 place-items-center rounded-full text-fg/60 hover:bg-fg/8 hover:text-fg">
             <Icon name="close" className="size-[18px]" />
           </button>
         </div>
@@ -419,7 +419,7 @@ export function ConversationDetails({
   return (
     <div className="absolute inset-0 z-30 flex flex-col bg-bg" role="dialog" aria-label="Conversation details">
       <div className="flex items-center gap-1 px-2 pb-2" style={{ paddingTop: "calc(8px + env(safe-area-inset-top))" }}>
-        <button type="button" aria-label="Back" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8">
+        <button type="button" aria-label="Back" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg hover:bg-fg/8">
           <Icon name="back" className="size-6" />
         </button>
         <h2 className="text-[16px] font-bold text-fg">Details</h2>

@@ -28,14 +28,14 @@ function Row({ i }: { i: ContentItem }) {
   const m = i.media[0];
   const thumb = m?.thumbnail_url ?? m?.url ?? null;
   return (
-    <Link href={`/admin/content/${i.id}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-white/5">
+    <Link href={`/admin/content/${i.id}`} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-fg/5">
       {thumb ? (
         <img src={thumb} alt="" className="size-12 shrink-0 rounded-xl bg-card object-cover" />
       ) : (
         <span className="size-12 shrink-0 rounded-xl bg-surface-interactive" />
       )}
       <div className="min-w-0 flex-1">
-        <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-white">{i.caption || "No caption"}</p>
+        <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-fg">{i.caption || "No caption"}</p>
         <p className="truncate text-supporting text-muted">{i.account?.name ?? i.account?.key ?? "Account"} · {timeLine(i)}</p>
         {i.last_error && <p className="truncate text-supporting text-danger">{i.last_error}</p>}
       </div>
@@ -80,7 +80,7 @@ export function ContentView() {
   }, [load]);
 
   const action = staff.can("content.write") ? (
-    <Link href="/admin/content/new" className="grid h-10 place-items-center rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+    <Link href="/admin/content/new" className="grid h-10 place-items-center rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
       New
     </Link>
   ) : undefined;
@@ -90,17 +90,17 @@ export function ContentView() {
       <div className="no-scrollbar mb-4 flex gap-2 overflow-x-auto">
         {TABS.map((t) => (
           <button key={t.id} type="button" onClick={() => setTab(t.id)}
-            className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold ${tab === t.id ? "bg-white text-black" : "bg-surface-interactive text-white"}`}>
+            className={`h-9 shrink-0 rounded-full px-4 text-secondary font-bold ${tab === t.id ? "bg-fg text-bg" : "bg-surface-interactive text-fg"}`}>
             {t.label}
           </button>
         ))}
       </div>
       {(accounts.data?.length ?? 0) > 1 && (
         <select aria-label="Account" value={account} onChange={(e) => setAccount(e.target.value)}
-          className="mb-4 h-10 w-full rounded-full bg-surface-interactive px-4 text-secondary font-bold text-white outline-none">
-          <option value="" className="bg-[#26262b]">All accounts</option>
+          className="mb-4 h-10 w-full rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg outline-none">
+          <option value="" className="bg-card-elevated">All accounts</option>
           {accounts.data?.map((a) => (
-            <option key={a.key} value={a.key} className="bg-[#26262b]">{a.name ?? a.key}</option>
+            <option key={a.key} value={a.key} className="bg-card-elevated">{a.name ?? a.key}</option>
           ))}
         </select>
       )}
@@ -108,9 +108,9 @@ export function ContentView() {
       {!loaded ? (
         err ? (
           <div className="py-16 text-center">
-            <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+            <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
             <p className="mt-1 text-body text-muted">{err}</p>
-            <button type="button" onClick={() => void load(null)} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+            <button type="button" onClick={() => void load(null)} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
               Try again
             </button>
           </div>
@@ -128,7 +128,7 @@ export function ContentView() {
           </Group>
           {err && <p className="px-2 pt-3 text-secondary text-danger">{err}</p>}
           {cursor && (
-            <button type="button" disabled={busy} onClick={() => void load(cursor)} className="mt-4 h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => void load(cursor)} className="mt-4 h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-fg disabled:opacity-50">
               {busy ? "Loading…" : "Load more"}
             </button>
           )}

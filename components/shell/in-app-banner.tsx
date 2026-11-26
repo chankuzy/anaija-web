@@ -192,7 +192,7 @@ export function InAppBanner() {
           <span className="relative shrink-0">
             <Avatar url={cur.avatar ?? null} name={first} size={46} />
             <span
-              className="absolute -bottom-1 -right-1 grid size-[20px] place-items-center rounded-full text-white ring-2 ring-surface-subtle"
+              className="absolute -bottom-1 -right-1 grid size-[20px] place-items-center rounded-full text-fg ring-2 ring-surface-subtle"
               style={{ background: g.color }}
             >
               <Icon name={g.icon} filled className="size-[11px]" />

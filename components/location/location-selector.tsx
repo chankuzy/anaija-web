@@ -153,9 +153,9 @@ function LocationDialogContent({
       aria-labelledby="location-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150"
     >
-      <div className="w-full max-w-lg rounded-[28px] bg-card-elevated border border-white/10 p-5 md:p-6 shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
+      <div className="w-full max-w-lg rounded-[28px] bg-card-elevated border border-fg/10 p-5 md:p-6 shadow-2xl animate-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/10">
+        <div className="flex items-center justify-between pb-3 border-b border-fg/10">
           <div className="flex items-center gap-2.5">
             <span className="grid size-9 place-items-center rounded-full bg-brand/15 text-brand">
               <Icon name="pointOnMap" className="size-5" />
@@ -173,7 +173,7 @@ function LocationDialogContent({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="grid size-8 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-fg"
+            className="grid size-8 place-items-center rounded-full text-muted hover:bg-fg/10 hover:text-fg"
           >
             <Icon name="close" className="size-5" />
           </button>
@@ -394,7 +394,7 @@ function LocationDialogContent({
         </div>
 
         {/* Footer actions */}
-        <div className="mt-4 flex gap-2 pt-3 border-t border-white/10">
+        <div className="mt-4 flex gap-2 pt-3 border-t border-fg/10">
           <button
             type="button"
             onClick={handleClear}
@@ -405,7 +405,7 @@ function LocationDialogContent({
           <button
             type="button"
             onClick={onClose}
-            className="h-10 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg hover:bg-white/10 transition"
+            className="h-10 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg hover:bg-fg/10 transition"
           >
             Cancel
           </button>
@@ -481,7 +481,7 @@ export function LocationFieldTrigger({
           type="button"
           onClick={onClear}
           aria-label="Remove location"
-          className="grid size-7 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-danger"
+          className="grid size-7 place-items-center rounded-full text-muted hover:bg-fg/10 hover:text-danger"
         >
           <Icon name="close" className="size-3.5" />
         </button>

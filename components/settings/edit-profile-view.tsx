@@ -296,7 +296,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
                   type="button"
                   aria-label="Remove link"
                   onClick={() => setLinks((p) => (p.length > 1 ? p.filter((_, j) => j !== i) : [""]))}
-                  className="grid size-12 shrink-0 place-items-center rounded-full text-white/60 transition hover:bg-white/8 hover:text-white"
+                  className="grid size-12 shrink-0 place-items-center rounded-full text-fg/60 transition hover:bg-fg/8 hover:text-fg"
                 >
                   <Icon name="close" className="size-6" />
                 </button>
@@ -307,7 +307,7 @@ function EditForm({ profile }: { profile: UserProfile }) {
             <button
               type="button"
               onClick={() => setLinks((p) => [...p, ""])}
-              className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-white transition hover:bg-surface-elevated"
+              className="mt-3 inline-flex h-10 items-center gap-2 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg transition hover:bg-surface-elevated"
             >
               <Icon name="plus" className="size-5" />
               Add link
@@ -341,7 +341,7 @@ export function EditProfileView() {
     <SettingsPage title="Edit profile" backHref="/me">
       {error ? (
         <div className="py-16 text-center">
-          <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+          <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
           <p className="mt-1 text-body text-muted">{error.message}</p>
           <button type="button" onClick={reload} className="mt-5 h-10 rounded-full bg-brand px-5 text-secondary font-extrabold text-brand-fg">
             Try again

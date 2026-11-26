@@ -68,18 +68,18 @@ function Row({ c, active, ring, myId }: { c: Conversation; active: boolean; ring
   const online = useOnline(c.type === "group" ? null : c.other_user?.id);
   const d = describe(c, myId);
   return (
-    <Link href={`/messages/${c.id}`} className={`flex items-center gap-3.5 px-4 py-2.5 transition-colors ${active ? "bg-white/8" : "hover:bg-white/5"}`}>
+    <Link href={`/messages/${c.id}`} className={`flex items-center gap-3.5 px-4 py-2.5 transition-colors ${active ? "bg-fg/8" : "hover:bg-fg/5"}`}>
       <span className="relative shrink-0">
         <RingAvatar url={convAvatar(c)} name={convName(c)} size={56} ring={ring} />
         {online && <OnlineDot size={13} className="absolute bottom-[3px] right-[3px]" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="flex items-center gap-2">
-          <span className={`min-w-0 flex-1 truncate text-[17px] ${unread ? "font-extrabold text-white" : "font-semibold text-fg"}`}>{convName(c)}</span>
+          <span className={`min-w-0 flex-1 truncate text-[17px] ${unread ? "font-extrabold text-fg" : "font-semibold text-fg"}`}>{convName(c)}</span>
           <span className={`shrink-0 text-[11.5px] ${unread ? "font-bold text-brand" : "text-muted"}`}>{ago(c.last_message_at)}</span>
         </span>
         <span className="mt-0.5 flex items-center gap-2">
-          <span className={`flex min-w-0 flex-1 items-center gap-1.5 text-[15px] ${unread ? "font-semibold text-white/90" : "text-muted"}`}>
+          <span className={`flex min-w-0 flex-1 items-center gap-1.5 text-[15px] ${unread ? "font-semibold text-fg/90" : "text-muted"}`}>
             {d.kind !== "text" && <PreviewIcon kind={d.kind} />}
             <span className="truncate">{d.text || "No messages yet"}</span>
           </span>
@@ -138,7 +138,7 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
         {!showReq && <h1 className="mb-3 text-[24px] font-extrabold tracking-tight text-fg">Messages</h1>}
         {showReq && !query ? (
           <div className="flex h-11 items-center gap-2">
-            <button type="button" aria-label="Back to chats" onClick={() => setShowReq(false)} className="grid size-10 place-items-center rounded-full hover:bg-white/8">
+            <button type="button" aria-label="Back to chats" onClick={() => setShowReq(false)} className="grid size-10 place-items-center rounded-full hover:bg-fg/8">
               <Icon name="back" className="size-6" />
             </button>
             <h1 className="text-[17px] font-extrabold text-fg">Requests</h1>
@@ -153,7 +153,7 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
               className="min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-muted"
             />
             {query && (
-              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="grid size-6 place-items-center rounded-full hover:bg-white/10">
+              <button type="button" aria-label="Clear search" onClick={() => setQuery("")} className="grid size-6 place-items-center rounded-full hover:bg-fg/10">
                 <Icon name="close" className="size-4" />
               </button>
             )}
@@ -181,7 +181,7 @@ export function InboxPane({ activeId }: { activeId: number | null }) {
         )}
 
         {conversations && !showReq && !query && requests.length > 0 && (
-          <button type="button" onClick={() => setShowReq(true)} className="flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-white/5">
+          <button type="button" onClick={() => setShowReq(true)} className="flex w-full items-center gap-3.5 px-4 py-3 text-left transition-colors hover:bg-fg/5">
             <span className="grid size-[56px] place-items-center rounded-full bg-brand/15 text-brand">
               <Icon name="user" filled className="size-6" />
             </span>

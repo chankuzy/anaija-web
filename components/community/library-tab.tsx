@@ -52,7 +52,7 @@ function Cover({ r, large = false }: { r: Resource; large?: boolean }) {
   if (r.file?.thumbnail) return <img src={r.file.thumbnail} alt="" className="size-full object-cover" />;
   const code = r.course_code ?? (r.file?.mime?.includes("pdf") ? "PDF" : "DOC");
   return (
-    <div className={`flex size-full flex-col justify-between bg-gradient-to-br ${TINT[r.doc_type] ?? TINT.other} ${large ? "p-5" : "p-3.5"} text-black/80`}>
+    <div className={`flex size-full flex-col justify-between bg-gradient-to-br ${TINT[r.doc_type] ?? TINT.other} ${large ? "p-5" : "p-3.5"} text-bg/80`}>
       <span className="text-micro font-extrabold uppercase tracking-[0.1em]">{TYPE_LABEL[r.doc_type] ?? "Document"}</span>
       <span className={`${large ? "text-[40px]" : "text-[26px]"} font-black leading-none tracking-tight`}>{code}</span>
       <span className="text-supporting font-bold">{r.academic_session ?? r.subject ?? ""}</span>

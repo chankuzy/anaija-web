@@ -321,7 +321,7 @@ export function VoicePlayer({
             type="button"
             onClick={cycleSpeed}
             aria-label={`Playback speed ${speed}x`}
-            className="rounded-full bg-white/10 px-1.5 py-[1px] text-[10px] font-extrabold transition hover:bg-white/20 active:scale-95"
+            className="rounded-full bg-fg/10 px-1.5 py-[1px] text-[10px] font-extrabold transition hover:bg-fg/20 active:scale-95"
           >
             {speed}×
           </button>

@@ -8,7 +8,7 @@ import { useCapabilities } from "@/lib/create/use-capabilities";
 
 const TONE: Record<Tone, string> = {
   brand: "bg-brand text-brand-fg",
-  neutral: "bg-white/[0.07] text-fg",
+  neutral: "bg-fg/[0.07] text-fg",
   info: "bg-info/15 text-info",
   accent: "bg-accent/15 text-accent",
   warm: "bg-warm/15 text-warm",
@@ -66,7 +66,7 @@ export function CreateSheet({ onClose }: { onClose: () => void }) {
         className="sv-rise no-scrollbar relative max-h-[90dvh] w-full max-w-[460px] overflow-y-auto rounded-t-[30px] bg-surface-subtle px-4 pt-3 md:rounded-[30px] md:pt-6"
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
       >
-        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 md:hidden" />
+        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-fg/20 md:hidden" />
         <p className="px-1 text-[22px] font-extrabold tracking-tight text-fg">Create</p>
 
         <Label>Share</Label>

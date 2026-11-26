@@ -7,7 +7,7 @@ import type { PublicProfile } from "@/lib/server/public";
 // Same cover treatment as the signed-in profile: fades into the page on the left, right and bottom.
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
-const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,color-mix(in_srgb,var(--c-brand)_12%,transparent),transparent_70%)]";
 
 export function PublicProfileView({ p }: { p: PublicProfile }) {
   const login = `/login?next=${encodeURIComponent(`/u/${p.username}`)}`;
@@ -47,27 +47,27 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
               <Avatar url={p.avatar} name={p.name ?? p.username} size={96} />
             </div>
             <div className="min-w-0 flex-1 pt-1">
-              <h1 className="truncate text-[25px] font-extrabold leading-[1.1] tracking-tight text-white text-shadow">
+              <h1 className="truncate text-[25px] font-extrabold leading-[1.1] tracking-tight text-fg text-shadow">
                 {p.name ?? p.username}
               </h1>
-              <p className="mt-0.5 truncate text-[15px] text-white/55 text-shadow">
+              <p className="mt-0.5 truncate text-[15px] text-fg/55 text-shadow">
                 @{p.username}
                 {p.institution ? ` · ${p.institution}` : ""}
               </p>
               <div className="mt-3.5 flex items-start gap-7">
                 <div>
-                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-white text-shadow">{formatCount(p.counts.followers)}</p>
-                  <p className="mt-1 text-body text-white/55">Followers</p>
+                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(p.counts.followers)}</p>
+                  <p className="mt-1 text-body text-fg/55">Followers</p>
                 </div>
                 <div>
-                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-white text-shadow">{formatCount(total)}</p>
-                  <p className="mt-1 text-body text-white/55">Posts</p>
+                  <p className="text-[21px] font-extrabold leading-none tracking-tight text-fg text-shadow">{formatCount(total)}</p>
+                  <p className="mt-1 text-body text-fg/55">Posts</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-white/90 text-shadow md:max-w-[620px]">{bio}</p>}
+          {bio && <p className="mt-3 line-clamp-4 whitespace-pre-line text-[15px] leading-[1.4] text-fg/90 text-shadow md:max-w-[620px]">{bio}</p>}
 
           <Link
             href={login}
@@ -79,7 +79,7 @@ export function PublicProfileView({ p }: { p: PublicProfile }) {
       </section>
 
       <div className="flex md:px-6">
-        <span className="relative px-5 py-2.5 text-label font-bold text-white md:px-0">
+        <span className="relative px-5 py-2.5 text-label font-bold text-fg md:px-0">
           Posts
           <span className="absolute bottom-0 left-1/2 h-[3px] w-8 -translate-x-1/2 rounded-full bg-brand md:inset-x-0 md:left-0 md:w-auto md:translate-x-0" />
         </span>

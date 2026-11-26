@@ -78,7 +78,7 @@ export function FileRow({ name, size, onRemove, disabled }: { name: string; size
         <p className="truncate text-body font-semibold text-fg">{name}</p>
         <p className="text-supporting text-muted">{formatBytes(size)}</p>
       </div>
-      <button type="button" aria-label="Remove" disabled={disabled} onClick={onRemove} className="grid size-9 place-items-center rounded-full text-muted hover:bg-white/8 disabled:opacity-50">
+      <button type="button" aria-label="Remove" disabled={disabled} onClick={onRemove} className="grid size-9 place-items-center rounded-full text-muted hover:bg-fg/8 disabled:opacity-50">
         <Icon name="close" className="size-4" />
       </button>
     </div>

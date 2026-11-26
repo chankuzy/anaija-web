@@ -48,7 +48,7 @@ function Tile({ code, fav, onPick, onToggleFav }: { code: string; fav: boolean; 
           }
           onPick();
         }}
-        className="grid aspect-square w-full place-items-center rounded-2xl p-1 transition [-webkit-touch-callout:none] hover:bg-white/8 active:scale-95"
+        className="grid aspect-square w-full place-items-center rounded-2xl p-1 transition [-webkit-touch-callout:none] hover:bg-fg/8 active:scale-95"
       >
         <StickerView code={code} size={72} />
       </button>
@@ -57,7 +57,7 @@ function Tile({ code, fav, onPick, onToggleFav }: { code: string; fav: boolean; 
         aria-label={fav ? "Remove from favourites" : "Add to favourites"}
         aria-pressed={fav}
         onClick={onToggleFav}
-        className={`absolute right-0.5 top-0.5 hidden size-6 place-items-center rounded-full bg-black/55 md:group-hover/s:grid ${fav ? "text-brand" : "text-white"}`}
+        className={`absolute right-0.5 top-0.5 hidden size-6 place-items-center rounded-full bg-black/55 md:group-hover/s:grid ${fav ? "text-brand" : "text-fg"}`}
       >
         <Icon name="star" filled={fav} className="size-3.5" />
       </button>
@@ -69,7 +69,7 @@ function CustomTile({ s, onPick, onRemove }: { s: CustomSticker; onPick: () => v
   const url = useBlobUrl(s.blob);
   return (
     <div className="relative">
-      <button type="button" aria-label="Send sticker" onClick={onPick} className="grid aspect-square w-full place-items-center rounded-2xl p-1 transition hover:bg-white/8 active:scale-95">
+      <button type="button" aria-label="Send sticker" onClick={onPick} className="grid aspect-square w-full place-items-center rounded-2xl p-1 transition hover:bg-fg/8 active:scale-95">
         {url && <img src={url} alt="" draggable={false} className="size-[72px] select-none object-contain" />}
       </button>
       <button type="button" aria-label="Delete sticker" onClick={onRemove} className="absolute right-0.5 top-0.5 grid size-6 place-items-center rounded-full bg-black/55 text-white">
@@ -192,7 +192,7 @@ export function StickerTray({
           <EmojiPicker onPick={onEmoji} />
         ) : tab === "mine" && canMake ? (
           <div className="grid grid-cols-4 gap-1 sm:grid-cols-5 md:grid-cols-6">
-            <button type="button" onClick={create} className="grid aspect-square w-full place-items-center rounded-2xl bg-white/6 text-fg transition hover:bg-white/10 active:scale-95">
+            <button type="button" onClick={create} className="grid aspect-square w-full place-items-center rounded-2xl bg-fg/6 text-fg transition hover:bg-fg/10 active:scale-95">
               <span className="flex flex-col items-center gap-1">
                 <Icon name="galleryAdd" filled className="size-6" />
                 <span className="text-[11px] font-bold">Create</span>

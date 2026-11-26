@@ -110,7 +110,7 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center px-1 pb-0 pt-1.5">
-        <button type="button" aria-label="Back" disabled={c.busy} onClick={onBack} className="grid size-12 place-items-center text-white disabled:opacity-50">
+        <button type="button" aria-label="Back" disabled={c.busy} onClick={onBack} className="grid size-12 place-items-center text-fg disabled:opacity-50">
           <Icon name="back" className="size-5" />
         </button>
       </div>
@@ -179,9 +179,9 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
                   c.update({ visibility: v.id });
                   setVisibilityOpen(false);
                 }}
-                className="flex w-full items-center gap-3.5 px-6 py-3.5 text-left hover:bg-white/4"
+                className="flex w-full items-center gap-3.5 px-6 py-3.5 text-left hover:bg-fg/4"
               >
-                <Icon name={v.icon} filled className="size-6 text-white" />
+                <Icon name={v.icon} filled className="size-6 text-fg" />
                 <span className="flex-1 text-[15.5px] text-fg">{v.label}</span>
                 {d.visibility === v.id && <Icon name="check" className="size-5 text-brand" />}
               </button>

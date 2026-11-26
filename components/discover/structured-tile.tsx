@@ -18,7 +18,7 @@ export function StructuredTile({ post, hasCover }: { post: Post; hasCover: boole
     const title = c.kind === "poll" ? c.question : c.kind === "article" ? c.headline : c.title;
     return (
       <span className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-b from-transparent to-black/80 px-2.5 pb-2 pt-12 text-left">
-        <span className={`line-clamp-3 block text-supporting font-bold leading-[1.25] text-white ${c.kind === "article" ? "font-serif" : ""}`}>{title}</span>
+        <span className={`line-clamp-3 block text-supporting font-bold leading-[1.25] text-fg ${c.kind === "article" ? "font-serif" : ""}`}>{title}</span>
       </span>
     );
   }
@@ -30,7 +30,7 @@ export function StructuredTile({ post, hasCover }: { post: Post; hasCover: boole
         <span className="line-clamp-5 block text-[13px] font-bold leading-[1.3] text-fg md:text-[15px]">{c.question}</span>
         <span className="hidden flex-col gap-1 md:flex">
           {c.options.slice(0, 2).map((o) => (
-            <span key={o.id} className="truncate rounded-full bg-white/10 px-2.5 py-1 text-micro font-semibold text-fg">
+            <span key={o.id} className="truncate rounded-full bg-fg/10 px-2.5 py-1 text-micro font-semibold text-fg">
               {o.text}
             </span>
           ))}

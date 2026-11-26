@@ -137,14 +137,14 @@ export function ForwardSheet({ message, onClose }: { message: Message; onClose: 
       >
         <div className="flex h-12 shrink-0 items-center justify-center">
           <h2 className="text-[16px] font-bold tracking-tight text-fg">Forward to</h2>
-          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-2 grid size-9 place-items-center rounded-full text-fg hover:bg-white/8">
+          <button type="button" aria-label="Close" onClick={onClose} className="absolute right-2 grid size-9 place-items-center rounded-full text-fg hover:bg-fg/8">
             <Icon name="close" className="size-5" />
           </button>
         </div>
         <div className="shrink-0 px-4 pb-2">
           <label className="flex h-11 items-center gap-2.5 rounded-full bg-surface-interactive px-3.5">
             <Icon name="search" className="size-[18px] shrink-0 text-muted" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" autoComplete="off" className="min-w-0 flex-1 bg-transparent text-[14px] text-white outline-none placeholder:text-muted" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" autoComplete="off" className="min-w-0 flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-muted" />
           </label>
         </div>
         {error && <p role="alert" className="shrink-0 px-5 pb-2 text-[12.5px] font-medium text-danger">{error}</p>}

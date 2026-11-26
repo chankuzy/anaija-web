@@ -276,13 +276,13 @@ export function SearchView() {
             <SectionTitle>Trending on campus</SectionTitle>
             {tags.slice(0, 8).map((h, i) => (
               <button key={h.tag} type="button" onClick={() => runTerm(h.tag)} className="flex w-full items-center py-2.5 text-left">
-                <span className="w-12 text-[28px] font-medium leading-none text-white/25">{String(i + 1).padStart(2, "0")}</span>
+                <span className="w-12 text-[28px] font-medium leading-none text-fg/25">{String(i + 1).padStart(2, "0")}</span>
                 <span className="min-w-0 flex-1">
                   <span className="flex items-baseline gap-2">
                     <span className="min-w-0 flex-1 truncate text-label font-bold text-fg">#{h.tag}</span>
                     <span className="text-supporting text-muted">{formatCount(h.posts_count)} posts</span>
                   </span>
-                  <span className="mt-2 block h-0.5 rounded bg-white/8">
+                  <span className="mt-2 block h-0.5 rounded bg-fg/8">
                     <span className="block h-full rounded bg-brand" style={{ width: `${Math.max(5, (h.posts_count / max) * 100)}%` }} />
                   </span>
                 </span>
@@ -430,7 +430,7 @@ export function SearchView() {
                 }}
                 className="grid size-9 place-items-center"
               >
-                <span className="grid size-[22px] place-items-center rounded-full bg-white/18 text-white">
+                <span className="grid size-[22px] place-items-center rounded-full bg-fg/18 text-fg">
                   <Icon name="close" className="size-3.5" />
                 </span>
               </button>
@@ -447,11 +447,11 @@ export function SearchView() {
                   type="button"
                   onClick={() => changeTab(x.id)}
                   className={`flex h-[38px] flex-1 items-center justify-center gap-1.5 rounded-full text-body ${
-                    x.id === tab ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
+                    x.id === tab ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-fg/60"
                   }`}
                 >
                   {x.label}
-                  {n > 0 && <span className="text-micro font-semibold text-white/40">{n}</span>}
+                  {n > 0 && <span className="text-micro font-semibold text-fg/40">{n}</span>}
                 </button>
               );
             })}

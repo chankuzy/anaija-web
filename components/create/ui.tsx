@@ -9,7 +9,7 @@ export function Spinner({ dark = false, size = 20 }: { dark?: boolean; size?: nu
     <span
       role="status"
       aria-label="Loading"
-      className={`inline-block animate-spin rounded-full border-2 ${dark ? "border-black/25 border-t-black" : "border-white/25 border-t-white"}`}
+      className={`inline-block animate-spin rounded-full border-2 ${dark ? "border-black/25 border-t-black" : "border-fg/25 border-t-white"}`}
       style={{ width: size, height: size }}
     />
   );
@@ -82,7 +82,7 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
       }}
       className={`relative h-[30px] w-[50px] shrink-0 rounded-full transition-colors ${on ? "bg-brand" : "bg-surface-elevated"}`}
     >
-      <span className={`absolute top-[3px] size-6 rounded-full transition-[left] duration-150 ${on ? "left-[23px] bg-brand-fg" : "left-[3px] bg-white/80"}`} />
+      <span className={`absolute top-[3px] size-6 rounded-full transition-[left] duration-150 ${on ? "left-[23px] bg-brand-fg" : "left-[3px] bg-fg/80"}`} />
     </button>
   );
 }
@@ -113,15 +113,15 @@ export function SettingsRow({
           onClick();
         }
       }}
-      className="flex cursor-pointer items-center gap-3.5 px-5 py-4 transition-colors hover:bg-white/3"
+      className="flex cursor-pointer items-center gap-3.5 px-5 py-4 transition-colors hover:bg-fg/3"
     >
-      <Icon name={icon} filled className="size-[22px] shrink-0 text-white" />
+      <Icon name={icon} filled className="size-[22px] shrink-0 text-fg" />
       <span className="shrink-0 text-[15.5px] text-fg">{label}</span>
       <span className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
         {value ? (
           <>
             {highlight && <span className="size-1.5 rounded-full bg-brand" />}
-            <span className={`truncate text-secondary font-semibold ${highlight ? "text-white" : "text-muted"}`}>{value}</span>
+            <span className={`truncate text-secondary font-semibold ${highlight ? "text-fg" : "text-muted"}`}>{value}</span>
           </>
         ) : null}
       </span>
@@ -200,10 +200,10 @@ export function Dialog({
         <p className="text-[17px] font-bold text-fg">{title}</p>
         <div className="mt-4">{children}</div>
         <div className="mt-5 flex justify-end gap-1">
-          <button type="button" onClick={onClose} className="h-10 rounded-full px-4 text-sm font-semibold text-muted hover:bg-white/8">
+          <button type="button" onClick={onClose} className="h-10 rounded-full px-4 text-sm font-semibold text-muted hover:bg-fg/8">
             Cancel
           </button>
-          <button type="button" onClick={onSave} className="h-10 rounded-full px-4 text-sm font-extrabold text-brand hover:bg-white/8">
+          <button type="button" onClick={onSave} className="h-10 rounded-full px-4 text-sm font-extrabold text-brand hover:bg-fg/8">
             Save
           </button>
         </div>
@@ -214,7 +214,7 @@ export function Dialog({
 
 export function ExitSheet({ onSave, onDiscard, onKeep }: { onSave: () => void; onDiscard: () => void; onKeep: () => void }) {
   const opt = (label: string, cls: string, fn: () => void) => (
-    <button type="button" onClick={fn} className={`w-full py-4 text-[15px] hover:bg-white/4 ${cls}`}>
+    <button type="button" onClick={fn} className={`w-full py-4 text-[15px] hover:bg-fg/4 ${cls}`}>
       {label}
     </button>
   );

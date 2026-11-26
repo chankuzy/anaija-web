@@ -63,7 +63,7 @@ function Price({ d, size, prefix }: { d: NonNullable<ListingFull["listing"]>; si
       <span className="font-bold text-brand" style={{ fontSize: size * 0.75 }}>₦</span>
       <span className="font-bold text-fg" style={{ fontSize: size }}>{d.formatted_price}</span>
       {d.price_type === "negotiable" && (
-        <span className="ml-1 rounded-full bg-surface-interactive px-2 py-0.5 font-bold text-white/80" style={{ fontSize: size * 0.5 }}>Negotiable</span>
+        <span className="ml-1 rounded-full bg-surface-interactive px-2 py-0.5 font-bold text-fg/80" style={{ fontSize: size * 0.5 }}>Negotiable</span>
       )}
     </span>
   );
@@ -111,14 +111,14 @@ function Gallery({ urls, badge, onOpen }: { urls: string[]; badge: string | null
         </div>
       )}
       {badge && (
-        <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-white/10 bg-black/60 px-3 py-1 text-[13px] font-semibold text-white backdrop-blur">
+        <span className="pointer-events-none absolute left-3 top-3 rounded-full border border-fg/10 bg-black/60 px-3 py-1 text-[13px] font-semibold text-white backdrop-blur">
           {badge}
         </span>
       )}
       {urls.length > 1 && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 flex items-center justify-center gap-1.5">
           {urls.map((u, n) => (
-            <span key={u} className={`size-2 rounded-full transition-colors ${n === idx ? "bg-brand" : "bg-white/35"}`} />
+            <span key={u} className={`size-2 rounded-full transition-colors ${n === idx ? "bg-brand" : "bg-fg/35"}`} />
           ))}
         </div>
       )}
@@ -129,8 +129,8 @@ function Gallery({ urls, badge, onOpen }: { urls: string[]; badge: string | null
 function HeartButton({ post }: { post: Post }) {
   const { liked, toggle } = useLike(post);
   return (
-    <button type="button" aria-label={liked ? "Remove like" : "Like"} aria-pressed={liked} onClick={toggle} className="grid size-10 place-items-center text-white transition-transform active:scale-90">
-      <Icon name="heart" filled={liked} className={`size-[26px] ${liked ? "text-like" : "text-white"}`} />
+    <button type="button" aria-label={liked ? "Remove like" : "Like"} aria-pressed={liked} onClick={toggle} className="grid size-10 place-items-center text-fg transition-transform active:scale-90">
+      <Icon name="heart" filled={liked} className={`size-[26px] ${liked ? "text-like" : "text-fg"}`} />
     </button>
   );
 }
@@ -421,12 +421,12 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
           type="button"
           aria-label="Back"
           onClick={() => (window.history.length > 1 ? router.back() : router.replace("/"))}
-          className="grid size-10 place-items-center text-white"
+          className="grid size-10 place-items-center text-fg"
         >
           <Icon name="back" className="size-[26px]" />
         </button>
-        <span className="min-w-0 flex-1 truncate text-[18px] font-medium text-white/90">{TYPE_LABEL[type] ?? "Listing"}</span>
-        <button type="button" aria-label="Share" onClick={() => void share()} className="grid size-10 place-items-center text-white">
+        <span className="min-w-0 flex-1 truncate text-[18px] font-medium text-fg/90">{TYPE_LABEL[type] ?? "Listing"}</span>
+        <button type="button" aria-label="Share" onClick={() => void share()} className="grid size-10 place-items-center text-fg">
           <Icon name="share" className="size-[24px]" />
         </button>
         <HeartButton post={l as unknown as Post} />
@@ -475,7 +475,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <span className="text-[30px] font-extrabold leading-none tracking-tight text-brand">₦{d.formatted_price}</span>
                 {negotiable && (
-                  <span className="rounded-full bg-surface-interactive px-3 py-1 text-[14px] font-bold text-white/85">Negotiable</span>
+                  <span className="rounded-full bg-surface-interactive px-3 py-1 text-[14px] font-bold text-fg/85">Negotiable</span>
                 )}
               </div>
             )}
@@ -518,7 +518,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
 
         <div className="my-5" />
 
-        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-white/[0.07] bg-card p-4">
+        <Link href={isOwn ? "/me" : `/u/${l.author?.username ?? ""}`} className="flex items-center gap-3 rounded-card border border-fg/[0.07] bg-card p-4">
           <ProfileHoverCard username={l.author?.username}><Avatar url={l.author?.avatar} name={l.author?.name ?? l.author?.username} size={50} /></ProfileHoverCard>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-[17px] font-bold text-fg">{l.author?.name ?? l.author?.username}</span>
@@ -533,7 +533,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
         {(type === "product" || type === "rental") && desc && (
           <div className="mt-6">
             <h2 className="mb-1.5 text-[18px] font-bold text-fg">Description</h2>
-            <p className={`whitespace-pre-wrap text-[16px] leading-[1.5] text-white/70 ${descOpen ? "" : "line-clamp-3"}`}>
+            <p className={`whitespace-pre-wrap text-[16px] leading-[1.5] text-fg/70 ${descOpen ? "" : "line-clamp-3"}`}>
               {desc}
             </p>
             {longDesc && (
@@ -547,7 +547,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
         {(type === "product" || type === "rental") && tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             {tags.map((t) => (
-              <span key={t} className="rounded-xl bg-surface-interactive px-3.5 py-2 text-[14px] font-medium text-white/85">
+              <span key={t} className="rounded-xl bg-surface-interactive px-3.5 py-2 text-[14px] font-medium text-fg/85">
                 {t.replace(/^#/, "")}
               </span>
             ))}
@@ -635,7 +635,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
 
       {!isOwn && (
         <div
-          className="sticky z-30 mt-6 flex gap-3 border-t border-white/[0.06] bg-bg/95 px-5 py-3.5 backdrop-blur"
+          className="sticky z-30 mt-6 flex gap-3 border-t border-fg/[0.06] bg-bg/95 px-5 py-3.5 backdrop-blur"
           style={{ bottom: "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
         >
           {canOffer && (
@@ -653,7 +653,7 @@ export function ListingView({ id, initial }: { id: string; initial?: ListingFull
             disabled={!enabled || busy}
             onClick={() => void sendInquiry()}
             className={`h-[54px] flex-1 rounded-full text-[16px] font-extrabold transition active:scale-[0.98] disabled:opacity-60 ${
-              !enabled ? "bg-card-elevated text-muted" : inquired ? "bg-card-elevated text-white" : "bg-brand text-brand-fg"
+              !enabled ? "bg-card-elevated text-muted" : inquired ? "bg-card-elevated text-fg" : "bg-brand text-brand-fg"
             }`}
           >
             {busy ? "…" : cta}

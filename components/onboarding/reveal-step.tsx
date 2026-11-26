@@ -36,7 +36,7 @@ function PersonRow({ p, onGone, onFirst }: { p: MatchedPerson; onGone: () => voi
           <span className="block truncate text-[15px] font-bold text-fg">{p.name || p.username}</span>
           {p.username && <span className="block truncate text-supporting text-muted">@{p.username}</span>}
         </span>
-        <button type="button" onClick={() => void follow()} disabled={st === "busy"} aria-pressed={on} className={`${PILL} ${on || st === "busy" ? "bg-surface-interactive text-fg" : "bg-fg text-bg hover:bg-white"}`}>
+        <button type="button" onClick={() => void follow()} disabled={st === "busy"} aria-pressed={on} className={`${PILL} ${on || st === "busy" ? "bg-surface-interactive text-fg" : "bg-fg text-bg hover:bg-fg"}`}>
           {on && <Icon name="check" weight="strong" className="size-3.5" />}
           {st === "busy" ? "…" : on ? "Following" : "Follow"}
         </button>
@@ -137,7 +137,7 @@ function OppCard({ o, onFirst }: { o: Opportunity; onFirst: (a: string) => void 
       )}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button type="button" onClick={() => void save()} disabled={busy} aria-pressed={saved} className={`${PILL} ${saved ? "bg-surface-interactive text-fg" : "bg-fg text-bg hover:bg-white"}`}>{saved ? "Saved" : "Save"}</button>
+        <button type="button" onClick={() => void save()} disabled={busy} aria-pressed={saved} className={`${PILL} ${saved ? "bg-surface-interactive text-fg" : "bg-fg text-bg hover:bg-fg"}`}>{saved ? "Saved" : "Save"}</button>
         <button type="button" onClick={explore} aria-expanded={open} className={`${PILL} bg-surface-interactive text-fg`}>{open ? "Hide details" : "Explore"}</button>
         <button type="button" onClick={() => void dismiss()} disabled={busy} className="h-9 px-2 text-secondary font-semibold text-muted hover:text-fg">Dismiss</button>
       </div>

@@ -329,7 +329,7 @@ export function FeedView({
           <button
             type="button"
             onClick={applyFresh}
-            className="sv-rise pointer-events-auto flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-black shadow-[0_8px_28px_rgba(0,0,0,0.45)] transition active:scale-95"
+            className="sv-rise pointer-events-auto flex items-center gap-1.5 rounded-full bg-fg px-3.5 py-2 text-xs font-bold text-bg shadow-[0_8px_28px_rgba(0,0,0,0.45)] transition active:scale-95"
           >
             <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 19V5M5 12l7-7 7 7" />

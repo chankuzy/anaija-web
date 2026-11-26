@@ -522,7 +522,7 @@ export function NotificationPill() {
       {open && (
         <section
           aria-label="Messages and activity"
-          className="pill-card w-[392px] max-w-[calc(100vw-48px)] overflow-hidden rounded-[28px] bg-surface-subtle shadow-[0_24px_80px_rgba(0,0,0,0.65)]"
+          className="pill-card w-[392px] max-w-[calc(100vw-48px)] overflow-hidden rounded-[28px] bg-surface-subtle shadow-[0_18px_50px_rgba(0,0,0,0.22)] ring-1 ring-line"
         >
           {active ? (
             <MiniChat
@@ -675,7 +675,7 @@ export function NotificationPill() {
         onClick={toggle}
         aria-expanded={open}
         aria-haspopup="dialog"
-        className={`relative flex h-14 items-center gap-3 rounded-full bg-surface-interactive pl-2 pr-5 text-fg shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition hover:bg-surface-elevated active:scale-[0.97] ${
+        className={`relative flex h-14 items-center gap-3 rounded-full bg-surface-interactive pl-2 pr-5 text-fg shadow-[0_10px_28px_rgba(0,0,0,0.2)] transition hover:bg-surface-elevated active:scale-[0.97] ${
           badge > 0 && !open ? "pill-glow" : ""
         }`}
       >

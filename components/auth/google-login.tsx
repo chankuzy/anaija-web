@@ -41,7 +41,7 @@ export function GoogleLogin() {
           <h2 className={`${playfair.className} text-[44px] font-medium leading-[1.1] tracking-[-0.02em] text-fg`}>
             Hustle. Flex. <span className="text-brand">Earn.</span>
           </h2>
-          <p className="mt-3 text-[15px] leading-normal text-white/55">Reels, stories and a campus marketplace, all in one app.</p>
+          <p className="mt-3 text-[15px] leading-normal text-fg/55">Reels, stories and a campus marketplace, all in one app.</p>
         </div>
         <div className="w-full [mask-image:linear-gradient(to_bottom,#000_62%,transparent)] md:[mask-image:none]">
           <Showcase />
@@ -50,7 +50,7 @@ export function GoogleLogin() {
 
       {/* sign in */}
       <section
-        className="relative z-10 flex flex-1 flex-col justify-end px-7 md:justify-center md:bg-white/[0.02] md:px-12"
+        className="relative z-10 flex flex-1 flex-col justify-end px-7 md:justify-center md:bg-fg/[0.02] md:px-12"
         style={{ paddingBottom: "max(env(safe-area-inset-bottom), 20px)" }}
       >
         <div className="mx-auto w-full max-w-[380px]">
@@ -63,7 +63,7 @@ export function GoogleLogin() {
             <br />
             Opportunity 🇳🇬
           </h1>
-          <p className="mt-3 text-center text-supporting font-semibold tracking-[0.2em] text-white/50 md:hidden">
+          <p className="mt-3 text-center text-supporting font-semibold tracking-[0.2em] text-fg/50 md:hidden">
             HUSTLE&nbsp;&nbsp;·&nbsp;&nbsp;FLEX&nbsp;&nbsp;·&nbsp;&nbsp;EARN
           </p>
 
@@ -72,22 +72,22 @@ export function GoogleLogin() {
               <div ref={btnRef} style={{ colorScheme: "light" }} className={busy ? "pointer-events-none opacity-50" : ""} />
             </div>
 
-            {busy && <p className="mt-3 text-sm text-white/60">Signing you in…</p>}
+            {busy && <p className="mt-3 text-sm text-fg/60">Signing you in…</p>}
             {error && (
               <p role="alert" className="mt-3 text-center text-sm text-danger">
                 {error}
               </p>
             )}
 
-            <Link href="/" onClick={(e) => { e.preventDefault(); router.push(readNext()); }} className="mt-4 px-4 py-2 text-sm font-semibold text-white/75 hover:text-white">
+            <Link href="/" onClick={(e) => { e.preventDefault(); router.push(readNext()); }} className="mt-4 px-4 py-2 text-sm font-semibold text-fg/75 hover:text-fg">
               Browse as guest
             </Link>
 
-            <p className="mt-3.5 text-center text-supporting leading-normal text-white/45">
+            <p className="mt-3.5 text-center text-supporting leading-normal text-fg/45">
               By continuing, you agree to our
               <br />
-              <span className="text-white/80 underline decoration-white/35">Terms of Service</span> and{" "}
-              <span className="text-white/80 underline decoration-white/35">Privacy Policy</span>.
+              <span className="text-fg/80 underline decoration-white/35">Terms of Service</span> and{" "}
+              <span className="text-fg/80 underline decoration-white/35">Privacy Policy</span>.
             </p>
           </div>
         </div>

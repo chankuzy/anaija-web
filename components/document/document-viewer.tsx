@@ -344,7 +344,7 @@ export function DocumentViewer({ url, title, startPage = 0, onClose }: { url: st
 
       {!ready && !failed && (
         <div className="absolute inset-0 grid place-items-center">
-          <span aria-hidden className="size-7 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+          <span aria-hidden className="size-7 animate-spin rounded-full border-2 border-fg/25 border-t-white" />
         </div>
       )}
       {failed && (
@@ -357,7 +357,7 @@ export function DocumentViewer({ url, title, startPage = 0, onClose }: { url: st
                 setFailed(false);
                 setAttempt((a) => a + 1);
               }}
-              className="mt-3 h-10 rounded-pill bg-white/15 px-5 text-secondary font-bold"
+              className="mt-3 h-10 rounded-pill bg-fg/15 px-5 text-secondary font-bold"
             >
               Try again
             </button>

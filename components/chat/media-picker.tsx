@@ -24,9 +24,9 @@ function Tile({ item, order, onToggle }: { item: PickedFile; order: number; onTo
       )}
       {on && <span className="absolute inset-0 bg-black/35 ring-2 ring-inset ring-brand" />}
       {item.kind === "video" && item.durationMs != null && (
-        <span className="absolute bottom-1 left-1.5 text-[11.5px] font-bold text-white text-shadow">{fmt(item.durationMs)}</span>
+        <span className="absolute bottom-1 left-1.5 text-[11.5px] font-bold text-fg text-shadow">{fmt(item.durationMs)}</span>
       )}
-      <span className={`absolute right-1.5 top-1.5 grid size-[22px] place-items-center rounded-full text-[12px] font-extrabold ${on ? "bg-brand text-brand-fg" : "border-2 border-white/80 bg-black/20"}`}>
+      <span className={`absolute right-1.5 top-1.5 grid size-[22px] place-items-center rounded-full text-[12px] font-extrabold ${on ? "bg-brand text-brand-fg" : "border-2 border-fg/80 bg-black/20"}`}>
         {on ? order : null}
       </span>
     </button>
@@ -122,7 +122,7 @@ export function MediaPicker({ max, onClose, onDone }: { max: number; onClose: ()
   return (
     <div className="fixed inset-0 z-[75] flex flex-col bg-bg" role="dialog" aria-modal="true" aria-label="Add photos and videos">
       <header className="flex items-center gap-2 px-2 pb-1" style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}>
-        <button type="button" aria-label="Close" onClick={onClose} className="grid size-11 place-items-center rounded-full text-fg transition-colors hover:bg-white/8">
+        <button type="button" aria-label="Close" onClick={onClose} className="grid size-11 place-items-center rounded-full text-fg transition-colors hover:bg-fg/8">
           <Icon name="close" className="size-6" />
         </button>
         <h2 className="flex-1 text-[16px] font-bold text-fg">Add photos &amp; videos</h2>
@@ -143,7 +143,7 @@ export function MediaPicker({ max, onClose, onDone }: { max: number; onClose: ()
           <button type="button" onClick={() => void browse()} disabled={busy} className="grid aspect-square place-items-center bg-surface-subtle text-fg transition-colors hover:bg-surface-interactive disabled:opacity-60">
             <span className="flex flex-col items-center gap-1.5">
               {busy ? (
-                <span role="status" aria-label="Loading" className="size-6 animate-spin rounded-full border-2 border-white/25 border-t-white" />
+                <span role="status" aria-label="Loading" className="size-6 animate-spin rounded-full border-2 border-fg/25 border-t-white" />
               ) : (
                 <Icon name="plus" className="size-7" />
               )}

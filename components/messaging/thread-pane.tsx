@@ -404,7 +404,7 @@ function Bubble({
               onOpenMenu(m, { x: rect.left, y: rect.bottom + 4 });
             }}
             aria-label="Message options"
-            className="grid size-7 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-fg"
+            className="grid size-7 place-items-center rounded-full text-muted transition hover:bg-fg/10 hover:text-fg"
           >
             <Icon name="menuDots" className="size-4" />
           </button>
@@ -412,7 +412,7 @@ function Bubble({
             type="button"
             onClick={onPicker}
             aria-label="React"
-            className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-white/10"
+            className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-fg/10"
           >
             <Icon name="smileCircle" className="size-[18px]" />
           </button>
@@ -444,7 +444,7 @@ function Bubble({
                     key={e}
                     type="button"
                     onClick={() => onReact(e)}
-                    className="grid size-9 place-items-center rounded-full text-xl transition-transform hover:scale-125 hover:bg-white/10"
+                    className="grid size-9 place-items-center rounded-full text-xl transition-transform hover:scale-125 hover:bg-fg/10"
                   >
                     <EmojiGlyph code={e} size={26} />
                   </button>
@@ -539,7 +539,7 @@ function Bubble({
             type="button"
             onClick={onPicker}
             aria-label="React"
-            className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-white/10"
+            className="grid size-7 place-items-center rounded-full text-sm transition hover:bg-fg/10"
           >
             <Icon name="smileCircle" className="size-[18px]" />
           </button>
@@ -550,7 +550,7 @@ function Bubble({
               onOpenMenu(m, { x: rect.left, y: rect.bottom + 4 });
             }}
             aria-label="Message options"
-            className="grid size-7 place-items-center rounded-full text-muted transition hover:bg-white/10 hover:text-fg"
+            className="grid size-7 place-items-center rounded-full text-muted transition hover:bg-fg/10 hover:text-fg"
           >
             <Icon name="menuDots" className="size-4" />
           </button>
@@ -999,7 +999,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
           <Link
             href="/messages"
             aria-label="Back"
-            className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8 md:hidden"
+            className="grid size-10 place-items-center rounded-full text-fg hover:bg-fg/8 md:hidden"
           >
             <Icon name="back" className="size-6" />
           </Link>
@@ -1042,8 +1042,8 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
             aria-label={xl && details ? "Hide details" : "Show details"}
             aria-pressed={xl ? details : sheet}
             onClick={() => (xl ? setDetails((d) => !d) : setSheet(true))}
-            className={`ml-auto grid size-10 place-items-center rounded-full transition-colors hover:bg-white/8 ${
-              xl && details ? "text-brand" : "text-white/60"
+            className={`ml-auto grid size-10 place-items-center rounded-full transition-colors hover:bg-fg/8 ${
+              xl && details ? "text-brand" : "text-fg/60"
             }`}
           >
             <Icon name="infoCircle" filled={xl && details} className="size-6" />
@@ -1233,7 +1233,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                 type="button"
                 onClick={() => setReplyingTo(null)}
                 aria-label="Cancel reply"
-                className="grid size-7 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-fg"
+                className="grid size-7 place-items-center rounded-full text-muted hover:bg-fg/10 hover:text-fg"
               >
                 <Icon name="close" className="size-4" />
               </button>
@@ -1256,7 +1256,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                   setText("");
                 }}
                 aria-label="Cancel editing"
-                className="grid size-7 place-items-center rounded-full text-muted hover:bg-white/10 hover:text-fg"
+                className="grid size-7 place-items-center rounded-full text-muted hover:bg-fg/10 hover:text-fg"
               >
                 <Icon name="close" className="size-4" />
               </button>
@@ -1286,7 +1286,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                     type="button"
                     aria-label="Add photos or videos"
                     onClick={openMedia}
-                    className="grid size-11 shrink-0 place-items-center rounded-full text-[#38bdf8] transition hover:bg-white/10 active:scale-95"
+                    className="grid size-11 shrink-0 place-items-center rounded-full text-[#38bdf8] transition hover:bg-fg/10 active:scale-95"
                   >
                     <Icon name="gallery" filled className="size-[26px]" />
                   </button>
@@ -1295,7 +1295,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                     aria-label={trayOpen ? "Close stickers" : "Open stickers"}
                     aria-pressed={trayOpen}
                     onClick={toggleTray}
-                    className={`grid size-11 shrink-0 place-items-center rounded-full text-[#fbbf24] transition hover:bg-white/10 active:scale-95 ${trayOpen ? "bg-white/10" : ""}`}
+                    className={`grid size-11 shrink-0 place-items-center rounded-full text-[#fbbf24] transition hover:bg-fg/10 active:scale-95 ${trayOpen ? "bg-fg/10" : ""}`}
                   >
                     <StickerGlyph filled className="size-[26px]" />
                   </button>
@@ -1344,7 +1344,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
                   type="button"
                   aria-label="Record voice message"
                   onClick={() => void voiceRecorder.start()}
-                  className="grid size-11 shrink-0 place-items-center rounded-full text-[#fb7185] transition hover:bg-white/10 active:scale-95"
+                  className="grid size-11 shrink-0 place-items-center rounded-full text-[#fb7185] transition hover:bg-fg/10 active:scale-95"
                 >
                   <Icon name="microphone" filled className="size-[26px]" />
                 </button>

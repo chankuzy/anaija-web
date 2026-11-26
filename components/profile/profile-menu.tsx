@@ -85,7 +85,7 @@ export function ProfileMenu({
     }
   }
 
-  const row = "flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-semibold text-white transition hover:bg-white/10 active:bg-white/15";
+  const row = "flex w-full items-center gap-3 px-4 py-3 text-left text-[15px] font-semibold text-fg transition hover:bg-fg/10 active:bg-fg/15";
   return (
     <div className="fixed inset-0 z-50">
       <button type="button" aria-label="Close menu" onClick={onClose} className="absolute inset-0 cursor-default bg-black/40" />
@@ -105,14 +105,14 @@ export function ProfileMenu({
                 onUnfollow();
               }}
             >
-              <Icon name="userCross" className="size-5 text-white" />
+              <Icon name="userCross" className="size-5 text-fg" />
               Unfollow
             </button>
             <button type="button" role="menuitem" className={row} onClick={() => void toggleNotify()}>
-              <Icon name="bell" filled={notify === true} className={`size-5 ${notify ? "text-brand" : "text-white"}`} />
+              <Icon name="bell" filled={notify === true} className={`size-5 ${notify ? "text-brand" : "text-fg"}`} />
               <span className="flex-1">Notify me of posts</span>
-              <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-all ${notify ? "justify-end bg-brand" : "justify-start bg-white/25"}`}>
-                <span className={`size-4 rounded-full ${notify ? "bg-brand-fg" : "bg-white"}`} />
+              <span className={`flex h-5 w-9 items-center rounded-full p-0.5 transition-all ${notify ? "justify-end bg-brand" : "justify-start bg-fg/25"}`}>
+                <span className={`size-4 rounded-full ${notify ? "bg-brand-fg" : "bg-fg"}`} />
               </span>
             </button>
             <div className="my-1 h-1.5" />
@@ -120,7 +120,7 @@ export function ProfileMenu({
         )}
         {blocked === true ? (
           <button type="button" role="menuitem" className={row} onClick={() => void unblock()}>
-            <Icon name="forbidden" className="size-5 text-white" />
+            <Icon name="forbidden" className="size-5 text-fg" />
             Unblock @{profile.username}
           </button>
         ) : (

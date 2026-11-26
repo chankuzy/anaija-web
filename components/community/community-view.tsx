@@ -87,7 +87,7 @@ function Header({ c, cover, avatar, saving, joining, onJoin, onMenu, onView, onA
     ? [c.course_code, c.academic_session, members].filter(Boolean).join(" · ")
     : [categoryLabel(c.category), c.course_code, members].filter(Boolean).join(" · ");
   const title = desk ? (c.course_title ?? c.name) : c.name;
-  const spinner = <span className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />;
+  const spinner = <span className="size-5 animate-spin rounded-full border-2 border-fg border-t-transparent" />;
   const pill = "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-interactive px-3.5 text-secondary font-bold text-fg transition-colors hover:bg-surface-elevated";
 
   let join: ReactNode = null;

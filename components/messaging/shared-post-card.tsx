@@ -19,7 +19,7 @@ function clock(sec: number) {
 function Unavailable() {
   return (
     <div className="mb-1 flex w-[190px] flex-col items-center gap-2 rounded-[19px] bg-card px-4 py-7 text-center">
-      <Icon name="eyeClosed" className="size-5 text-white/60" />
+      <Icon name="eyeClosed" className="size-5 text-fg/60" />
       <p className="text-secondary font-semibold text-fg">Post unavailable</p>
       <p className="text-supporting text-muted">It may have been deleted or made private.</p>
     </div>
@@ -37,7 +37,7 @@ function Card({ post }: { post: SharedPost }) {
 
   return (
     <div
-      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_12px_32px_rgba(0,0,0,0.5)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
+      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_8px_22px_rgba(0,0,0,0.18)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
         video ? "aspect-[9/15]" : "aspect-[4/5]"
       }`}
     >
@@ -66,7 +66,7 @@ function Card({ post }: { post: SharedPost }) {
           className="absolute inset-0 grid place-items-center"
           style={{ background: "linear-gradient(160deg,#1d1d24 0%,#0b0b0f 100%)" }}
         >
-          <Icon name={video ? "videocamera" : "gallery"} className="size-[34px] text-white/25" />
+          <Icon name={video ? "videocamera" : "gallery"} className="size-[34px] text-fg/25" />
         </div>
       )}
 
@@ -89,7 +89,7 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Top-right: clapperboard for video/reels, copy for multi-image posts */}
       {(video || multi) && (
-        <span className="pointer-events-none absolute right-2.5 top-2.5 z-[3] text-white">
+        <span className="pointer-events-none absolute right-2.5 top-2.5 z-[3] text-fg">
           <Icon name={video ? "clapperboard" : "copy"} filled className={`size-[19px] ${GLYPH_SHADOW}`} />
         </span>
       )}
@@ -103,7 +103,7 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Centre: play for video/reels */}
       {video && (
-        <span className="pointer-events-none absolute inset-0 z-[3] grid place-items-center text-white">
+        <span className="pointer-events-none absolute inset-0 z-[3] grid place-items-center text-fg">
           <Icon
             name="play"
             filled
@@ -115,7 +115,7 @@ function Card({ post }: { post: SharedPost }) {
       {/* Bottom-left: caption + author row */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-start gap-1.5 p-2.5">
         {post.caption && (
-          <p className="text-shadow w-full truncate text-[11px] font-medium leading-none text-white/90">{post.caption}</p>
+          <p className="text-shadow w-full truncate text-[11px] font-medium leading-none text-fg/90">{post.caption}</p>
         )}
         {post.author && (
           <Link
@@ -123,7 +123,7 @@ function Card({ post }: { post: SharedPost }) {
             className="pointer-events-auto flex max-w-full items-center gap-2 transition-opacity hover:opacity-80"
           >
             <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={22} />
-            <span className="text-shadow truncate text-[11px] font-bold leading-none text-white">{post.author}</span>
+            <span className="text-shadow truncate text-[11px] font-bold leading-none text-fg">{post.author}</span>
             {post.author_verified && <Icon name="verifiedCheck" filled className="size-3 shrink-0 text-sky-400" />}
           </Link>
         )}
@@ -131,7 +131,7 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Bottom-right: duration */}
       {video && post.duration !== null && (
-        <span className="text-shadow pointer-events-none absolute bottom-3 right-2.5 z-[3] text-[10px] font-bold leading-none tabular-nums text-white">
+        <span className="text-shadow pointer-events-none absolute bottom-3 right-2.5 z-[3] text-[10px] font-bold leading-none tabular-nums text-fg">
           {clock(post.duration)}
         </span>
       )}

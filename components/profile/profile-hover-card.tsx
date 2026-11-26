@@ -28,7 +28,7 @@ const SHOWN_POSTS = 6;
 // Same cover treatment as the mobile profile header.
 const COVER_MASK =
   "linear-gradient(to bottom, #000 0%, #000 45%, transparent 100%), linear-gradient(to right, transparent 0%, #000 22%, #000 78%, transparent 100%)";
-const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,rgba(255,216,77,0.08),transparent_70%)]";
+const WARM_GLOW = "bg-[radial-gradient(70%_90%_at_18%_0%,color-mix(in_srgb,var(--c-brand)_12%,transparent),transparent_70%)]";
 
 type HoverData = { profile: UserProfile; posts: Post[] };
 type Entry = { at: number; value: HoverData | null; p: Promise<HoverData> };
@@ -61,7 +61,7 @@ function load(username: string): Entry {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="text-[14px]">
-      <span className="font-extrabold text-white">{formatCount(value)}</span> <span className="text-white/55">{label}</span>
+      <span className="font-extrabold text-fg">{formatCount(value)}</span> <span className="text-fg/55">{label}</span>
     </div>
   );
 }
@@ -91,7 +91,7 @@ function Tile({ post }: { post: Post }) {
         />
       )}
       {isVideo && (
-        <span className="absolute right-1.5 top-1.5 text-white drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
+        <span className="absolute right-1.5 top-1.5 text-fg drop-shadow-[0_0_4px_rgba(0,0,0,0.8)]">
           <Icon name="play" filled className="size-4" />
         </span>
       )}
@@ -189,12 +189,12 @@ function Loaded({ data }: { data: HoverData }) {
           </Link>
           <div className="min-w-0 flex-1">
             <Link href={href} className="flex min-w-0 items-center gap-1.5">
-              <span className="text-shadow truncate text-[18px] font-extrabold leading-tight tracking-tight text-white">
+              <span className="text-shadow truncate text-[18px] font-extrabold leading-tight tracking-tight text-fg">
                 {profile.name ?? profile.username}
               </span>
               {profile.campus_verified && <Icon name="verifiedCheck" filled className="size-[18px] shrink-0 text-brand" />}
             </Link>
-            <p className="text-shadow truncate text-[14px] text-white/55">@{profile.username}</p>
+            <p className="text-shadow truncate text-[14px] text-fg/55">@{profile.username}</p>
           </div>
         </div>
 
@@ -204,14 +204,14 @@ function Loaded({ data }: { data: HoverData }) {
           <Stat value={total} label="Posts" />
         </div>
 
-        {bio && <p className="text-shadow mt-3 line-clamp-3 whitespace-pre-line text-[14px] leading-[1.4] text-white/90">{bio}</p>}
+        {bio && <p className="text-shadow mt-3 line-clamp-3 whitespace-pre-line text-[14px] leading-[1.4] text-fg/90">{bio}</p>}
 
         <button
           type="button"
           disabled={busy}
           onClick={() => (following ? onMessage() : void onFollow())}
           className={`mt-3.5 h-10 w-full rounded-full text-[14px] font-bold transition active:scale-98 disabled:opacity-60 ${
-            following ? "bg-surface-interactive text-white hover:bg-surface-elevated" : "bg-brand text-brand-fg hover:bg-brand-hover"
+            following ? "bg-surface-interactive text-fg hover:bg-surface-elevated" : "bg-brand text-brand-fg hover:bg-brand-hover"
           }`}
         >
           {following ? "Message" : "Follow"}
@@ -305,7 +305,7 @@ function HoverCard({
       onClickCapture={(e) => {
         if ((e.target as HTMLElement).closest("a")) onClose();
       }}
-      className="fixed z-[55] w-[340px] overflow-hidden rounded-2xl bg-surface-subtle shadow-[0_24px_60px_rgba(0,0,0,0.65)] transition-[opacity,transform] duration-150 ease-out"
+      className="fixed z-[55] w-[340px] overflow-hidden rounded-2xl bg-surface-subtle shadow-[0_18px_44px_rgba(0,0,0,0.22)] ring-1 ring-line transition-[opacity,transform] duration-150 ease-out"
       style={{
         left: pos?.left ?? 0,
         top: pos?.top ?? 0,

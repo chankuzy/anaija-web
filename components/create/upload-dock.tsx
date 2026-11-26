@@ -11,7 +11,7 @@ import { useUploads } from "@/lib/create/use-uploads";
 
 function Bar({ value }: { value: number | null }) {
   return (
-    <div className="relative h-0.5 overflow-hidden bg-white/10">
+    <div className="relative h-0.5 overflow-hidden bg-fg/10">
       {value === null ? (
         <div className="absolute inset-y-0 w-[35%] animate-pulse bg-brand" />
       ) : (
@@ -36,10 +36,10 @@ function Strip({ t, others }: { t: UploadTask; others: number }) {
           ) : failed ? (
             <Icon name="dangerCircle" className="size-[17px] text-danger" />
           ) : (
-            <span className="size-3.5 animate-spin rounded-full border-2 border-white/25 border-t-white/80" />
+            <span className="size-3.5 animate-spin rounded-full border-2 border-fg/25 border-t-white/80" />
           )}
         </span>
-        <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-white">
+        <p className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-fg">
           {uploadLabel(t)}
           {pct}
           {others > 0 ? `  (+${others} more)` : ""}

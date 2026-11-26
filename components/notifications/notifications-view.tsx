@@ -174,7 +174,7 @@ function Row({
   const coversId = item.thumb_count > 1 && listDest ? (listDest.item_id as number) : null;
 
   return (
-    <div className={`group relative flex gap-3 px-4 py-3 transition-colors hover:bg-white/4 ${coversId ? "items-start" : "items-center"}`}>
+    <div className={`group relative flex gap-3 px-4 py-3 transition-colors hover:bg-fg/4 ${coversId ? "items-start" : "items-center"}`}>
       <button type="button" aria-label="Open" onClick={onOpen} className="absolute inset-0" />
       <span className={`relative flex w-8 shrink-0 items-center justify-center ${coversId ? "h-[52px]" : ""}`}>
         <Glyph kind={item.kind} />
@@ -451,12 +451,12 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     <div className="flex h-full min-h-0 flex-col">
       <header className="shrink-0 px-3 pb-2" style={{ paddingTop: "calc(14px + env(safe-area-inset-top))" }}>
         <div className="flex items-center gap-1 py-1.5">
-          <button type="button" aria-label="Back" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg hover:bg-white/8 md:hidden">
+          <button type="button" aria-label="Back" onClick={onClose} className="grid size-10 place-items-center rounded-full text-fg hover:bg-fg/8 md:hidden">
             <Icon name="back" className="size-6" />
           </button>
           <h1 className="flex-1 px-1 text-[24px] font-extrabold tracking-tight text-fg">Activity</h1>
           {unread > 0 && (
-            <button type="button" onClick={() => void markAll()} className="h-9 rounded-full px-3 text-secondary font-semibold text-muted hover:bg-white/8 hover:text-fg">
+            <button type="button" onClick={() => void markAll()} className="h-9 rounded-full px-3 text-secondary font-semibold text-muted hover:bg-fg/8 hover:text-fg">
               Mark all read
             </button>
           )}
@@ -464,7 +464,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
             href="/settings/notifications"
             aria-label="Notification settings"
             onClick={onClose}
-            className="grid size-10 place-items-center rounded-full text-white/70 hover:bg-white/8 hover:text-white"
+            className="grid size-10 place-items-center rounded-full text-fg/70 hover:bg-fg/8 hover:text-fg"
           >
             <Icon name="settings" className="size-6" />
           </Link>
@@ -485,7 +485,7 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
         </div>
         {/* Silent background reconcile: a hairline, never a spinner over the list. */}
         <div className={`mt-1.5 h-[2px] overflow-hidden rounded transition-opacity duration-300 ${list.refreshing ? "opacity-100" : "opacity-0"}`}>
-          <div className="h-full w-1/3 animate-pulse rounded bg-white/50" />
+          <div className="h-full w-1/3 animate-pulse rounded bg-fg/50" />
         </div>
       </header>
 

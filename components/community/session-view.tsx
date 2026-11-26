@@ -19,7 +19,7 @@ import { AREA, Empty, ReportSheet, Sheet, StatusChip, messageOf, shareLink, site
 function AliasDot({ alias }: { alias: string }) {
   const n = parseInt(alias.replace(/\D/g, ""), 10) || 0;
   return (
-    <span className="grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-extrabold text-black" style={{ background: `hsl(${(n * 47) % 360} 70% 72%)` }}>
+    <span className="grid size-8 shrink-0 place-items-center rounded-full text-[11px] font-extrabold text-bg" style={{ background: `hsl(${(n * 47) % 360} 70% 72%)` }}>
       {String(n).slice(-2)}
     </span>
   );
@@ -172,7 +172,7 @@ function PostCard({ s, code, post, onChanged, onReport, onModerate, reply = fals
           {v.can_moderate && <button type="button" onClick={() => onModerate(post)} className="hover:text-danger">Remove</button>}
         </div>
         {open && (
-          <div className="mt-3 border-l-2 border-white/10 pl-4">
+          <div className="mt-3 border-l-2 border-fg/10 pl-4">
             {replies.loading && <Sk className="h-10 w-full rounded-xl" />}
             {(replies.data ?? []).map((r) => (
               <PostCard key={r.id} s={s} code={code} post={r} reply onChanged={() => { replies.reload(); onChanged(); }} onReport={onReport} onModerate={onModerate} />

@@ -51,7 +51,7 @@ function FilterMenu({ value, onChange }: { value: DiscoverFilter; onChange: (f: 
                   setOpen(false);
                   onChange(f.id);
                 }}
-                className="flex w-full items-center justify-between px-4 py-2.5 text-body font-semibold text-white transition-colors hover:bg-white/8"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-body font-semibold text-fg transition-colors hover:bg-fg/8"
               >
                 {f.label}
                 {f.id === value && <CheckGlyph className="size-4" />}

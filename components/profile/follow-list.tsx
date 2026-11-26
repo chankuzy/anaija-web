@@ -28,7 +28,7 @@ function Row({ u, isSelf, followsMe }: { u: FollowUser; isSelf: boolean; follows
           <span className="block truncate text-[15px] font-bold text-fg">{u.name ?? u.username}</span>
           <span className="block truncate text-xs text-muted">@{u.username}</span>
           {mutual ? (
-            <span className="mt-1 inline-block rounded-full bg-surface-interactive px-2 py-0.5 text-micro font-bold text-white/85">Mutual</span>
+            <span className="mt-1 inline-block rounded-full bg-surface-interactive px-2 py-0.5 text-micro font-bold text-fg/85">Mutual</span>
           ) : (
             followsMe && <span className="mt-1 block text-supporting font-medium text-muted">Follows you</span>
           )}
@@ -90,7 +90,7 @@ export function FollowListView({ username, kind }: { username: string; kind: Kin
       href={`/u/${username}/${k}`}
       replace
       className={`grid h-[38px] flex-1 place-items-center rounded-full text-body ${
-        k === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
+        k === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-fg/60"
       }`}
     >
       {label}

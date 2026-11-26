@@ -107,11 +107,11 @@ export function PublishShare() {
         className="sv-rise relative w-full max-w-[440px] rounded-t-[30px] bg-surface-subtle px-4 pt-3 md:rounded-[30px] md:pt-6"
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
       >
-        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-white/20 md:hidden" />
-        <p className="text-center text-[18px] font-extrabold tracking-tight text-white">
+        <span className="mx-auto mb-3 block h-1 w-10 rounded-full bg-fg/20 md:hidden" />
+        <p className="text-center text-[18px] font-extrabold tracking-tight text-fg">
           {`Your ${item.noun} is live`}
         </p>
-        <p className="mt-1 px-6 text-center text-secondary text-white/55">Share it so more people can find it.</p>
+        <p className="mt-1 px-6 text-center text-secondary text-fg/55">Share it so more people can find it.</p>
 
         <div className="mt-5 flex">
           <Quick glyph={<WhatsappGlyph className="size-[22px]" />} label="WhatsApp" onClick={whatsapp} />
@@ -125,7 +125,7 @@ export function PublishShare() {
           <button
             type="button"
             onClick={close}
-            className="h-12 flex-1 rounded-full bg-surface-interactive text-[15px] font-bold text-white transition hover:bg-surface-elevated active:scale-[0.98]"
+            className="h-12 flex-1 rounded-full bg-surface-interactive text-[15px] font-bold text-fg transition hover:bg-surface-elevated active:scale-[0.98]"
           >
             Not now
           </button>

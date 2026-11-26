@@ -49,9 +49,9 @@ export function AuditView() {
       {!loaded ? (
         err ? (
           <div className="py-16 text-center">
-            <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+            <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
             <p className="mt-1 text-body text-muted">{err}</p>
-            <button type="button" onClick={() => void load(null)} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+            <button type="button" onClick={() => void load(null)} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
               Try again
             </button>
           </div>
@@ -66,20 +66,20 @@ export function AuditView() {
             {rows.map((r) => (
               <div key={r.id} className="px-4 py-3">
                 <div className="flex items-baseline gap-2">
-                  <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-white">{r.action}</p>
+                  <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-fg">{r.action}</p>
                   <span className="shrink-0 text-supporting text-muted">{when(r.created_at)}</span>
                 </div>
                 <p className="truncate text-secondary text-muted">
                   {r.actor ? (r.actor.name ?? r.actor.username ?? `User ${r.actor.id}`) : "System"}
                   {r.target_kind ? ` → ${r.target_kind} ${r.target_id ?? ""}` : ""}
                 </p>
-                {short(r.detail) && <p className="mt-0.5 break-all text-supporting text-white/40">{short(r.detail)}</p>}
+                {short(r.detail) && <p className="mt-0.5 break-all text-supporting text-fg/40">{short(r.detail)}</p>}
               </div>
             ))}
           </Group>
           {err && <p className="px-2 pt-3 text-secondary text-danger">{err}</p>}
           {cursor && (
-            <button type="button" disabled={busy} onClick={() => void load(cursor)} className="mt-4 h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-white disabled:opacity-50">
+            <button type="button" disabled={busy} onClick={() => void load(cursor)} className="mt-4 h-11 w-full rounded-full bg-surface-interactive text-[15px] font-bold text-fg disabled:opacity-50">
               {busy ? "Loading…" : "Load more"}
             </button>
           )}

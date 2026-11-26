@@ -194,7 +194,7 @@ export function CommunitySearch() {
               />
               {q && (
                 <button type="button" aria-label="Clear" onClick={() => { setQ(""); setDq(""); inputRef.current?.focus(); }} className="grid size-9 place-items-center">
-                  <span className="grid size-[22px] place-items-center rounded-full bg-white/18 text-white"><Icon name="close" className="size-3.5" /></span>
+                  <span className="grid size-[22px] place-items-center rounded-full bg-fg/18 text-fg"><Icon name="close" className="size-3.5" /></span>
                 </button>
               )}
             </div>

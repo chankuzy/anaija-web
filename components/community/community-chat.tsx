@@ -83,7 +83,7 @@ export function CommunityChat({ slug }: { slug: string }) {
         <Link
           href={`/c/${slug}`}
           aria-label="Back to community"
-          className="grid size-10 place-items-center rounded-full text-fg transition-colors hover:bg-white/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          className="grid size-10 place-items-center rounded-full text-fg transition-colors hover:bg-fg/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
         >
           <Icon name="back" className="size-6" />
         </Link>

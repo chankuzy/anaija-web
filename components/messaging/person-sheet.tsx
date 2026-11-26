@@ -39,7 +39,7 @@ function Row({
       type="button"
       disabled={busy}
       onClick={onClick}
-      className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold transition-colors hover:bg-white/5 active:bg-white/8 disabled:opacity-50 ${
+      className={`flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-[15px] font-semibold transition-colors hover:bg-fg/5 active:bg-fg/8 disabled:opacity-50 ${
         danger ? "text-danger" : "text-fg"
       }`}
     >
@@ -187,7 +187,7 @@ export function PersonSheet({ conv, onClose }: { conv: Conversation; onClose: ()
         className="sv-rise relative w-full max-w-md overflow-hidden rounded-t-sheet bg-surface-subtle md:rounded-floating"
         style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
       >
-        <span className="mx-auto mt-2 block h-1 w-9 rounded-full bg-white/20 md:hidden" />
+        <span className="mx-auto mt-2 block h-1 w-9 rounded-full bg-fg/20 md:hidden" />
         <div className="flex flex-col items-center px-6 pt-5 text-center">
           <button
             type="button"

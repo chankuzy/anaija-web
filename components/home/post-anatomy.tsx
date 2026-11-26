@@ -13,7 +13,7 @@ import { useStoryRing } from "@/lib/stories/use-story-ring";
 import { CaptionText, withHashtags } from "./caption-text";
 
 const BTN =
-  "relative inline-flex h-10 min-w-9 items-center justify-center gap-1.5 rounded-pill px-1.5 text-fg transition-[background-color,transform] duration-150 hover:bg-white/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
+  "relative inline-flex h-10 min-w-9 items-center justify-center gap-1.5 rounded-pill px-1.5 text-fg transition-[background-color,transform] duration-150 hover:bg-fg/6 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100 focus-visible:outline-2 focus-visible:outline-brand/80";
 const ACT = "size-[26px]"; // action icons (like, comment, share, save)
 
 // Header: avatar, the username alone on the first line, and a quiet second line (attached sound, else why you are
@@ -92,7 +92,7 @@ export function PostHeader({
         <button
           type="button"
           onClick={() => void onFollow()}
-          className="hit-area relative h-7 rounded-pill bg-white/8 px-3.5 text-secondary font-semibold text-fg transition-[background-color,transform] duration-150 hover:bg-white/14 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
+          className="hit-area relative h-7 rounded-pill bg-fg/8 px-3.5 text-secondary font-semibold text-fg transition-[background-color,transform] duration-150 hover:bg-fg/14 active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
         >
           Follow
         </button>

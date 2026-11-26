@@ -45,9 +45,9 @@ function Faq({ q, a }: { q: string; a: string }) {
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 px-4 py-4 text-left transition-colors hover:bg-white/5"
+        className="flex w-full items-center gap-2 px-4 py-4 text-left transition-colors hover:bg-fg/5"
       >
-        <span className="flex-1 text-[15px] font-semibold text-white">{q}</span>
+        <span className="flex-1 text-[15px] font-semibold text-fg">{q}</span>
         <Icon name="chevronRight" className={`size-5 shrink-0 text-muted transition-transform ${open ? "rotate-90" : ""}`} />
       </button>
       {open && <p className="px-4 pb-4 pr-10 text-body leading-[1.45] text-muted">{a}</p>}

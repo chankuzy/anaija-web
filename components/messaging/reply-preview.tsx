@@ -42,7 +42,7 @@ export function ReplyThumb({ reply, size = 32 }: { reply: ReplyRef; size?: numbe
     return (
       <span className="relative shrink-0 overflow-hidden rounded-lg bg-card" style={box}>
         <video src={`${reply.media_url}#t=0.1`} preload="metadata" muted playsInline className="size-full object-cover" />
-        <span className="absolute inset-0 grid place-items-center text-white">
+        <span className="absolute inset-0 grid place-items-center text-fg">
           <Icon name="play" filled className="size-4" />
         </span>
       </span>
@@ -55,7 +55,7 @@ export function ReplyChip({ reply, onClick }: { reply: ReplyRef; onClick: () => 
     <button
       type="button"
       onClick={onClick}
-      className="mb-1 flex max-w-full items-center gap-2 rounded-xl bg-white/8 py-1 pl-2.5 pr-1.5 text-left text-[12px] font-medium text-muted transition hover:bg-white/12"
+      className="mb-1 flex max-w-full items-center gap-2 rounded-xl bg-fg/8 py-1 pl-2.5 pr-1.5 text-left text-[12px] font-medium text-muted transition hover:bg-fg/12"
     >
       <Icon name="reply" className="size-3.5 shrink-0 text-brand" />
       <span className="min-w-0 flex-1 truncate">{replyLabel(reply)}</span>

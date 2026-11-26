@@ -223,7 +223,7 @@ export function ImageViewer({ src, onClose }: { src: string; onClose: () => void
   }, [onClose]);
   return (
     <div className="sv-overlay fixed inset-0 z-[70] grid place-items-center bg-black/90 p-4" role="dialog" aria-modal="true" onClick={onClose}>
-      <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 grid size-10 place-items-center rounded-full bg-white/10 text-white" style={{ top: "max(16px, env(safe-area-inset-top))" }}>
+      <button type="button" aria-label="Close" onClick={onClose} className="absolute right-4 grid size-10 place-items-center rounded-full bg-fg/10 text-fg" style={{ top: "max(16px, env(safe-area-inset-top))" }}>
         <Icon name="close" className="size-5" />
       </button>
       {/* eslint-disable-next-line @next/next/no-img-element */}

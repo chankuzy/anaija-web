@@ -39,7 +39,7 @@ function Tile({
   destructive?: boolean;
   disabled?: boolean;
 }) {
-  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium transition-colors hover:bg-white/[0.05] disabled:opacity-50 ${
+  const cls = `flex w-full items-center gap-3.5 rounded-2xl px-4 py-3.5 text-left text-[15px] font-medium transition-colors hover:bg-fg/[0.05] disabled:opacity-50 ${
     destructive ? "text-danger" : "text-fg"
   }`;
   const inner = (
@@ -133,23 +133,23 @@ export function OptionsSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/60" />
       <div
-        className="sv-rise relative max-h-[85dvh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] border-t border-white/[0.08] bg-bg px-2 pt-2.5 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[28px] md:border"
+        className="sv-rise relative max-h-[85dvh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] border-t border-fg/[0.08] bg-bg px-2 pt-2.5 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[28px] md:border"
         style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
       >
-        <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-white/20" />
+        <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-fg/20" />
         {confirming ? (
           <div className="p-4">
             <p className="text-base font-bold text-fg">Delete this {isListing ? "listing" : "post"}?</p>
             <p className="mt-1 text-sm text-muted">This can&apos;t be undone.</p>
             <div className="mt-5 flex justify-end gap-2">
-              <button type="button" onClick={() => setConfirming(false)} className="h-10 rounded-full px-4 text-sm font-semibold text-fg hover:bg-white/8">
+              <button type="button" onClick={() => setConfirming(false)} className="h-10 rounded-full px-4 text-sm font-semibold text-fg hover:bg-fg/8">
                 Cancel
               </button>
               <button
                 type="button"
                 disabled={busy}
                 onClick={() => void run(onDelete)}
-                className="h-10 rounded-full px-4 text-sm font-semibold text-danger hover:bg-white/8 disabled:opacity-50"
+                className="h-10 rounded-full px-4 text-sm font-semibold text-danger hover:bg-fg/8 disabled:opacity-50"
               >
                 {busy ? "Deleting…" : "Delete"}
               </button>

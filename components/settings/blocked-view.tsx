@@ -42,7 +42,7 @@ export function BlockedView() {
   if (!users && error) {
     body = (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
         <button
           type="button"
@@ -58,7 +58,7 @@ export function BlockedView() {
   } else if (users.length === 0) {
     body = (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">No blocked accounts</p>
+        <p className="text-[17px] font-bold text-fg">No blocked accounts</p>
         <p className="mt-1 text-body text-muted">People you block will show up here</p>
       </div>
     );
@@ -69,14 +69,14 @@ export function BlockedView() {
           <div key={u.id} className="flex items-center gap-3 px-4 py-3">
             <Avatar url={u.avatar} name={u.name ?? u.username} size={40} />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-body font-bold text-white">{u.name ?? ""}</p>
+              <p className="truncate text-body font-bold text-fg">{u.name ?? ""}</p>
               <p className="truncate text-supporting text-muted">@{u.username ?? ""}</p>
             </div>
             <button
               type="button"
               disabled={busy.has(u.id)}
               onClick={() => void unblock(u)}
-              className="h-9 rounded-full bg-surface-interactive px-4 text-supporting font-bold text-white transition hover:bg-surface-elevated disabled:opacity-50"
+              className="h-9 rounded-full bg-surface-interactive px-4 text-supporting font-bold text-fg transition hover:bg-surface-elevated disabled:opacity-50"
             >
               {busy.has(u.id) ? "…" : "Unblock"}
             </button>

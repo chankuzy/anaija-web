@@ -110,7 +110,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
         {n === 0 ? (
           <button type="button" onClick={browse} className="group mx-3.5 mb-3 flex h-[calc(100%-12px)] w-[calc(100%-28px)] flex-col items-center justify-center gap-3 rounded-[22px] bg-surface-subtle text-center transition-colors hover:bg-surface-interactive">
             <span className="grid size-16 place-items-center rounded-full bg-card">
-              <Icon name="gallery" filled className="size-7 text-white" />
+              <Icon name="gallery" filled className="size-7 text-fg" />
             </span>
             <span className="text-[17px] font-bold text-fg">Choose photos or videos</span>
             <span className="max-w-[260px] text-[12.5px] leading-[1.4] text-muted">
@@ -130,7 +130,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
                 )}
                 <span className="absolute inset-0 bg-black/40" />
                 {m.type === "video" && m.durationSeconds != null && (
-                  <span className="absolute bottom-[5px] left-1.5 text-[11.5px] font-bold text-white text-shadow">{fmt(m.durationSeconds)}</span>
+                  <span className="absolute bottom-[5px] left-1.5 text-[11.5px] font-bold text-fg text-shadow">{fmt(m.durationSeconds)}</span>
                 )}
                 <span className="absolute right-[7px] top-[7px] grid size-[22px] place-items-center rounded-full bg-brand text-[12px] font-extrabold text-brand-fg">
                   {max > 1 ? i + 1 : <Icon name="check" className="size-3.5" />}

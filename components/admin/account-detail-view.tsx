@@ -18,7 +18,7 @@ import { Footnote, Group, SectionLabel, SettingsPage, Toggle, useToast } from "@
 import { StatusPill } from "./status-pill";
 
 const inputCls =
-  "h-12 w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-white outline-none placeholder:text-muted disabled:opacity-60";
+  "h-12 w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-fg outline-none placeholder:text-muted disabled:opacity-60";
 
 function AdminsSection({ accountKey, show }: { accountKey: string; show: (m: string) => void }) {
   const { data, refresh } = useCached<{ data: AccountAdmin[]; candidates: StaffLite[] }>(
@@ -63,7 +63,7 @@ function AdminsSection({ accountKey, show }: { accountKey: string; show: (m: str
             <div className="flex items-center gap-3 px-4 pt-3">
               <Avatar url={ad.avatar} name={ad.name ?? ad.username} size={36} />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] font-semibold text-white">{ad.name ?? ad.username ?? `User ${ad.user_id}`}</p>
+                <p className="truncate text-[15px] font-semibold text-fg">{ad.name ?? ad.username ?? `User ${ad.user_id}`}</p>
                 <p className="truncate text-supporting text-muted">{ad.username ? `@${ad.username} · ` : ""}{roleLabel(ad.role)}</p>
               </div>
               <button type="button" disabled={busy} onClick={() => void remove(ad)} className="h-9 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-danger disabled:opacity-50">
@@ -84,11 +84,11 @@ function AdminsSection({ accountKey, show }: { accountKey: string; show: (m: str
             aria-label="Assign staff"
             value={pick}
             onChange={(e) => setPick(e.target.value)}
-            className="h-11 min-w-0 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-white outline-none"
+            className="h-11 min-w-0 flex-1 rounded-full bg-surface-interactive px-4 text-secondary font-bold text-fg outline-none"
           >
-            <option value="" className="bg-[#26262b]">Assign a staff member…</option>
+            <option value="" className="bg-card-elevated">Assign a staff member…</option>
             {data.candidates.map((s) => (
-              <option key={s.user_id} value={s.user_id} className="bg-[#26262b]">
+              <option key={s.user_id} value={s.user_id} className="bg-card-elevated">
                 {(s.name ?? s.username ?? `User ${s.user_id}`)} · {roleLabel(s.role)}
               </option>
             ))}
@@ -97,7 +97,7 @@ function AdminsSection({ accountKey, show }: { accountKey: string; show: (m: str
             type="button"
             disabled={!pick || busy}
             onClick={() => void run(async () => { await platformApi.setAdmin(accountKey, { staff_user_id: Number(pick) }); setPick(""); })}
-            className="h-11 shrink-0 rounded-full bg-white px-5 text-secondary font-extrabold text-black disabled:opacity-40"
+            className="h-11 shrink-0 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg disabled:opacity-40"
           >
             Assign
           </button>
@@ -193,9 +193,9 @@ export function AccountDetailView() {
   if (!a) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">
           Try again
         </button>
       </div>
@@ -220,7 +220,7 @@ export function AccountDetailView() {
               className="relative shrink-0 rounded-full disabled:opacity-60"
             >
               <Avatar url={a.avatar} name={a.name ?? a.username} size={64} />
-              <span className="absolute -bottom-0.5 -right-0.5 grid size-7 place-items-center rounded-full bg-white text-black">
+              <span className="absolute -bottom-0.5 -right-0.5 grid size-7 place-items-center rounded-full bg-fg text-bg">
                 {uploading ? <span className="text-micro font-bold">…</span> : <Icon name="camera" filled className="size-4" />}
               </span>
             </button>
@@ -228,7 +228,7 @@ export function AccountDetailView() {
             <Avatar url={a.avatar} name={a.name ?? a.username} size={64} />
           )}
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[17px] font-extrabold text-white">{a.name ?? a.key}</p>
+            <p className="truncate text-[17px] font-extrabold text-fg">{a.name ?? a.key}</p>
             <p className="truncate text-secondary text-muted">
               {a.username ? `@${a.username}` : a.key} · {a.followers.toLocaleString()} {a.followers === 1 ? "follower" : "followers"}
             </p>
@@ -248,7 +248,7 @@ export function AccountDetailView() {
               className={`${inputCls} h-auto resize-none py-3 leading-[1.4]`} />
             {a.can.edit && (
               <button type="button" disabled={!dirty || busy || !name.trim()} onClick={() => void save()}
-                className="h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40">
+                className="h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40">
                 Save changes
               </button>
             )}
@@ -263,7 +263,7 @@ export function AccountDetailView() {
             <Group>
               <div className="p-4">
                 {a.status === "provisioned" && (
-                  <button type="button" disabled={busy} onClick={() => void act("activate")} className="h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40">
+                  <button type="button" disabled={busy} onClick={() => void act("activate")} className="h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40">
                     Activate account
                   </button>
                 )}
@@ -273,7 +273,7 @@ export function AccountDetailView() {
                   </button>
                 )}
                 {a.status === "suspended" && (
-                  <button type="button" disabled={busy} onClick={() => void act("recover")} className="h-11 w-full rounded-full bg-white text-[15px] font-extrabold text-black disabled:opacity-40">
+                  <button type="button" disabled={busy} onClick={() => void act("recover")} className="h-11 w-full rounded-full bg-fg text-[15px] font-extrabold text-bg disabled:opacity-40">
                     Recover account
                   </button>
                 )}

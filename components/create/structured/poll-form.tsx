@@ -63,7 +63,7 @@ export function PollForm({ onClose }: { onClose: () => void }) {
               onChange={(e) => setOptions((p) => p.map((x) => (x.id === o.id ? { ...x, text: e.target.value } : x)))}
             />
             {options.length > 2 && (
-              <button type="button" aria-label="Remove option" disabled={pub.busy} onClick={() => setOptions((p) => p.filter((x) => x.id !== o.id))} className="grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-white/8">
+              <button type="button" aria-label="Remove option" disabled={pub.busy} onClick={() => setOptions((p) => p.filter((x) => x.id !== o.id))} className="grid size-10 shrink-0 place-items-center rounded-full text-muted hover:bg-fg/8">
                 <Icon name="close" className="size-4" />
               </button>
             )}

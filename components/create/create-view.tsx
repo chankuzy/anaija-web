@@ -318,7 +318,7 @@ export function CreateView({
               disabled={busy}
               onClick={() => setKind(k.id)}
               className={`h-[38px] flex-1 rounded-full text-body ${
-                k.id === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-white/60"
+                k.id === kind ? "bg-brand font-extrabold text-brand-fg" : "font-bold text-fg/60"
               }`}
             >
               {k.label}
@@ -506,7 +506,7 @@ export function CreateView({
         style={{ bottom: embedded ? 0 : "calc(var(--nav-h) + env(safe-area-inset-bottom))" }}
       >
         {busy && stage === "uploading" && (
-          <div className="mb-2.5 h-1 overflow-hidden rounded bg-white/10">
+          <div className="mb-2.5 h-1 overflow-hidden rounded bg-fg/10">
             <div className="h-full bg-brand transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
         )}

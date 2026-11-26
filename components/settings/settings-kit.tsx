@@ -32,7 +32,7 @@ export function useToast() {
   );
   const toast = msg ? (
     <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center">
-      <span className="rounded-full bg-surface-elevated px-4 py-2 text-secondary font-bold text-white shadow-lg">{msg}</span>
+      <span className="rounded-full bg-surface-elevated px-4 py-2 text-secondary font-bold text-fg shadow-lg">{msg}</span>
     </div>
   ) : null;
   return { toast, show };
@@ -59,7 +59,7 @@ export function SettingsPage({
             type="button"
             onClick={onBack}
             aria-label="Back"
-            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated"
+            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-fg transition hover:bg-surface-elevated"
           >
             <Icon name="back" className="size-6" />
           </button>
@@ -67,12 +67,12 @@ export function SettingsPage({
           <Link
             href={backHref}
             aria-label="Back"
-            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-white transition hover:bg-surface-elevated"
+            className="grid size-11 place-items-center rounded-full bg-surface-interactive text-fg transition hover:bg-surface-elevated"
           >
             <Icon name="back" className="size-6" />
           </Link>
         )}
-        <h1 className="min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-tight text-white">{title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-[20px] font-extrabold tracking-tight text-fg">{title}</h1>
         {action}
       </header>
       {children}
@@ -92,7 +92,7 @@ export function Footnote({ children }: { children: ReactNode }) {
   return <p className="px-2 pt-2.5 text-secondary leading-[1.4] text-muted">{children}</p>;
 }
 
-const rowCls = "flex w-full items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-white/5";
+const rowCls = "flex w-full items-center gap-3.5 px-4 py-4 text-left transition-colors hover:bg-fg/5";
 
 export function Tile({
   icon,
@@ -111,8 +111,8 @@ export function Tile({
 }) {
   const inner = (
     <>
-      <Icon name={icon} className={`size-6 shrink-0 ${danger ? "text-danger" : "text-white/75"}`} />
-      <span className={`min-w-0 flex-1 truncate text-[15px] font-semibold ${danger ? "text-danger" : "text-white"}`}>{label}</span>
+      <Icon name={icon} className={`size-6 shrink-0 ${danger ? "text-danger" : "text-fg/75"}`} />
+      <span className={`min-w-0 flex-1 truncate text-[15px] font-semibold ${danger ? "text-danger" : "text-fg"}`}>{label}</span>
       {trailing ? <span className="shrink-0 truncate text-secondary text-muted">{trailing}</span> : null}
       {!danger && <Icon name="chevronRight" className="size-5 shrink-0 text-muted" />}
     </>
@@ -143,8 +143,8 @@ export function Toggle({
 }) {
   return (
     <div className={`flex items-center gap-3.5 px-4 py-3 ${disabled ? "opacity-50" : ""}`}>
-      <Icon name={icon} className="size-6 shrink-0 text-white/75" />
-      <span className="min-w-0 flex-1 text-[15px] font-semibold text-white">{label}</span>
+      <Icon name={icon} className="size-6 shrink-0 text-fg/75" />
+      <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{label}</span>
       <button
         type="button"
         role="switch"
@@ -154,7 +154,7 @@ export function Toggle({
         onClick={() => onChange(!value)}
         className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${value ? "bg-brand" : "bg-surface-elevated"}`}
       >
-        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-brand-fg" : "left-0.5 bg-white/70"}`} />
+        <span className={`absolute top-0.5 size-6 rounded-full transition-all ${value ? "left-[22px] bg-brand-fg" : "left-0.5 bg-fg/70"}`} />
       </button>
     </div>
   );

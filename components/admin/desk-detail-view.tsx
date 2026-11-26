@@ -13,14 +13,14 @@ import { Footnote, Group, SectionLabel, SettingsPage, Tile, useToast } from "@/c
 import { DeskStatusPill } from "./desks-view";
 import { useStaff } from "./staff-context";
 
-const field = "w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-white outline-none placeholder:text-muted disabled:opacity-60";
+const field = "w-full rounded-[18px] bg-surface-interactive px-4 text-[15px] text-fg outline-none placeholder:text-muted disabled:opacity-60";
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" }) : "—");
 
 function Row({ k, v }: { k: string; v: ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-4 px-4 py-3">
       <span className="text-secondary text-muted">{k}</span>
-      <span className="min-w-0 truncate text-right text-[15px] font-semibold text-white">{v}</span>
+      <span className="min-w-0 truncate text-right text-[15px] font-semibold text-fg">{v}</span>
     </div>
   );
 }
@@ -71,9 +71,9 @@ export function DeskDetailView() {
   if (!c) {
     body = error ? (
       <div className="py-16 text-center">
-        <p className="text-[17px] font-bold text-white">Couldn&apos;t load</p>
+        <p className="text-[17px] font-bold text-fg">Couldn&apos;t load</p>
         <p className="mt-1 text-body text-muted">{error}</p>
-        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-white px-5 text-secondary font-extrabold text-black">Try again</button>
+        <button type="button" onClick={() => void refresh()} className="mt-5 h-10 rounded-full bg-fg px-5 text-secondary font-extrabold text-bg">Try again</button>
       </div>
     ) : (
       <SettingsGroupsSkeleton groups={3} rows={3} />
@@ -111,7 +111,7 @@ export function DeskDetailView() {
           {c.verification_note && (
             <div className="px-4 py-3">
               <p className="text-supporting text-muted">{c.verification_status === "pending" ? "Owner's evidence" : "Last note"}</p>
-              <p className="mt-1 whitespace-pre-wrap text-[15px] leading-[1.4] text-white">{c.verification_note}</p>
+              <p className="mt-1 whitespace-pre-wrap text-[15px] leading-[1.4] text-fg">{c.verification_note}</p>
             </div>
           )}
         </Group>
@@ -122,8 +122,8 @@ export function DeskDetailView() {
             <SectionLabel>Possible duplicates</SectionLabel>
             <Group>
               {c.duplicate_desks.map((d) => (
-                <Link key={d.id} href={`/admin/desks/${d.id}`} className="block px-4 py-3 transition-colors hover:bg-white/5">
-                  <p className="truncate text-[15px] font-semibold text-white">{d.name}</p>
+                <Link key={d.id} href={`/admin/desks/${d.id}`} className="block px-4 py-3 transition-colors hover:bg-fg/5">
+                  <p className="truncate text-[15px] font-semibold text-fg">{d.name}</p>
                   <p className="truncate text-secondary text-muted">{d.members} members{d.owner?.username ? ` · @${d.owner.username}` : ""} · {d.status}</p>
                 </Link>
               ))}
@@ -158,7 +158,7 @@ export function DeskDetailView() {
               </button>
               <div className="flex gap-2">
                 <button type="button" disabled={busy || note.trim().length < 5} onClick={() => void decide("rejected")}
-                  className="h-11 flex-1 rounded-full bg-surface-interactive text-[15px] font-bold text-white disabled:opacity-40">Reject</button>
+                  className="h-11 flex-1 rounded-full bg-surface-interactive text-[15px] font-bold text-fg disabled:opacity-40">Reject</button>
                 {c.verification_status === "verified" && (
                   <button type="button" disabled={busy || note.trim().length < 5} onClick={() => void decide("unverified")}
                     className="h-11 flex-1 rounded-full bg-danger/90 text-[15px] font-bold text-white disabled:opacity-40">Revoke</button>

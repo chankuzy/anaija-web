@@ -10,7 +10,7 @@ import { useCached } from "@/lib/cache/swr";
 const INSTITUTION_ID = 1; // AFIT. Becomes a selector when a second institution is curated.
 const PILL: Record<UnitVerification, string> = {
   verified: "bg-brand/15 text-brand",
-  unverified: "bg-white/8 text-muted",
+  unverified: "bg-fg/8 text-muted",
   conflicting: "bg-danger/15 text-danger",
 };
 const btn = "h-8 shrink-0 rounded-full bg-surface-interactive px-3.5 text-supporting font-bold text-fg transition-colors hover:bg-card-elevated disabled:opacity-50";
