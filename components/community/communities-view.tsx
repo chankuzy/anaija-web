@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon, type IconName } from "@/components/ui/icon";
 import { Sk } from "@/components/ui/skeleton";
@@ -16,6 +15,7 @@ import { useRecent } from "@/lib/community/recent";
 import { timeAgo } from "@/lib/format";
 import { useNotificationsPanel } from "@/lib/notifications/panel-context";
 import { usePullRefresh } from "@/lib/ui/use-pull-refresh";
+import { CommunityAvatar } from "./community-avatar";
 import { CATEGORIES, Chip, Cm, Empty, OfficialMark, SectionHead, Sheet, StatusChip, categoryLabel, useFetch } from "./kit";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -64,7 +64,7 @@ function CommunityRow({ c, reason, flush = false }: { c: Community; reason?: str
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
   return (
     <Link href={`/c/${c.slug}`} className={`flex items-center gap-3.5 transition-colors active:bg-surface-interactive ${flush ? "px-4 py-3.5 md:px-0" : "rounded-2xl px-1 py-2.5"}`}>
-      <Avatar url={c.avatar} name={c.name} size={48} />
+      <CommunityAvatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{c.name}</span>{c.academic_origin && <OfficialMark />}</span>
         <span className="mt-0.5 block truncate text-supporting text-muted">{metaOf(c)}</span>
@@ -93,7 +93,7 @@ function MineTile({ c }: { c: MineRow }) {
   return (
     <Link href={`/c/${c.slug}`} className="relative flex w-[148px] shrink-0 flex-col rounded-3xl border border-line bg-surface-subtle p-3.5 transition-colors active:bg-surface-interactive">
       <span className="relative w-fit">
-        <Avatar url={c.avatar} name={c.name} size={48} />
+        <CommunityAvatar url={c.avatar} name={c.name} size={48} />
         {c.chat_unread > 0 && (
           <span aria-label={`${c.chat_unread} unread chat messages`} className="absolute -right-2 -top-2 grid h-[20px] min-w-[20px] place-items-center rounded-full bg-brand px-1 text-[10px] font-extrabold text-brand-fg ring-2 ring-surface">
             {c.chat_unread > 99 ? "99+" : c.chat_unread}
@@ -111,7 +111,7 @@ function RecTile({ r }: { r: Rec }) {
   const { c } = r;
   return (
     <Link href={`/c/${c.slug}`} className="flex w-[172px] shrink-0 flex-col rounded-3xl border border-line bg-surface-subtle p-4 transition-colors active:bg-surface-interactive">
-      <Avatar url={c.avatar} name={c.name} size={52} />
+      <CommunityAvatar url={c.avatar} name={c.name} size={52} />
       <span className="mt-3.5 line-clamp-2 block min-h-[34px] text-[14px] font-bold leading-[1.2] tracking-[-0.01em] text-fg">{c.name}</span>
       <span className="mt-1 flex items-center truncate text-micro text-muted">{c.academic_origin ? <OfficialMark /> : (c.course_code ?? categoryLabel(c.category))}</span>
       <span className="mt-2 line-clamp-2 block min-h-[28px] text-supporting font-semibold leading-[1.3] text-brand-ink">{r.reason}</span>
@@ -177,7 +177,7 @@ function Highlights({ p }: { p: Pulse | undefined }) {
         {ann.map((a) => (
           <Link key={`a${a.id}`} href={`/p/${a.id}`} className={card}>
             <span className="flex items-center gap-2">
-              <Avatar url={a.community.avatar} name={a.community.name} size={20} />
+              <CommunityAvatar url={a.community.avatar} name={a.community.name} size={20} />
               <span className="min-w-0 flex-1 truncate text-supporting font-semibold text-muted">{a.community.name}</span>
               {a.pinned && <span className="text-micro font-extrabold uppercase tracking-[0.08em] text-brand-ink">Pinned</span>}
             </span>
@@ -188,7 +188,7 @@ function Highlights({ p }: { p: Pulse | undefined }) {
         {res.map((r) => (
           <Link key={`r${r.id}`} href={`/c/${r.community.slug}?tab=library`} className={card}>
             <span className="flex items-center gap-2">
-              <Avatar url={r.community.avatar} name={r.community.name} size={20} />
+              <CommunityAvatar url={r.community.avatar} name={r.community.name} size={20} />
               <span className="min-w-0 flex-1 truncate text-supporting font-semibold text-muted">{r.community.name}</span>
             </span>
             <span className="mt-3 line-clamp-3 block text-[14px] font-bold leading-[1.3] text-fg">{r.title}</span>
@@ -281,12 +281,14 @@ export function CommunitiesView() {
           )}
         </div>
 
-        <header className="flex items-start gap-1">
+        <header className="flex items-center gap-0.5">
           <div className="min-w-0 flex-1">
-            <p className="text-micro font-semibold uppercase tracking-[0.14em] text-muted">Anaija</p>
-            <h1 className="mt-1 text-[32px] font-extrabold leading-[1.05] tracking-[-0.03em] text-fg">Communities</h1>
-            <p className="mt-2 truncate text-secondary text-muted">Your campus. Your people. Your conversations.</p>
+            <h1 className="text-[32px] font-extrabold leading-[1.05] tracking-[-0.03em] text-fg">Communities</h1>
+            <p className="mt-2 text-secondary leading-[1.35] text-muted">Your campus. Your people. Your conversations.</p>
           </div>
+          <Link href="/communities/search" aria-label="Search communities" className={ICON_BTN}>
+            <Icon name="search" className="size-[24px]" />
+          </Link>
           {authed ? (
             <button type="button" aria-label={unseen > 0 ? `${unseen} new notifications` : "Notifications"} onClick={panel.toggle} className={`${ICON_BTN} -mr-2`}>
               <Icon name="bell" filled={unseen > 0} className="size-[24px]" />
@@ -297,16 +299,7 @@ export function CommunitiesView() {
           ) : null}
         </header>
 
-        <Link
-          href="/communities/search"
-          aria-label="Search communities"
-          className="mt-5 flex h-12 items-center gap-3 rounded-full border border-line bg-surface-subtle px-4 text-muted transition-colors hover:bg-surface-interactive active:scale-[0.99]"
-        >
-          <Icon name="search" className="size-[19px] shrink-0" />
-          <span className="min-w-0 flex-1 truncate text-[15px] font-medium">Search communities, courses, departments</span>
-        </Link>
-
-        <div className="mt-8 flex flex-col gap-9 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-10 lg:gap-y-9">
+        <div className="mt-7 flex flex-col gap-9 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-10 lg:gap-y-9">
           <section className="min-w-0 lg:col-start-1 lg:row-start-1">
             <SectionHead title="My communities">
               {hasMine && <button type="button" onClick={() => setAll(true)} className="text-secondary font-bold text-muted hover:text-fg">See all</button>}
@@ -333,7 +326,7 @@ export function CommunitiesView() {
                 <span className="shrink-0 text-micro font-semibold uppercase tracking-[0.1em] text-muted">Recently viewed</span>
                 {viewed.map((r) => (
                   <Link key={r.slug} href={`/c/${r.slug}`} className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-surface-interactive pl-1.5 pr-3.5 text-secondary font-bold text-fg">
-                    <Avatar url={r.avatar} name={r.name} size={24} />
+                    <CommunityAvatar url={r.avatar} name={r.name} size={24} />
                     <span className="max-w-[140px] truncate">{r.name}</span>
                   </Link>
                 ))}

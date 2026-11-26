@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar } from "@/components/ui/avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Sk } from "@/components/ui/skeleton";
@@ -11,6 +10,7 @@ import { communitiesApi, type Community } from "@/lib/api/communities";
 import { homeApi } from "@/lib/api/community-home";
 import { useAuth } from "@/lib/auth/auth-context";
 import { addSearch, clearSearches, removeSearch, useSearches } from "@/lib/community/search-recents";
+import { CommunityAvatar } from "./community-avatar";
 import { CATEGORIES, Chip, Cm, Empty, OfficialMark, categoryLabel, useFetch } from "./kit";
 
 type Extra = { key: string; items: Community[]; more: boolean; page: number };
@@ -34,7 +34,7 @@ function Row({ c, q, onOpen }: { c: Community; q: string; onOpen: () => void }) 
   const state = c.is_member ? "Joined" : c.request_status === "pending" ? "Requested" : c.join_policy === "open" ? "Open" : c.join_policy === "request" ? "Approval" : "Invite only";
   return (
     <Link href={`/c/${c.slug}`} onClick={onOpen} className="flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-surface-interactive">
-      <Avatar url={c.avatar} name={c.name} size={48} />
+      <CommunityAvatar url={c.avatar} name={c.name} size={48} />
       <span className="min-w-0 flex-1">
         <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-[15px] font-bold text-fg">{mark(c.name, q)}</span>{c.academic_origin && <OfficialMark />}</span>
         <span className="mt-0.5 block truncate text-supporting text-muted">{metaOf(c)}</span>
