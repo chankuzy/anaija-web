@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { Icon } from "@/components/ui/icon";
 import type { CommunityDetail } from "@/lib/api/communities";
-import { KIND_META, type CreateKind } from "@/lib/create/kinds";
+import { KIND_META, KIND_TONE, type CreateKind } from "@/lib/create/kinds";
 import { Sheet } from "./kit";
 
 const ORDER: CreateKind[] = ["question", "photo", "reel", "document", "poll", "article", "announcement", "listing"];
@@ -37,7 +37,7 @@ export function PublishSheet({ c, onClose }: { c: CommunityDetail; onClose: () =
             onClick={() => router.push(publishHref(c, k))}
             className="flex flex-col items-start gap-3 rounded-2xl border border-line p-4 text-left transition-colors hover:bg-surface-interactive active:scale-[0.98]"
           >
-            <Icon name={KIND_META[k].icon} className="size-6 text-fg" />
+            <Icon name={KIND_META[k].icon} filled tone={KIND_TONE[k]} className="size-6" />
             <span>
               <span className="block text-[15px] font-bold text-fg">{KIND_META[k].title}</span>
               <span className="mt-0.5 block text-supporting leading-[1.3] text-muted">{SUB[k] ?? KIND_META[k].sub}</span>

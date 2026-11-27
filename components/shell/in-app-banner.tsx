@@ -179,7 +179,7 @@ export function InAppBanner() {
         onPointerCancel={onUp}
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => !press.current && setPaused(false)}
-        className={`anaija-banner group pointer-events-auto relative w-full max-w-[420px] cursor-pointer touch-none select-none overflow-hidden rounded-[22px] bg-surface-subtle/95 backdrop-blur-xl ${
+        className={`anaija-banner group pointer-events-auto relative w-full max-w-[420px] cursor-pointer touch-none select-none overflow-hidden rounded-[22px] bg-[var(--sheet-bg)] ${
           leaving ? "anaija-banner-out" : ""
         }`}
         style={{

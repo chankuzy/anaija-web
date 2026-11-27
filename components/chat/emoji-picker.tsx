@@ -73,7 +73,7 @@ export function EmojiPicker({ onPick }: { onPick: (unicode: string) => void }) {
 
   return (
     <div>
-      <div className="sticky top-0 z-10 bg-surface-subtle pb-1 pt-1">
+      <div className="sticky top-0 z-10 bg-[var(--sheet-bg)] pb-1 pt-1">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}

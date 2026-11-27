@@ -158,7 +158,7 @@ export function StickerTray({
     `flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold transition-colors ${active ? "bg-surface-elevated text-fg" : "text-muted hover:text-fg"}`;
 
   return (
-    <div className="flex h-[320px] flex-col overflow-hidden rounded-[22px] bg-surface-subtle">
+    <div className="flex h-[320px] flex-col overflow-hidden rounded-[22px] bg-[var(--sheet-bg)]">
       <div className="no-scrollbar flex gap-1 overflow-x-auto p-1.5" role="tablist" aria-label="Sticker packs">
         <button type="button" role="tab" aria-selected={tab === "recent"} onClick={() => setTab("recent")} className={pill(tab === "recent")}>
           <Icon name="clockCircle" tone="sky" filled={tab === "recent"} className="size-4" />
