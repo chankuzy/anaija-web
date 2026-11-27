@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth/auth-context";
 // Colour by meaning. Any icon not listed keeps the neutral grey. A row can still override with its own `tone`.
 const ICON_TONE: Partial<Record<IconName, IconTone>> = {
   bell: "gold",
+  clockCircle: "sky",
   bellOff: "steel",
   moon: "violet",
   eye: "sky",
