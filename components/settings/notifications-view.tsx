@@ -21,7 +21,7 @@ const DEVICE_NOTE: Record<PushState, string> = {
 function HourRow({ label, value, disabled, onChange }: { label: string; value: number; disabled: boolean; onChange: (h: number) => void }) {
   return (
     <div className={`flex items-center gap-3.5 px-4 py-3 ${disabled ? "opacity-50" : ""}`}>
-      <Icon name="clockCircle" className="size-6 shrink-0 text-fg/75" />
+      <Icon name="clockCircle" tone="sky" className="size-6 shrink-0" />
       <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{label}</span>
       <select
         aria-label={label}

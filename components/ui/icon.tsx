@@ -20,7 +20,6 @@ const WEIGHT = {
 export type IconWeight = keyof typeof WEIGHT;
 
 // Multi-colour palette for casual icons (settings rows, info glyphs, state icons).
-// Buttons and main nav never pass a tone, so they keep following currentColor.
 export const TONES = {
   fire: "#FF5A1F",
   orange: "#FF8A1F",
@@ -33,13 +32,48 @@ export const TONES = {
   steel: "#8A94A6",
 } as const;
 
-// "none" opts out of every automatic colour (used for the unsaved bookmark on dark media).
+// "none" opts out of every automatic colour and of the automatic fill.
 export type IconTone = keyof typeof TONES | "none";
+
+// CASUAL icons: coloured AND filled everywhere by default. Main interaction icons (like, share, comment, send,
+// close, back, plus, chevrons, search, nav, bell, composer tools, buttons) are deliberately NOT here.
+// Auto colour is skipped when the call site already sets a text-* colour, or passes its own tone / filled.
+const AUTO: Partial<Record<IconName, keyof typeof TONES>> = {
+  fire: "fire",
+  stars: "gold",
+  star: "gold",
+  diploma: "gold",
+  letter: "gold",
+  gift: "rose",
+  calendar: "fire",
+  tag: "orange",
+  bag: "orange",
+  bag2: "orange",
+  shop: "orange",
+  cart: "orange",
+  caseMinimalistic: "orange",
+  pointOnMap: "rose",
+  pinCircle: "rose",
+  pin: "rose",
+  forbidden: "rose",
+  mapPointSchool: "sky",
+  school: "sky",
+  earth: "sky",
+  squareAcademicCap: "violet",
+  book: "violet",
+  hashtag: "violet",
+  phone: "mint",
+  link: "mint",
+  linkRound: "mint",
+  checkCircle: "mint",
+};
+
+const HAS_TEXT_COLOR = /(^|\s)text-/;
 
 export function Icon({
   name,
   className = "size-6",
-  filled = false,
+  filled,
   weight = "medium",
   tone,
 }: {
@@ -49,11 +83,14 @@ export function Icon({
   weight?: IconWeight;
   tone?: IconTone;
 }) {
-  const Glyph = SOLAR[name][filled ? "bold" : "outline"];
-  const extra = filled ? "" : WEIGHT[weight];
+  const auto = tone === undefined && !HAS_TEXT_COLOR.test(className) ? AUTO[name] : undefined;
+  // Casual icons and any icon with an explicit tone are filled unless the call site says otherwise.
+  const isFilled = filled ?? (!!auto || (tone !== undefined && tone !== "none"));
   // A filled bookmark is a SAVED bookmark everywhere: always orange/yellow, never the brand purple.
-  const effective: IconTone | undefined = tone ?? (name === "bookmark" && filled ? "amber" : undefined);
+  const effective: IconTone | undefined = tone ?? (name === "bookmark" && isFilled ? "amber" : undefined) ?? auto;
   const color = effective && effective !== "none" ? TONES[effective] : undefined;
+  const Glyph = SOLAR[name][isFilled ? "bold" : "outline"];
+  const extra = isFilled ? "" : WEIGHT[weight];
   // The wrapper owns the size (className), the glyph fills it. Sizing the glyph itself via size="1em"
   // made every icon follow the parent's font-size and ignore size-* classes.
   return (

@@ -354,7 +354,7 @@ function SectionHead({ icon, title, onSeeAll }: { icon: IconName; title: string;
   return (
     <div className="mb-3 flex items-center justify-between">
       <h2 className="flex items-center gap-2 text-[18px] font-extrabold tracking-tight text-fg">
-        <Icon name={icon} filled className={`size-6 ${TEXT_YELLOW}`} />
+        <Icon name={icon} filled className="size-6" />
         {title}
       </h2>
       <button type="button" onClick={onSeeAll} className="text-[13px] font-bold text-fg/80 transition-colors hover:text-fg active:text-fg">
@@ -800,7 +800,7 @@ export function MarketView() {
                   on ? BTN_WHITE : "border border-fg/10 bg-surface-subtle text-fg hover:bg-surface-interactive"
                 }`}
               >
-                {t.icon && <Icon name={t.icon} className="size-[18px]" />}
+                {t.icon && <Icon name={t.icon} tone="none" className="size-[18px]" />}
                 {t.label}
               </button>
             );

@@ -176,7 +176,7 @@ export function Tile({
     <>
       <Icon
         name={icon}
-        tone={danger ? undefined : (tone ?? ICON_TONE[icon])}
+        tone={danger ? undefined : (tone ?? ICON_TONE[icon] ?? "steel")}
         className={`size-6 shrink-0 ${danger ? "text-danger" : "text-fg/75"}`}
       />
       <span className={`min-w-0 flex-1 truncate text-[15px] font-semibold ${danger ? "text-danger" : "text-fg"}`}>{label}</span>
@@ -212,7 +212,7 @@ export function Toggle({
 }) {
   return (
     <div className={`flex items-center gap-3.5 px-4 py-3 ${disabled ? "opacity-50" : ""}`}>
-      <Icon name={icon} tone={tone ?? ICON_TONE[icon]} className="size-6 shrink-0 text-fg/75" />
+      <Icon name={icon} tone={tone ?? ICON_TONE[icon] ?? "steel"} className="size-6 shrink-0 text-fg/75" />
       <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{label}</span>
       <button
         type="button"

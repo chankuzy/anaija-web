@@ -13,7 +13,7 @@ export function ThemeRow() {
   const pref = useThemePref();
   return (
     <div className="flex items-center gap-3.5 px-4 py-3">
-      <Icon name="moon" className="size-6 shrink-0 text-fg/75" />
+      <Icon name="moon" tone="violet" className="size-6 shrink-0" />
       <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">Theme</span>
       <div role="radiogroup" aria-label="Theme" className="flex rounded-full bg-surface-interactive p-0.5">
         {OPTS.map((o) => (

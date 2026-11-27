@@ -83,7 +83,7 @@ function Explore({ communities, listings }: { communities: LandingCommunity[]; l
         </Link>
         {listings.length > 0 && (
           <button type="button" aria-expanded={market} onClick={() => setMarket((m) => !m)} className={`${CHIP} ${market ? "bg-fg! text-bg!" : ""}`}>
-            <Icon name="bag" className="size-[18px]" /> Marketplace
+            <Icon name="bag" tone="none" className="size-[18px]" /> Marketplace
           </button>
         )}
         <Link href="/watch" className={CHIP}>

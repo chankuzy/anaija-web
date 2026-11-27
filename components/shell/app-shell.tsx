@@ -184,7 +184,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                 const inner = (
                   <>
                     <span className="relative shrink-0">
-                      <Icon name={n.icon} filled={active} className="size-8" />
+                      <Icon name={n.icon} filled={active} tone="none" className="size-8" />
                       {count > 0 && (
                         <span
                           className={`absolute -right-1.5 -top-1 origin-center transition-transform duration-200 ${
@@ -302,7 +302,7 @@ export function AppShellContent({ children }: { children: React.ReactNode }) {
                   <Avatar url={avatar} name={user?.name ?? user?.username} size={26} />
                 </span>
               ) : (
-                <Icon name={n.icon} filled={active} className="size-[28px]" />
+                <Icon name={n.icon} filled={active} tone="none" className="size-[28px]" />
               )}
             </Link>
           );
