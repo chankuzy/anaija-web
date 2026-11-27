@@ -104,17 +104,13 @@ function dayLabel(iso: string) {
   });
 }
 
+// Instagram-style grouping. A lone bubble is fully round; inside a stack the sender's own edge goes sharp:
+//   first -> sharp bottom, middle -> sharp top and bottom, last -> sharp top. The far edge always stays round.
+const ROUND = "rounded-[20px]";
 function bubbleCorners(mine: boolean, first: boolean, last: boolean): string {
-  if (mine) {
-    if (first && last) return "rounded-[18px] rounded-br-[6px]";
-    if (first) return "rounded-[18px] rounded-br-[4px]";
-    if (last) return "rounded-[18px] rounded-tr-[4px] rounded-br-[6px]";
-    return "rounded-[18px] rounded-r-[4px]";
-  }
-  if (first && last) return "rounded-[18px] rounded-bl-[6px]";
-  if (first) return "rounded-[18px] rounded-bl-[4px]";
-  if (last) return "rounded-[18px] rounded-tl-[4px] rounded-bl-[6px]";
-  return "rounded-[18px] rounded-l-[4px]";
+  if (first && last) return ROUND;
+  if (mine) return first ? `${ROUND} rounded-br-[5px]` : last ? `${ROUND} rounded-tr-[5px]` : `${ROUND} rounded-r-[5px]`;
+  return first ? `${ROUND} rounded-bl-[5px]` : last ? `${ROUND} rounded-tl-[5px]` : `${ROUND} rounded-l-[5px]`;
 }
 
 const isAudioMsg = (m: Message) =>
@@ -122,6 +118,28 @@ const isAudioMsg = (m: Message) =>
   (m.media_type?.startsWith("audio/") ?? false) ||
   (m.media_url?.includes("voice_") ?? false) ||
   /\.(webm|m4a|mp3|ogg|wav)(\?|$)/i.test(m.media_url ?? "");
+
+function ChatImage({ src, corners, sending, onOpen }: { src: string; corners: string; sending: boolean; onOpen: () => void }) {
+  const [ready, setReady] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label="Open photo"
+      onClick={onOpen}
+      className={`relative block w-[260px] max-w-full cursor-zoom-in overflow-hidden bg-card-elevated ${corners} ${ready ? "" : "aspect-[4/5]"} ${sending ? "opacity-70" : ""}`}
+    >
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        onLoad={() => setReady(true)}
+        className="block max-h-[380px] w-full object-cover"
+      />
+    </button>
+  );
+}
 
 function Media({
   m,
@@ -155,25 +173,21 @@ function Media({
 
   if (m.type === "image")
     return (
-      <img
+      <ChatImage
         src={m.media_url}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-        onClick={onOpen}
-        className={`max-h-80 max-w-full cursor-zoom-in object-cover ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
+        corners={bubbleCorners(mine, firstInBlock, lastInBlock)}
+        sending={m.status === "sending"}
+        onOpen={onOpen}
       />
     );
   if (m.type === "video")
     return (
-      <div className="relative">
-        <video
-          src={m.media_url}
-          controls
-          preload="metadata"
-          className={`max-h-80 max-w-full ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
-        />
+      <div
+        className={`relative w-[260px] max-w-full overflow-hidden bg-black ${bubbleCorners(mine, firstInBlock, lastInBlock)} ${
+          m.status === "sending" ? "opacity-70" : ""
+        }`}
+      >
+        <video src={m.media_url} controls preload="metadata" className="block max-h-[380px] w-full" />
         <button
           type="button"
           aria-label="Open video"
@@ -247,6 +261,7 @@ function Bubble({
   })();
   const reacts = Object.entries(m.reactions).filter(([, ids]) => ids.length > 0);
   const canReact = m.id > 0 && !m.is_deleted && !m.status;
+  const mediaWithCaption = hasMedia && !audio && (m.type === "image" || m.type === "video") && showText && jumboN === 0;
 
   // Gesture state lives in refs and writes straight to the DOM, so dragging never re-renders the bubble.
   const slideRef = useRef<HTMLDivElement>(null);
@@ -454,7 +469,7 @@ function Bubble({
 
             {m.reply_to && <ReplyChip reply={m.reply_to} onClick={() => m.reply_to && onNavigateToMessage(m.reply_to.id)} />}
 
-            {m.shared_post && <SharedPostCard post={m.shared_post} />}
+            {m.shared_post && <SharedPostCard post={m.shared_post} corners={bubbleCorners(mine, firstInBlock, lastInBlock && !showText)} />}
             {isSticker && (
               <div
                 onClick={m.status === "failed" ? onRetry : undefined}
@@ -471,12 +486,7 @@ function Bubble({
                 <img src={m.media_url ?? ""} alt="Sticker" draggable={false} loading="lazy" className="size-36 select-none object-contain" />
               </div>
             ) : (
-              <Media
-                m={m}
-                mine={mine}
-                firstInBlock={firstInBlock}
-                lastInBlock={lastInBlock}
-                onRetry={onRetry}
+              <Media m={m} mine={mine} firstInBlock={firstInBlock} lastInBlock={lastInBlock && !mediaWithCaption} onRetry={onRetry}
                 onOpen={() => onOpenMedia(m.id)}
               />
             )}
@@ -492,11 +502,7 @@ function Bubble({
             {showText && jumboN === 0 && (
               <div
                 onClick={m.status === "failed" ? onRetry : undefined}
-                className={`whitespace-pre-wrap break-words ${bubbleCorners(
-                  mine,
-                  firstInBlock,
-                  lastInBlock,
-                )} px-3 py-[7px] text-[14.5px] font-medium leading-[1.4] transition-opacity ${
+                className={`whitespace-pre-wrap break-words ${bubbleCorners(mine, firstInBlock && !mediaWithCaption && !m.shared_post, lastInBlock)} px-3.5 py-2 text-[15px] font-medium leading-[1.4] transition-opacity ${
                   mine ? "bubble-sent" : "bg-card-elevated text-fg"
                 } ${m.is_deleted ? "italic opacity-60" : ""} ${
                   m.status === "sending" ? "opacity-70" : ""

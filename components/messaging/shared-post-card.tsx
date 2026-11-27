@@ -10,15 +10,16 @@ import type { SharedPost } from "@/lib/api/messaging";
 
 // Bare glyphs only: no pill, no circle, no backdrop. Legibility comes from the scrims and this shadow.
 const GLYPH_SHADOW = "drop-shadow-[0_1px_4px_rgba(0,0,0,0.7)]";
+const DEFAULT_CORNERS = "rounded-[20px]";
 
 function clock(sec: number) {
   const s = Math.max(0, Math.round(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
-function Unavailable() {
+function Unavailable({ corners }: { corners: string }) {
   return (
-    <div className="mb-1 flex w-[190px] flex-col items-center gap-2 rounded-[19px] bg-card px-4 py-7 text-center">
+    <div className={`flex w-[232px] max-w-full flex-col items-center gap-2 bg-card px-4 py-7 text-center ${corners}`}>
       <Icon name="eyeClosed" className="size-5 text-fg/60" />
       <p className="text-secondary font-semibold text-fg">Post unavailable</p>
       <p className="text-supporting text-muted">It may have been deleted or made private.</p>
@@ -26,7 +27,7 @@ function Unavailable() {
   );
 }
 
-function Card({ post }: { post: SharedPost }) {
+function Card({ post, corners }: { post: SharedPost; corners: string }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -37,8 +38,8 @@ function Card({ post }: { post: SharedPost }) {
 
   return (
     <div
-      className={`group/card relative mb-1 w-[190px] overflow-hidden rounded-[19px] bg-card shadow-[0_8px_22px_rgba(0,0,0,0.18)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${
-        video ? "aspect-[9/15]" : "aspect-[4/5]"
+      className={`group/card relative w-[232px] max-w-full overflow-hidden bg-card shadow-[0_8px_22px_rgba(0,0,0,0.18)] transition-shadow duration-300 hover:shadow-[0_18px_44px_rgba(0,0,0,0.65)] ${corners} ${
+        video ? "aspect-[9/14]" : "aspect-[4/5]"
       }`}
     >
       {/* Media */}
@@ -79,24 +80,24 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Scrims */}
       <span
-        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-[68px]"
+        className="pointer-events-none absolute inset-x-0 top-0 z-[2] h-[72px]"
         style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5), rgba(0,0,0,0))" }}
       />
       <span
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[109px]"
-        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0))" }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] h-[132px]"
+        style={{ background: "linear-gradient(to top, rgba(0,0,0,0.82), rgba(0,0,0,0))" }}
       />
 
       {/* Top-right: clapperboard for video/reels, copy for multi-image posts */}
       {(video || multi) && (
-        <span className="pointer-events-none absolute right-2.5 top-2.5 z-[3] text-fg">
+        <span className="pointer-events-none absolute right-3 top-3 z-[3] text-fg">
           <Icon name={video ? "clapperboard" : "copy"} filled className={`size-[19px] ${GLYPH_SHADOW}`} />
         </span>
       )}
 
       {/* Top-left: price on listings */}
       {post.price && (
-        <span className="pointer-events-none absolute left-2.5 top-2.5 z-[3] rounded-full bg-brand px-2 py-[3px] text-[11px] font-extrabold text-brand-fg">
+        <span className="pointer-events-none absolute left-3 top-3 z-[3] rounded-full bg-brand px-2 py-[3px] text-[11px] font-extrabold text-brand-fg">
           ₦{post.price}
         </span>
       )}
@@ -113,9 +114,9 @@ function Card({ post }: { post: SharedPost }) {
       )}
 
       {/* Bottom-left: caption + author row */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-start gap-1.5 p-2.5">
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] flex flex-col items-start gap-2 p-3">
         {post.caption && (
-          <p className="text-shadow w-full truncate text-[11px] font-medium leading-none text-fg/90">{post.caption}</p>
+          <p className="text-shadow line-clamp-2 w-full text-[12px] font-medium leading-snug text-fg/95">{post.caption}</p>
         )}
         {post.author && (
           <Link
@@ -123,7 +124,7 @@ function Card({ post }: { post: SharedPost }) {
             className="pointer-events-auto flex max-w-full items-center gap-2 transition-opacity hover:opacity-80"
           >
             <Avatar url={post.author_avatar} name={post.author_name ?? post.author} size={22} />
-            <span className="text-shadow truncate text-[11px] font-bold leading-none text-fg">{post.author}</span>
+            <span className="text-shadow truncate text-[11.5px] font-bold leading-none text-fg">{post.author}</span>
             {post.author_verified && <Icon name="verifiedCheck" filled className="size-3 shrink-0 text-sky-400" />}
           </Link>
         )}
@@ -131,7 +132,7 @@ function Card({ post }: { post: SharedPost }) {
 
       {/* Bottom-right: duration */}
       {video && post.duration !== null && (
-        <span className="text-shadow pointer-events-none absolute bottom-3 right-2.5 z-[3] text-[10px] font-bold leading-none tabular-nums text-fg">
+        <span className="text-shadow pointer-events-none absolute bottom-3.5 right-3 z-[3] text-[10px] font-bold leading-none tabular-nums text-fg">
           {clock(post.duration)}
         </span>
       )}
@@ -139,6 +140,7 @@ function Card({ post }: { post: SharedPost }) {
   );
 }
 
-export function SharedPostCard({ post }: { post: SharedPost }) {
-  return post.unavailable ? <Unavailable /> : <Card post={post} />;
+// `corners` comes from the chat bubble grouping (lone = fully round, stacked = sharp inner edge); other callers get round.
+export function SharedPostCard({ post, corners = DEFAULT_CORNERS }: { post: SharedPost; corners?: string }) {
+  return post.unavailable ? <Unavailable corners={corners} /> : <Card post={post} corners={corners} />;
 }
