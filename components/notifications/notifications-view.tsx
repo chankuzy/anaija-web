@@ -25,6 +25,7 @@ import { PushHint } from "@/components/notifications/push-hint";
 const FILTERS: { id: ActivityFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "unread", label: "Unread" },
+  { id: "spaces", label: "Spaces" },
   { id: "likes", label: "Likes" },
   { id: "comments", label: "Comments" },
   { id: "follows", label: "Follows" },
@@ -52,6 +53,22 @@ const GLYPH: Record<string, { icon: IconName | null; color: string; shape: Shape
   moment_answer: { icon: "message", color: "#ffb340", shape: "circle" },
   moment_challenge: { icon: "usersGroupRounded", color: "#ff6b5c", shape: "circle" },
   moment_mod: { icon: "forbidden", color: "#ff5c5c", shape: "circle" },
+  course_announcement: { icon: "pin", color: "#ffb340", shape: "square" },
+  course_material: { icon: "notebookMinimalistic", color: "#4c8dff", shape: "square" },
+  course_material_update: { icon: "notebookMinimalistic", color: "#4c8dff", shape: "square" },
+  course_event: { icon: "clockCircle", color: "#14B8A6", shape: "square" },
+  course_event_change: { icon: "clockCircle", color: "#ff6b5c", shape: "square" },
+  course_deadline: { icon: "clockCircle", color: "#ff5c5c", shape: "square" },
+  course_question: { icon: "questionCircle", color: "#7C3AED", shape: "circle" },
+  course_answer: { icon: "message", color: "#2563EB", shape: "circle" },
+  course_reply: { icon: "message", color: "#2563EB", shape: "circle" },
+  course_accepted: { icon: "check", color: "#16A34A", shape: "circle" },
+  community_request: { icon: "userPlus", color: "#7C3AED", shape: "circle" },
+  community_decision: { icon: "usersGroupRounded", color: "#16A34A", shape: "circle" },
+  community_announcement: { icon: "pin", color: "#ffb340", shape: "square" },
+  community_moderation: { icon: "forbidden", color: "#ff5c5c", shape: "circle" },
+  session_live: { icon: "eyeClosed", color: "#9b8cff", shape: "circle" },
+  discovery: { icon: "star", color: "#ffb340", shape: "circle" },
 };
 const FALLBACK = { icon: "bell" as IconName, color: "#71717A", shape: "circle" as Shape };
 
@@ -415,7 +432,9 @@ export function NotificationsView({ onClose }: { onClose: () => void }) {
     body = (
       <div className="py-24 text-center">
         <p className="text-[15px] font-bold text-fg">No activity yet</p>
-        <p className="mt-1 text-secondary text-muted">Likes, comments and follows will show here</p>
+        <p className="mt-1 text-secondary text-muted">
+          {filter === "spaces" ? "Updates from your Course Desks and communities will show here" : "Likes, comments and follows will show here"}
+        </p>
       </div>
     );
   } else {

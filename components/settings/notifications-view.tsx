@@ -121,8 +121,9 @@ export function NotificationsView() {
           <Toggle icon="chatLine" label="Comments" value={p.comments} disabled={!on} onChange={(v) => void save({ ...p, comments: v })} />
           <Toggle icon="userPlus" label="Follows" value={p.follows} disabled={!on} onChange={(v) => void save({ ...p, follows: v })} />
           <Toggle icon="letter" label="Messages" value={p.messages} disabled={!on} onChange={(v) => void save({ ...p, messages: v })} />
+          <Toggle icon="star" label="Discoveries" value={p.discoveries ?? true} disabled={!on} onChange={(v) => void save({ ...p, discoveries: v })} />
         </Group>
-        <Footnote>Likes includes reposts and milestones. Comments includes replies and @mentions.</Footnote>
+        <Footnote>Likes includes reposts and milestones. Comments includes replies and @mentions. Discoveries suggests people and opportunities.</Footnote>
 
         <div className="h-6" />
         <SectionLabel>Course Desks</SectionLabel>
@@ -132,6 +133,13 @@ export function NotificationsView() {
           <Toggle icon="clockCircle" label="Class and deadline reminders" value={p.course_reminders} disabled={!on} onChange={(v) => void save({ ...p, course_reminders: v })} />
         </Group>
         <Footnote>Announcements and materials includes schedule changes. Turning one off only holds back the push: the items still appear in Activity.</Footnote>
+
+        <div className="h-6" />
+        <SectionLabel>Communities</SectionLabel>
+        <Group>
+          <Toggle icon="usersGroupRounded" label="Community updates" value={p.community_updates ?? true} disabled={!on} onChange={(v) => void save({ ...p, community_updates: v })} />
+        </Group>
+        <Footnote>Announcements, join requests, live sessions and moments. Join decisions and moderation notices are always sent while push is on.</Footnote>
 
         <div className="h-6" />
         <SectionLabel>Privacy</SectionLabel>
@@ -157,7 +165,11 @@ export function NotificationsView() {
             </>
           )}
         </Group>
-        {p.quiet_hours_enabled && <Footnote>Activity and unread counts still update. This only holds back the push notification.</Footnote>}
+        {p.quiet_hours_enabled && (
+          <Footnote>
+            Held notifications arrive when quiet hours end. Important announcements, cancellations, join decisions and moderation notices still come through.
+          </Footnote>
+        )}
       </>
     );
   }

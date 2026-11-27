@@ -2,7 +2,7 @@ import { api } from "./client";
 import { mediaUrl, normPost } from "./feed";
 import type { Post } from "./feed-types";
 
-export type ActivityFilter = "all" | "unread" | "likes" | "comments" | "follows";
+export type ActivityFilter = "all" | "unread" | "likes" | "comments" | "follows" | "spaces";
 
 export interface ActivityActor {
   id: number;

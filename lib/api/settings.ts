@@ -43,6 +43,10 @@ export interface NotifPrefs {
   course_discussions: boolean;
   /** Course Desks: class and deadline reminders. */
   course_reminders: boolean;
+  /** Communities: join requests, announcements, live sessions, moments. */
+  community_updates: boolean;
+  /** Discoveries suggestions. */
+  discoveries: boolean;
   quiet_hours_enabled: boolean;
   quiet_hours_start: number | null;
   quiet_hours_end: number | null;
@@ -84,6 +88,8 @@ export const settingsApi = {
       course_updates: r.course_updates ?? true,
       course_discussions: r.course_discussions ?? true,
       course_reminders: r.course_reminders ?? true,
+      community_updates: r.community_updates ?? true,
+      discoveries: r.discoveries ?? true,
       quiet_hours_enabled: r.quiet_hours_enabled ?? false,
       quiet_hours_start: r.quiet_hours_start ?? null,
       quiet_hours_end: r.quiet_hours_end ?? null,
