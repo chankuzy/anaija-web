@@ -566,6 +566,154 @@ function Bubble({
   );
 }
 
+// ── Albums: photos sent together read as one tiled block (grouped in the UI only; each photo is still its own message) ──
+const ALBUM_GAP_MS = 120_000;
+const ALBUM_MAX = 6;
+const ALBUM_LAYOUT: Record<number, { spans: [number, number][]; rows: number; h: number }> = {
+  2: { spans: [[3, 1], [3, 1]], rows: 1, h: 196 },
+  3: { spans: [[3, 2], [3, 1], [3, 1]], rows: 2, h: 130 },
+  4: { spans: [[3, 1], [3, 1], [3, 1], [3, 1]], rows: 2, h: 130 },
+  5: { spans: [[3, 1], [3, 1], [2, 1], [2, 1], [2, 1]], rows: 2, h: 130 },
+  6: { spans: [[2, 1], [2, 1], [2, 1], [2, 1], [2, 1], [2, 1]], rows: 2, h: 120 },
+};
+
+const albumable = (m: Message) =>
+  m.type === "image" &&
+  !!m.media_url &&
+  !m.is_deleted &&
+  !isCustomSticker(m) &&
+  m.status !== "failed" &&
+  !(m.body ?? "").trim() &&
+  !m.shared_post &&
+  !m.reply_to;
+
+function buildAlbums(msgs: Message[]) {
+  const albumOf = new Map<string | number, Message[]>();
+  const albumSkip = new Set<string | number>();
+  const keyOf = (m: Message) => m.local_id ?? m.id;
+  let i = 0;
+  while (i < msgs.length) {
+    const first = msgs[i];
+    if (!albumable(first)) {
+      i += 1;
+      continue;
+    }
+    const run: Message[] = [first];
+    let j = i + 1;
+    while (j < msgs.length && run.length < ALBUM_MAX) {
+      const prev = run[run.length - 1];
+      const cur = msgs[j];
+      if (
+        !albumable(cur) ||
+        cur.sender_id !== first.sender_id ||
+        Math.abs(Date.parse(cur.created_at) - Date.parse(prev.created_at)) > ALBUM_GAP_MS
+      )
+        break;
+      run.push(cur);
+      j += 1;
+    }
+    if (run.length >= 2) {
+      albumOf.set(keyOf(first), run);
+      for (const m of run.slice(1)) albumSkip.add(keyOf(m));
+    }
+    i += run.length;
+  }
+  return { albumOf, albumSkip };
+}
+
+function AlbumRow({
+  items,
+  mine,
+  showAvatar,
+  firstInBlock,
+  lastInBlock,
+  onOpen,
+  onOpenMenu,
+  onAvatarTap,
+}: {
+  items: Message[];
+  mine: boolean;
+  showAvatar: boolean;
+  firstInBlock: boolean;
+  lastInBlock: boolean;
+  onOpen: (id: number) => void;
+  onOpenMenu: (m: Message, pos?: { x: number; y: number }) => void;
+  onAvatarTap: () => void;
+}) {
+  const layout = ALBUM_LAYOUT[Math.min(items.length, ALBUM_MAX)];
+  const timer = useRef<number | null>(null);
+  const fired = useRef(false);
+  const stop = () => {
+    if (timer.current !== null) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+  useEffect(() => () => stop(), []);
+  const sender = items[0].sender;
+
+  return (
+    <div className={`relative flex items-end gap-1.5 ${mine ? "justify-end" : "justify-start"} ${lastInBlock ? "mb-2" : "mb-[2px]"}`}>
+      {!mine &&
+        (showAvatar ? (
+          <button type="button" aria-label="Open contact" onClick={onAvatarTap} className="shrink-0 rounded-full transition-transform active:scale-95">
+            <Avatar url={sender?.avatar} name={sender?.name} size={28} />
+          </button>
+        ) : (
+          <span className="w-7 shrink-0" />
+        ))}
+      <div
+        className={`grid w-[264px] max-w-[78%] gap-[2px] overflow-hidden bg-card-elevated ${bubbleCorners(mine, firstInBlock, lastInBlock)}`}
+        style={{
+          gridTemplateColumns: "repeat(6, minmax(0, 1fr))",
+          gridTemplateRows: `repeat(${layout.rows}, ${layout.h}px)`,
+        }}
+      >
+        {items.map((m, i) => {
+          const [c, r] = layout.spans[i];
+          return (
+            <button
+              key={m.local_id ?? m.id}
+              type="button"
+              aria-label="Open photo"
+              onClick={() => {
+                if (fired.current) {
+                  fired.current = false;
+                  return;
+                }
+                onOpen(m.id);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                onOpenMenu(m, { x: e.clientX, y: e.clientY });
+              }}
+              onTouchStart={(e) => {
+                const t = e.touches[0];
+                stop();
+                fired.current = false;
+                timer.current = window.setTimeout(() => {
+                  fired.current = true;
+                  try {
+                    navigator.vibrate?.(18);
+                  } catch {}
+                  onOpenMenu(m, { x: t.clientX, y: t.clientY });
+                }, 450);
+              }}
+              onTouchMove={stop}
+              onTouchEnd={stop}
+              onTouchCancel={stop}
+              style={{ gridColumn: `span ${c}`, gridRow: `span ${r}` }}
+              className={`relative block min-h-0 min-w-0 overflow-hidden bg-card-elevated transition-opacity ${m.status === "sending" ? "opacity-70" : ""}`}
+            >
+              <img src={m.media_url ?? ""} alt="" loading="lazy" decoding="async" draggable={false} className="absolute inset-0 size-full object-cover" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function EmptyThread() {
   return (
     <div className="grid h-full place-items-center px-6 text-center">
@@ -636,6 +784,7 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
 
   const msgs = t.messages;
   const last = msgs[msgs.length - 1];
+  const { albumOf, albumSkip } = useMemo(() => buildAlbums(msgs), [msgs]);
   const viewerItems = useMemo<ViewerItem[]>(
     () =>
       msgs
@@ -1111,8 +1260,13 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
           )}
 
           {msgs.map((m, i) => {
+            const key = m.local_id ?? m.id;
+            if (albumSkip.has(key)) return null;
+            const album = albumOf.get(key) ?? null;
+            const endIdx = album ? i + album.length - 1 : i;
+            const lastM = msgs[endIdx];
             const prev = msgs[i - 1];
-            const nextM = msgs[i + 1];
+            const nextM = msgs[endIdx + 1];
             const mine = m.sender_id === myId;
             const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at);
             const firstInBlock =
@@ -1122,11 +1276,38 @@ export function ThreadPane({ conversationId, embedded = false, communityDetail =
               Math.abs(Date.parse(m.created_at) - Date.parse(prev.created_at)) >= GAP_MS;
             const lastInBlock =
               !nextM ||
-              nextM.sender_id !== m.sender_id ||
-              dayKey(nextM.created_at) !== dayKey(m.created_at) ||
-              Math.abs(Date.parse(nextM.created_at) - Date.parse(m.created_at)) >= GAP_MS;
+              nextM.sender_id !== lastM.sender_id ||
+              dayKey(nextM.created_at) !== dayKey(lastM.created_at) ||
+              Math.abs(Date.parse(nextM.created_at) - Date.parse(lastM.created_at)) >= GAP_MS;
 
             const showSeen = mine && m.id === lastMineId && !!newestOther && newestOther.id > m.id;
+
+            if (album) {
+              return (
+                <div key={key}>
+                  {newDay && m.created_at && (
+                    <p className="my-3 text-center">
+                      <span className="rounded-full bg-card px-3 py-1 text-[11.5px] font-semibold text-muted">
+                        {dayLabel(m.created_at)}
+                      </span>
+                    </p>
+                  )}
+                  {conv?.type === "group" && !mine && firstInBlock && (
+                    <p className="mb-0.5 ml-9 text-supporting font-semibold text-muted">{m.sender?.name ?? m.sender?.username}</p>
+                  )}
+                  <AlbumRow
+                    items={album}
+                    mine={mine}
+                    showAvatar={!mine && lastInBlock}
+                    firstInBlock={firstInBlock}
+                    lastInBlock={lastInBlock}
+                    onOpen={setViewerId}
+                    onOpenMenu={(target, pos) => setMenuTarget({ m: target, pos })}
+                    onAvatarTap={() => (conv && conv.type !== "group" && conv.other_user ? setPerson(true) : m.sender?.username ? router.push(`/u/${m.sender.username}`) : undefined)}
+                  />
+                </div>
+              );
+            }
 
             return (
               <div key={m.local_id ?? m.id}>
