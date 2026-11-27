@@ -162,7 +162,7 @@ function Sheet({
     >
       <button type="button" aria-label="Close" tabIndex={-1} onClick={onClose} className="ob-fade absolute inset-0 cursor-default bg-black/65" />
       <div
-        className="ob-sheet relative flex max-h-[min(82dvh,640px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] bg-card-elevated text-fg shadow-[0_-10px_36px_rgba(0,0,0,0.2)] md:rounded-[28px] md:shadow-[0_18px_48px_rgba(0,0,0,0.25)]"
+        className="ob-sheet relative flex max-h-[min(82dvh,640px)] w-full max-w-[480px] flex-col overflow-hidden rounded-t-[28px] bg-[var(--sheet-bg)] text-fg shadow-[0_-10px_36px_rgba(0,0,0,0.2)] md:rounded-[28px] md:shadow-[0_18px_48px_rgba(0,0,0,0.25)]"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-fg/20 md:hidden" />

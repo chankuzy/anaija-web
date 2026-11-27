@@ -45,7 +45,7 @@ export function DeleteDialog({
     >
       <div
         ref={dialogRef}
-        className="w-full max-w-sm rounded-[24px] bg-card-elevated border border-fg/10 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
+        className="w-full max-w-sm rounded-[24px] bg-[var(--sheet-bg)] border border-fg/10 p-5 shadow-2xl animate-in zoom-in-95 duration-150"
       >
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-full bg-danger/15 text-danger">

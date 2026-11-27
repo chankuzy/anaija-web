@@ -582,3 +582,13 @@ body {
 /* F5: no label shadow in Light; a soft one only in Dark. */
 .text-shadow-soft { text-shadow: none; }
 :root[data-theme="dark"] .text-shadow-soft { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45); }
+
+/* Sheets, menus, dialogs: ONE solid soft-black surface. No transparency, no blur. */
+:root { --sheet-bg: #141417; }
+:root[data-theme="light"] { --sheet-bg: #ffffff; }
+.glass {
+  background: var(--sheet-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-fg, #ffffff) 7%, transparent), 0 14px 36px rgba(0, 0, 0, 0.45);
+}

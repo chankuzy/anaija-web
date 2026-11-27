@@ -161,7 +161,7 @@ export function StickerTray({
     <div className="flex h-[320px] flex-col overflow-hidden rounded-[22px] bg-surface-subtle">
       <div className="no-scrollbar flex gap-1 overflow-x-auto p-1.5" role="tablist" aria-label="Sticker packs">
         <button type="button" role="tab" aria-selected={tab === "recent"} onClick={() => setTab("recent")} className={pill(tab === "recent")}>
-          <Icon name="clockCircle" filled={tab === "recent"} className="size-4" />
+          <Icon name="clockCircle" tone="sky" filled={tab === "recent"} className="size-4" />
           Recent
         </button>
         <button type="button" role="tab" aria-selected={tab === "fav"} onClick={() => setTab("fav")} className={pill(tab === "fav")}>
@@ -176,7 +176,7 @@ export function StickerTray({
         )}
         {canMake && (
           <button type="button" role="tab" aria-selected={tab === "mine"} onClick={() => setTab("mine")} className={pill(tab === "mine")}>
-            <Icon name="user" filled={tab === "mine"} className="size-4" />
+            <Icon name="user" tone="mint" filled={tab === "mine"} className="size-4" />
             Mine
           </button>
         )}

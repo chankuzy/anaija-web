@@ -37,7 +37,7 @@ export function Quick({
       className="flex flex-1 flex-col items-center gap-2 text-fg transition-transform active:scale-95 disabled:opacity-60"
     >
       <span className="grid size-14 place-items-center rounded-full bg-surface-interactive transition-colors hover:bg-surface-elevated">
-        {glyph ?? (icon && <Icon name={icon} className={`size-[22px] ${busy ? "animate-pulse" : ""} ${active ? "text-brand" : ""}`} />)}
+        {glyph ?? (icon && <Icon name={icon} row={!active} className={`size-[22px] ${busy ? "animate-pulse" : ""} ${active ? "text-brand" : ""}`} />)}
       </span>
       <span className="text-supporting font-semibold text-fg/85">{label}</span>
     </button>

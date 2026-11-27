@@ -93,7 +93,7 @@ export function DocumentForm({ onClose }: { onClose: () => void }) {
         <FileRow name={file.name} size={file.size} disabled={pub.busy} onRemove={removeDoc} />
       ) : (
         <button type="button" onClick={() => docRef.current?.click()} className="flex h-[112px] w-full flex-col items-center justify-center gap-2 rounded-[22px] bg-surface-subtle text-muted transition-colors hover:bg-surface-interactive">
-          <Icon name="copy" filled className="size-7 text-fg" />
+          <Icon name="copy" tone="orange" className="size-7" />
           <span className="text-body font-bold text-fg">Choose a document</span>
         </button>
       )}

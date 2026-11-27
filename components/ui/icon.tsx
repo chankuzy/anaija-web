@@ -73,7 +73,9 @@ const AUTO: Partial<Record<IconName, keyof typeof TONES>> = {
 const ROW: Partial<Record<IconName, keyof typeof TONES>> = {
   user: "sky",
   usersGroupRounded: "sky",
+  eye: "sky",
   star: "gold",
+  stars: "gold",
   eyeClosed: "violet",
   settings: "steel",
   gallery: "mint",
@@ -90,7 +92,19 @@ const ROW: Partial<Record<IconName, keyof typeof TONES>> = {
   mapPointSchool: "sky",
   pointOnMap: "rose",
   gift: "rose",
-  stars: "gold",
+  copy: "sky",
+  plus: "gold",
+  repeat: "mint",
+  shareArrow: "violet",
+  clockCircle: "sky",
+  videocamera: "rose",
+  musicNote: "rose",
+  music: "rose",
+  camera: "violet",
+  microphone: "rose",
+  clapperboard: "fire",
+  questionCircle: "mint",
+  filters: "violet",
 };
 
 const HAS_TEXT_COLOR = /(^|\s)text-/;

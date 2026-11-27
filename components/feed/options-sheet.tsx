@@ -133,7 +133,7 @@ export function OptionsSheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/60" />
       <div
-        className="sv-rise relative max-h-[85dvh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] border-t border-fg/[0.08] bg-bg px-2 pt-2.5 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[28px] md:border"
+        className="sv-rise relative max-h-[85dvh] w-full max-w-[480px] overflow-y-auto rounded-t-[28px] border-t border-fg/[0.08] bg-[var(--sheet-bg)] px-2 pt-2.5 shadow-[0_-12px_40px_rgba(0,0,0,0.55)] md:rounded-[28px] md:border"
         style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
       >
         <span className="mx-auto mb-2 block h-1 w-10 rounded-full bg-fg/20" />

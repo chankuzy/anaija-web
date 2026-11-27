@@ -1,4 +1,4 @@
-import type { IconName } from "@/components/ui/icon";
+import type { IconName, IconTone } from "@/components/ui/icon";
 
 export type StructuredCreateKind = "document" | "poll" | "article" | "announcement" | "question";
 export type CreateKind = "reel" | "photo" | "story" | "listing" | StructuredCreateKind;
@@ -22,6 +22,19 @@ export const KIND_META: Record<CreateKind, KindMeta> = {
   article: { title: "Publication", sub: "Long-form writing with a cover", icon: "notebookMinimalistic", tone: "neutral" },
   announcement: { title: "Announcement", sub: "An official notice", icon: "bell", tone: "brand" },
   question: { title: "Question", sub: "Ask your course a question", icon: "questionCircle", tone: "info" },
+};
+
+// Icon colour per kind (the icon palette in components/ui/icon.tsx).
+export const KIND_TONE: Record<CreateKind, Exclude<IconTone, "none">> = {
+  reel: "fire",
+  photo: "mint",
+  story: "violet",
+  listing: "orange",
+  document: "sky",
+  poll: "gold",
+  article: "rose",
+  announcement: "amber",
+  question: "sky",
 };
 
 export const STRUCTURED_KINDS: readonly StructuredCreateKind[] = ["document", "poll", "article", "announcement", "question"];

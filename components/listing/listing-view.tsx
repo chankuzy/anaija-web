@@ -141,7 +141,7 @@ function OfferSheet({ asking, busy, onClose, onSend }: { asking: string; busy: b
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60" onClick={onClose}>
       <div
-        className="w-full max-w-[720px] rounded-t-[30px] bg-card-elevated px-5 pt-5"
+        className="w-full max-w-[720px] rounded-t-[30px] bg-[var(--sheet-bg)] px-5 pt-5"
         style={{ paddingBottom: "calc(20px + env(safe-area-inset-bottom))" }}
         onClick={(e) => e.stopPropagation()}
       >

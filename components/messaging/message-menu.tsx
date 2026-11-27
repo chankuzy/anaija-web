@@ -65,7 +65,7 @@ export function MessageMenu({
       ref={menuRef}
       role="menu"
       aria-label="Message options"
-      className="glass z-50 flex min-w-[180px] flex-col overflow-hidden rounded-[20px] bg-card-elevated/95 p-1.5 shadow-2xl backdrop-blur-xl border border-fg/10 text-fg animate-in fade-in zoom-in-95 duration-100"
+      className="glass z-50 flex min-w-[180px] flex-col overflow-hidden rounded-[20px] p-1.5 shadow-2xl border border-fg/10 text-fg animate-in fade-in zoom-in-95 duration-100"
       style={
         position
           ? {
@@ -86,7 +86,7 @@ export function MessageMenu({
         }}
         className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-fg/10 active:bg-fg/15 transition text-left"
       >
-        <Icon name="reply" className="size-4 text-muted" />
+        <Icon name="reply" tone="sky" className="size-4" />
         <span>Reply</span>
       </button>
 
@@ -101,7 +101,7 @@ export function MessageMenu({
           }}
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-fg/10 active:bg-fg/15 transition text-left"
         >
-          <Icon name="pen" className="size-4 text-muted" />
+          <Icon name="pen" tone="amber" className="size-4" />
           <span>Edit</span>
         </button>
       )}
@@ -117,7 +117,7 @@ export function MessageMenu({
           }}
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-fg/10 active:bg-fg/15 transition text-left"
         >
-          <Icon name="copy" className="size-4 text-muted" />
+          <Icon name="copy" tone="mint" className="size-4" />
           <span>Copy text</span>
         </button>
       )}
@@ -133,7 +133,7 @@ export function MessageMenu({
           }}
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-fg/10 active:bg-fg/15 transition text-left"
         >
-          <Icon name="shareArrow" filled className="size-4 text-muted" />
+          <Icon name="shareArrow" filled tone="violet" className="size-4" />
           <span>Forward</span>
         </button>
       )}
@@ -149,7 +149,7 @@ export function MessageMenu({
           }}
           className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-[14px] font-semibold text-fg hover:bg-fg/10 active:bg-fg/15 transition text-left"
         >
-          <Icon name="plus" className="size-4 text-muted" />
+          <Icon name="plus" tone="gold" className="size-4" />
           <span>Save to favourites</span>
         </button>
       )}

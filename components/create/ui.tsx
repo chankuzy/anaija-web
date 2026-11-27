@@ -115,7 +115,7 @@ export function SettingsRow({
       }}
       className="flex cursor-pointer items-center gap-3.5 px-5 py-4 transition-colors hover:bg-fg/3"
     >
-      <Icon name={icon} filled className="size-[22px] shrink-0 text-fg" />
+      <Icon name={icon} filled row className="size-[22px] shrink-0 text-fg" />
       <span className="shrink-0 text-[15.5px] text-fg">{label}</span>
       <span className="flex min-w-0 flex-1 items-center justify-end gap-1.5">
         {value ? (
@@ -196,7 +196,7 @@ export function Dialog({
   return (
     <div className="fixed inset-0 z-[70] grid place-items-center p-5" role="dialog" aria-modal="true">
       <button type="button" aria-label="Close" onClick={onClose} className="absolute inset-0 cursor-default bg-black/60" />
-      <div className="relative w-full max-w-sm rounded-floating bg-surface-interactive p-5">
+      <div className="relative w-full max-w-sm rounded-floating bg-[var(--sheet-bg)] p-5">
         <p className="text-[17px] font-bold text-fg">{title}</p>
         <div className="mt-4">{children}</div>
         <div className="mt-5 flex justify-end gap-1">

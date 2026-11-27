@@ -110,7 +110,7 @@ export function PickStep({ c, onNext, onClose }: { c: Composer; onNext: () => vo
         {n === 0 ? (
           <button type="button" onClick={browse} className="group mx-3.5 mb-3 flex h-[calc(100%-12px)] w-[calc(100%-28px)] flex-col items-center justify-center gap-3 rounded-[22px] bg-surface-subtle text-center transition-colors hover:bg-surface-interactive">
             <span className="grid size-16 place-items-center rounded-full bg-card">
-              <Icon name="gallery" filled className="size-7 text-fg" />
+              <Icon name="gallery" tone="mint" className="size-7" />
             </span>
             <span className="text-[17px] font-bold text-fg">Choose photos or videos</span>
             <span className="max-w-[260px] text-[12.5px] leading-[1.4] text-muted">

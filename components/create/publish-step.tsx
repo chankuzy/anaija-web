@@ -181,7 +181,7 @@ export function PublishStep({ c, onBack, onDone }: { c: Composer; onBack: () => 
                 }}
                 className="flex w-full items-center gap-3.5 px-6 py-3.5 text-left hover:bg-fg/4"
               >
-                <Icon name={v.icon} filled className="size-6 text-fg" />
+                <Icon name={v.icon} filled row className="size-6 text-fg" />
                 <span className="flex-1 text-[15.5px] text-fg">{v.label}</span>
                 {d.visibility === v.id && <Icon name="check" className="size-5 text-brand" />}
               </button>

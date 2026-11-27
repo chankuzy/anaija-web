@@ -184,7 +184,7 @@ export function PersonSheet({ conv, onClose }: { conv: Conversation; onClose: ()
     <div className="fixed inset-0 z-[55] flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-label={name}>
       <button type="button" aria-label="Close" onClick={onClose} className="sv-overlay absolute inset-0 cursor-default bg-black/55" />
       <div
-        className="sv-rise relative w-full max-w-md overflow-hidden rounded-t-sheet bg-surface-subtle md:rounded-floating"
+        className="sv-rise relative w-full max-w-md overflow-hidden rounded-t-sheet bg-[var(--sheet-bg)] md:rounded-floating"
         style={{ paddingBottom: "max(12px, env(safe-area-inset-bottom))" }}
       >
         <span className="mx-auto mt-2 block h-1 w-9 rounded-full bg-fg/20 md:hidden" />
