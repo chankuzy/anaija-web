@@ -70,7 +70,7 @@ function ToggleRow({
       onClick={onClick}
       className="flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-fg/4 disabled:opacity-60"
     >
-      <Icon name={icon} className="size-5 shrink-0 text-fg/85" />
+      <Icon name={icon} row className="size-5 shrink-0 text-fg/85" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-medium text-fg">{label}</span>
         {hint && <span className="block truncate text-supporting text-muted">{hint}</span>}

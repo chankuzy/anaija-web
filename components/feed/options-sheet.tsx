@@ -44,7 +44,7 @@ function Tile({
   }`;
   const inner = (
     <>
-      {glyph ?? (icon ? <Icon name={icon} className="size-5" /> : null)}
+      {glyph ?? (icon ? <Icon name={icon} row className="size-5" /> : null)}
       {label}
     </>
   );

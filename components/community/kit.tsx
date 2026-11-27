@@ -235,7 +235,7 @@ export function ImageViewer({ src, onClose }: { src: string; onClose: () => void
 export function MenuRow({ icon, label, hint, onClick, danger = false }: { icon: React.ComponentProps<typeof Icon>["name"]; label: string; hint?: string; onClick: () => void; danger?: boolean }) {
   return (
     <button type="button" onClick={onClick} className={`flex w-full items-center gap-3.5 rounded-2xl px-3 py-3.5 text-left transition-colors hover:bg-surface-interactive ${danger ? "text-danger" : "text-fg"}`}>
-      <Icon name={icon} className="size-[22px] shrink-0 opacity-80" />
+      <Icon name={icon} row className="size-[22px] shrink-0 opacity-80" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">{label}</span>
         {hint && <span className="block truncate text-supporting font-normal text-muted">{hint}</span>}

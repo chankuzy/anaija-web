@@ -440,7 +440,7 @@ export function LocationFieldTrigger({
         className="flex h-12 w-full items-center justify-between rounded-input bg-surface-interactive px-4 text-[14.5px] font-medium text-muted hover:bg-surface-elevated hover:text-fg transition"
       >
         <span className="flex items-center gap-2">
-          <Icon name="pointOnMap" className="size-4 text-muted" />
+          <Icon name="pointOnMap" tone="rose" className="size-4" />
           <span>Add pickup / location (Campus, City, State)</span>
         </span>
         <Icon name="chevronRight" className="size-4 text-muted" />

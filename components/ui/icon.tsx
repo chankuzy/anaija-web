@@ -68,6 +68,31 @@ const AUTO: Partial<Record<IconName, keyof typeof TONES>> = {
   checkCircle: "mint",
 };
 
+// Menu / sheet ROW icons (opt in with the `row` prop). Only icons that never sit in a red "danger" row
+// (leave, report, block, delete), so destructive rows keep their red.
+const ROW: Partial<Record<IconName, keyof typeof TONES>> = {
+  user: "sky",
+  usersGroupRounded: "sky",
+  star: "gold",
+  eyeClosed: "violet",
+  settings: "steel",
+  gallery: "mint",
+  bell: "gold",
+  message: "sky",
+  bag: "orange",
+  bag2: "orange",
+  link: "mint",
+  notebookMinimalistic: "amber",
+  calendar: "fire",
+  tag: "orange",
+  hashtag: "violet",
+  earth: "sky",
+  mapPointSchool: "sky",
+  pointOnMap: "rose",
+  gift: "rose",
+  stars: "gold",
+};
+
 const HAS_TEXT_COLOR = /(^|\s)text-/;
 
 export function Icon({
@@ -76,18 +101,22 @@ export function Icon({
   filled,
   weight = "medium",
   tone,
+  row = false,
 }: {
   name: IconName;
   className?: string;
   filled?: boolean;
   weight?: IconWeight;
   tone?: IconTone;
+  /** Menu / sheet row icon: coloured and filled from the ROW map (danger rows are not in it). */
+  row?: boolean;
 }) {
   const auto = tone === undefined && !HAS_TEXT_COLOR.test(className) ? AUTO[name] : undefined;
+  const rowTone = row && tone === undefined ? ROW[name] : undefined;
   // Casual icons and any icon with an explicit tone are filled unless the call site says otherwise.
-  const isFilled = filled ?? (!!auto || (tone !== undefined && tone !== "none"));
+  const isFilled = filled ?? (!!auto || !!rowTone || (tone !== undefined && tone !== "none"));
   // A filled bookmark is a SAVED bookmark everywhere: always orange/yellow, never the brand purple.
-  const effective: IconTone | undefined = tone ?? (name === "bookmark" && isFilled ? "amber" : undefined) ?? auto;
+  const effective: IconTone | undefined = tone ?? (name === "bookmark" && isFilled ? "amber" : undefined) ?? auto ?? rowTone;
   const color = effective && effective !== "none" ? TONES[effective] : undefined;
   const Glyph = SOLAR[name][isFilled ? "bold" : "outline"];
   const extra = isFilled ? "" : WEIGHT[weight];

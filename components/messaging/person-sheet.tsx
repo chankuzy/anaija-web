@@ -43,7 +43,7 @@ function Row({
         danger ? "text-danger" : "text-fg"
       }`}
     >
-      <Icon name={icon} className="size-5 shrink-0" />
+      <Icon name={icon} row className="size-5 shrink-0" />
       <span className="min-w-0 flex-1">
         <span className="block truncate">{label}</span>
         {hint && <span className="block truncate text-supporting font-normal text-muted">{hint}</span>}

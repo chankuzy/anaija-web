@@ -61,7 +61,7 @@ export function AboutTab({ c }: { c: CommunityDetail }) {
           <div className="divide-y divide-line">
             {c.links.map((l) => (
               <a key={l.url} href={l.url} target="_blank" rel="noreferrer noopener" className="flex items-center gap-3 px-1 py-3.5 text-[15px] font-semibold text-fg transition-opacity active:opacity-60">
-                <Icon name="link" className="size-5 text-muted" />
+                <Icon name="link" tone="mint" className="size-5" />
                 <span className="truncate">{l.label}</span>
               </a>
             ))}

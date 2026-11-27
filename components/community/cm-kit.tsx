@@ -35,7 +35,7 @@ export function Toggle({ icon, label, value, onChange, disabled = false }: {
 }) {
   return (
     <div className={`flex items-center gap-3.5 px-4 py-3 ${disabled ? "opacity-50" : ""}`}>
-      <Icon name={icon} className="size-6 shrink-0 text-fg/70" />
+      <Icon name={icon} row className="size-6 shrink-0 text-fg/70" />
       <span className="min-w-0 flex-1 text-[15px] font-semibold text-fg">{label}</span>
       <button
         type="button"
