@@ -11,6 +11,11 @@ import { useAuth } from "@/lib/auth/auth-context";
 const ICON_TONE: Partial<Record<IconName, IconTone>> = {
   bell: "gold",
   clockCircle: "sky",
+  userPlus: "mint",
+  notebookMinimalistic: "amber",
+  message: "sky",
+  chatLine: "orange",
+  logout: "rose",
   bellOff: "steel",
   moon: "violet",
   eye: "sky",

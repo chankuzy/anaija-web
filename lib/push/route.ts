@@ -4,6 +4,7 @@ export const PANEL_URL = "/?panel=notifications";
 const num = (v: unknown) => (/^\d{1,12}$/.test(String(v ?? "")) ? String(v) : null);
 const uname = (v: unknown) => (/^[A-Za-z0-9_.]{2,30}$/.test(String(v ?? "")) ? String(v) : null);
 const slugOf = (v: unknown) => (/^[a-z0-9][a-z0-9-]{0,60}$/.test(String(v ?? "")) ? String(v) : null);
+const codeOf = (v: unknown) => (/^[A-Za-z0-9_-]{1,64}$/.test(String(v ?? "")) ? String(v) : null);
 const COMMUNITY_TABS = ["overview", "materials", "posts", "about"];
 
 export function routeForPush(d: Record<string, string | undefined>): string {
@@ -13,6 +14,7 @@ export function routeForPush(d: Record<string, string | undefined>): string {
   const user = uname(d.username || d.actor_username);
   const viewer = uname(d.viewer_username);
   const slug = slugOf(d.slug);
+  const code = codeOf(d.code);
   const tab = d.tab && COMMUNITY_TABS.includes(d.tab) ? d.tab : null;
   switch (d.dest) {
     case "post":
@@ -37,6 +39,14 @@ export function routeForPush(d: Record<string, string | undefined>): string {
     case "community":
       if (slug) return `/c/${slug}${tab ? `?tab=${tab}` : ""}`;
       break;
+    case "session":
+      if (code) return `/s/${code}`;
+      break;
+    case "moment":
+      if (code) return `/m/${code}`;
+      break;
+    case "discoveries":
+      return "/discoveries";
     case "chats":
       return "/messages";
   }
